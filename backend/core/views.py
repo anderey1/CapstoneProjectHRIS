@@ -37,7 +37,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAuthenticated, IsAdminOrHR]
         return [permission() for permission in permission_classes]
 
-    def get_queryset(self):
+    def get_queryset(self): 
         user = self.request.user
         if user.role in [Role.ADMIN, Role.HR]:
             return Employee.objects.all()
@@ -227,6 +227,28 @@ def attendance_trends_chart(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def leave_rate_chart(request):
+    data = LeaveRequest.objects.values('leave_type').annotate(count=Count('leave_type'))
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def payroll_summary_chart(request):
+    from django.db.models import Sum
+    data = Payroll.objects.values('cutoff_period').annotate(
+        total_net=Sum('net_salary'),
+        total_deductions=Sum('total_deductions')
+    ).order_by('-cutoff_period')[:6]
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def performance_dist_chart(request):
+    data = PerformanceReview.objects.values('is_promotion_eligible').annotate(count=Count('id'))
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def dashboard_ai_summary(request):
     """
     Returns a descriptive summary of system data (non-AI).
@@ -242,9 +264,38 @@ def dashboard_ai_summary(request):
 
 
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def analytics_detail(request, metric):
+    """
+    Generic analytics endpoint that routes to specific chart data.
+    """
+    if metric == 'attendance':
+        data = Attendance.objects.values('status').annotate(count=Count('status'))
+    elif metric == 'leave':
+        data = LeaveRequest.objects.values('leave_type').annotate(count=Count('leave_type'))
+    elif metric == 'payroll':
+        from django.db.models import Sum
+        data = Payroll.objects.values('cutoff_period').annotate(
+            total_net=Sum('net_salary'),
+            total_deductions=Sum('total_deductions')
+        ).order_by('-cutoff_period')[:6]
+    elif metric == 'performance':
+        data = PerformanceReview.objects.values('is_promotion_eligible').annotate(count=Count('id'))
+    elif metric == 'loans':
+        data = ProvidentLoan.objects.values('status').annotate(count=Count('status'))
+    elif metric == 'departments':
+        data = Employee.objects.values('department').annotate(count=Count('department'))
+    else:
+        return Response({"detail": "Metric not found. Available: attendance, leave, payroll, performance, loans, departments"}, status=404)
+    
+    return Response(data)
+
 # -------------------------
 # LOANS
 # -------------------------
+
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = ProvidentLoan.objects.all().order_by('-date_applied')
     serializer_class = LoanSerializer

@@ -8,92 +8,134 @@ import {
   FileText, 
   UserCircle,
   LogOut,
-  Settings,
-  Menu,
   Clock,
   BarChart2,
   KanbanSquare,
-  ShieldAlert
+  ShieldAlert,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 /**
- * Sidebar Component
- * 
- * Mobile-first responsive sidebar using DaisyUI Drawer.
- * It provides the main navigation links for the application.
+ * Sidebar Component with Simple Labels
  */
 const SidebarContent = ({ closeDrawer }) => {
   const { user, logout } = useAuth();
-
   const isAdminOrHR = user && ['ADMIN', 'HR'].includes(user?.role);
-  
-  const navLinks = [
-    { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
-    { to: '/employees', icon: <Users className="w-5 h-5" />, label: 'Employees', roles: ['ADMIN', 'HR'] },
-    { to: '/leave', icon: <Clock className="w-5 h-5" />, label: isAdminOrHR ? 'Leave Management' : 'My Leaves' },
-    { to: '/loans', icon: <Wallet className="w-5 h-5" />, label: isAdminOrHR ? 'Provident Loans' : 'My Loans' },
-    { to: '/attendance', icon: <CalendarCheck className="w-5 h-5" />, label: isAdminOrHR ? 'Attendance' : 'My Attendance' },
-    { to: '/dtr', icon: <FileText className="w-5 h-5" />, label: 'Daily Time Record (DTR)' },
-    { to: '/payroll', icon: <FileText className="w-5 h-5" />, label: isAdminOrHR ? 'Payroll' : 'My Payroll' },
-    { to: '/performance', icon: <BarChart2 className="w-5 h-5" />, label: isAdminOrHR ? 'IPCRF Management' : 'My IPCRF' },
-    {to: '/recruitment', icon: <KanbanSquare className="w-5 h-5" />, label: 'Recruitment', roles: ['ADMIN', 'HR'] },
-    { to: '/audit-logs', icon: <ShieldAlert className="w-5 h-5" />, label: 'Audit Logs', roles: ['ADMIN', 'HR'] },
-    { to: '/profile', icon: <UserCircle className="w-5 h-5" />, label: 'My Profile' },
+
+  const menuGroups = [
+    {
+      title: 'Main',
+      links: [
+        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home' },
+      ]
+    },
+    {
+      title: 'Staff',
+      links: [
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['ADMIN', 'HR'] },
+        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Hiring', roles: ['ADMIN', 'HR'] },
+      ]
+    },
+    {
+      title: 'Time & Leave',
+      links: [
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance' },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record (DTR)' },
+        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves' },
+      ]
+    },
+    {
+      title: 'Money',
+      links: [
+        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll' },
+        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans' },
+      ]
+    },
+    {
+      title: 'Work Quality',
+      links: [
+        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance' },
+      ]
+    },
+    {
+      title: 'Settings',
+      links: [
+        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile' },
+        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['ADMIN', 'HR'] },
+      ]
+    }
   ];
 
-  const filteredLinks = navLinks.filter(link => 
-    !link.roles || (user && link.roles.includes(user.role))
-  );
-
   return (
-    <div className="flex flex-col h-full bg-base-100 text-base-content w-80 border-r border-base-300">
-      {/* Sidebar Header */}
-      <div className="p-6 border-b border-base-300">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary rounded-lg text-primary-content">
-            <LayoutDashboard className="w-6 h-6" />
+    <div className="flex flex-col h-full bg-base-100 text-base-content w-80 border-r border-base-200">
+      
+      {/* Brand Section */}
+      <div className="p-8">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-content shadow-lg shadow-primary/20">
+            <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="font-black text-xl tracking-tight">DepEd HRIS</h2>
-            <p className="text-[10px] uppercase tracking-widest opacity-50 font-bold">Lucena City</p>
+            <h2 className="font-black text-xl tracking-tight leading-none text-base-content uppercase">DEPED HRIS</h2>
+            <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.2em] mt-1 text-primary">Lucena Division</p>
           </div>
         </div>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-1">
-        {filteredLinks.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            onClick={closeDrawer}
-            className={({ isActive }) => `
-              flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group
-              ${isActive 
-                ? 'bg-primary text-primary-content shadow-md shadow-primary/20' 
-                : 'hover:bg-base-200 text-base-content/70 hover:text-base-content'}
-            `}
-          >
-            <span className="group-hover:scale-110 transition-transform duration-200">
-              {link.icon}
-            </span>
-            <span className="font-medium">{link.label}</span>
-          </NavLink>
-        ))}
+      {/* Menu Area */}
+      <nav className="flex-1 overflow-y-auto px-6 pb-6 space-y-8">
+        {menuGroups.map((group, idx) => {
+          const visibleLinks = group.links.filter(link => 
+            !link.roles || (user && link.roles.includes(user.role))
+          );
+
+          if (visibleLinks.length === 0) return null;
+
+          return (
+            <div key={idx} className="space-y-3">
+              <h3 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-30">
+                {group.title}
+              </h3>
+              <div className="space-y-1">
+                {visibleLinks.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    onClick={closeDrawer}
+                    className={({ isActive }) => `
+                      flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group
+                      ${isActive 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'text-base-content/60 hover:bg-base-200/50 hover:text-base-content'}
+                    `}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="transition-transform duration-200 group-hover:scale-110">
+                        {link.icon}
+                      </span>
+                      <span className="text-sm font-bold tracking-tight">{link.label}</span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-30 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
-      {/* Sidebar Footer / User Profile */}
-      <div className="p-4 border-t border-base-300 bg-base-200/30">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-base-100 border border-base-300 mb-4">
+      {/* Footer */}
+      <div className="p-6 border-t border-base-200 bg-base-50/50">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-base-200 mb-4 shadow-sm">
           <div className="avatar placeholder">
-            <div className="bg-neutral text-neutral-content rounded-full w-10">
-              <span className="text-xs">{user?.username?.[0]?.toUpperCase() || 'U'}</span>
+            <div className="bg-primary/10 text-primary rounded-lg w-10 h-10 font-black text-xs uppercase flex items-center justify-center">
+              {user?.username?.[0] || 'U'}
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate">{user?.username || 'User'}</p>
-            <p className="text-[10px] opacity-50 font-bold uppercase">{user?.role || 'Guest'}</p>
+            <p className="text-xs font-black truncate text-base-content uppercase tracking-tight">{user?.username || 'Guest'}</p>
+            <p className="text-[10px] font-bold opacity-30 uppercase tracking-tighter">{user?.role || 'Guest'}</p>
           </div>
         </div>
         
@@ -102,10 +144,10 @@ const SidebarContent = ({ closeDrawer }) => {
             closeDrawer();
             logout();
           }}
-          className="btn btn-ghost btn-block justify-start gap-4 text-error hover:bg-error/10 rounded-xl"
+          className="btn btn-ghost btn-block justify-start gap-3 text-error hover:bg-error/10 rounded-lg text-xs font-bold uppercase tracking-widest"
         >
-          <LogOut className="w-5 h-5" />
-          <span>Sign Out</span>
+          <LogOut className="w-4 h-4" />
+          <span>Logout</span>
         </button>
       </div>
     </div>

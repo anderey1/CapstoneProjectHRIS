@@ -6,6 +6,8 @@ export const QUERY_KEYS = {
   LEAVES: 'leaves',
   PERFORMANCE: 'performance',
   APPLICANTS: 'applicants',
+  AUDIT_LOGS: 'audit-logs',
+  SCHOOLS: 'schools',
   DASHBOARD_STATS: 'dashboard_stats',
   AI_SUMMARY: 'ai_summary',
   CHARTS: {

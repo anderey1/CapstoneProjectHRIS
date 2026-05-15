@@ -4,10 +4,7 @@ from .views import (
     AttendanceViewSet, LoanViewSet, EmployeeViewSet,
     LeaveViewSet, PayrollViewSet, PerformanceReviewViewSet,
     ApplicantViewSet, AuditLogViewSet, SchoolViewSet,
-    dashboard_stats, loan_status_chart, employee_department_chart,
-    attendance_trends_chart, leave_rate_chart, payroll_summary_chart,
-    performance_dist_chart, dashboard_ai_summary, analytics_detail,
-    generate_payroll
+    dashboard_stats, dashboard_ai_summary, analytics_detail
 )
 
 router = DefaultRouter()
@@ -26,24 +23,12 @@ urlpatterns = [
     # CRUD endpoints via ViewSets
     path('', include(router.urls)),
 
-    # Dashboard
-    path('dashboard/', dashboard_stats),
-    path('dashboard/summary/', dashboard_ai_summary),
+    # Dashboard & AI
+    path('dashboard/', dashboard_stats, name='dashboard_stats'),
+    path('dashboard/summary/', dashboard_ai_summary, name='dashboard_ai_summary'),
 
-    # Charts (Specific Endpoints)
-    path('charts/loan-status/', loan_status_chart),
-    path('charts/department/', employee_department_chart),
-    path('charts/attendance-trends/', attendance_trends_chart),
-
-    path('charts/leave-rate/', leave_rate_chart),
-    path('charts/payroll/', payroll_summary_chart),
-    path('charts/performance/', performance_dist_chart),
-
-    # Generic Analytics
-    path('analytics/<str:metric>/', analytics_detail),
-
-    # Payroll Generation
-    path('payroll/generate/<int:employee_id>/', generate_payroll),
+    # Consolidated Analytics (Replaces individual chart endpoints)
+    path('analytics/<str:metric>/', analytics_detail, name='analytics_detail'),
 ]
 
 

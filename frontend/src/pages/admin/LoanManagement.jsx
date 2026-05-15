@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, PlusCircle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Wallet, PlusCircle, CheckCircle2, AlertCircle, Coins } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
@@ -9,18 +9,17 @@ import LoanCard from '../../components/features/loans/LoanCard';
 import ApplyLoanModal from '../../components/features/loans/ApplyLoanModal';
 
 /**
- * LoanManagement (Admin/HR View)
+ * Loans (Admin/HR View)
  * 
- * Allows HR/Admin to review all loan applications, approve, or reject them.
- * They can also file a loan application on behalf of an employee.
+ * Simple, professional redesign for managing staff loans.
  */
 const LoanManagement = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeModal, setActiveModal] = useState(null);
-  const [successMsg, setSuccessMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState(null);
 
-  // Fetch All Loans
+  // 1. Data Fetching
   const { data: loans, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.LOANS],
     queryFn: async () => {
@@ -29,7 +28,6 @@ const LoanManagement = () => {
     },
   });
 
-  // Fetch Employees for Application Select
   const { data: employees } = useQuery({
     queryKey: [QUERY_KEYS.EMPLOYEES],
     queryFn: async () => {
@@ -38,16 +36,16 @@ const LoanManagement = () => {
     }
   });
 
-  // Mutations
+  // 2. Mutations
   const applyMutation = useMutation({
     mutationFn: (newLoan) => api.post('loans/', newLoan),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
       setActiveModal(null);
-      showToast('Loan application recorded!');
+      showToast('Loan recorded!');
     },
     onError: (err) => {
-      const msg = err.response?.data?.detail || err.response?.data?.[0] || 'Failed to record loan.';
+      const msg = err.response?.data?.detail || 'Failed to add loan.';
       showToast(msg, 'error');
     }
   });
@@ -56,7 +54,7 @@ const LoanManagement = () => {
     mutationFn: (id) => api.post(`loans/${id}/approve/`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
-      showToast('Loan approved successfully.');
+      showToast('Loan approved!');
     },
   });
 
@@ -64,7 +62,7 @@ const LoanManagement = () => {
     mutationFn: (id) => api.post(`loans/${id}/reject/`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
-      showToast('Loan application rejected.');
+      showToast('Loan rejected.');
     },
   });
 
@@ -83,38 +81,51 @@ const LoanManagement = () => {
   const employeeList = Array.isArray(employees) ? employees : (employees?.results || []);
 
   if (isLoading) return (
-    <div className="p-8 flex justify-center">
-      <span className="loading loading-spinner loading-lg text-secondary"></span>
+    <div className="p-8 flex justify-center h-[60vh] items-center">
+      <span className="loading loading-spinner loading-lg text-primary"></span>
     </div>
   );
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+      
+      {/* Toast Notification */}
       {successMsg && (
-        <div className="toast toast-top toast-end z-[100]">
-          <div className={`alert ${successMsg.type === 'error' ? 'alert-error' : 'alert-secondary'} shadow-xl border-none text-white rounded-2xl flex items-center gap-3`}>
-            {successMsg.type === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
-            <span className="font-bold text-sm">{successMsg.text}</span>
+        <div className="toast toast-top toast-end z-[100] mt-16">
+          <div className={`alert ${successMsg.type === 'error' ? 'alert-error' : 'bg-primary'} text-white shadow-xl border-none rounded-lg flex items-center gap-3 py-3 px-6`}>
+            {successMsg.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+            <span className="font-bold text-xs uppercase tracking-widest">{successMsg.text}</span>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-base-content flex items-center gap-3">
-            <Wallet className="w-8 h-8 text-secondary" />
-            Loan Management
-          </h1>
-          <p className="text-sm opacity-50 font-medium mt-1">Review and manage employee loan applications.</p>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+              <Coins className="w-5 h-5" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Loans</h1>
+          </div>
+          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Manage staff loan requests</p>
         </div>
-        <button onClick={() => setActiveModal('apply')} className="btn btn-secondary shadow-lg shadow-secondary/20 rounded-2xl group">
-          <PlusCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          Record New Loan
+        
+        <button 
+          onClick={() => setActiveModal('apply')} 
+          className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8"
+        >
+          <PlusCircle className="w-4 h-4 mr-2" />
+          Add Loan
         </button>
       </div>
 
-      <LoanStats loans={loanList} />
+      {/* Summary Stats */}
+      <div className="animate-in fade-in duration-700">
+        <LoanStats loans={loanList} />
+      </div>
 
+      {/* Grid Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {loanList.length > 0 ? (
           loanList.map((loan) => (
@@ -128,9 +139,9 @@ const LoanManagement = () => {
             />
           ))
         ) : (
-          <div className="lg:col-span-2 py-20 bg-base-100 rounded-3xl border-2 border-dashed border-base-300 flex flex-col items-center justify-center text-center opacity-30">
-            <AlertCircle className="w-16 h-16 mb-4" />
-            <p className="text-xl font-bold italic">No loan applications to review.</p>
+          <div className="lg:col-span-2 py-20 bg-white rounded-xl border border-dashed border-base-300 flex flex-col items-center justify-center text-center opacity-30">
+            <AlertCircle className="w-12 h-12 mb-3" />
+            <p className="text-lg font-black uppercase tracking-widest">No loan requests</p>
           </div>
         )}
       </div>

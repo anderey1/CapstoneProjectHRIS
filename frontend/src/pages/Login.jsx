@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { LogIn, User, Lock, Eye, EyeOff, AlertCircle, ShieldCheck } from 'lucide-react';
 
 /**
- * Login Page Component
+ * Cleaned and Professional Login Page
  * 
- * Redesigned with a modern, professional look for DepEd Lucena City Division.
- * Features:
- * - Responsive, centered card layout
- * - Icon-integrated input fields
- * - Show/Hide password toggle
- * - Loading state feedback
- * - Branded typography and colors
+ * Optimized for clarity, simplicity, and professional enterprise branding.
  */
 const Login = () => {
   const { login } = useAuth();
@@ -30,134 +24,125 @@ const Login = () => {
 
     try {
       await login(username, password);
-      // Redirect handled by AuthContext or manual redirect
       window.location.href = '/';
     } catch (err) {
       console.error(err);
-      setError('Invalid username or password. Please try again.');
+      setError('Authentication failed. Please verify your credentials.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-base-300 to-secondary/10 p-4">
-      <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-base-300 overflow-hidden">
-        {/* Top Accent Bar */}
-        <div className="h-2 bg-gradient-to-r from-primary to-secondary w-full" />
-        
-        <div className="card-body p-8">
-          {/* Header Section */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-              <LogIn className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-base-200 relative overflow-hidden">
+      
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+      <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl"></div>
+      <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-secondary/5 rounded-full blur-3xl"></div>
+
+      <div className="card w-full max-w-md bg-white shadow-xl border border-base-300 rounded-xl overflow-hidden z-10 mx-4">
+        <div className="card-body p-10">
+          
+          {/* Brand Header */}
+          <div className="flex flex-col items-center mb-10">
+            <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center text-white mb-6 shadow-lg shadow-primary/20">
+              <ShieldCheck className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-black text-center text-base-content">
-              DepEd Lucena HRIS
+            <h1 className="text-xl font-black tracking-tight text-center text-base-content uppercase">
+              DEPED LUCENA HRIS
             </h1>
-            <p className="text-sm text-base-content/60 text-center mt-1">
-              Human Resource Information System
-            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-1 h-1 bg-success rounded-full animate-pulse"></div>
+              <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em]">
+                Secure Access Gateway
+              </p>
+            </div>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="alert alert-error shadow-sm mb-6 py-3 rounded-lg flex items-start">
-              <AlertCircle className="w-5 h-5 mt-0.5" />
-              <span className="text-sm font-medium">{error}</span>
+            <div className="bg-error/10 border border-error/20 p-4 rounded-lg flex items-center gap-3 mb-6 animate-in fade-in slide-in-from-top-2">
+              <AlertCircle className="w-5 h-5 text-error" />
+              <span className="text-xs font-bold text-error leading-tight">{error}</span>
             </div>
           )}
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username Field */}
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text font-bold opacity-70">Username</span>
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none opacity-50">
-                  <User className="w-5 h-5" />
-                </span>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Username</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-primary transition-all">
+                  <User className="w-4 h-4" />
+                </div>
                 <input
                   name="username"
                   type="text"
-                  placeholder="Enter your username"
-                  className="input input-bordered w-full pl-10 focus:input-primary transition-all bg-base-200/50"
+                  placeholder="Official username"
+                  className="input input-md w-full pl-11 bg-base-100 border-base-300 focus:border-primary transition-all rounded-lg text-sm font-medium"
                   required
                   disabled={isLoading}
                 />
               </div>
             </div>
 
-            {/* Password Field */}
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text font-bold opacity-70">Password</span>
-                <span className="label-text-alt link link-hover text-primary font-medium">Forgot?</span>
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none opacity-50">
-                  <Lock className="w-5 h-5" />
-                </span>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center px-1">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Password</label>
+                <button type="button" className="text-[10px] font-bold text-primary uppercase tracking-tighter hover:underline">Forgot Access?</button>
+              </div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-primary transition-all">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <input
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  className="input input-bordered w-full pl-10 pr-10 focus:input-primary transition-all bg-base-200/50"
+                  placeholder="Account password"
+                  className="input input-md w-full pl-11 pr-11 bg-base-100 border-base-300 focus:border-primary transition-all rounded-lg text-sm font-medium"
                   required
                   disabled={isLoading}
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 opacity-50 hover:opacity-100 transition-opacity"
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 opacity-30 hover:opacity-100 transition-opacity"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me Toggle */}
-            <div className="flex items-center justify-between py-1">
-              <div className="form-control">
-                <label className="label cursor-pointer gap-2 p-0">
-                  <input type="checkbox" className="checkbox checkbox-xs checkbox-primary" />
-                  <span className="label-text text-xs opacity-60">Remember device</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="form-control mt-4">
-              <button 
-                type="submit" 
-                className={`btn btn-primary w-full shadow-lg ${isLoading ? 'loading' : ''}`}
-                disabled={isLoading}
-              >
-                {!isLoading && <LogIn className="w-4 h-4 mr-2" />}
-                {isLoading ? 'Verifying...' : 'Sign In'}
-              </button>
-            </div>
+            <button 
+              type="submit" 
+              className={`btn btn-primary btn-md w-full shadow-md shadow-primary/20 rounded-lg text-xs font-black uppercase tracking-widest mt-4 ${isLoading ? 'loading' : ''}`}
+              disabled={isLoading}
+            >
+              {!isLoading && <LogIn className="w-4 h-4 mr-2" />}
+              {isLoading ? 'Verifying Identity...' : 'Sign In to Portal'}
+            </button>
           </form>
 
-          {/* Footer Info */}
-          <div className="mt-8 pt-6 border-t border-base-300 text-center">
-            <div className="badge badge-outline badge-sm opacity-50 mb-3 uppercase tracking-widest font-bold">
-              Development Preview
-            </div>
-            <p className="text-xs text-base-content/40 leading-relaxed">
-              Use <span className="font-bold text-base-content/60">admin / admin123</span><br />
-              to explore the system functionality.
-            </p>
+          {/* System Info Footer */}
+          <div className="mt-10 pt-8 border-t border-base-200 text-center space-y-4">
+             <div className="inline-flex items-center gap-2 px-3 py-1 bg-base-100 border border-base-300 rounded-full">
+                <div className="w-1 h-1 bg-primary rounded-full"></div>
+                <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Preview Build 2.0.4</span>
+             </div>
+             <p className="text-[10px] font-medium opacity-30 leading-relaxed max-w-[200px] mx-auto uppercase">
+                Authorized Personnel Only. All access attempts are logged for security audit.
+             </p>
           </div>
         </div>
       </div>
       
-      {/* Branding Footer (Optional) */}
-      <div className="fixed bottom-6 text-xs font-medium opacity-30 text-center uppercase tracking-widest">
-        © 2026 DepEd Lucena City Division
+      {/* Absolute Bottom Footer */}
+      <div className="absolute bottom-8 left-0 w-full text-center">
+        <p className="text-[10px] font-black opacity-20 uppercase tracking-[0.3em]">
+          © 2026 DepEd Lucena City Division
+        </p>
       </div>
     </div>
   );

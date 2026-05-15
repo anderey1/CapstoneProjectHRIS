@@ -3,8 +3,13 @@ import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/axios';
 import { QUERY_KEYS } from '../../../api/queryKeys';
-import { CheckCircle, X } from 'lucide-react';
+import { CheckCircle, X, Award, User } from 'lucide-react';
 
+/**
+ * IPCRF Form Modal (Performance Rating)
+ * 
+ * Simple, professional redesign for administrative ratings.
+ */
 const IPCRFFormModal = ({ onClose, review }) => {
   const queryClient = useQueryClient();
   
@@ -45,28 +50,39 @@ const IPCRFFormModal = ({ onClose, review }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-neutral/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-      <div className="bg-base-100 p-8 rounded-[2rem] w-full max-w-md shadow-2xl border border-base-300 relative">
-        <button onClick={onClose} className="absolute right-6 top-6 btn btn-ghost btn-circle btn-sm">
-            <X className="w-5 h-5" />
-        </button>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-xl w-full max-w-md shadow-2xl border border-base-200 overflow-hidden animate-in zoom-in-95 duration-300">
+        
+        {/* Header */}
+        <div className="bg-base-50/50 border-b border-base-100 p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                <Award className="w-4 h-4" />
+             </div>
+             <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-base-content">
+                   {review?.id ? 'Edit Rating' : 'Rate Staff'}
+                </h2>
+                <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.2em] mt-0.5">Performance Evaluation</p>
+             </div>
+          </div>
+          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100">
+             <X className="w-4 h-4" />
+          </button>
+        </div>
 
-        <h2 className="text-2xl font-black mb-6 flex items-center gap-2">
-          {review?.id ? 'Edit IPCRF Rating' : 'New IPCRF Rating'}
-        </h2>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="form-control">
-            <label className="label py-1"><span className="label-text text-xs font-bold uppercase opacity-50">Select Employee</span></label>
+        <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Select Staff</label>
             {loadingEmployees ? (
-              <span className="loading loading-spinner" />
+              <div className="h-8 flex items-center"><span className="loading loading-spinner loading-xs text-primary" /></div>
             ) : (
               <select
-                className="select select-bordered bg-base-200/50 rounded-xl"
+                className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest"
                 {...register('employee', { required: true })}
                 disabled={!!review?.id}
               >
-                <option value="">Select personnel</option>
+                <option value="">Choose Staff Member...</option>
                 {(Array.isArray(employees) ? employees : [])?.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.first_name} {emp.last_name}
@@ -74,49 +90,39 @@ const IPCRFFormModal = ({ onClose, review }) => {
                 ))}
               </select>
             )}
-            {errors.employee && <p className="text-error text-[10px] font-bold mt-1 uppercase">Personnel is required</p>}
+            {errors.employee && <p className="text-error text-[9px] font-bold mt-1 uppercase tracking-tight ml-1">Staff selection required</p>}
           </div>
 
-          <div className="form-control">
-            <label className="label py-1"><span className="label-text text-xs font-bold uppercase opacity-50">Evaluation Period</span></label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Period</label>
             <input
-              className="input input-bordered bg-base-200/50 rounded-xl"
-              placeholder="e.g., SY 2025-2026 Q1"
+              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold"
+              placeholder="e.g. SY 2025-2026 Q1"
               {...register('period', { required: true })}
             />
-            {errors.period && <p className="text-error text-[10px] font-bold mt-1 uppercase">Period is required</p>}
+            {errors.period && <p className="text-error text-[9px] font-bold mt-1 uppercase tracking-tight ml-1">Period required</p>}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            {['punctuality_score', 'quality_score', 'behavior_score'].map((field) => (
-              <div key={field} className="form-control">
-                <label className="label py-1"><span className="label-text text-[10px] font-bold uppercase opacity-40">{field.split('_')[0]}</span></label>
+          <div className="grid grid-cols-3 gap-4">
+            {['punctuality', 'quality', 'behavior'].map((field) => (
+              <div key={field} className="space-y-1.5 text-center">
+                <label className="text-[9px] font-black uppercase opacity-40 tracking-widest">{field}</label>
                 <input
                   type="number"
                   min="1"
                   max="5"
                   step="0.1"
-                  className="input input-bordered bg-base-200/50 rounded-xl text-center font-black"
-                  {...register(field, { required: true, min: 1, max: 5 })}
+                  className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-center text-xs font-black"
+                  {...register(`${field}_score`, { required: true, min: 1, max: 5 })}
                 />
               </div>
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 mt-8">
-            <button type="submit" className="btn btn-primary rounded-xl font-black" disabled={mutation.isPending}>
-              {mutation.isPending ? (
-                <span className="loading loading-spinner" />
-              ) : (
-                <><CheckCircle className="w-5 h-5 mr-1" /> Save Evaluation</>
-              )}
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost rounded-xl opacity-50"
-              onClick={onClose}
-            >
-              Cancel
+          <div className="flex gap-3 pt-6 border-t border-base-100">
+            <button type="button" className="btn btn-ghost flex-1 text-[10px] font-black uppercase tracking-widest opacity-40" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md shadow-primary/20" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Saving...' : 'Save Rating'}
             </button>
           </div>
         </form>

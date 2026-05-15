@@ -2,11 +2,17 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   User, Mail, Shield, Briefcase, Building2, MapPin, 
-  Calendar, Wallet, Heart, Plane, Camera, Fingerprint 
+  Calendar, Wallet, Heart, Plane, Camera, Fingerprint,
+  UserCircle
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 
+/**
+ * My Profile Page
+ * 
+ * Simple, professional redesign for viewing personal and work details.
+ */
 const Profile = () => {
   const { data: me, isLoading } = useQuery({
     queryKey: ['me'],
@@ -14,7 +20,7 @@ const Profile = () => {
   });
 
   if (isLoading) return (
-    <div className="flex h-[80vh] items-center justify-center">
+    <div className="p-8 flex justify-center h-[60vh] items-center">
       <span className="loading loading-spinner loading-lg text-primary" />
     </div>
   );
@@ -26,31 +32,33 @@ const Profile = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       
-      {/* Premium Profile Header */}
-      <div className="relative bg-base-100 rounded-[3rem] shadow-2xl border border-base-300 overflow-hidden">
-        <div className="h-48 bg-gradient-to-r from-primary via-secondary to-accent opacity-90" />
-        <div className="px-8 pb-8 -mt-20 flex flex-col md:flex-row items-end gap-6 relative z-10">
-          <div className="p-2 bg-white rounded-[2.5rem] shadow-2xl">
-            <div className="w-32 h-32 md:w-40 md:h-40 bg-base-200 rounded-[2rem] flex items-center justify-center border-4 border-white overflow-hidden relative group">
-              <User size={80} className="text-base-300 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                <Camera className="text-white w-8 h-8" />
+      {/* Page Header / Profile Banner */}
+      <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+        <div className="h-32 bg-primary/10 relative">
+           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-primary/20 to-transparent"></div>
+        </div>
+        <div className="px-8 pb-8 -mt-12 flex flex-col md:flex-row items-end gap-6 relative z-10">
+          <div className="p-1.5 bg-white rounded-xl shadow-lg border border-base-100">
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-base-100 rounded-lg flex items-center justify-center border border-base-200 overflow-hidden relative group">
+              <UserCircle size={60} className="text-primary opacity-20" />
+              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                <Camera className="text-primary w-6 h-6" />
               </div>
             </div>
           </div>
-          <div className="flex-1 pb-4">
+          <div className="flex-1 pb-2">
             <div className="flex flex-wrap items-center gap-3 mb-1">
-              <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-base-content">
+              <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">
                 {me?.first_name} {me?.last_name}
               </h1>
-              <span className="badge badge-primary badge-lg font-black rounded-xl uppercase tracking-widest text-[10px] px-4 py-4">
+              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-primary/10">
                 {me?.user_details?.role}
-              </span>
+              </div>
             </div>
-            <p className="text-lg font-medium opacity-50 flex items-center gap-2">
-              <Briefcase className="w-4 h-4" /> {me?.position} • {me?.department}
+            <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex items-center gap-2">
+              <Briefcase className="w-3.5 h-3.5" /> {me?.position} • {me?.department}
             </p>
           </div>
         </div>
@@ -58,102 +66,82 @@ const Profile = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Account & Personal Info */}
+        {/* Main Info Area */}
         <div className="lg:col-span-2 space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Contact Information */}
-            <div className="card bg-base-100 border border-base-300 shadow-xl rounded-[2.5rem] p-8 space-y-6">
-              <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <Fingerprint className="w-4 h-4" /> Personnel Credentials
+            {/* Account Info */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+                <Fingerprint className="w-4 h-4 text-primary" /> Personal Info
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-base-200 rounded-2xl"><User className="w-5 h-5 opacity-40" /></div>
+                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><User className="w-4 h-4 opacity-30" /></div>
                   <div>
-                    <p className="text-[10px] font-black uppercase opacity-40">Username</p>
-                    <p className="font-bold">{me?.user_details?.username}</p>
+                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Username</p>
+                    <p className="text-sm font-bold text-base-content">{me?.user_details?.username}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-base-200 rounded-2xl"><Mail className="w-5 h-5 opacity-40" /></div>
+                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Mail className="w-4 h-4 opacity-30" /></div>
                   <div>
-                    <p className="text-[10px] font-black uppercase opacity-40">Email Address</p>
-                    <p className="font-bold">{me?.user_details?.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-base-200 rounded-2xl"><Shield className="w-5 h-5 opacity-40" /></div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase opacity-40">System Privilege</p>
-                    <p className="font-bold">{me?.user_details?.role}</p>
+                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Email</p>
+                    <p className="text-sm font-bold text-base-content">{me?.user_details?.email}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Employment Details */}
-            <div className="card bg-base-100 border border-base-300 shadow-xl rounded-[2.5rem] p-8 space-y-6">
-              <h3 className="text-xs font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <Building2 className="w-4 h-4" /> Service Information
+            {/* Job Info */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-primary" /> Work Info
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-base-200 rounded-2xl"><Calendar className="w-5 h-5 opacity-40" /></div>
+                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Calendar className="w-4 h-4 opacity-30" /></div>
                   <div>
-                    <p className="text-[10px] font-black uppercase opacity-40">Date Hired</p>
-                    <p className="font-bold">{me?.date_hired}</p>
+                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Joined</p>
+                    <p className="text-sm font-bold text-base-content">{new Date(me?.date_hired).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-base-200 rounded-2xl"><Wallet className="w-5 h-5 opacity-40" /></div>
+                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Wallet className="w-4 h-4 opacity-30" /></div>
                   <div>
-                    <p className="text-[10px] font-black uppercase opacity-40">Monthly Salary</p>
-                    <p className="font-bold">₱{parseFloat(me?.salary || 0).toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-base-200 rounded-2xl"><MapPin className="w-5 h-5 opacity-40" /></div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase opacity-40">Current Station</p>
-                    <p className="font-bold">{workstation?.name || 'Unassigned'}</p>
+                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Monthly Pay</p>
+                    <p className="text-sm font-bold text-primary">₱{parseFloat(me?.salary || 0).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Service Credits / Leave Balances */}
-          <div className="card bg-base-100 border border-base-300 shadow-xl rounded-[2.5rem] p-8">
-            <h3 className="text-xs font-black uppercase tracking-widest opacity-30 mb-8">Leave Balances & Service Credits</h3>
+          {/* Leave Summary */}
+          <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-8">Leave Balances</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="p-6 bg-success/5 rounded-3xl border border-success/10 flex items-center justify-between">
+              <div className="p-6 bg-base-50 rounded-xl border border-base-100 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-4 bg-success text-white rounded-2xl shadow-lg shadow-success/20">
-                    <Heart className="w-6 h-6" />
+                  <div className="w-12 h-12 bg-success/10 text-success rounded-lg flex items-center justify-center border border-success/10">
+                    <Heart className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-2xl font-black text-success">{me?.sick_leave_balance || 0}</h4>
-                    <p className="text-[10px] font-black uppercase opacity-50">Sick Leave Balance</p>
+                    <h4 className="text-2xl font-black text-base-content">{me?.sick_leave_balance || 0}</h4>
+                    <p className="text-[9px] font-black uppercase opacity-40 tracking-widest">Sick Leave</p>
                   </div>
-                </div>
-                <div className="radial-progress text-success/20" style={{"--value": (me?.sick_leave_balance/15)*100, "--size": "3rem"}} role="progressbar">
-                  <span className="text-[10px] font-black text-success">{(me?.sick_leave_balance/15*100).toFixed(0)}%</span>
                 </div>
               </div>
 
-              <div className="p-6 bg-info/5 rounded-3xl border border-info/10 flex items-center justify-between">
+              <div className="p-6 bg-base-50 rounded-xl border border-base-100 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-4 bg-info text-white rounded-2xl shadow-lg shadow-info/20">
-                    <Plane className="w-6 h-6" />
+                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center border border-primary/10">
+                    <Plane className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-2xl font-black text-info">{me?.vacation_leave_balance || 0}</h4>
-                    <p className="text-[10px] font-black uppercase opacity-50">Vacation Leave Balance</p>
+                    <h4 className="text-2xl font-black text-base-content">{me?.vacation_leave_balance || 0}</h4>
+                    <p className="text-[9px] font-black uppercase opacity-40 tracking-widest">Vacation Leave</p>
                   </div>
-                </div>
-                <div className="radial-progress text-info/20" style={{"--value": (me?.vacation_leave_balance/15)*100, "--size": "3rem"}} role="progressbar">
-                   <span className="text-[10px] font-black text-info">{(me?.vacation_leave_balance/15*100).toFixed(0)}%</span>
                 </div>
               </div>
             </div>
@@ -161,14 +149,14 @@ const Profile = () => {
 
         </div>
 
-        {/* Sidebar: Location & Workstation */}
-        <div className="space-y-8">
-          <div className="card bg-base-100 border border-base-300 shadow-xl rounded-[2.5rem] overflow-hidden flex flex-col h-full">
-            <div className="p-8 border-b border-base-200">
-               <h3 className="text-xs font-black uppercase tracking-widest opacity-30 mb-2">Workstation Map</h3>
-               <p className="text-sm font-bold">{workstation?.name || 'No assigned school'}</p>
+        {/* Sidebar: Map */}
+        <div className="space-y-8 h-full">
+          <div className="bg-white border border-base-200 shadow-sm rounded-xl overflow-hidden flex flex-col h-full min-h-[400px]">
+            <div className="p-6 border-b border-base-100">
+               <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-1">Work Location</h3>
+               <p className="text-xs font-black uppercase tracking-tight text-primary">{workstation?.name || 'Home Office'}</p>
             </div>
-            <div className="flex-1 min-h-[300px] z-0">
+            <div className="flex-1 min-h-[200px] z-0">
                <MapContainer 
                  key={`${pos.lat}-${pos.lng}`}
                  center={[pos.lat, pos.lng]} 
@@ -183,10 +171,10 @@ const Profile = () => {
                  <Marker position={[pos.lat, pos.lng]} />
                </MapContainer>
             </div>
-            <div className="p-6 bg-base-200/50 flex items-center gap-3">
-               <MapPin className="text-primary w-5 h-5" />
-               <span className="text-[10px] font-black uppercase opacity-50 tracking-tighter">
-                 {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Authorized Zone
+            <div className="p-6 bg-base-50/50 flex items-center gap-3">
+               <MapPin className="text-primary w-4 h-4" />
+               <span className="text-[9px] font-black uppercase opacity-40 tracking-tighter">
+                 {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Office Boundary
                </span>
             </div>
           </div>

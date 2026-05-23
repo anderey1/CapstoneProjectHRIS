@@ -1,5 +1,6 @@
 from .employee import SchoolViewSet, EmployeeViewSet
-from .attendance import AttendanceViewSet, LeaveViewSet
+from .attendance import AttendanceViewSet
+from .leave import LeaveViewSet
 from .loan import LoanViewSet
 from .payroll import PayrollViewSet
 from .recruitment import ApplicantViewSet

@@ -1,5 +1,6 @@
 from .employee import Role, User, School, Employee
-from .attendance import Attendance, LeaveRequest
+from .attendance import Attendance
+from .leave import LeaveRequest
 from .loan import ProvidentLoan, LoanPayment
 from .payroll import Payroll
 from .recruitment import Applicant

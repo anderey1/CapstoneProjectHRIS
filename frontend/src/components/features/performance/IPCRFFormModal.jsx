@@ -12,7 +12,7 @@ import { CheckCircle, X, Award, User } from 'lucide-react';
  */
 const IPCRFFormModal = ({ onClose, review }) => {
   const queryClient = useQueryClient();
-  
+
   const { data: employees, isLoading: loadingEmployees } = useQuery({
     queryKey: [QUERY_KEYS.EMPLOYEES],
     queryFn: async () => {
@@ -52,22 +52,22 @@ const IPCRFFormModal = ({ onClose, review }) => {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-xl w-full max-w-md shadow-2xl border border-base-200 overflow-hidden animate-in zoom-in-95 duration-300">
-        
+
         {/* Header */}
         <div className="bg-base-50/50 border-b border-base-100 p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                <Award className="w-4 h-4" />
-             </div>
-             <div>
-                <h2 className="text-sm font-black uppercase tracking-widest text-base-content">
-                   {review?.id ? 'Edit Rating' : 'Rate Staff'}
-                </h2>
-                <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.2em] mt-0.5">Performance Evaluation</p>
-             </div>
+            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+              <Award className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-base-content">
+                {review?.id ? 'Edit Rating' : 'Rate Staff'}
+              </h2>
+              <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.2em] mt-0.5">Performance Evaluation</p>
+            </div>
           </div>
           <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100">
-             <X className="w-4 h-4" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 

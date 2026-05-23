@@ -22,6 +22,7 @@ import Attendance from './pages/shared/Attendance';
 import DTR from './pages/shared/DTR';
 import Profile from './pages/shared/Profile';
 import AuditLogs from './pages/admin/AuditLogs';
+import SchoolManagement from './pages/admin/SchoolManagement';
 
 /**
  * App Component
@@ -95,6 +96,12 @@ function App() {
           <Route
             path="recruitment"
             element={isAdminOrHR ? <Recruitment /> : <Navigate to="/" replace />}
+          />
+
+          {/* Schools/Geofencing - Admin/HR only */}
+          <Route
+            path="schools"
+            element={isAdminOrHR ? <SchoolManagement /> : <Navigate to="/" replace />}
           />
 
           {/* Audit Logs - Admin/HR only */}

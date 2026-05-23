@@ -12,7 +12,8 @@ import {
   BarChart2,
   KanbanSquare,
   ShieldAlert,
-  ChevronRight
+  ChevronRight,
+  School
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -62,6 +63,7 @@ const SidebarContent = ({ closeDrawer }) => {
       title: 'Settings',
       links: [
         { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile' },
+        { to: '/schools', icon: <School className="w-4 h-4" />, label: 'School Geofencing', roles: ['ADMIN', 'HR'] },
         { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['ADMIN', 'HR'] },
       ]
     }

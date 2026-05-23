@@ -1,5 +1,6 @@
 from .employee import UserSerializer, EmployeeSerializer, SchoolSerializer
-from .attendance import AttendanceSerializer, LeaveRequestSerializer
+from .attendance import AttendanceSerializer
+from .leave import LeaveRequestSerializer
 from .loan import LoanSerializer, LoanPaymentSerializer
 from .payroll import PayrollSerializer
 from .recruitment import ApplicantSerializer

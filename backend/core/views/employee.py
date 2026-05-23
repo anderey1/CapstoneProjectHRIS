@@ -1,21 +1,40 @@
-from rest_framework import viewsets, serializers
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from ..models import Employee, School, Role, AuditLog
-from ..serializers import EmployeeSerializer
+from ..serializers import EmployeeSerializer, SchoolSerializer
 from ..permissions import IsAdminOrHR
 
-class SchoolSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = School
-        fields = '__all__'
-
-class SchoolViewSet(viewsets.ReadOnlyModelViewSet):
+class SchoolViewSet(viewsets.ModelViewSet):
     queryset = School.objects.all()
     serializer_class = SchoolSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated, IsAdminOrHR]
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        try:
+            instance = serializer.save()
+            AuditLog.objects.create(user=self.request.user, action=f"Created School: {instance.name}")
+        except Exception as e:
+            raise e
+
+    def perform_update(self, serializer):
+        try:
+            instance = serializer.save()
+            AuditLog.objects.create(user=self.request.user, action=f"Updated School: {instance.name}")
+        except Exception as e:
+            raise e
+
+    def perform_destroy(self, instance):
+        AuditLog.objects.create(user=self.request.user, action=f"Deleted School: {instance.name}")
+        instance.delete()
 
 class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()

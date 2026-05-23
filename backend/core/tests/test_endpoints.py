@@ -178,3 +178,45 @@ class TestHRISAPI:
         # Should have results if previous tests ran or if we just triggered one
         assert 'results' in response.data
 
+    # --- SCHOOL GEOFENCING TESTS ---
+    def test_school_geofencing_permissions_and_crud(self, admin_client, staff_client, school):
+        # 1. Staff (Employee) can list schools
+        list_url = reverse('school-list')
+        res_list = staff_client.get(list_url)
+        assert res_list.status_code == status.HTTP_200_OK
+
+        # 2. Staff (Employee) cannot create a school
+        res_create_staff = staff_client.post(list_url, {
+            "name": "Unauthorized School",
+            "latitude": 13.900,
+            "longitude": 121.600,
+            "radius_meters": 150
+        })
+        assert res_create_staff.status_code == status.HTTP_403_FORBIDDEN
+
+        # 3. Admin can create a school
+        res_create_admin = admin_client.post(list_url, {
+            "name": "Lucena East II Elementary School",
+            "latitude": 13.950,
+            "longitude": 121.630,
+            "radius_meters": 200
+        })
+        assert res_create_admin.status_code == status.HTTP_201_CREATED
+        new_school_id = res_create_admin.data['id']
+
+        # 4. Admin can update school
+        detail_url = reverse('school-detail', args=[new_school_id])
+        res_update = admin_client.put(detail_url, {
+            "name": "Lucena East II Elementary School (Updated)",
+            "latitude": 13.951,
+            "longitude": 121.631,
+            "radius_meters": 250
+        })
+        assert res_update.status_code == status.HTTP_200_OK
+        assert res_update.data['name'] == "Lucena East II Elementary School (Updated)"
+        assert res_update.data['radius_meters'] == 250
+
+        # 5. Admin can delete school
+        res_delete = admin_client.delete(detail_url)
+        assert res_delete.status_code == status.HTTP_204_NO_CONTENT
+

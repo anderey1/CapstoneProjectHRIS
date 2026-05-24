@@ -124,6 +124,14 @@ AUTH_USER_MODEL = 'core.User'
 
 STATIC_URL = 'static/'
 
+# Media files (Uploaded documents)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Loan document upload limits
+LOAN_DOC_MAX_SIZE_MB = 10
+LOAN_DOC_ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
+
 
 from datetime import timedelta
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, PlusCircle, CheckCircle2, AlertCircle, Coins } from 'lucide-react';
+import { PlusCircle, CheckCircle2, AlertCircle, Coins } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
@@ -10,8 +10,6 @@ import ApplyLoanModal from '../../components/features/loans/ApplyLoanModal';
 
 /**
  * My Loans (Employee View)
- * 
- * Simple, professional redesign for staff to track their loans.
  */
 const MyLoans = () => {
   const { user } = useAuth();
@@ -30,7 +28,22 @@ const MyLoans = () => {
 
   // 2. Mutations
   const applyMutation = useMutation({
-    mutationFn: (newLoan) => api.post('loans/', newLoan),
+    mutationFn: async ({ formData, files }) => {
+      // 1. Create the loan
+      const res = await api.post('loans/', formData);
+      const loanId = res.data.id;
+
+      // 2. Upload files if any
+      for (const { doc_type, file } of files) {
+        const fd = new FormData();
+        fd.append('doc_type', doc_type);
+        fd.append('file', file);
+        await api.post(`loans/${loanId}/upload_document/`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
       setActiveModal(null);
@@ -47,10 +60,8 @@ const MyLoans = () => {
     setTimeout(() => setSuccessMsg(null), 3000);
   };
 
-  const handleApplySubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    applyMutation.mutate(Object.fromEntries(formData.entries()));
+  const handleApplySubmit = (formData, files) => {
+    applyMutation.mutate({ formData, files });
   };
 
   const loanList = Array.isArray(loans) ? loans : (loans?.results || []);

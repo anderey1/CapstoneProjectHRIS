@@ -1,7 +1,7 @@
 from .employee import Role, User, School, Employee
 from .attendance import Attendance
 from .leave import LeaveRequest
-from .loan import ProvidentLoan, LoanPayment
+from .loan import ProvidentLoan, LoanPayment, LoanDocument
 from .payroll import Payroll
 from .recruitment import Applicant
 from .performance import PerformanceReview
@@ -16,8 +16,10 @@ __all__ = [
     'LeaveRequest',
     'ProvidentLoan',
     'LoanPayment',
+    'LoanDocument',
     'Payroll',
     'Applicant',
     'PerformanceReview',
     'AuditLog',
 ]
+

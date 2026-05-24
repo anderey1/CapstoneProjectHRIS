@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     User, Employee, School, Attendance, LeaveRequest, 
-    ProvidentLoan, LoanPayment, Payroll, 
+    ProvidentLoan, LoanPayment, LoanDocument, Payroll, 
     PerformanceReview, Applicant, AuditLog
 )
 
@@ -56,12 +56,23 @@ class LoanPaymentInline(admin.TabularInline):
     model = LoanPayment
     extra = 0
 
+class LoanDocumentInline(admin.TabularInline):
+    model = LoanDocument
+    extra = 0
+    readonly_fields = ('uploaded_at',)
+
 @admin.register(ProvidentLoan)
 class ProvidentLoanAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'loan_amount', 'status', 'date_applied')
-    list_filter = ('status', 'date_applied')
+    list_display = ('employee', 'loan_amount', 'purpose', 'status', 'date_applied', 'reviewed_by')
+    list_filter = ('status', 'purpose', 'date_applied')
     search_fields = ('employee__first_name', 'employee__last_name')
-    inlines = [LoanPaymentInline]
+    inlines = [LoanDocumentInline, LoanPaymentInline]
+
+@admin.register(LoanDocument)
+class LoanDocumentAdmin(admin.ModelAdmin):
+    list_display = ('loan', 'doc_type', 'file', 'uploaded_at')
+    list_filter = ('doc_type', 'uploaded_at')
+    search_fields = ('loan__employee__first_name', 'loan__employee__last_name')
 
 @admin.register(Payroll)
 class PayrollAdmin(admin.ModelAdmin):

@@ -58,7 +58,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
         if not is_valid:
             return Response({
-                "detail": f"Check-in failed. You are {round(distance, 1)}m away from your workstation.",
+                "detail": f"Workstation check-in failed. You are {round(distance, 1)}m away from your workstation.",
                 "distance": round(distance, 2)
             }, status=400)
 

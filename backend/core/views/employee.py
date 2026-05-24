@@ -56,7 +56,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         try:
             instance = serializer.save()
-            AuditLog.objects.create(user=self.request.user, action=f"Created Employee: {instance}")
+            AuditLog.objects.create(user=self.request.user, action=f"Created employee record: {instance}")
         except Exception as e:
             print(f"DEBUG: perform_create error: {e}")
             raise

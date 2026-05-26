@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('access_token');
-      const role = localStorage.getItem('user_role');
+      const role = localStorage.getItem('user_role') || 'employee';
       const username = localStorage.getItem('username');
       if (token) {
         setUser({ loggedIn: true, role, username });

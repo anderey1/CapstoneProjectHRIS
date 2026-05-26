@@ -1,14 +1,12 @@
-import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { MapPin, QrCode } from 'lucide-react';
-import { QRCodeCanvas } from 'qrcode.react';
+import { MapPin } from 'lucide-react';
 
 /**
  * Attendance Map & QR (Station View)
  * 
  * Simple, professional redesign for monitoring check-in locations.
  */
-const AttendanceMap = ({ records, qrData, center }) => {
+const AttendanceMap = ({ records, center }) => {
   return (
     <div className="space-y-6">
       {/* Location Map */}
@@ -33,23 +31,6 @@ const AttendanceMap = ({ records, qrData, center }) => {
               </Marker>
             ))}
           </MapContainer>
-        </div>
-      </div>
-
-      {/* Station Auth Token */}
-      <div className="bg-white border border-base-200 rounded-xl p-6 shadow-sm flex items-center gap-6">
-        <div className="bg-white p-3 rounded-lg border border-base-100 shadow-sm">
-          <QRCodeCanvas value={qrData?.token || 'N/A'} size={100} />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[10px] font-black text-base-content/30 uppercase tracking-widest">
-             <QrCode className="w-3.5 h-3.5" />
-             Station Code
-          </div>
-          <p className="text-3xl font-black text-primary tracking-tight font-mono">{qrData?.token || '---'}</p>
-          <p className="text-[10px] font-black opacity-30 uppercase tracking-widest leading-relaxed">
-             Staff scan this code at the station to log their daily records.
-          </p>
         </div>
       </div>
     </div>

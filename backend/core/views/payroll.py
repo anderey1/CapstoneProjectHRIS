@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from decimal import Decimal
 from ..models import Employee, ProvidentLoan, LoanPayment, Payroll, Role, AuditLog
 from ..serializers import PayrollSerializer
-from ..permissions import IsAdminOrHR
+from ..permissions import IsAdminOrHR, IsAccountant
 
 class PayrollViewSet(viewsets.ModelViewSet):
     queryset = Payroll.objects.all().order_by('-date_generated')
@@ -27,7 +27,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
         )
         instance.delete()
 
-    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHR])
+    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHR | IsAccountant])
     def generate(self, request):
         """Generates a payroll record for a specific employee."""
         employee_id = request.data.get('employee_id')

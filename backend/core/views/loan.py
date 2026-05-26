@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from ..models import Employee, ProvidentLoan, LoanDocument, Role, AuditLog
 from ..serializers import LoanSerializer, LoanDocumentSerializer
-from ..permissions import IsAdminOrHR, IsHR
+from ..permissions import IsAdminOrHR, IsHR, IsSupervisor
 
 # Required documents for every loan application
 BASE_REQUIRED_DOCS = ['laf', 'letter_request', 'auth_deduct', 'payslip', 'deped_id', 'comaker_payslip']
@@ -61,7 +61,7 @@ class LoanViewSet(viewsets.ModelViewSet):
     # ---------------------------
     # APPROVE / REJECT
     # ---------------------------
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSupervisor])
     def approve(self, request, pk=None):
         loan = self.get_object()
         if loan.status != 'pending':
@@ -76,7 +76,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Approved Loan: {loan.employee}")
         return Response({"message": "Loan approved.", "status": "approved"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSupervisor])
     def reject(self, request, pk=None):
         loan = self.get_object()
         if loan.status != 'pending':

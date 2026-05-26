@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from datetime import datetime
+from ..permissions import IsAdminOrHR, IsAccountant
 from ..models import Attendance, Role
 from ..serializers import AttendanceSerializer
 from ..utils import validate_attendance_geo, get_attendance_status, generate_daily_qr_token
@@ -13,9 +14,14 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.request.method in ['GET']:
+            return [IsAuthenticated()]
+        return [IsAdminOrHR()]
+
     def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR]:
+        if user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT]:
             return Attendance.objects.all()
         return Attendance.objects.filter(employee__user=user)
 

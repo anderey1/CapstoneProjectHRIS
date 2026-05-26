@@ -1,33 +1,36 @@
 from rest_framework import permissions
 from core.models import Role
 
-class IsAdmin(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role == Role.ADMIN or request.user.is_superuser))
+class BaseRolePermission(permissions.BasePermission):
+    allowed_roles = []
 
-class IsHR(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role == Role.HR or request.user.is_superuser))
+        return bool(
+            request.user and 
+            request.user.is_authenticated and 
+            (request.user.is_superuser or request.user.role in self.allowed_roles)
+        )
 
-class IsSupervisor(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role == Role.SUPERVISOR or request.user.is_superuser))
+class IsAdmin(BaseRolePermission):
+    allowed_roles = [Role.ADMIN]
 
-class IsAccountant(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role == Role.ACCOUNTANT or request.user.is_superuser))
+class IsHR(BaseRolePermission):
+    allowed_roles = [Role.HR]
 
-class IsEmployee(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role == Role.EMPLOYEE or request.user.is_superuser))
+class IsSupervisor(BaseRolePermission):
+    allowed_roles = [Role.SUPERVISOR]
 
-class IsAdminOrHR(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role in [Role.ADMIN, Role.HR] or request.user.is_superuser))
+class IsAccountant(BaseRolePermission):
+    allowed_roles = [Role.ACCOUNTANT]
 
-class IsEmployeeOrAdminOrHR(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated)
+class IsEmployee(BaseRolePermission):
+    allowed_roles = [Role.EMPLOYEE]
+
+class IsAdminOrHR(BaseRolePermission):
+    allowed_roles = [Role.ADMIN, Role.HR]
+
+class IsEmployeeOrAdminOrHR(BaseRolePermission):
+    allowed_roles = [Role.EMPLOYEE, Role.ADMIN, Role.HR]
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser or request.user.role in [Role.ADMIN, Role.HR]:

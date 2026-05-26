@@ -29,6 +29,9 @@ class IsEmployee(BaseRolePermission):
 class IsAdminOrHR(BaseRolePermission):
     allowed_roles = [Role.ADMIN, Role.HR]
 
+class IsAdminOrHRorSupervisor(BaseRolePermission):
+    allowed_roles = [Role.ADMIN, Role.HR, Role.SUPERVISOR]
+
 class IsEmployeeOrAdminOrHR(BaseRolePermission):
     allowed_roles = [Role.EMPLOYEE, Role.ADMIN, Role.HR]
 

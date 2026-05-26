@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from ..models import Employee, School, Role, AuditLog
 from ..serializers import EmployeeSerializer, SchoolSerializer
-from ..permissions import IsAdminOrHR, IsSupervisor
+from ..permissions import IsAdminOrHR, IsSupervisor, IsAdminOrHRorSupervisor
 
 class SchoolViewSet(viewsets.ModelViewSet):
     queryset = School.objects.all()
@@ -15,7 +15,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             permission_classes = [IsAuthenticated]
         else:
-            permission_classes = [IsAuthenticated, IsAdminOrHR | IsSupervisor]
+            permission_classes = [IsAuthenticated, IsAdminOrHRorSupervisor]
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):

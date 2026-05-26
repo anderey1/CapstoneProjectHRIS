@@ -81,7 +81,14 @@ class PayrollViewSet(viewsets.ModelViewSet):
 
         # Fetch active approved provident loan to deduct payment
         active_loan = ProvidentLoan.objects.filter(employee=employee, status='approved').first()
-        loan_deduction = ((active_loan.monthly_payment / Decimal('2.0')) if active_loan else Decimal('0.00')).quantize(Decimal('0.01'))
+        loan_deduction = Decimal('0.00')
+        
+        if active_loan:
+            standard_deduction = (active_loan.monthly_payment / Decimal('2.0')).quantize(Decimal('0.01'))
+            remaining = active_loan.current_balance
+            
+            # Cap the deduction at the actual remaining balance
+            loan_deduction = min(standard_deduction, remaining)
 
         # Check if payroll record already exists for the employee for this cutoff.
         # If it exists, update it to reflect the new generation; otherwise, create a new record.

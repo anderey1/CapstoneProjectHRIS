@@ -3,6 +3,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from .employee import Employee
+from decimal import Decimal
 import os
 
 
@@ -85,6 +86,13 @@ class ProvidentLoan(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.loan_amount} ({self.get_purpose_display()})"
+
+    @property
+    def current_balance(self):
+        """Returns the remaining balance of the loan."""
+        from django.db.models import Sum
+        payments_sum = self.loanpayment_set.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+        return self.total_amount - Decimal(str(payments_sum))
 
 
 # -------------------------

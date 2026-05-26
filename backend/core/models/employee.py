@@ -10,6 +10,7 @@ class Role(models.TextChoices):
     ADMIN = 'ADMIN', 'Admin'
     HR = 'HR', 'HR Staff'
     SUPERVISOR = 'SUPERVISOR', 'Supervisor'
+    ACCOUNTANT = 'ACCOUNTANT', 'Accountant'
     EMPLOYEE = 'EMPLOYEE', 'Employee'
 
 

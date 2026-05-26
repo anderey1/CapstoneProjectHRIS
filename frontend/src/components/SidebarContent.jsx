@@ -22,13 +22,13 @@ import { useAuth } from '../context/AuthContext';
  */
 const SidebarContent = ({ closeDrawer }) => {
   const { user, logout } = useAuth();
-  const isAdminOrHR = user && ['ADMIN', 'HR'].includes(user?.role);
+  const role = user?.role;
 
   const menuGroups = [
     {
       title: 'Main',
       links: [
-        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home' },
+        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
       ]
     },
     {
@@ -41,28 +41,28 @@ const SidebarContent = ({ closeDrawer }) => {
     {
       title: 'Time & Leave',
       links: [
-        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance' },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record (DTR)' },
-        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves' },
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record (DTR)', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
+        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
       ]
     },
     {
       title: 'Money',
       links: [
-        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll' },
-        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans' },
+        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['ADMIN', 'HR', 'ACCOUNTANT'] },
+        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
       ]
     },
     {
       title: 'Work Quality',
       links: [
-        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance' },
+        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance', roles: ['ADMIN', 'HR', 'MANAGER'] },
       ]
     },
     {
       title: 'Settings',
       links: [
-        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile' },
+        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
         { to: '/schools', icon: <School className="w-4 h-4" />, label: 'School Geofencing', roles: ['ADMIN', 'HR'] },
         { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['ADMIN', 'HR'] },
       ]

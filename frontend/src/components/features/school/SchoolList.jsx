@@ -9,7 +9,8 @@ const SchoolList = ({
   onSelectSchool,
   onFocusSchool,
   onEdit,
-  onDelete
+  onDelete,
+  canEdit
 }) => {
   // Filter schools by search query
   const filteredSchools = schools.filter(s => 
@@ -78,20 +79,24 @@ const SchoolList = ({
                     >
                       <Compass className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onEdit(school)}
-                      title="Edit coordinates"
-                      className="btn btn-xs btn-ghost btn-circle text-info hover:bg-info/10"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(school.id, school.name)}
-                      title="Remove school"
-                      className="btn btn-xs btn-ghost btn-circle text-error hover:bg-error/10"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {canEdit && (
+                      <>
+                        <button
+                          onClick={() => onEdit(school)}
+                          title="Edit coordinates"
+                          className="btn btn-xs btn-ghost btn-circle text-info hover:bg-info/10"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => onDelete(school.id, school.name)}
+                          title="Remove school"
+                          className="btn btn-xs btn-ghost btn-circle text-error hover:bg-error/10"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

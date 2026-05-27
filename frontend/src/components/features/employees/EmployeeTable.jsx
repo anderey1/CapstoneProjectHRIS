@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit, Trash2, MoreVertical, Briefcase, Building2, Calendar, User } from 'lucide-react';
 import EmployeeRow from './EmployeeRow';
+import { useAuth } from '../../../context/AuthContext';
 
 /**
  * Employee Table (Staff Directory)
@@ -8,6 +9,9 @@ import EmployeeRow from './EmployeeRow';
  * Simple, professional redesign with high-density data display.
  */
 const EmployeeTable = ({ employees, onDelete, onEdit }) => {
+  const { user } = useAuth();
+  const canEdit = ['ADMIN', 'HR'].includes(user?.role);
+
   return (
     <div className="space-y-6">
       
@@ -27,15 +31,17 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
                   </div>
                 </div>
                 
-                <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className="btn btn-ghost btn-xs btn-circle opacity-30 hover:opacity-100">
-                    <MoreVertical className="w-4 h-4" />
-                  </label>
-                  <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-lg w-32 border border-base-200">
-                    <li><button onClick={() => onEdit(emp)} className="text-[10px] font-black uppercase tracking-widest"><Edit className="w-3.5 h-3.5" /> Edit</button></li>
-                    <li><button onClick={() => onDelete(emp.id)} className="text-[10px] font-black uppercase tracking-widest text-error"><Trash2 className="w-3.5 h-3.5" /> Delete</button></li>
-                  </ul>
-                </div>
+                {canEdit && (
+                  <div className="dropdown dropdown-end">
+                    <label tabIndex={0} className="btn btn-ghost btn-xs btn-circle opacity-30 hover:opacity-100">
+                      <MoreVertical className="w-4 h-4" />
+                    </label>
+                    <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-lg w-32 border border-base-200">
+                      <li><button onClick={() => onEdit(emp)} className="text-[10px] font-black uppercase tracking-widest"><Edit className="w-3.5 h-3.5" /> Edit</button></li>
+                      <li><button onClick={() => onDelete(emp.id)} className="text-[10px] font-black uppercase tracking-widest text-error"><Trash2 className="w-3.5 h-3.5" /> Delete</button></li>
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -51,11 +57,8 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
 
               <div className="flex items-center justify-between border-t border-base-100 pt-4 mt-2">
                 <div className="space-y-1">
-                   <span className="text-[9px] font-black uppercase opacity-20 tracking-widest">Credits</span>
-                   <div className="flex gap-3">
-                      <span className="text-[11px] font-black text-secondary">{Math.floor(emp.sick_leave_balance)}S</span>
-                      <span className="text-[11px] font-black text-primary">{Math.floor(emp.vacation_leave_balance)}V</span>
-                   </div>
+                   <span className="text-[9px] font-black uppercase opacity-20 tracking-widest">Balance</span>
+                   <p className="text-[11px] font-black text-primary uppercase">{Math.floor(emp.leave_balance)} Days</p>
                 </div>
                 <div className="text-right space-y-1">
                    <span className="text-[9px] font-black uppercase opacity-20 tracking-widest">Joined</span>

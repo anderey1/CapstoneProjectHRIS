@@ -3,9 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { 
-  User, Wallet, CalendarCheck, Clock, Award, ChevronRight, ArrowRight, Sparkles, MapPin
+  User, Wallet, CalendarCheck, Clock, Award, ChevronRight, ArrowRight, Sparkles, MapPin, BarChart3, TrendingUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell
+} from 'recharts';
 
 /**
  * Employee Home (Dashboard)
@@ -34,6 +38,25 @@ const EmployeeDashboard = () => {
         return data.filter(l => l.status === 'approved');
     })
   });
+
+  const { data: payrolls } = useQuery({
+    queryKey: [QUERY_KEYS.PAYROLL],
+    queryFn: () => api.get('payroll/').then(res => Array.isArray(res.data) ? res.data : res.data.results || [])
+  });
+
+  const { data: leaves } = useQuery({
+    queryKey: [QUERY_KEYS.LEAVES],
+    queryFn: () => api.get('leaves/').then(res => Array.isArray(res.data) ? res.data : res.data.results || [])
+  });
+
+  const formattedPay = payrolls?.map(p => ({
+    name: p.cutoff_period?.split(' ')[0] || 'N/A', // Shorten
+    amount: p.basic_salary - p.sss - p.philhealth - p.pagibig - p.tax - p.loans
+  })).reverse() || [];
+
+  const leaveData = [
+    { name: 'Balance', remaining: me?.leave_balance || 0, color: '#4f46e5' }
+  ];
 
   if (meLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
@@ -88,32 +111,65 @@ const EmployeeDashboard = () => {
         {/* Main Section: Attendance & Credits */}
         <div className="lg:col-span-2 space-y-8">
            
+           {/* Highlights Grid */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white border border-base-200 shadow-sm rounded-xl p-6 flex flex-col justify-between">
+                 <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-4">Latest Net Pay</p>
+                 {payrolls?.length > 0 ? (
+                    <div>
+                       <h3 className="text-2xl font-black text-primary">
+                          ₱{(payrolls[0].basic_salary - payrolls[0].sss - payrolls[0].philhealth - payrolls[0].pagibig - payrolls[0].tax - payrolls[0].loans).toLocaleString()}
+                       </h3>
+                       <p className="text-[9px] font-bold opacity-40 uppercase mt-1">{payrolls[0].cutoff_period}</p>
+                    </div>
+                 ) : (
+                    <p className="text-[10px] font-bold opacity-20 uppercase">No records yet</p>
+                 )}
+              </div>
+
+              <div className="bg-white border border-base-200 shadow-sm rounded-xl p-6 flex flex-col justify-between">
+                 <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-4">Pending Requests</p>
+                 <div className="flex gap-4">
+                    <div>
+                       <h3 className="text-2xl font-black text-warning">
+                          {leaves?.filter(l => l.status === 'pending').length || 0}
+                       </h3>
+                       <p className="text-[9px] font-bold opacity-40 uppercase mt-1">Leaves</p>
+                    </div>
+                    <div className="border-l border-base-100 pl-4">
+                       <h3 className="text-2xl font-black text-accent">
+                          {loans?.filter(l => l.status === 'pending').length || 0}
+                       </h3>
+                       <p className="text-[9px] font-bold opacity-40 uppercase mt-1">Loans</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="bg-white border border-base-200 shadow-sm rounded-xl p-6 flex flex-col justify-between">
+                 <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-4">Next Cutoff</p>
+                 <div>
+                    <h3 className="text-2xl font-black text-base-content uppercase tracking-tighter">
+                       {new Date().getDate() <= 15 ? '16th - End' : '1st - 15th'}
+                    </h3>
+                    <p className="text-[9px] font-bold opacity-40 uppercase mt-1">Processing period</p>
+                 </div>
+              </div>
+           </div>
+           
            {/* Leave Balances */}
            <div className="space-y-4">
               <div className="flex items-center gap-2 px-1">
                  <Clock className="w-4 h-4 text-primary opacity-40" />
                  <h2 className="text-[11px] font-black uppercase tracking-widest opacity-40">Leave Credits</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div className="bg-white border border-base-200 shadow-sm rounded-xl p-6 group hover:border-success/30 transition-all">
-                    <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-2">Sick Leave</p>
-                    <div className="flex items-end gap-2 mb-4">
-                       <h3 className="text-4xl font-black text-success">{me?.sick_leave_balance || 0}</h3>
-                       <span className="text-[10px] font-black opacity-20 mb-1.5 uppercase">Days</span>
-                    </div>
-                    <div className="w-full bg-base-100 rounded-full h-1.5 overflow-hidden">
-                       <div className="bg-success h-full transition-all duration-1000" style={{ width: `${(me?.sick_leave_balance / 15) * 100}%` }}></div>
-                    </div>
+              <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 group hover:border-primary/30 transition-all max-w-sm">
+                 <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-2">Available Balance</p>
+                 <div className="flex items-end gap-2 mb-4">
+                    <h3 className="text-4xl font-black text-primary">{me?.leave_balance || 0}</h3>
+                    <span className="text-[10px] font-black opacity-20 mb-1.5 uppercase">Days Remaining</span>
                  </div>
-                 <div className="bg-white border border-base-200 shadow-sm rounded-xl p-6 group hover:border-primary/30 transition-all">
-                    <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-2">Vacation Leave</p>
-                    <div className="flex items-end gap-2 mb-4">
-                       <h3 className="text-4xl font-black text-primary">{me?.vacation_leave_balance || 0}</h3>
-                       <span className="text-[10px] font-black opacity-20 mb-1.5 uppercase">Days</span>
-                    </div>
-                    <div className="w-full bg-base-100 rounded-full h-1.5 overflow-hidden">
-                       <div className="bg-primary h-full transition-all duration-1000" style={{ width: `${(me?.vacation_leave_balance / 15) * 100}%` }}></div>
-                    </div>
+                 <div className="w-full bg-base-100 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-primary h-full transition-all duration-1000" style={{ width: `${(me?.leave_balance / 15) * 100}%` }}></div>
                  </div>
               </div>
            </div>
@@ -148,6 +204,59 @@ const EmployeeDashboard = () => {
                        ))}
                     </tbody>
                  </table>
+              </div>
+           </div>
+
+           {/* Personal Analytics Row */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
+                 <div className="flex items-center gap-3 mb-8">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Pay History Trend</h3>
+                 </div>
+                 <div className="h-[200px] w-full">
+                    {formattedPay.length > 0 ? (
+                       <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={formattedPay} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                             <defs>
+                                <linearGradient id="colorPay" x1="0" y1="0" x2="0" y2="1">
+                                   <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
+                                   <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                                </linearGradient>
+                             </defs>
+                             <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                             <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
+                             <YAxis tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
+                             <Tooltip contentStyle={{ borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontSize: '10px', fontWeight: 'bold' }} />
+                             <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorPay)" />
+                          </AreaChart>
+                       </ResponsiveContainer>
+                    ) : (
+                       <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No pay history</div>
+                    )}
+                 </div>
+              </div>
+
+              <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
+                 <div className="flex items-center gap-3 mb-8">
+                    <CalendarCheck className="w-4 h-4 text-secondary" />
+                    <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Leave Utilization</h3>
+                 </div>
+                 <div className="h-[200px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <BarChart data={leaveData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                          <XAxis type="number" domain={[0, 15]} hide />
+                          <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} width={60} />
+                          <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '0.75rem', border: '1px solid #e2e8f0', fontSize: '10px', fontWeight: 'bold' }} />
+                          <Bar dataKey="remaining" radius={[0, 4, 4, 0]} barSize={20}>
+                             {leaveData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                             ))}
+                          </Bar>
+                       </BarChart>
+                    </ResponsiveContainer>
+                 </div>
+                 <p className="text-[9px] font-bold opacity-30 text-center uppercase mt-4 tracking-tighter">Remaining credits vs 15 days annual cap</p>
               </div>
            </div>
         </div>

@@ -79,9 +79,8 @@ class Employee(models.Model):
     salary = models.DecimalField(max_digits=12, decimal_places=2)
     date_hired = models.DateField(null=True, blank=True)
 
-    # Leave Balances
-    sick_leave_balance = models.DecimalField(max_digits=5, decimal_places=2, default=15.0)
-    vacation_leave_balance = models.DecimalField(max_digits=5, decimal_places=2, default=15.0)
+    # Leave Balance (Unified 15 days for all types)
+    leave_balance = models.DecimalField(max_digits=5, decimal_places=2, default=15.0)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

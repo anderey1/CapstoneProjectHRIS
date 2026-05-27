@@ -14,6 +14,7 @@ class ProvidentLoan(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('approved', 'Approved'),
+        ('released', 'Released'),
         ('rejected', 'Rejected'),
         ('paid', 'Paid'),
     ]

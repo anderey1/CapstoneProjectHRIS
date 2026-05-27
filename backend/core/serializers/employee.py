@@ -36,7 +36,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'user', 'user_details', 'first_name', 'last_name', 'position', 
             'department', 'school', 'school_details', 'salary', 'date_hired', 
-            'sick_leave_balance', 'vacation_leave_balance',
+            'leave_balance',
             'username', 'email', 'password', 'role'
         )
         read_only_fields = ('user',)

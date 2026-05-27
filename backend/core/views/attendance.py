@@ -15,13 +15,13 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method in ['GET']:
+        if self.request.method in ['GET'] or self.action == 'scan':
             return [IsAuthenticated()]
         return [IsAdminOrHR()]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT]:
+        if user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERVISOR]:
             return Attendance.objects.all()
         return Attendance.objects.filter(employee__user=user)
 
@@ -58,15 +58,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Profile has no assigned school workstation."}, status=400)
 
         # 2. Geo-Validation
-        is_valid, distance = validate_attendance_geo(
+        is_in_zone, distance = validate_attendance_geo(
             lat, lng, employee.school.latitude, employee.school.longitude, employee.school.radius_meters
         )
-
-        if not is_valid:
-            return Response({
-                "detail": f"Workstation check-in failed. You are {round(distance, 1)}m away from your workstation.",
-                "distance": round(distance, 2)
-            }, status=400)
 
         # 3. Process Attendance Logic
         today = timezone.now().date()
@@ -84,12 +78,22 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
             # Record Time Out
             attendance.time_out = now.time()
+            # If they timed out outside, flag the record
+            if not is_in_zone:
+                attendance.is_geo_flagged = True
+            
             attendance.save()
+            
+            msg = "Time Out recorded successfully."
+            if not is_in_zone:
+                msg += f" (Note: Outside zone - {round(distance, 1)}m away)"
+
             return Response({
-                "message": "Time Out recorded successfully.",
+                "message": msg,
                 "status": attendance.status,
                 "time_out": attendance.time_out,
-                "distance": round(distance, 2)
+                "distance": round(distance, 2),
+                "is_geo_flagged": attendance.is_geo_flagged
             })
 
         # Record Time In
@@ -98,14 +102,20 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             time_in=timezone.now().time(),
             status=get_attendance_status(timezone.now()),
             latitude=lat,
-            longitude=lng
+            longitude=lng,
+            is_geo_flagged=not is_in_zone
         )
 
+        msg = "Time In recorded successfully."
+        if not is_in_zone:
+            msg += f" (Note: Outside zone - {round(distance, 1)}m away)"
+
         return Response({
-            "message": "Time In recorded successfully.",
+            "message": msg,
             "status": attendance.status,
             "time_in": attendance.time_in,
-            "distance": round(distance, 2)
+            "distance": round(distance, 2),
+            "is_geo_flagged": attendance.is_geo_flagged
         })
 
 

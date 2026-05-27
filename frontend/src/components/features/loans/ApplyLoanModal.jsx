@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Info, Calculator, Wallet, Upload, FileCheck, Trash2 } from 'lucide-react';
 
 const PURPOSE_OPTIONS = [
@@ -26,7 +26,7 @@ const DOC_TYPES = [
 /**
  * Apply Loan Modal — Extended with purpose, letter, co-maker, and doc uploads.
  */
-const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees }) => {
+const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees, initialData }) => {
   const [formData, setFormData] = useState({
     loan_amount: '',
     interest_rate: '5.0',
@@ -36,6 +36,32 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees 
     co_maker_name: '',
   });
   const [files, setFiles] = useState([]); // { doc_type, file }
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          loan_amount: initialData.loan_amount,
+          interest_rate: initialData.interest_rate,
+          term_months: initialData.term_months,
+          purpose: initialData.purpose,
+          letter_request: initialData.letter_request,
+          co_maker_name: initialData.co_maker_name || '',
+          employee: initialData.employee
+        });
+      } else {
+        setFormData({
+          loan_amount: '',
+          interest_rate: '5.0',
+          term_months: '12',
+          purpose: 'general',
+          letter_request: '',
+          co_maker_name: '',
+        });
+      }
+      setFiles([]);
+    }
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
@@ -261,7 +287,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees 
           <div className="flex gap-3 pt-6 border-t border-base-100">
             <button type="button" className="btn btn-ghost flex-1 text-[10px] font-black uppercase tracking-widest opacity-40" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-secondary flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md shadow-secondary/20" disabled={isPending}>
-              {isPending ? 'Submitting...' : 'Apply Now'}
+              {isPending ? 'Submitting...' : (initialData ? 'Resubmit Application' : 'Apply Now')}
             </button>
           </div>
         </form>

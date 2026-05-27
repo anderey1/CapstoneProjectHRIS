@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, CheckCircle2, XCircle, Clock as ClockIcon, ShieldCheck, ChevronRight, User, FileText, CalendarRange } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * Leaves Management (Admin/HR View)
@@ -10,9 +11,12 @@ import { QUERY_KEYS } from '../../api/queryKeys';
  * Simple, professional redesign for managing staff leave requests.
  */
 const LeaveManagement = () => {
+   const { user } = useAuth();
    const queryClient = useQueryClient();
    const [activeTab, setActiveTab] = useState('pending');
    const [selectedLeave, setSelectedLeave] = useState(null);
+
+   const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
 
    // 1. Data Fetching
    const { data: leaves = [], isLoading } = useQuery({
@@ -175,20 +179,28 @@ const LeaveManagement = () => {
 
                      {selectedLeave.status === 'pending' ? (
                         <div className="grid grid-cols-2 gap-4 pt-4">
-                           <button
-                              onClick={() => rejectMutation.mutate(selectedLeave.id)}
-                              disabled={rejectMutation.isPending}
-                              className="btn btn-outline border-base-300 text-error hover:bg-error/5 hover:border-error/20 rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
-                           >
-                              Reject
-                           </button>
-                           <button
-                              onClick={() => approveMutation.mutate(selectedLeave.id)}
-                              disabled={approveMutation.isPending}
-                              className="btn btn-primary rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
-                           >
-                              Approve
-                           </button>
+                           {canManage ? (
+                              <>
+                                 <button
+                                    onClick={() => rejectMutation.mutate(selectedLeave.id)}
+                                    disabled={rejectMutation.isPending}
+                                    className="btn btn-outline border-base-300 text-error hover:bg-error/5 hover:border-error/20 rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
+                                 >
+                                    Reject
+                                 </button>
+                                 <button
+                                    onClick={() => approveMutation.mutate(selectedLeave.id)}
+                                    disabled={approveMutation.isPending}
+                                    className="btn btn-primary rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
+                                 >
+                                    Approve
+                                 </button>
+                              </>
+                           ) : (
+                              <div className="col-span-2 p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
+                                 You do not have permission to approve leaves.
+                              </div>
+                           )}
                         </div>
                      ) : (
                         <button onClick={() => setSelectedLeave(null)} className="btn btn-block bg-base-100 border-base-200 rounded-lg font-black text-xs uppercase tracking-widest">Close Record</button>

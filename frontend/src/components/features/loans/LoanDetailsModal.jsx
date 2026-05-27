@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, FileText, AlertCircle, CheckCircle2, Circle, Tag, Users, MessageSquare } from 'lucide-react';
+import { X, FileText, AlertCircle, CheckCircle2, Circle, Tag, Users, MessageSquare, Eye } from 'lucide-react';
 import api from '../../../api/axios';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 
@@ -12,20 +12,39 @@ const PURPOSE_LABELS = {
   emergency: 'Emergency',
 };
 
+const getFileUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const host = baseUrl.split('/api')[0];
+  return `${host}${path}`;
+};
+
 /**
  * Loan Details Modal — Shows financial breakdown, docs checklist, review info.
  */
 const LoanDetailsModal = ({ loan, onClose }) => {
-  if (!loan) return null;
-
   // Fetch checklist from backend
   const { data: checklist } = useQuery({
-    queryKey: [QUERY_KEYS.LOANS, loan.id, 'checklist'],
+    queryKey: [QUERY_KEYS.LOANS, loan?.id, 'checklist'],
     queryFn: async () => {
       const res = await api.get(`loans/${loan.id}/checklist/`);
       return res.data;
     },
+    enabled: !!loan?.id,
   });
+
+  // Documents for selected loan
+  const { data: documents = [] } = useQuery({
+    queryKey: [QUERY_KEYS.LOANS, loan?.id, 'documents'],
+    queryFn: async () => {
+      const res = await api.get(`loans/${loan.id}/documents/`);
+      return res.data;
+    },
+    enabled: !!loan?.id,
+  });
+
+  if (!loan) return null;
 
   const monthlyPayment = parseFloat(loan.monthly_payment);
   const term = parseInt(loan.term_months);
@@ -140,25 +159,35 @@ const LoanDetailsModal = ({ loan, onClose }) => {
                 </span>
               </div>
               <div className="space-y-1">
-                {checklist.checklist?.map((doc) => (
-                  <div key={doc.doc_type} className="flex items-center justify-between p-3 bg-base-50 rounded-lg border border-base-100">
-                    <div className="flex items-center gap-2">
-                      {doc.submitted
-                        ? <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                        : <Circle className="w-3.5 h-3.5 opacity-20" />
-                      }
-                      <span className="text-[10px] font-bold uppercase tracking-wide">{doc.label}</span>
+                {checklist.checklist?.map((doc) => {
+                  const uploadedDoc = documents.find(d => d.doc_type === doc.doc_type);
+                  return (
+                    <div key={doc.doc_type} className="flex items-center justify-between p-3 bg-base-50 rounded-lg border border-base-100">
+                      <div className="flex items-center gap-2">
+                        {doc.submitted
+                          ? <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                          : <Circle className="w-3.5 h-3.5 opacity-20" />
+                        }
+                        <span className="text-[10px] font-bold uppercase tracking-wide">{doc.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {uploadedDoc?.file && (
+                          <a 
+                            href={getFileUrl(uploadedDoc.file)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn btn-ghost btn-xs text-primary font-black uppercase tracking-widest hover:bg-primary/5"
+                          >
+                            <Eye className="w-3 h-3" /> View
+                          </a>
+                        )}
+                        {!doc.required && (
+                          <span className="text-[8px] font-black text-info/50 uppercase tracking-widest">Optional</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!doc.required && (
-                        <span className="text-[8px] font-black text-info/50 uppercase tracking-widest">Optional</span>
-                      )}
-                      <span className={`text-[9px] font-black uppercase tracking-widest ${doc.submitted ? 'text-success' : 'opacity-20'}`}>
-                        {doc.submitted ? '✓' : '—'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

@@ -37,8 +37,19 @@ const MyLeaves = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
       queryClient.invalidateQueries({ queryKey: ['me'] }); 
       setIsModalOpen(false);
+      alert('Leave application submitted successfully!');
     },
-    onError: (err) => alert(err.response?.data?.detail || "Application failed.")
+    onError: (err) => {
+      const errorData = err.response?.data;
+      let msg = 'Application failed. Please check your leave credits or dates.';
+      
+      if (errorData) {
+        if (typeof errorData === 'string') msg = errorData;
+        else if (Array.isArray(errorData)) msg = errorData[0];
+        else if (errorData.detail) msg = errorData.detail;
+      }
+      alert(msg);
+    }
   });
 
   const handleSubmit = (e) => {
@@ -78,25 +89,12 @@ const MyLeaves = () => {
       </div>
 
       {/* Credit Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-base-200 p-8 rounded-xl flex items-center justify-between shadow-sm relative overflow-hidden group">
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-white border border-base-200 p-8 rounded-xl flex items-center justify-between shadow-sm relative overflow-hidden group max-w-md mx-auto w-full">
           <div className="z-10">
-            <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.2em] mb-2">Sick Leave</p>
-            <h2 className="text-5xl font-black text-success flex items-baseline gap-2">
-              {employee?.sick_leave_balance || 0}
-              <span className="text-[10px] opacity-30 tracking-widest">DAYS</span>
-            </h2>
-          </div>
-          <div className="p-5 bg-success/5 text-success rounded-xl z-10 group-hover:scale-110 transition-transform border border-success/10">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-base-200 p-8 rounded-xl flex items-center justify-between shadow-sm relative overflow-hidden group">
-          <div className="z-10">
-            <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.2em] mb-2">Vacation Leave</p>
+            <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.2em] mb-2">Available Leave Balance</p>
             <h2 className="text-5xl font-black text-primary flex items-baseline gap-2">
-              {employee?.vacation_leave_balance || 0}
+              {employee?.leave_balance || 0}
               <span className="text-[10px] opacity-30 tracking-widest">DAYS</span>
             </h2>
           </div>

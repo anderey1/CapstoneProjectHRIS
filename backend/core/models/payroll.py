@@ -5,6 +5,12 @@ from .employee import Employee
 # PAYROLL
 # -------------------------
 class Payroll(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('approved', 'Approved'),
+        ('released', 'Released'),
+    ]
+
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payrolls')
     cutoff_period = models.CharField(max_length=50, default="May 1-15, 2026")
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
@@ -18,7 +24,9 @@ class Payroll(models.Model):
     
     total_deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     net_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     date_generated = models.DateTimeField(auto_now_add=True)
+    date_released = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         self.total_deductions = self.sss + self.philhealth + self.pagibig + self.tax + self.loans

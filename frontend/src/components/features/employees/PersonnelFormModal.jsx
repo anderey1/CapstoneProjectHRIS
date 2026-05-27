@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, User, Briefcase, ChevronRight } from 'lucide-react';
+import { ROLES } from '../../../utils/constants';
 import PersonalFields from './PersonalFields';
 import EmploymentFields from './EmploymentFields';
 
@@ -22,7 +23,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     formState: { errors } 
   } = useForm({
     defaultValues: initialData || {
-      role: 'EMPLOYEE',
+      role: ROLES.EMPLOYEE,
       department: '',
       school: '',
       salary: '',
@@ -39,7 +40,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
         }
       } else {
         reset({
-          role: 'EMPLOYEE',
+          role: ROLES.EMPLOYEE,
           department: '',
           school: '',
           salary: '',

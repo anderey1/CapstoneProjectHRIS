@@ -1,4 +1,5 @@
 import React from 'react';
+import { ROLES } from '../../../utils/constants';
 
 /**
  * Work Info Fields (Employment)
@@ -15,10 +16,11 @@ const EmploymentFields = ({ schools, register, errors }) => {
             {...register("role", { required: "Role is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.role ? 'border-error' : ''}`}
           >
-            <option value="EMPLOYEE">Employee</option>
-            <option value="HR">HR Staff</option>
-            <option value="ADMIN">Administrator</option>
-            <option value="SUPERVISOR">Supervisor</option>
+            <option value={ROLES.EMPLOYEE}>Employee</option>
+            <option value={ROLES.HR}>HR Staff</option>
+            <option value={ROLES.ADMIN}>Administrator</option>
+            <option value={ROLES.SUPERVISOR}>Supervisor</option>
+            <option value={ROLES.ACCOUNTANT}>Accountant</option>
           </select>
           {errors.role && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.role.message}</span>}
         </div>

@@ -88,6 +88,56 @@ def staff_user(db, school):
     return employee.user
 
 @pytest.fixture
+def supervisor_user(db, school):
+    user_data = {
+        "username": "supervisor",
+        "password": "password123",
+        "role": Role.SUPERVISOR
+    }
+    employee_data = {
+        "first_name": "Supervisor",
+        "last_name": "User",
+        "position": "Supervisor",
+        "department": "Instructional",
+        "school": school,
+        "salary": 50000
+    }
+    employee = Employee.objects.create_with_user(user_data, employee_data)
+    return employee.user
+
+@pytest.fixture
+def supervisor_client(supervisor_user):
+    from rest_framework.test import APIClient
+    client = APIClient()
+    client.force_authenticate(user=supervisor_user)
+    return client
+
+@pytest.fixture
+def accountant_user(db, school):
+    user_data = {
+        "username": "accountant",
+        "password": "password123",
+        "role": Role.ACCOUNTANT
+    }
+    employee_data = {
+        "first_name": "Accountant",
+        "last_name": "User",
+        "position": "Accountant",
+        "department": "Finance",
+        "school": school,
+        "salary": 40000
+    }
+    employee = Employee.objects.create_with_user(user_data, employee_data)
+    return employee.user
+
+@pytest.fixture
+def accountant_client(accountant_user):
+    from rest_framework.test import APIClient
+    client = APIClient()
+    client.force_authenticate(user=accountant_user)
+    return client
+
+@pytest.fixture
 def staff_client(staff_user):
     from rest_framework.test import APIClient
     client = APIClient()

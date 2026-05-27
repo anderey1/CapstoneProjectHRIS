@@ -13,7 +13,7 @@ const PURPOSE_LABELS = {
 /**
  * Loan Card — Shows purpose badge, co-maker, and review info.
  */
-const LoanCard = ({ loan, user, onApprove, onReject, isProcessing }) => {
+const LoanCard = ({ loan, user, onApprove, onReject, onResubmit, isProcessing }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
@@ -87,7 +87,7 @@ const LoanCard = ({ loan, user, onApprove, onReject, isProcessing }) => {
           <div className="mt-4 p-3 bg-base-50 rounded-lg border border-base-100 flex items-start gap-2">
             <MessageSquare className="w-3 h-3 mt-0.5 opacity-30 shrink-0" />
             <div>
-              <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">HR Remarks</p>
+              <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">Superisor Remarks</p>
               <p className="text-[10px] font-bold text-base-content/70">{loan.remarks}</p>
             </div>
           </div>
@@ -159,13 +159,22 @@ const LoanCard = ({ loan, user, onApprove, onReject, isProcessing }) => {
 
         {/* View details for any status */}
         {loan.status !== 'approved' && (
-          <div className="mt-4 pt-4 border-t border-base-50 flex justify-end">
-            <button 
-              onClick={() => setShowDetails(true)}
-              className="text-[9px] font-black text-secondary uppercase tracking-widest hover:underline flex items-center gap-1"
-            >
-              View Details <ChevronRight className="w-3 h-3" />
-            </button>
+          <div className="mt-4 pt-4 border-t border-base-50 flex justify-between items-center">
+             {loan.status === 'rejected' && onResubmit && (
+               <button 
+                 onClick={() => onResubmit(loan)}
+                 className="btn btn-warning btn-xs rounded-lg font-black text-[9px] uppercase tracking-widest px-4 shadow-sm"
+               >
+                 Edit & Resubmit
+               </button>
+             )}
+             <div className="flex-1"></div>
+             <button 
+               onClick={() => setShowDetails(true)}
+               className="text-[9px] font-black text-secondary uppercase tracking-widest hover:underline flex items-center gap-1"
+             >
+               View Details <ChevronRight className="w-3 h-3" />
+             </button>
           </div>
         )}
       </div>

@@ -28,42 +28,42 @@ const SidebarContent = ({ closeDrawer }) => {
     {
       title: 'Main',
       links: [
-        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
+        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
       ]
     },
     {
       title: 'Staff',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['ADMIN', 'HR'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR'] },
         { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Hiring', roles: ['ADMIN', 'HR'] },
       ]
     },
     {
       title: 'Time & Leave',
       links: [
-        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record (DTR)', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
-        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record (DTR)', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
+        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
       ]
     },
     {
       title: 'Money',
       links: [
-        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['ADMIN', 'HR', 'ACCOUNTANT'] },
-        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
+        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['ADMIN', 'ACCOUNTANT', 'HR'] },
+        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['ADMIN', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE', 'HR'] },
       ]
     },
     {
       title: 'Work Quality',
       links: [
-        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance', roles: ['ADMIN', 'HR', 'MANAGER'] },
+        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance', roles: ['ADMIN', 'HR', 'SUPERVISOR'] },
       ]
     },
     {
       title: 'Settings',
       links: [
-        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['ADMIN', 'HR', 'EMPLOYEE'] },
-        { to: '/schools', icon: <School className="w-4 h-4" />, label: 'School Geofencing', roles: ['ADMIN', 'HR'] },
+        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
+        { to: '/schools', icon: <School className="w-4 h-4" />, label: 'School Geofencing', roles: ['ADMIN', 'SUPERVISOR'] },
         { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['ADMIN', 'HR'] },
       ]
     }

@@ -34,6 +34,7 @@ function App() {
   const { user } = useAuth();
 
   const isAdminOrHR = user && ['ADMIN', 'HR'].includes(user.role);
+  const isManagement = user && ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR'].includes(user.role);
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -51,30 +52,30 @@ function App() {
           }
         >
           {/* Child Routes injected into MainLayout's <Outlet /> */}
-          <Route index element={isAdminOrHR ? <AdminDashboard /> : <EmployeeDashboard />} />
+          <Route index element={isManagement ? <AdminDashboard /> : <EmployeeDashboard />} />
           
-          {/* Employees - Admin/HR only */}
+          {/* Employees - Management only */}
           <Route 
             path="employees" 
-            element={isAdminOrHR ? <Employees /> : <Navigate to="/" replace />} 
+            element={isManagement ? <Employees /> : <Navigate to="/" replace />} 
           />
           
           {/* Loans - Role based switching */}
           <Route 
             path="loans" 
-            element={isAdminOrHR ? <LoanManagement /> : <MyLoans />} 
+            element={isManagement ? <LoanManagement /> : <MyLoans />} 
           />
 
           {/* Leave Management - Role based switching */}
           <Route 
             path="leave" 
-            element={isAdminOrHR ? <LeaveManagement /> : <MyLeaves />} 
+            element={isManagement ? <LeaveManagement /> : <MyLeaves />} 
           />
           
           {/* Attendance - Role based switching */}
           <Route
             path="attendance"
-            element={isAdminOrHR ? <AttendanceManagement /> : <Attendance />}
+            element={isManagement ? <AttendanceManagement /> : <Attendance />}
           />
           
           <Route path="dtr" element={<DTR />} />
@@ -83,13 +84,13 @@ function App() {
           {/* Payroll - Role based switching */}
           <Route
             path="payroll"
-            element={isAdminOrHR ? <Payroll /> : <MyPayroll />}
+            element={isManagement ? <Payroll /> : <MyPayroll />}
           />
 
           {/* IPCRF (Performance) - Role based switching */}
           <Route
             path="performance"
-            element={isAdminOrHR ? <IPCRFManagement /> : <MyIPCRF />}
+            element={isManagement ? <IPCRFManagement /> : <MyIPCRF />}
           />
 
           {/* Recruitment - Admin/HR only */}
@@ -98,10 +99,10 @@ function App() {
             element={isAdminOrHR ? <Recruitment /> : <Navigate to="/" replace />}
           />
 
-          {/* Schools/Geofencing - Admin/HR only */}
+          {/* Schools/Geofencing - Admin/Supervisor only */}
           <Route
             path="schools"
-            element={isAdminOrHR ? <SchoolManagement /> : <Navigate to="/" replace />}
+            element={['ADMIN', 'SUPERVISOR'].includes(user?.role) ? <SchoolManagement /> : <Navigate to="/" replace />}
           />
 
           {/* Audit Logs - Admin/HR only */}

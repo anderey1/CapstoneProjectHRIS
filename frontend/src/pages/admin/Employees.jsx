@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, UserPlus, Search, Filter, CheckCircle2, FileDown } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
+import { useAuth } from '../../context/AuthContext';
 import EmployeeTable from '../../components/features/employees/EmployeeTable';
 import PersonnelFormModal from '../../components/features/employees/PersonnelFormModal';
 import { exportToCSV } from '../../utils/export';
@@ -13,6 +14,7 @@ import { exportToCSV } from '../../utils/export';
  * Simple, professional redesign with clean filters and actions.
  */
 const Employees = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeModal, setActiveModal] = useState(null);

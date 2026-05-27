@@ -46,10 +46,12 @@ function ChangeMapView({ center, zoom }) {
 }
 
 // Component to capture map clicks and send them to the parent component
-function MapClickHandler({ onMapClick }) {
+function MapClickHandler({ onMapClick, canEdit }) {
   useMapEvents({
     click(e) {
-      onMapClick(e.latlng);
+      if (canEdit) {
+        onMapClick(e.latlng);
+      }
     }
   });
   return null;
@@ -64,7 +66,8 @@ const SchoolMap = ({
   tempMarker,
   onMapClick,
   onEdit,
-  onDelete
+  onDelete,
+  canEdit
 }) => {
   return (
     <MapContainer 
@@ -75,7 +78,7 @@ const SchoolMap = ({
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <ChangeMapView center={mapCenter} zoom={mapZoom} />
-      <MapClickHandler onMapClick={onMapClick} />
+      <MapClickHandler onMapClick={onMapClick} canEdit={canEdit} />
 
       {/* Render Existing Schools */}
       {schools.map((school) => {
@@ -102,20 +105,22 @@ const SchoolMap = ({
                     <p>Coordinates: {lat.toFixed(5)}, {lng.toFixed(5)}</p>
                     <p>Geofence Radius: {school.radius_meters} meters</p>
                   </div>
-                  <div className="flex justify-end gap-2 pt-2 border-t">
-                    <button
-                      onClick={() => onEdit(school)}
-                      className="btn btn-xs btn-ghost text-primary uppercase text-[9px] font-bold"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(school.id, school.name)}
-                      className="btn btn-xs btn-ghost text-error uppercase text-[9px] font-bold"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div className="flex justify-end gap-2 pt-2 border-t">
+                      <button
+                        onClick={() => onEdit(school)}
+                        className="btn btn-xs btn-ghost text-primary uppercase text-[9px] font-bold"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDelete(school.id, school.name)}
+                        className="btn btn-xs btn-ghost text-error uppercase text-[9px] font-bold"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </Popup>
             </Marker>

@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { School, Plus } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
+import { useAuth } from '../../context/AuthContext';
+import { ROLES } from '../../utils/constants';
 
 // Subcomponents
 import SchoolMap from '../../components/features/school/SchoolMap';
@@ -14,6 +16,8 @@ import SchoolFormModal from '../../components/features/school/SchoolFormModal';
  * Orchestrates maps, lists, and forms for workstation configuration.
  */
 const SchoolManagement = () => {
+  const { user } = useAuth();
+  const canEdit = user?.role === ROLES.ADMIN || user?.role === ROLES.SUPERVISOR;
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSchool, setSelectedSchool] = useState(null);
@@ -159,13 +163,15 @@ const SchoolManagement = () => {
           </p>
         </div>
 
-        <button 
-          onClick={() => openAddModal()}
-          className="btn btn-primary rounded-lg text-xs font-black uppercase tracking-widest shadow-md shadow-primary/20 gap-2 w-full lg:w-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Add School Location
-        </button>
+        {canEdit && (
+          <button 
+            onClick={() => openAddModal()}
+            className="btn btn-primary rounded-lg text-xs font-black uppercase tracking-widest shadow-md shadow-primary/20 gap-2 w-full lg:w-auto"
+          >
+            <Plus className="w-4 h-4" />
+            Add School Location
+          </button>
+        )}
       </div>
 
       {/* Main Grid */}
@@ -197,6 +203,7 @@ const SchoolManagement = () => {
                 onMapClick={handleMapClick}
                 onEdit={openEditModal}
                 onDelete={handleDelete}
+                canEdit={canEdit}
               />
             </div>
           </div>
@@ -213,6 +220,7 @@ const SchoolManagement = () => {
             onFocusSchool={selectAndFocusSchool}
             onEdit={openEditModal}
             onDelete={handleDelete}
+            canEdit={canEdit}
           />
         </div>
 

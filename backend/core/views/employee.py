@@ -47,12 +47,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAuthenticated, IsAdminOrHR]
         return [permission() for permission in permission_classes]
 
-    def get_queryset(self): 
+    def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR]:
+        if user.role in [Role.ADMIN, Role.HR, Role.SUPERVISOR, Role.ACCOUNTANT]:
             return Employee.objects.all()
         return Employee.objects.filter(user=user)
-
     def perform_create(self, serializer):
         try:
             instance = serializer.save()
@@ -99,8 +98,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 "last_name": user.last_name
             },
             "salary": 0,
-            "sick_leave_balance": 0,
-            "vacation_leave_balance": 0,
+            "leave_balance": 0,
             "date_hired": None,
             "school_details": None
         })

@@ -1,10 +1,11 @@
 import pytest
 from django.urls import reverse
 from rest_framework import status
-from core.models import Role, Attendance, LeaveRequest, ProvidentLoan, Payroll, PerformanceReview, Applicant, AuditLog
+from core.models import Role, Attendance, LeaveRequest, ProvidentLoan, Payroll, PerformanceReview, Applicant, AuditLog, LoanPayment
 from django.utils import timezone
 import datetime
 from decimal import Decimal
+from rest_framework.test import APIClient
 
 @pytest.mark.django_db
 class TestHRISBackendSuite:
@@ -29,10 +30,6 @@ class TestHRISBackendSuite:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "Cooldown active" in response.data['detail']
 
-        # 3. Time Out (Valid - manual override of time for testing if possible, 
-        # but here we just check logic. For real tests we'd need to mock timezone.now() 
-        # but let's assume we test the error message)
-
     def test_attendance_geo_fail(self, staff_client, school):
         from core.utils import generate_daily_qr_token
         token = generate_daily_qr_token()
@@ -40,8 +37,8 @@ class TestHRISBackendSuite:
         # Coordinates far from school
         data = {"qr_token": token, "lat": 14.599, "lng": 120.984}
         response = staff_client.post(url, data)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Workstation check-in failed" in response.data['detail']
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['is_geo_flagged'] == True
 
     # --- LEAVE PROCESSES ---
     def test_leave_logic(self, staff_client, hr_client, staff_user):
@@ -66,12 +63,12 @@ class TestHRISBackendSuite:
 
         # 3. Approve and check balance deduction
         approve_url = reverse('leaverequest-approve', args=[leave_id])
-        old_balance = staff_user.employee_profile.sick_leave_balance
+        old_balance = staff_user.employee_profile.leave_balance
         response = hr_client.post(approve_url)
         assert response.status_code == status.HTTP_200_OK
         
         staff_user.employee_profile.refresh_from_db()
-        assert staff_user.employee_profile.sick_leave_balance == old_balance - 2
+        assert staff_user.employee_profile.leave_balance == old_balance - 2
 
     # --- LOAN PROCESSES ---
     def test_loan_workflow_with_comaker(self, staff_client, hr_client, staff_user, another_staff_user):
@@ -123,9 +120,9 @@ class TestHRISBackendSuite:
     # --- PAYROLL PROCESSES ---
     def test_payroll_generation_and_deductions(self, hr_client, staff_user):
         employee = staff_user.employee_profile
-        # Create an approved loan for the employee to test auto-deduction
+        # Create a released loan for the employee to test auto-deduction
         loan = ProvidentLoan.objects.create(
-            employee=employee, loan_amount=12000, interest_rate=0, term_months=12, status='approved'
+            employee=employee, loan_amount=12000, interest_rate=0, term_months=12, status='released'
         )
         
         url = reverse('payroll-generate')
@@ -149,12 +146,12 @@ class TestHRISBackendSuite:
         """Verify that payroll only deducts the remaining balance if it's less than the installment."""
         employee = staff_user.employee_profile
         # Loan: 1000 total. Semi-monthly installment: 250.
+        # NOTE: Status must be 'released' for payroll deduction to work per requirements.
         loan = ProvidentLoan.objects.create(
-            employee=employee, loan_amount=1000, interest_rate=0, term_months=2, status='approved'
+            employee=employee, loan_amount=1000, interest_rate=0, term_months=2, status='released'
         )
         
         # Manually add payments totaling 900. Remaining balance: 100.
-        from core.models import LoanPayment
         LoanPayment.objects.create(loan=loan, amount_paid=Decimal('900.00'))
         
         url = reverse('payroll-generate')
@@ -164,7 +161,108 @@ class TestHRISBackendSuite:
         assert response.status_code == status.HTTP_201_CREATED
         # Should only deduct the remaining 100, not the 250 installment.
         assert Decimal(str(response.data['loans'])) == Decimal('100.00')
-        assert ProvidentLoan.objects.get(id=loan.id).status == 'paid'
+        # Status should remain 'released' until payroll is officially RELEASED
+        assert ProvidentLoan.objects.get(id=loan.id).status == 'released'
+
+    # --- LOAN WORKFLOW TESTS ---
+    def test_loan_approve_workflow(self, staff_user, supervisor_client):
+        # Create pending loan
+        loan = ProvidentLoan.objects.create(
+            employee=staff_user.employee_profile,
+            loan_amount=10000, interest_rate=5, term_months=12, status='pending'
+        )
+        approve_url = reverse('providentloan-approve', args=[loan.id])
+
+        # 1. Staff cannot approve
+        staff_client = APIClient()
+        staff_client.force_authenticate(user=staff_user)
+
+        assert staff_client.post(approve_url).status_code == status.HTTP_403_FORBIDDEN
+
+        # 2. Supervisor can approve
+        assert supervisor_client.post(approve_url).status_code == status.HTTP_200_OK
+        loan.refresh_from_db()
+        assert loan.status == 'approved'
+
+        # 3. Cannot approve already approved
+        assert supervisor_client.post(approve_url).status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_loan_release_funds_workflow(self, hr_client, accountant_client, staff_user):
+        # Create approved loan
+        loan = ProvidentLoan.objects.create(
+            employee=staff_user.employee_profile,
+            loan_amount=10000, interest_rate=5, term_months=12, status='approved'
+        )
+        release_url = reverse('providentloan-release-funds', args=[loan.id])
+
+        # 1. HR cannot release funds (only Accountant/Admin)
+        assert hr_client.post(release_url).status_code == status.HTTP_403_FORBIDDEN
+
+        # 2. Accountant can release funds
+        assert accountant_client.post(release_url).status_code == status.HTTP_200_OK
+        loan.refresh_from_db()
+        assert loan.status == 'released'
+
+    def test_loan_deduction_only_on_payroll_release(self, accountant_client, hr_client, staff_user):
+        # Setup released loan
+        loan = ProvidentLoan.objects.create(
+            employee=staff_user.employee_profile,
+            loan_amount=12000, interest_rate=0, term_months=12, status='released'
+        )
+        
+        # Setup draft payroll
+        payroll = Payroll.objects.create(
+            employee=staff_user.employee_profile,
+            basic_salary=15000,
+            loans=500,
+            net_salary=14500
+        )
+        
+        # Approve payroll - should not create payment
+        hr_client.post(reverse('payroll-approve', args=[payroll.id]))
+        assert LoanPayment.objects.filter(loan=loan).count() == 0
+        
+        # Release payroll - should create payment
+        accountant_client.post(reverse('payroll-release', args=[payroll.id]))
+        assert LoanPayment.objects.filter(loan=loan).count() == 1
+
+    # --- PAYROLL WORKFLOW TESTS ---
+    def test_payroll_approve_workflow(self, staff_user, hr_client):
+        payroll = Payroll.objects.create(
+            employee=staff_user.employee_profile,
+            basic_salary=15000,
+            net_salary=15000,
+            status='draft'
+        )
+        approve_url = reverse('payroll-approve', args=[payroll.id])
+
+        # 1. Staff cannot approve
+        staff_client = APIClient()
+        staff_client.force_authenticate(user=staff_user)
+
+        assert staff_client.post(approve_url).status_code == status.HTTP_403_FORBIDDEN
+
+        # 2. HR can approve
+        assert hr_client.post(approve_url).status_code == status.HTTP_200_OK
+        payroll.refresh_from_db()
+        assert payroll.status == 'approved'
+
+    def test_payroll_release_workflow(self, hr_client, accountant_client, staff_user):
+        payroll = Payroll.objects.create(
+            employee=staff_user.employee_profile,
+            basic_salary=15000,
+            net_salary=15000,
+            status='approved'
+        )
+        release_url = reverse('payroll-release', args=[payroll.id])
+
+        # 1. HR cannot release (only Admin/Accountant)
+        assert hr_client.post(release_url).status_code == status.HTTP_403_FORBIDDEN
+
+        # 2. Accountant can release
+        assert accountant_client.post(release_url).status_code == status.HTTP_200_OK
+        payroll.refresh_from_db()
+        assert payroll.status == 'released'
 
     # --- PERFORMANCE PROCESSES ---
     def test_performance_rating_with_ai(self, admin_client, staff_user):

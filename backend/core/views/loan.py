@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from ..models import Employee, ProvidentLoan, LoanDocument, Role, AuditLog
 from ..serializers import LoanSerializer, LoanDocumentSerializer
-from ..permissions import IsAdminOrHR, IsHR, IsSupervisor
+from ..permissions import IsAdminOrHR, IsHR, IsSupervisor, IsAccountant, IsAdmin
 
 # Required documents for every loan application
 BASE_REQUIRED_DOCS = ['laf', 'letter_request', 'auth_deduct', 'payslip', 'deped_id', 'comaker_payslip']
@@ -30,7 +30,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR]:
+        if user.role in [Role.ADMIN, Role.HR, Role.SUPERVISOR, Role.ACCOUNTANT]:
             return ProvidentLoan.objects.all().order_by('-date_applied')
         return ProvidentLoan.objects.filter(employee__user=user).order_by('-date_applied')
 
@@ -98,6 +98,34 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Rejected Loan: {loan.employee}")
         return Response({"message": "Loan rejected.", "status": "rejected"})
 
+    @action(detail=True, methods=['post'])
+    def resubmit(self, request, pk=None):
+        """Allows employee to update and resubmit a rejected loan."""
+        loan = self.get_object()
+        if loan.status != 'rejected':
+            return Response({"detail": "Only rejected loans can be resubmitted."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Reset status and clear old remarks
+        serializer = self.get_serializer(loan, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(status='pending', remarks='')
+        
+        AuditLog.objects.create(user=request.user, action=f"Resubmitted Loan #{loan.id}")
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsAccountant], url_path='release-funds')
+    def release_funds(self, request, pk=None):
+        """Accountant action to release money after supervisor approval."""
+        loan = self.get_object()
+        if loan.status != 'approved':
+            return Response({"detail": "Only approved loans can be released."}, status=status.HTTP_400_BAD_REQUEST)
+
+        loan.status = 'released'
+        loan.save()
+
+        AuditLog.objects.create(user=request.user, action=f"Released Funds for Loan #{loan.id} ({loan.employee})")
+        return Response({"message": "Loan funds released successfully.", "status": "released"})
+
     # ---------------------------
     # DOCUMENT UPLOAD
     # ---------------------------
@@ -151,7 +179,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         """List all uploaded documents for a loan."""
         loan = self.get_object()
         docs = LoanDocument.objects.filter(loan=loan)
-        serializer = LoanDocumentSerializer(docs, many=True)
+        serializer = LoanDocumentSerializer(docs, many=True, context={'request': request})
         return Response(serializer.data)
 
     # ---------------------------

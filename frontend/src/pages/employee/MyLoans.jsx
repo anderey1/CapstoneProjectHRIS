@@ -15,7 +15,7 @@ const MyLoans = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeModal, setActiveModal] = useState(null);
-  const [successMsg, setSuccessMsg] = useState(null);
+  const [selectedLoan, setSelectedLoan] = useState(null);
 
   // 1. Data Fetching
   const { data: loans, isLoading } = useQuery({
@@ -47,21 +47,66 @@ const MyLoans = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
       setActiveModal(null);
-      showToast('Application sent!');
+      setSelectedLoan(null);
+      alert('Application sent successfully!');
     },
     onError: (err) => {
-      const msg = err.response?.data?.detail || 'Application failed.';
-      showToast(msg, 'error');
+      const errorData = err.response?.data;
+      let msg = 'Application failed. Please ensure all data is correct and files are valid.';
+      if (errorData) {
+        if (typeof errorData === 'string') msg = errorData;
+        else if (Array.isArray(errorData)) msg = errorData[0];
+        else if (errorData.detail) msg = errorData.detail;
+      }
+      alert(msg);
     }
   });
 
-  const showToast = (msg, type = 'success') => {
-    setSuccessMsg({ text: msg, type });
-    setTimeout(() => setSuccessMsg(null), 3000);
-  };
+  const resubmitMutation = useMutation({
+    mutationFn: async ({ id, formData, files }) => {
+      // 1. Resubmit the loan data
+      const res = await api.post(`loans/${id}/resubmit/`, formData);
+      
+      // 2. Upload new files if any
+      for (const { doc_type, file } of files) {
+        const fd = new FormData();
+        fd.append('doc_type', doc_type);
+        fd.append('file', file);
+        await api.post(`loans/${id}/upload_document/`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
+      setActiveModal(null);
+      setSelectedLoan(null);
+      alert('Application resubmitted successfully!');
+    },
+    onError: (err) => {
+      const errorData = err.response?.data;
+      let msg = 'Resubmission failed. Please check your data and try again.';
+      if (errorData) {
+        if (typeof errorData === 'string') msg = errorData;
+        else if (Array.isArray(errorData)) msg = errorData[0];
+        else if (errorData.detail) msg = errorData.detail;
+      }
+      alert(msg);
+    }
+  });
 
   const handleApplySubmit = (formData, files) => {
-    applyMutation.mutate({ formData, files });
+    if (selectedLoan) {
+      resubmitMutation.mutate({ id: selectedLoan.id, formData, files });
+    } else {
+      applyMutation.mutate({ formData, files });
+    }
+  };
+
+  const handleResubmitClick = (loan) => {
+    setSelectedLoan(loan);
+    setActiveModal('apply');
   };
 
   const loanList = Array.isArray(loans) ? loans : (loans?.results || []);
@@ -75,16 +120,6 @@ const MyLoans = () => {
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       
-      {/* Toast Notification */}
-      {successMsg && (
-        <div className="toast toast-top toast-end z-[100] mt-16">
-          <div className={`alert ${successMsg.type === 'error' ? 'alert-error' : 'bg-primary'} text-white shadow-xl border-none rounded-lg flex items-center gap-3 py-3 px-6`}>
-            {successMsg.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
-            <span className="font-bold text-xs uppercase tracking-widest">{successMsg.text}</span>
-          </div>
-        </div>
-      )}
-
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
@@ -119,6 +154,7 @@ const MyLoans = () => {
               key={loan.id} 
               loan={loan} 
               user={user} 
+              onResubmit={handleResubmitClick}
             />
           ))
         ) : (
@@ -131,10 +167,11 @@ const MyLoans = () => {
 
       <ApplyLoanModal 
         isOpen={activeModal === 'apply'} 
-        onClose={() => setActiveModal(null)} 
+        onClose={() => { setActiveModal(null); setSelectedLoan(null); }} 
         onSubmit={handleApplySubmit} 
-        isPending={applyMutation.isPending} 
+        isPending={applyMutation.isPending || resubmitMutation.isPending} 
         user={user}
+        initialData={selectedLoan}
       />
     </div>
   );

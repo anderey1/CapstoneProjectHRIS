@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
 import { CheckCircle, XCircle, Plus, FileText, BarChart3, Trash2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal';
 
 /**
@@ -11,8 +12,10 @@ import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal
  * Simple, professional redesign for performance evaluations.
  */
 const IPCRFManagement = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const canRate = ['ADMIN', 'HR', 'SUPERVISOR'].includes(user?.role);
 
   // 1. Data Fetching
   const { data: reviews, isLoading } = useQuery({
@@ -100,12 +103,14 @@ const IPCRFManagement = () => {
                     </p>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      className="btn btn-ghost btn-xs text-error font-black hover:bg-error/5"
-                      onClick={() => handleDelete(r.id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {canRate && (
+                      <button
+                        className="btn btn-ghost btn-xs text-error font-black hover:bg-error/5"
+                        onClick={() => handleDelete(r.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

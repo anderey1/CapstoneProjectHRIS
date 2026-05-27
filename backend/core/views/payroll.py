@@ -4,10 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from decimal import Decimal
 from ..models import Employee, ProvidentLoan, LoanPayment, Payroll, Role, AuditLog
 from ..serializers import PayrollSerializer
-from ..permissions import IsAdminOrHR, IsAccountant
+from ..permissions import IsAdminOrHR, IsAccountant, IsAdmin
 
 class PayrollViewSet(viewsets.ModelViewSet):
     queryset = Payroll.objects.all().order_by('-date_generated')
@@ -16,7 +17,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR]:
+        if user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT]:
             return Payroll.objects.all().order_by('-date_generated')
         return Payroll.objects.filter(employee__user=user).order_by('-date_generated')
 
@@ -79,8 +80,8 @@ class PayrollViewSet(viewsets.ModelViewSet):
         # Calculate semi-monthly basic salary
         semi_monthly_salary = (monthly_salary / Decimal('2.0')).quantize(Decimal('0.01'))
 
-        # Fetch active approved provident loan to deduct payment
-        active_loan = ProvidentLoan.objects.filter(employee=employee, status='approved').first()
+        # Fetch active released provident loan to deduct payment
+        active_loan = ProvidentLoan.objects.filter(employee=employee, status='released').first()
         loan_deduction = Decimal('0.00')
         
         if active_loan:
@@ -93,9 +94,12 @@ class PayrollViewSet(viewsets.ModelViewSet):
         # Check if payroll record already exists for the employee for this cutoff.
         # If it exists, update it to reflect the new generation; otherwise, create a new record.
         existing_payroll = Payroll.objects.filter(employee=employee, cutoff_period=cutoff).first()
-        is_new_payroll = existing_payroll is None
 
         if existing_payroll:
+            # Only allow re-generating if in draft
+            if existing_payroll.status != 'draft':
+                return Response({"detail": f"Cannot re-generate payroll in {existing_payroll.status} status."}, status=400)
+            
             payroll = existing_payroll
             payroll.basic_salary = semi_monthly_salary
             payroll.loans = loan_deduction
@@ -113,14 +117,44 @@ class PayrollViewSet(viewsets.ModelViewSet):
                 **DEDUCTIONS
             )
 
-        # Automatic Loan Repayment Tracking (Only for new payroll periods to prevent duplicate deductions)
-        if is_new_payroll and active_loan and loan_deduction > 0:
-            LoanPayment.objects.create(loan=active_loan, amount_paid=loan_deduction)
-            AuditLog.objects.create(
-                user=request.user, 
-                action=f"Auto loan deduction: {employee} (₱{loan_deduction})"
-            )
-
         serializer = self.get_serializer(payroll)
         return Response(serializer.data, status=http_status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['POST'], permission_classes=[IsAdminOrHR])
+    def approve(self, request, pk=None):
+        """Approves a draft payroll record."""
+        payroll = self.get_object()
+        if payroll.status != 'draft':
+            return Response({"detail": f"Cannot approve payroll in {payroll.status} status."}, status=400)
+            
+        payroll.status = 'approved'
+        payroll.save()
+        
+        AuditLog.objects.create(user=request.user, action=f"Approved payroll: {payroll.employee} ({payroll.cutoff_period})")
+        return Response({"message": "Payroll approved.", "status": "approved"})
+
+    @action(detail=True, methods=['POST'], permission_classes=[IsAdmin | IsAccountant], url_path='release')
+    def release(self, request, pk=None):
+        """Finalizes and releases payroll, recording loan deductions if any."""
+        payroll = self.get_object()
+        if payroll.status != 'approved':
+            return Response({"detail": f"Cannot release payroll in {payroll.status} status. It must be approved first."}, status=400)
+            
+        payroll.status = 'released'
+        payroll.date_released = timezone.now()
+        payroll.save()
+
+        # Record Loan Repayment if deduction was part of this payroll
+        if payroll.loans > 0:
+            # Important: We only deduct from 'released' loans (funds already disbursed)
+            active_loan = ProvidentLoan.objects.filter(employee=payroll.employee, status='released').first()
+            if active_loan:
+                LoanPayment.objects.create(loan=active_loan, amount_paid=payroll.loans)
+                AuditLog.objects.create(
+                    user=request.user, 
+                    action=f"Released payroll loan deduction: {payroll.employee} (₱{payroll.loans})"
+                )
+        
+        AuditLog.objects.create(user=request.user, action=f"Released payroll: {payroll.employee} ({payroll.cutoff_period})")
+        return Response({"message": "Payroll released successfully.", "status": "released"})
 

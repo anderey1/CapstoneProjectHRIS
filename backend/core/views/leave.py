@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime
-from ..models import LeaveRequest, Role, AuditLog
+from ..models import LeaveRequest, Role, AuditLog, Employee
 from ..serializers import LeaveRequestSerializer
 from ..permissions import IsAdminOrHR
 
@@ -22,10 +22,16 @@ class LeaveViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not hasattr(user, 'employee_profile'):
+        
+        # Robust employee profile check
+        try:
+            employee = getattr(user, 'employee_profile', None)
+        except Exception:
+            employee = None
+
+        if not employee:
             raise ValidationError("You must have an employee profile to file a leave.")
             
-        employee = user.employee_profile
         start_date = serializer.validated_data['start_date']
         end_date = serializer.validated_data['end_date']
         leave_type = serializer.validated_data['leave_type']
@@ -50,11 +56,8 @@ class LeaveViewSet(viewsets.ModelViewSet):
 
         # 3. Balance Check
         duration = (end_date - start_date).days + 1
-        if leave_type == 'sick' and employee.sick_leave_balance < duration:
-            raise ValidationError(f"Insufficient Sick Leave ({employee.sick_leave_balance} left).")
-        
-        if leave_type == 'vacation' and employee.vacation_leave_balance < duration:
-            raise ValidationError(f"Insufficient Vacation Leave ({employee.vacation_leave_balance} left).")
+        if employee.leave_balance < duration:
+            raise ValidationError(f"Insufficient leave balance ({employee.leave_balance} days left).")
 
         instance = serializer.save(employee=employee)
         AuditLog.objects.create(user=user, action=f"Filed {instance.leave_type} leave: {start_date} to {end_date}")
@@ -68,17 +71,13 @@ class LeaveViewSet(viewsets.ModelViewSet):
         employee = leave.employee
         duration = (leave.end_date - leave.start_date).days + 1
         
-        # Deduction logic
-        if leave.leave_type == 'sick':
-            if employee.sick_leave_balance < duration:
-                return Response({"detail": "Insufficient balance."}, status=400)
-            employee.sick_leave_balance -= duration
-        elif leave.leave_type == 'vacation':
-            if employee.vacation_leave_balance < duration:
-                return Response({"detail": "Insufficient balance."}, status=400)
-            employee.vacation_leave_balance -= duration
+        # Deduction logic (Unified balance)
+        if employee.leave_balance < duration:
+            return Response({"detail": f"Insufficient balance. Employee only has {employee.leave_balance} days left."}, status=400)
             
+        employee.leave_balance -= duration
         employee.save()
+        
         leave.status = 'approved'
         leave.save()
         

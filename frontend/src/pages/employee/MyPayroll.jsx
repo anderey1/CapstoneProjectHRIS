@@ -25,6 +25,11 @@ const MyPayroll = () => {
     window.print();
   };
 
+  const calculateNet = (p) => {
+    if (!p) return 0;
+    return parseFloat(p.basic_salary) - parseFloat(p.sss) - parseFloat(p.philhealth) - parseFloat(p.pagibig) - parseFloat(p.tax) - parseFloat(p.loans);
+  };
+
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
       <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -58,29 +63,35 @@ const MyPayroll = () => {
                       <tr className="bg-base-50/50 border-b border-base-200 uppercase text-[10px] tracking-widest font-black opacity-50">
                         <th className="px-6 py-4 text-primary">Period</th>
                         <th className="px-6 py-4 text-right">Net Amount</th>
-                        <th className="px-6 py-4">Processed</th>
+                        <th className="px-6 py-4">Status</th>
                         <th className="px-6 py-4 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-base-100">
                       {payrolls.map((p) => {
-                        const netSalary = p.basic_salary - p.sss - p.philhealth - p.pagibig - p.tax - p.loans;
+                        const netSalary = calculateNet(p);
                         return (
                           <tr key={p.id} className={`hover:bg-base-50/30 transition-colors ${selectedPayroll?.id === p.id ? 'bg-primary/5' : ''}`}>
                             <td className="px-6 py-4 font-bold text-sm text-base-content uppercase">{p.cutoff_period}</td>
                             <td className="px-6 py-4 text-right">
                               <span className="font-black text-primary">₱{netSalary.toLocaleString()}</span>
                             </td>
-                            <td className="px-6 py-4 text-[11px] font-medium opacity-50">
-                              {new Date(p.date_generated).toLocaleDateString()}
+                            <td className="px-6 py-4">
+                               <span className={`badge badge-sm font-black text-[9px] uppercase ${
+                                  p.status === 'released' ? 'badge-success text-white' : 
+                                  p.status === 'approved' ? 'badge-info text-white' : 'badge-warning'
+                               }`}>
+                                  {p.status}
+                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
                               <button 
                                 onClick={() => setSelectedPayroll(p)}
-                                className="btn btn-ghost btn-xs text-primary font-black uppercase tracking-widest hover:bg-primary/5"
+                                disabled={p.status !== 'released'}
+                                className="btn btn-ghost btn-xs text-primary font-black uppercase tracking-widest hover:bg-primary/5 disabled:opacity-30"
                               >
                                 <Eye className="w-3.5 h-3.5 mr-1" />
-                                View
+                                {p.status === 'released' ? 'View' : 'Pending'}
                               </button>
                             </td>
                           </tr>
@@ -138,7 +149,7 @@ const MyPayroll = () => {
                       <div className="bg-primary/5 p-6 rounded-xl border border-primary/10 mt-8 text-center shadow-inner">
                          <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2 text-primary">Take Home Amount</p>
                          <h2 className="text-4xl font-black text-primary tracking-tighter">
-                            ₱{(selectedPayroll.basic_salary - selectedPayroll.sss - selectedPayroll.philhealth - selectedPayroll.pagibig - selectedPayroll.tax - selectedPayroll.loans).toLocaleString()}
+                            ₱{calculateNet(selectedPayroll).toLocaleString()}
                          </h2>
                       </div>
 

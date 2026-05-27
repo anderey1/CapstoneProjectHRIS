@@ -1,9 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  User, Mail, Shield, Briefcase, Building2, MapPin, 
-  Calendar, Wallet, Heart, Plane, Camera, Fingerprint,
-  UserCircle
+  User, Mail, Briefcase, Building2, MapPin, 
+  Calendar, Wallet, Camera, Fingerprint,
+  UserCircle, CalendarCheck
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
@@ -119,28 +119,16 @@ const Profile = () => {
 
           {/* Leave Summary */}
           <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-8">Leave Balances</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="p-6 bg-base-50 rounded-xl border border-base-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-success/10 text-success rounded-lg flex items-center justify-center border border-success/10">
-                    <Heart className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-2xl font-black text-base-content">{me?.sick_leave_balance || 0}</h4>
-                    <p className="text-[9px] font-black uppercase opacity-40 tracking-widest">Sick Leave</p>
-                  </div>
-                </div>
-              </div>
-
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-8">Leave Balance</h3>
+            <div className="max-w-md mx-auto">
               <div className="p-6 bg-base-50 rounded-xl border border-base-100 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center border border-primary/10">
-                    <Plane className="w-5 h-5" />
+                    <CalendarCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-2xl font-black text-base-content">{me?.vacation_leave_balance || 0}</h4>
-                    <p className="text-[9px] font-black uppercase opacity-40 tracking-widest">Vacation Leave</p>
+                    <h4 className="text-2xl font-black text-base-content">{me?.leave_balance || 0}</h4>
+                    <p className="text-[9px] font-black uppercase opacity-40 tracking-widest">Available Credits</p>
                   </div>
                 </div>
               </div>

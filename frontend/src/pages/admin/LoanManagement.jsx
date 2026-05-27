@@ -8,6 +8,7 @@ import {
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
+import { ROLES } from '../../utils/constants';
 
 const PURPOSE_LABELS = {
   general: 'General',
@@ -23,6 +24,14 @@ const PURPOSE_COLORS = {
   calamity: 'bg-warning/10 text-warning',
   educational: 'bg-info/10 text-info',
   emergency: 'bg-error/10 text-error',
+};
+
+const getFileUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const host = baseUrl.split('/api')[0];
+  return `${host}${path}`;
 };
 
 /**
@@ -58,6 +67,16 @@ const LoanManagement = () => {
     enabled: !!selectedLoan,
   });
 
+  // Documents for selected loan
+  const { data: documents = [] } = useQuery({
+    queryKey: [QUERY_KEYS.LOANS, selectedLoan?.id, 'documents'],
+    queryFn: async () => {
+      const res = await api.get(`loans/${selectedLoan.id}/documents/`);
+      return res.data;
+    },
+    enabled: !!selectedLoan,
+  });
+
   // Mutations
   const approveMutation = useMutation({
     mutationFn: ({ id, remarks }) => api.post(`loans/${id}/approve/`, { remarks }),
@@ -68,6 +87,16 @@ const LoanManagement = () => {
       showToast('Loan approved successfully!');
     },
     onError: (err) => showToast(err.response?.data?.detail || 'Approval failed.', 'error'),
+  });
+
+  const disburseMutation = useMutation({
+    mutationFn: (id) => api.post(`loans/${id}/release_funds/`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
+      setSelectedLoan(null);
+      showToast('Loan funds released successfully!');
+    },
+    onError: (err) => showToast(err.response?.data?.detail || 'Disbursement failed.', 'error'),
   });
 
   const rejectMutation = useMutation({
@@ -89,15 +118,17 @@ const LoanManagement = () => {
   // Filtering
   const pendingLoans = loans.filter(l => l.status === 'pending');
   const approvedLoans = loans.filter(l => l.status === 'approved');
+  const releasedLoans = loans.filter(l => l.status === 'released');
   const rejectedLoans = loans.filter(l => l.status === 'rejected');
   const paidLoans = loans.filter(l => l.status === 'paid');
 
   const filteredLoans = activeTab === 'pending' ? pendingLoans
     : activeTab === 'approved' ? approvedLoans
+    : activeTab === 'released' ? releasedLoans
     : activeTab === 'rejected' ? rejectedLoans
     : paidLoans;
 
-  const totalReleased = approvedLoans.reduce((acc, l) => acc + parseFloat(l.loan_amount || 0), 0);
+  const totalReleasedValue = [...approvedLoans, ...releasedLoans, ...paidLoans].reduce((acc, l) => acc + parseFloat(l.loan_amount || 0), 0);
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
@@ -169,7 +200,7 @@ const LoanManagement = () => {
           </div>
           <div>
             <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">Released</p>
-            <p className="text-2xl font-black text-base-content tracking-tighter">₱{totalReleased.toLocaleString()}</p>
+            <p className="text-2xl font-black text-base-content tracking-tighter">₱{totalReleasedValue.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -178,7 +209,8 @@ const LoanManagement = () => {
       <div className="flex gap-2 bg-base-200/50 p-1 rounded-xl w-fit border border-base-200">
         {[
           { key: 'pending', label: 'Pending', count: pendingLoans.length },
-          { key: 'approved', label: 'Approved', count: approvedLoans.length },
+          { key: 'approved', label: 'Wait Release', count: approvedLoans.length },
+          { key: 'released', label: 'Active', count: releasedLoans.length },
           { key: 'rejected', label: 'Rejected', count: rejectedLoans.length },
         ].map(tab => (
           <button
@@ -266,7 +298,7 @@ const LoanManagement = () => {
                   <div className="flex items-start gap-2 p-3 bg-base-50 rounded-lg border border-base-100">
                     <MessageSquare className="w-3 h-3 mt-0.5 opacity-30 shrink-0" />
                     <div>
-                      <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">HR Remarks</p>
+                      <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">Supervisor Remarks</p>
                       <p className="text-[10px] font-bold text-base-content/70 line-clamp-2">{loan.remarks}</p>
                     </div>
                   </div>
@@ -385,20 +417,33 @@ const LoanManagement = () => {
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {checklist.checklist?.map((doc) => (
-                      <div key={doc.doc_type} className="flex items-center justify-between p-3 bg-base-50 rounded-lg border border-base-100">
-                        <div className="flex items-center gap-2">
-                          {doc.submitted
-                            ? <FileCheck className="w-3.5 h-3.5 text-success" />
-                            : <Circle className="w-3.5 h-3.5 opacity-20" />
-                          }
-                          <span className="text-[10px] font-bold uppercase tracking-wide">{doc.label}</span>
+                    {checklist.checklist?.map((doc) => {
+                      const uploadedDoc = documents.find(d => d.doc_type === doc.doc_type);
+                      return (
+                        <div key={doc.doc_type} className="flex items-center justify-between p-3 bg-base-50 rounded-lg border border-base-100">
+                          <div className="flex items-center gap-2">
+                            {doc.submitted
+                              ? <FileCheck className="w-3.5 h-3.5 text-success" />
+                              : <Circle className="w-3.5 h-3.5 opacity-20" />
+                            }
+                            <span className="text-[10px] font-bold uppercase tracking-wide">{doc.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {uploadedDoc?.file && (
+                              <a 
+                                href={getFileUrl(uploadedDoc.file)} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="btn btn-ghost btn-xs text-primary font-black uppercase tracking-widest hover:bg-primary/5"
+                              >
+                                <Eye className="w-3 h-3" /> View
+                              </a>
+                            )}
+                            {!doc.required && <span className="text-[8px] font-black text-info/50 uppercase">Optional</span>}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {!doc.required && <span className="text-[8px] font-black text-info/50 uppercase">Optional</span>}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -408,7 +453,7 @@ const LoanManagement = () => {
                 <div className="p-4 bg-warning/5 rounded-lg border border-warning/10 flex items-start gap-3">
                   <MessageSquare className="w-4 h-4 text-warning opacity-60 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">HR Remarks</p>
+                    <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Supervisor Remarks</p>
                     <p className="text-xs font-bold text-base-content/70">{selectedLoan.remarks}</p>
                     {selectedLoan.reviewed_by_name && (
                       <p className="text-[9px] font-bold opacity-30 mt-1 uppercase">— {selectedLoan.reviewed_by_name}, {selectedLoan.reviewed_at ? new Date(selectedLoan.reviewed_at).toLocaleDateString() : ''}</p>
@@ -421,47 +466,79 @@ const LoanManagement = () => {
               {selectedLoan.status === 'pending' && (
                 <div className="space-y-4 pt-4 border-t border-base-100">
                   <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Decision</h4>
+                  {(user?.role === ROLES.ADMIN || user?.role === ROLES.SUPERVISOR) ? (
+                    <>
+                      {/* Approve Section */}
+                      <div className="p-4 bg-success/5 border border-success/10 rounded-xl space-y-3">
+                        <textarea
+                          value={approveRemarks}
+                          onChange={(e) => setApproveRemarks(e.target.value)}
+                          placeholder="Remarks for approval (optional)..."
+                          rows={2}
+                          className="textarea textarea-sm w-full bg-white border-success/20 focus:border-success rounded-lg text-xs font-bold"
+                        />
+                        <button
+                          onClick={() => approveMutation.mutate({ id: selectedLoan.id, remarks: approveRemarks })}
+                          disabled={approveMutation.isPending}
+                          className="btn btn-success btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-success/20"
+                        >
+                          {approveMutation.isPending ? 'Processing...' : 'Approve Application'}
+                        </button>
+                      </div>
 
-                  {/* Approve Section */}
-                  <div className="p-4 bg-success/5 border border-success/10 rounded-xl space-y-3">
-                    <textarea
-                      value={approveRemarks}
-                      onChange={(e) => setApproveRemarks(e.target.value)}
-                      placeholder="Remarks for approval (optional)..."
-                      rows={2}
-                      className="textarea textarea-sm w-full bg-white border-success/20 focus:border-success rounded-lg text-xs font-bold"
-                    />
-                    <button
-                      onClick={() => approveMutation.mutate({ id: selectedLoan.id, remarks: approveRemarks })}
-                      disabled={approveMutation.isPending}
-                      className="btn btn-success btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-success/20"
-                    >
-                      {approveMutation.isPending ? 'Processing...' : 'Approve Application'}
-                    </button>
-                  </div>
+                      {/* Reject Section */}
+                      <div className="p-4 bg-error/5 border border-error/10 rounded-xl space-y-3">
+                        <textarea
+                          value={rejectRemarks}
+                          onChange={(e) => setRejectRemarks(e.target.value)}
+                          placeholder="Reason for rejection (required)..."
+                          rows={2}
+                          className="textarea textarea-sm w-full bg-white border-error/20 focus:border-error rounded-lg text-xs font-bold"
+                        />
+                        <button
+                          onClick={() => rejectMutation.mutate({ id: selectedLoan.id, remarks: rejectRemarks })}
+                          disabled={rejectMutation.isPending || !rejectRemarks.trim()}
+                          className="btn btn-outline border-error/30 text-error hover:bg-error hover:border-error btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
+                        >
+                          {rejectMutation.isPending ? 'Processing...' : 'Reject Application'}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
+                      You do not have permission to approve or reject loan applications.
+                    </div>
+                  )}
+                </div>
+              )}
 
-                  {/* Reject Section */}
-                  <div className="p-4 bg-error/5 border border-error/10 rounded-xl space-y-3">
-                    <textarea
-                      value={rejectRemarks}
-                      onChange={(e) => setRejectRemarks(e.target.value)}
-                      placeholder="Reason for rejection (required)..."
-                      rows={2}
-                      className="textarea textarea-sm w-full bg-white border-error/20 focus:border-error rounded-lg text-xs font-bold"
-                    />
-                    <button
-                      onClick={() => rejectMutation.mutate({ id: selectedLoan.id, remarks: rejectRemarks })}
-                      disabled={rejectMutation.isPending || !rejectRemarks.trim()}
-                      className="btn btn-outline border-error/30 text-error hover:bg-error hover:border-error btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
-                    >
-                      {rejectMutation.isPending ? 'Processing...' : 'Reject Application'}
-                    </button>
-                  </div>
+              {/* Release Section (Accountant) */}
+              {selectedLoan.status === 'approved' && (
+                <div className="space-y-4 pt-4 border-t border-base-100">
+                  <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Disbursement</h4>
+                  {(user?.role === 'ADMIN' || user?.role === 'ACCOUNTANT') ? (
+                    <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
+                      <p className="text-[10px] font-bold text-primary/70 uppercase leading-relaxed text-center mb-2">
+                        Verify fund availability before releasing.
+                      </p>
+                      <button
+                        onClick={() => disburseMutation.mutate(selectedLoan.id)}
+                        disabled={disburseMutation.isPending}
+                        className="btn btn-primary btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
+                      >
+                        {disburseMutation.isPending ? 'Processing...' : 'Release Funds (Payout)'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
+                      Waiting for Accountant disbursement.
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Close for resolved */}
-              {selectedLoan.status !== 'pending' && (
+              {selectedLoan.status !== 'pending' && selectedLoan.status !== 'approved' && (
                 <button onClick={() => setSelectedLoan(null)} className="btn btn-block bg-base-100 border-base-200 rounded-lg font-black text-xs uppercase tracking-widest">
                   Close Record
                 </button>
@@ -474,5 +551,6 @@ const LoanManagement = () => {
     </div>
   );
 };
+
 
 export default LoanManagement;

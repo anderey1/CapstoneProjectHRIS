@@ -4,6 +4,7 @@ from .views import (
     AttendanceViewSet, LoanViewSet, EmployeeViewSet,
     LeaveViewSet, PayrollViewSet, PerformanceReviewViewSet,
     ApplicantViewSet, AuditLogViewSet, SchoolViewSet,
+    PDSExtractionView,
     dashboard_stats, dashboard_ai_summary, analytics_detail
 )
 
@@ -22,6 +23,9 @@ router.register(r'schools', SchoolViewSet)
 urlpatterns = [
     # CRUD endpoints via ViewSets
     path('', include(router.urls)),
+
+    # PDS OCR Extraction
+    path('pds/extract/', PDSExtractionView.as_view(), name='pds_extract'),
 
     # Dashboard & AI
     path('dashboard/', dashboard_stats, name='dashboard_stats'),

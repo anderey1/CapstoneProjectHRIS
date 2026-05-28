@@ -71,8 +71,33 @@ class EmployeeManager(models.Manager):
 class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile', null=True, blank=True)
     objects = EmployeeManager()
+    
+    # Personal Information (PDS Section I)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+    middle_name = models.CharField(max_length=50, null=True, blank=True)
+    name_extension = models.CharField(max_length=10, null=True, blank=True) # Jr., Sr., etc.
+    
+    date_of_birth = models.DateField(null=True, blank=True)
+    place_of_birth = models.CharField(max_length=255, null=True, blank=True)
+    sex = models.CharField(max_length=10, null=True, blank=True) # Male/Female
+    civil_status = models.CharField(max_length=20, null=True, blank=True)
+    
+    # Government IDs
+    gsis_id = models.CharField(max_length=30, null=True, blank=True)
+    pagibig_id = models.CharField(max_length=30, null=True, blank=True)
+    philhealth_no = models.CharField(max_length=30, null=True, blank=True)
+    sss_no = models.CharField(max_length=30, null=True, blank=True)
+    tin_no = models.CharField(max_length=30, null=True, blank=True)
+    agency_employee_no = models.CharField(max_length=30, null=True, blank=True) # Employee ID
+    
+    # Contact Info
+    mobile_no = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    residential_address = models.TextField(null=True, blank=True)
+    permanent_address = models.TextField(null=True, blank=True)
+
+    # Work Information
     position = models.CharField(max_length=50)
     department = models.CharField(max_length=50)
     school = models.ForeignKey(School, on_delete=models.SET_NULL, null=True, blank=True, related_name='personnel')

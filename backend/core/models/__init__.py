@@ -6,6 +6,8 @@ from .payroll import Payroll
 from .recruitment import Applicant
 from .performance import PerformanceReview
 from .audit import AuditLog
+from .pds import PDSUpload
+from .pds_details import FamilyMember, Education, Eligibility, WorkExperience
 
 __all__ = [
     'Role',
@@ -21,5 +23,10 @@ __all__ = [
     'Applicant',
     'PerformanceReview',
     'AuditLog',
+    'PDSUpload',
+    'FamilyMember',
+    'Education',
+    'Eligibility',
+    'WorkExperience',
 ]
 

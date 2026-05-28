@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
-import { Plus, User, Mail, Phone, Briefcase, Trash2, ChevronRight, Layout } from 'lucide-react';
+import { Plus, User, Mail, Phone, Briefcase, Trash2, ChevronRight, Layout, FileText, X } from 'lucide-react';
 import AddApplicantModal from '../../components/features/recruitment/AddApplicantModal';
+import PDSUploadForm from '../../components/features/recruitment/PDSUploadForm';
 
 const COLUMNS = [
   { id: 'applied', label: 'Applied', color: 'bg-info/10 text-info border-info/20' },
@@ -13,14 +14,10 @@ const COLUMNS = [
   { id: 'rejected', label: 'Rejected', color: 'bg-error/10 text-error border-error/20' }
 ];
 
-/**
- * Hiring Board (Recruitment)
- * 
- * Simple, professional Kanban redesign with standard radii and plain language.
- */
 const Recruitment = () => {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const [showPDSModal, setShowPDSModal] = useState(false);
 
   const { data: applicants = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.APPLICANTS],
@@ -59,13 +56,22 @@ const Recruitment = () => {
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Track applicant status</p>
         </div>
         
-        <button 
-          className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8" 
-          onClick={() => setShowModal(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Applicant
-        </button>
+        <div className="flex gap-3">
+          <button 
+            className="btn btn-outline btn-primary rounded-lg px-6" 
+            onClick={() => setShowPDSModal(true)}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Import PDS
+          </button>
+          <button 
+            className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8" 
+            onClick={() => setShowModal(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Applicant
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -90,7 +96,7 @@ const Recruitment = () => {
                       
                       <div className="flex justify-between items-start">
                         <div className="w-10 h-10 rounded-lg bg-base-50 border border-base-200 flex items-center justify-center text-xs font-black text-primary">
-                          {applicant.first_name[0]}{applicant.last_name[0]}
+                          {applicant.first_name ? applicant.first_name[0] : '?'}{applicant.last_name ? applicant.last_name[0] : '?'}
                         </div>
                         <button 
                           onClick={() => handleDelete(applicant.id)} 
@@ -150,6 +156,31 @@ const Recruitment = () => {
       )}
 
       {showModal && <AddApplicantModal onClose={() => setShowModal(false)} />}
+
+      {/* PDS Import Modal */}
+      {showPDSModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300">
+          <div className="bg-white rounded-xl w-full max-w-2xl shadow-2xl border border-base-200 overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-base-50/50 border-b border-base-100 p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                    <FileText className="w-4 h-4" />
+                 </div>
+                 <div>
+                    <h2 className="text-sm font-black uppercase tracking-widest text-base-content">PDS Document Import</h2>
+                    <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.2em] mt-0.5">Automated Extraction via OCR</p>
+                 </div>
+              </div>
+              <button onClick={() => setShowPDSModal(false)} className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100">
+                 <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-8">
+              <PDSUploadForm onSuccess={() => setShowPDSModal(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

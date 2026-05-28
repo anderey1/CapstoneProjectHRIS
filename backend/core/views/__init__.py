@@ -8,6 +8,7 @@ from .performance import PerformanceReviewViewSet
 from .analytics import dashboard_stats, dashboard_ai_summary, analytics_detail
 from .auth import MyTokenObtainPairView
 from .audit import AuditLogViewSet
+from .pds import PDSExtractionView
 
 __all__ = [
     'SchoolViewSet',
@@ -23,4 +24,5 @@ __all__ = [
     'analytics_detail',
     'MyTokenObtainPairView',
     'AuditLogViewSet',
+    'PDSExtractionView',
 ]

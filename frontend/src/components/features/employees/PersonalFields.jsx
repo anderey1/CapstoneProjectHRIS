@@ -4,35 +4,155 @@ import React from 'react';
  * Personal Info Fields
  * 
  * Simple, professional redesign with high-density labels and standard radius.
+ * Expanded to include PDS (CS Form 212) fields.
  */
 const PersonalFields = ({ isEdit, register, errors }) => {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">First Name</label>
-          <input 
-            {...register("first_name", { required: "First name is required" })}
-            type="text" 
-            placeholder="John" 
-            className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.first_name ? 'border-error' : ''}`} 
-          />
-          {errors.first_name && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.first_name.message}</span>}
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Last Name</label>
-          <input 
-            {...register("last_name", { required: "Last name is required" })}
-            type="text" 
-            placeholder="Doe" 
-            className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.last_name ? 'border-error' : ''}`} 
-          />
-          {errors.last_name && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.last_name.message}</span>}
+    <div className="space-y-8">
+      {/* 1. Basic Name Info */}
+      <div className="space-y-4">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Full Name</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">First Name</label>
+            <input 
+              {...register("first_name", { required: "First name is required" })}
+              type="text" 
+              placeholder="John" 
+              className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.first_name ? 'border-error' : ''}`} 
+            />
+            {errors.first_name && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.first_name.message}</span>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Last Name</label>
+            <input 
+              {...register("last_name", { required: "Last name is required" })}
+              type="text" 
+              placeholder="Doe" 
+              className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.last_name ? 'border-error' : ''}`} 
+            />
+            {errors.last_name && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.last_name.message}</span>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Middle Name</label>
+            <input 
+              {...register("middle_name")}
+              type="text" 
+              placeholder="Middle" 
+              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Name Extension</label>
+            <input 
+              {...register("name_extension")}
+              type="text" 
+              placeholder="e.g. Jr., Sr." 
+              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+            />
+          </div>
         </div>
       </div>
 
+      {/* 2. Birth & Status */}
+      <div className="space-y-4">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Birth & Status</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Date of Birth</label>
+            <input 
+              {...register("date_of_birth")}
+              type="date" 
+              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Sex</label>
+            <select 
+              {...register("sex")}
+              className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest"
+            >
+              <option value="">Select Sex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Civil Status</label>
+            <select 
+              {...register("civil_status")}
+              className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest"
+            >
+              <option value="">Select Status</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+              <option value="Widowed">Widowed</option>
+              <option value="Separated">Separated</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Place of Birth</label>
+            <input 
+              {...register("place_of_birth")}
+              type="text" 
+              placeholder="City/Municipality" 
+              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Government IDs */}
+      <div className="space-y-4">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Government IDs</h4>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[
+            { label: "GSIS ID", name: "gsis_id" },
+            { label: "Pag-IBIG ID", name: "pagibig_id" },
+            { label: "PhilHealth No", name: "philhealth_no" },
+            { label: "SSS No", name: "sss_no" },
+            { label: "TIN No", name: "tin_no" },
+            { label: "Agency Employee ID", name: "agency_employee_no" },
+          ].map(id => (
+            <div key={id.name} className="space-y-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">{id.label}</label>
+              <input 
+                {...register(id.name)}
+                type="text" 
+                className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-bold" 
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. Contact & Address */}
+      <div className="space-y-4">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Contact & Address</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Mobile No</label>
+            <input 
+              {...register("mobile_no")}
+              type="text" 
+              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Residential Address</label>
+            <textarea 
+              {...register("residential_address")}
+              className="textarea textarea-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold leading-tight" 
+              rows="2"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Account Details */}
       {!isEdit && (
-        <>
+        <div className="space-y-4">
+          <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Account Details</h4>
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Username</label>
             <input 
@@ -72,7 +192,7 @@ const PersonalFields = ({ isEdit, register, errors }) => {
               {errors.password && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.password.message}</span>}
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -55,7 +55,8 @@ const EmployeeDashboard = () => {
   })).reverse() || [];
 
   const leaveData = [
-    { name: 'Balance', remaining: me?.leave_balance || 0, color: '#4f46e5' }
+    { name: 'Vacation', remaining: me?.vacation_leave_balance || 0, color: '#4f46e5' },
+    { name: 'Sick', remaining: me?.sick_leave_balance || 0, color: '#ec4899' }
   ];
 
   if (meLoading) return (
@@ -159,18 +160,31 @@ const EmployeeDashboard = () => {
            {/* Leave Balances */}
            <div className="space-y-4">
               <div className="flex items-center gap-2 px-1">
-                 <Clock className="w-4 h-4 text-primary opacity-40" />
+                 <CalendarCheck className="w-4 h-4 text-primary opacity-40" />
                  <h2 className="text-[11px] font-black uppercase tracking-widest opacity-40">Leave Credits</h2>
               </div>
-              <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 group hover:border-primary/30 transition-all max-w-sm">
-                 <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-2">Available Balance</p>
-                 <div className="flex items-end gap-2 mb-4">
-                    <h3 className="text-4xl font-black text-primary">{me?.leave_balance || 0}</h3>
-                    <span className="text-[10px] font-black opacity-20 mb-1.5 uppercase">Days Remaining</span>
-                 </div>
-                 <div className="w-full bg-base-100 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-primary h-full transition-all duration-1000" style={{ width: `${(me?.leave_balance / 15) * 100}%` }}></div>
-                 </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                <div className="bg-white border border-base-200 shadow-sm rounded-xl p-6 group hover:border-primary/30 transition-all">
+                   <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-2">Vacation Credits</p>
+                   <div className="flex items-end gap-2 mb-4">
+                      <h3 className="text-3xl font-black text-primary">{me?.vacation_leave_balance || 0}</h3>
+                      <span className="text-[9px] font-black opacity-20 mb-1 uppercase tracking-tighter">Days</span>
+                   </div>
+                   <div className="w-full bg-base-100 rounded-full h-1 overflow-hidden">
+                      <div className="bg-primary h-full transition-all duration-1000" style={{ width: `${(me?.vacation_leave_balance / 15) * 100}%` }}></div>
+                   </div>
+                </div>
+
+                <div className="bg-white border border-base-200 shadow-sm rounded-xl p-6 group hover:border-secondary/30 transition-all">
+                   <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-2">Sick Credits</p>
+                   <div className="flex items-end gap-2 mb-4">
+                      <h3 className="text-3xl font-black text-secondary">{me?.sick_leave_balance || 0}</h3>
+                      <span className="text-[9px] font-black opacity-20 mb-1 uppercase tracking-tighter">Days</span>
+                   </div>
+                   <div className="w-full bg-base-100 rounded-full h-1 overflow-hidden">
+                      <div className="bg-secondary h-full transition-all duration-1000" style={{ width: `${(me?.sick_leave_balance / 15) * 100}%` }}></div>
+                   </div>
+                </div>
               </div>
            </div>
 

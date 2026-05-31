@@ -107,12 +107,12 @@ const PersonalFields = ({ isEdit, register, errors }) => {
         <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Government IDs</h4>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
-            { label: "GSIS ID", name: "gsis_id" },
-            { label: "Pag-IBIG ID", name: "pagibig_id" },
-            { label: "PhilHealth No", name: "philhealth_no" },
-            { label: "SSS No", name: "sss_no" },
-            { label: "TIN No", name: "tin_no" },
-            { label: "Agency Employee ID", name: "agency_employee_no" },
+            { label: "UMID ID", name: "umid_id" },
+            { label: "PAG-IBIG ID", name: "pagibig_id" },
+            { label: "PHILHEALTH NO.", name: "philhealth_no" },
+            { label: "PhilSys Number (ID)", name: "philsys_id" },
+            { label: "TIN NO.", name: "tin_no" },
+            { label: "AGENCY EMPLOYEE NO.", name: "agency_employee_no" },
           ].map(id => (
             <div key={id.name} className="space-y-1.5">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">{id.label}</label>

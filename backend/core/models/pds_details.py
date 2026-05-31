@@ -13,9 +13,10 @@ class FamilyMember(models.Model):
     ]
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='family')
     relationship = models.CharField(max_length=10, choices=RELATION_CHOICES)
-    surname = models.CharField(max_length=50)
-    first_name = models.CharField(max_length=50)
+    surname = models.CharField(max_length=50, null=True, blank=True)
+    first_name = models.CharField(max_length=50, null=True, blank=True)
     middle_name = models.CharField(max_length=50, null=True, blank=True)
+    full_name = models.CharField(max_length=255, null=True, blank=True) # Used primarily for Children
     extension = models.CharField(max_length=10, null=True, blank=True)
     
     # For Spouse
@@ -41,8 +42,8 @@ class Education(models.Model):
     ]
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='education')
     level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
-    school_name = models.CharField(max_length=255)
-    degree_course = models.CharField(max_length=255)
+    school_name = models.CharField(max_length=255, null=True, blank=True)
+    degree_course = models.CharField(max_length=255, null=True, blank=True)
     period_from = models.CharField(max_length=10, null=True, blank=True)
     period_to = models.CharField(max_length=10, null=True, blank=True)
     highest_level = models.CharField(max_length=100, null=True, blank=True) # Units earned
@@ -57,7 +58,7 @@ class Education(models.Model):
 # -------------------------
 class Eligibility(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='eligibilities')
-    service = models.CharField(max_length=255) # e.g. Career Service Professional
+    service = models.CharField(max_length=255, null=True, blank=True) # e.g. Career Service Professional
     rating = models.CharField(max_length=50, null=True, blank=True)
     date_of_exam = models.DateField(null=True, blank=True)
     place_of_exam = models.CharField(max_length=255, null=True, blank=True)
@@ -65,7 +66,7 @@ class Eligibility(models.Model):
     validity_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        return self.service
+        return self.service or "Unnamed Eligibility"
 
 # -------------------------
 # V. WORK EXPERIENCE
@@ -75,8 +76,8 @@ class WorkExperience(models.Model):
     date_from = models.DateField(null=True, blank=True)
     date_to = models.DateField(null=True, blank=True) # Null if Present
     is_present = models.BooleanField(default=False)
-    position_title = models.CharField(max_length=255)
-    agency = models.CharField(max_length=255)
+    position_title = models.CharField(max_length=255, null=True, blank=True)
+    agency = models.CharField(max_length=255, null=True, blank=True)
     monthly_salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     salary_grade = models.CharField(max_length=10, null=True, blank=True) # e.g. 11-1
     status_of_appointment = models.CharField(max_length=50, null=True, blank=True) # e.g. Permanent

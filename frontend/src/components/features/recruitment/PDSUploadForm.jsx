@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from '../../../api/axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../../api/queryKeys';
-import { 
-    AlertCircle, CheckCircle2, Loader2, Upload, 
-    UserPlus, RefreshCw, FileSearch, Eye, ShieldCheck 
+import {
+    AlertCircle, CheckCircle2, Loader2, Upload,
+    UserPlus, RefreshCw, FileSearch, Eye, ShieldCheck
 } from 'lucide-react';
 
 const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
@@ -17,18 +17,35 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
 
     const cleanValue = (val) => {
         if (!val) return '';
+        
+        // Handle Arrays (Recursive)
+        if (Array.isArray(val)) {
+            return val.map(item => cleanValue(item));
+        }
+        
+        // Handle Objects (Recursive)
+        if (typeof val === 'object' && val !== null) {
+            const cleanedObj = {};
+            Object.keys(val).forEach(key => {
+                cleanedObj[key] = cleanValue(val[key]);
+            });
+            return cleanedObj;
+        }
+
+        if (typeof val !== 'string') return val;
+
         // Remove spaces and normalize for comparison
         const normalized = val.replace(/\s+/g, '').toUpperCase();
         const placeholders = [
-            '(MM/DD/YYYY)', '(JR.,SR)', '(M)', '(KG)', 
+            '(MM/DD/YYYY)', '(JR.,SR)', '(M)', '(KG)',
             'N/A', 'NONE', '.', ',', 'NOTAPPLICABLE'
         ];
-        
+
         if (placeholders.includes(normalized)) return '';
-        
+
         // Also check for partial instruction matches
         if (normalized === '(MM/DD/YY)' || normalized === '(MM/DD)') return '';
-        
+
         return val.trim();
     };
 
@@ -116,7 +133,7 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                     <p className="text-xs font-bold text-base-content/40 mb-8 text-center max-w-[300px] leading-relaxed">
                         Drop your CS Form 212 PDF here. Our AI will automatically map fields for you.
                     </p>
-                    
+
                     <div className="w-full max-w-sm space-y-4">
                         <label className="flex flex-col items-center px-4 py-6 bg-white text-primary rounded-xl shadow-lg tracking-wide border border-primary/10 cursor-pointer hover:bg-primary hover:text-white transition-all group">
                             <Upload className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -126,7 +143,7 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                             <input type="file" accept=".pdf" className="hidden" onChange={handleFileChange} />
                         </label>
 
-                        <button 
+                        <button
                             onClick={() => extractMutation.mutate(file)}
                             disabled={!file || extractMutation.isPending}
                             className="btn btn-primary btn-block rounded-xl shadow-lg shadow-primary/30 h-14 font-black uppercase tracking-[0.2em] text-xs"
@@ -147,11 +164,11 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                     {/* Left: Preview */}
                     <div className="hidden lg:flex flex-col bg-base-200 rounded-2xl overflow-hidden border border-base-300">
                         <div className="bg-base-300 px-4 py-3 flex items-center justify-between">
-                             <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 <Eye className="w-4 h-4 opacity-50" />
                                 <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Document View</span>
-                             </div>
-                             <ShieldCheck className="w-4 h-4 text-success" />
+                            </div>
+                            <ShieldCheck className="w-4 h-4 text-success" />
                         </div>
                         <iframe src={previewUrl} className="w-full h-full min-h-[500px]" title="PDS Preview" />
                     </div>
@@ -184,9 +201,9 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                                             </label>
                                             {!value && <span className="text-[8px] font-black text-warning uppercase bg-warning/10 px-2 py-0.5 rounded-full">Missing</span>}
                                         </div>
-                                        <input 
-                                            type="text" 
-                                            value={value} 
+                                        <input
+                                            type="text"
+                                            value={value}
                                             onChange={(e) => setExtractedData(prev => ({ ...prev, [key]: e.target.value }))}
                                             className={`input input-bordered w-full bg-base-50/50 focus:bg-white rounded-xl text-xs font-bold h-10 transition-all ${!value ? 'border-warning/50' : 'border-base-200'}`}
                                             placeholder={`Enter ${key.replace(/_/g, ' ')}`}
@@ -197,14 +214,14 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                         </div>
 
                         <div className="flex gap-3 mt-auto">
-                            <button 
-                                className="btn btn-ghost flex-1 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-40 hover:bg-base-200" 
+                            <button
+                                className="btn btn-ghost flex-1 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-40 hover:bg-base-200"
                                 onClick={() => setExtractedData(null)}
                             >
                                 <RefreshCw className="w-3 h-3 mr-2" />
                                 Re-Scan
                             </button>
-                            <button 
+                            <button
                                 className="btn btn-primary flex-[2] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 h-12"
                                 onClick={handleSaveAsApplicant}
                                 disabled={saveApplicantMutation.isPending}

@@ -10,6 +10,7 @@ import { FamilyFields, EducationFields, EligibilityFields, WorkHistoryFields } f
 const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, initialData }) => {
   const [activeTab, setActiveTab] = useState('personal'); 
   const [showPDSImport, setShowPDSImport] = useState(false);
+  const [backendError, setBackendError] = useState(null);
   const isEdit = !!initialData;
 
   const { 
@@ -36,12 +37,14 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
 
   useEffect(() => {
     if (isOpen) {
+      setBackendError(null);
       if (initialData) {
         reset(initialData);
         if (initialData.user_details?.role) {
           setValue('role', initialData.user_details.role);
         }
       } else {
+        // Explicitly set all defaults for a fresh "Add Staff" form
         reset({
           role: ROLES.EMPLOYEE,
           department: '',
@@ -53,6 +56,8 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
           eligibilities: [],
           work_experience: []
         });
+        // Double-ensure the role is EMPLOYEE for new records
+        setValue('role', ROLES.EMPLOYEE);
       }
       setActiveTab('personal');
       setShowPDSImport(false);
@@ -64,8 +69,52 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
   const employeeRole = watch('role');
   const setEmployeeRole = (val) => setValue('role', val);
 
-  const handleProcessSubmit = (data) => {
-    onSubmit(data);
+  const handleProcessSubmit = async (data) => {
+    setBackendError(null);
+    
+    // Clean nested data: Filter out empty objects in arrays that backend would reject
+    const cleanedData = { ...data };
+    
+    if (Array.isArray(cleanedData.family)) {
+      cleanedData.family = cleanedData.family.filter(item => 
+        (item.relationship === 'CHILD' && item.full_name) || 
+        (item.relationship !== 'CHILD' && (item.surname || item.first_name))
+      );
+    }
+    
+    if (Array.isArray(cleanedData.education)) {
+      cleanedData.education = cleanedData.education.filter(item => item.school_name || item.degree_course);
+    }
+    
+    if (Array.isArray(cleanedData.eligibilities)) {
+      cleanedData.eligibilities = cleanedData.eligibilities.filter(item => item.service);
+    }
+    
+    if (Array.isArray(cleanedData.work_experience)) {
+      cleanedData.work_experience = cleanedData.work_experience.filter(item => item.position_title || item.agency);
+    }
+
+    try {
+      await onSubmit(cleanedData);
+    } catch (err) {
+      console.error("Modal submit error:", err);
+      const errorData = err.response?.data;
+      if (errorData) {
+        if (errorData.detail) setBackendError(errorData.detail);
+        else if (typeof errorData === 'object') {
+           // Flatten nested errors for display
+           const messages = [];
+           Object.entries(errorData).forEach(([key, val]) => {
+             messages.push(`${key}: ${Array.isArray(val) ? val.join(', ') : JSON.stringify(val)}`);
+           });
+           setBackendError(messages.join(' | '));
+        } else {
+          setBackendError("An unexpected server error occurred.");
+        }
+      } else {
+        setBackendError("Unable to connect to the server.");
+      }
+    }
   };
 
   const formatDateForInput = (dateStr) => {
@@ -98,10 +147,10 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     if (data.sex) setValue('sex', data.sex);
     if (data.civil_status) setValue('civil_status', data.civil_status);
 
-    if (data.gsis_id) setValue('gsis_id', data.gsis_id);
+    if (data.umid_id) setValue('umid_id', data.umid_id);
     if (data.pagibig_id) setValue('pagibig_id', data.pagibig_id);
     if (data.philhealth_no) setValue('philhealth_no', data.philhealth_no);
-    if (data.sss_no) setValue('sss_no', data.sss_no);
+    if (data.philsys_id) setValue('philsys_id', data.philsys_id);
     if (data.tin_no) setValue('tin_no', data.tin_no);
     if (data.agency_employee_no) setValue('agency_employee_no', data.agency_employee_no);
 
@@ -114,6 +163,40 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     if (data.department) setValue('department', data.department);
     if (data.salary) setValue('salary', data.salary);
     if (data.date_hired) setValue('date_hired', formatDateForInput(data.date_hired));
+
+    // Dynamic Section Population
+    if (data.family && Array.isArray(data.family)) {
+      setValue('family', data.family.map(m => ({
+        ...m,
+        date_of_birth: formatDateForInput(m.date_of_birth),
+        // Ensure child names use the full_name field if available from extraction
+        full_name: m.relationship === 'CHILD' ? (m.full_name || `${m.first_name} ${m.surname}`.trim()) : ''
+      })));
+    }
+
+    if (data.education && Array.isArray(data.education)) {
+      setValue('education', data.education.map(e => ({
+        ...e,
+        period_from: formatDateForInput(e.period_from),
+        period_to: e.period_to === 'present' ? 'present' : formatDateForInput(e.period_to)
+      })));
+    }
+
+    if (data.eligibilities && Array.isArray(data.eligibilities)) {
+      setValue('eligibilities', data.eligibilities.map(e => ({
+        ...e,
+        date_of_exam: formatDateForInput(e.date_of_exam),
+        validity_date: formatDateForInput(e.validity_date)
+      })));
+    }
+
+    if (data.work_experience && Array.isArray(data.work_experience)) {
+      setValue('work_experience', data.work_experience.map(w => ({
+        ...w,
+        date_from: formatDateForInput(w.date_from),
+        date_to: w.date_to === 'present' ? 'present' : formatDateForInput(w.date_to)
+      })));
+    }
 
     setShowPDSImport(false);
   };
@@ -216,6 +299,18 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
             
             <form onSubmit={handleSubmit(handleProcessSubmit)} className="flex flex-col flex-1 overflow-hidden">
               <div className="p-8 overflow-y-auto flex-1 bg-white custom-scrollbar">
+                
+                {backendError && (
+                  <div className="mb-6 bg-error/10 border border-error/20 p-4 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="w-5 h-5 text-error shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-error mb-1">Save Failure</p>
+                      <p className="text-xs font-bold text-error/80 leading-relaxed uppercase">{backendError}</p>
+                    </div>
+                    <button onClick={() => setBackendError(null)} className="btn btn-ghost btn-xs btn-circle text-error">×</button>
+                  </div>
+                )}
+
                 <div className={activeTab !== 'personal' ? 'hidden' : ''}>
                   <PersonalFields 
                     isEdit={isEdit} 
@@ -233,7 +328,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                   />
                 </div>
                 <div className={activeTab !== 'history' ? 'hidden' : 'space-y-10'}>
-                   <FamilyFields control={control} register={register} errors={errors} />
+                   <FamilyFields control={control} register={register} errors={errors} watch={watch} />
                    <EducationFields control={control} register={register} errors={errors} watch={watch} />
                    <EligibilityFields control={control} register={register} errors={errors} />
                    <WorkHistoryFields control={control} register={register} errors={errors} />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MoreVertical, Briefcase, Building2, Trash2, Edit, Calendar, Heart, Plane } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -9,17 +10,25 @@ import { useAuth } from '../../../context/AuthContext';
  */
 const EmployeeRow = ({ emp, onDelete, onEdit }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const canEdit = ['ADMIN', 'HR'].includes(user?.role);
 
+  const handleRowClick = () => {
+    navigate(`/employees/${emp.id}`);
+  };
+
   return (
-    <tr className="hover:bg-base-50/50 transition-colors border-b border-base-50 last:border-0 bg-white">
+    <tr 
+      onClick={handleRowClick}
+      className="hover:bg-primary/5 transition-all border-b border-base-50 last:border-0 bg-white cursor-pointer group/row"
+    >
       <td className="px-8 py-5">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-primary/5 border border-primary/5 rounded-lg flex items-center justify-center text-primary font-black uppercase text-xs">
+          <div className="w-10 h-10 bg-primary/5 border border-primary/5 rounded-lg flex items-center justify-center text-primary font-black uppercase text-xs group-hover/row:bg-primary group-hover/row:text-white transition-colors">
             {emp.first_name[0]}{emp.last_name[0]}
           </div>
           <div>
-            <div className="font-black text-sm text-base-content uppercase tracking-tight leading-tight">
+            <div className="font-black text-sm text-base-content uppercase tracking-tight leading-tight group-hover/row:text-primary transition-colors">
               {emp.first_name} {emp.last_name}
             </div>
             <div className="flex items-center gap-2 mt-0.5">
@@ -45,7 +54,7 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
       </td>
       <td className="px-8 py-5 text-right">
         {canEdit && (
-          <div className="dropdown dropdown-bottom dropdown-end">
+          <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
             <label tabIndex={0} className="btn btn-ghost btn-xs btn-circle opacity-30 hover:opacity-100">
               <MoreVertical className="w-4 h-4" />
             </label>

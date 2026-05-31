@@ -21,20 +21,18 @@ def extract_pds_data(file_bytes):
         prompt = """
         You are a high-security HR data extraction system. Your task is to extract data ONLY from a valid Civil Service Form No. 212 (Personal Data Sheet - PDS).
         
+        STRICT RULES:
+        1. NO HALLUCINATION. If a field is not present in the document, is blank, or contains only placeholders (like "N/A", "NONE", "(mm/dd/yyyy)"), return EXACTLY "".
+        2. BE LITERAL. Do not infer values.
+        3. IGNORE FORM INSTRUCTIONS. Do not extract text that is part of the form's labels or guidance (e.g., "(Write in full)").
+        4. NORMALIZE DATES to YYYY-MM-DD. If only a year is visible, use YYYY-01-01.
+        
         CRITICAL VERIFICATION:
-        First, check if this document is a CS Form No. 212 (Personal Data Sheet). 
-        If it is NOT a PDS (e.g., blank page, random image, different document), you MUST return EXACTLY this JSON: 
-        {"is_valid_pds": false}
-        and stop.
+        First, check if this document is a CS Form No. 212. 
+        If it is NOT a PDS, return: {"is_valid_pds": false}
         
-        If it IS a PDS, extract the data following these rules:
-        1. NO HALLUCINATION. If a field is blank or unreadable, return "".
-        2. Do not assume values.
-        3. Be literal.
-        
-        Return a JSON object with:
-        "is_valid_pds": true,
-        "data": {
+        If it IS a PDS, return a JSON object with "is_valid_pds": true and a "data" object containing:
+        {
             "first_name": "...",
             "last_name": "...",
             "middle_name": "...",
@@ -43,10 +41,10 @@ def extract_pds_data(file_bytes):
             "place_of_birth": "...",
             "sex": "...",
             "civil_status": "...",
-            "gsis_id": "...",
+            "umid_id": "...",
             "pagibig_id": "...",
             "philhealth_no": "...",
-            "sss_no": "...",
+            "philsys_id": "...",
             "tin_no": "...",
             "agency_employee_no": "...",
             "mobile_no": "...",
@@ -56,7 +54,57 @@ def extract_pds_data(file_bytes):
             "position": "...",
             "department": "...",
             "salary": "number",
-            "date_hired": "YYYY-MM-DD"
+            "date_hired": "YYYY-MM-DD",
+            
+            "family": [
+                {
+                    "relationship": "SPOUSE|FATHER|MOTHER|CHILD",
+                    "surname": "...",
+                    "first_name": "...",
+                    "middle_name": "...",
+                    "full_name": "...",
+                    "occupation": "...",
+                    "employer": "...",
+                    "date_of_birth": "YYYY-MM-DD"
+                }
+            ],
+            
+            "education": [
+                {
+                    "level": "ELEMENTARY|SECONDARY|VOCATIONAL|COLLEGE|GRADUATE",
+                    "school_name": "...",
+                    "degree_course": "...",
+                    "period_from": "YYYY-MM-DD",
+                    "period_to": "YYYY-MM-DD|present",
+                    "highest_level": "...",
+                    "year_graduated": "YYYY",
+                    "honors_received": "..."
+                }
+            ],
+            
+            "eligibilities": [
+                {
+                    "service": "...",
+                    "rating": "...",
+                    "date_of_exam": "YYYY-MM-DD",
+                    "place_of_exam": "...",
+                    "license_number": "...",
+                    "validity_date": "YYYY-MM-DD"
+                }
+            ],
+            
+            "work_experience": [
+                {
+                    "date_from": "YYYY-MM-DD",
+                    "date_to": "YYYY-MM-DD|present",
+                    "position_title": "...",
+                    "agency": "...",
+                    "monthly_salary": "number",
+                    "salary_grade": "...",
+                    "status_of_appointment": "...",
+                    "is_gov_service": boolean
+                }
+            ]
         }
         """
         
@@ -159,6 +207,20 @@ def get_attendance_status(check_in_time):
     if check_in_time > standard_time:
         return 'late'
     return 'present'
+
+def calculate_working_days(start_date, end_date):
+    """
+    Calculates the number of working days (Mon-Fri) between two dates inclusive.
+    Pure python implementation to avoid extra dependencies.
+    """
+    import datetime
+    day_count = 0
+    current_date = start_date
+    while current_date <= end_date:
+        if current_date.weekday() < 5: # 0-4 is Mon-Fri
+            day_count += 1
+        current_date += datetime.timedelta(days=1)
+    return day_count
 
 def generate_daily_qr_token():
     """

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Edit, Trash2, MoreVertical, Briefcase, Building2, Calendar, User } from 'lucide-react';
 import EmployeeRow from './EmployeeRow';
 import { useAuth } from '../../../context/AuthContext';
@@ -10,6 +11,7 @@ import { useAuth } from '../../../context/AuthContext';
  */
 const EmployeeTable = ({ employees, onDelete, onEdit }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const canEdit = ['ADMIN', 'HR'].includes(user?.role);
 
   return (
@@ -19,20 +21,24 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
         {employees.length > 0 ? (
           employees.map((emp) => (
-            <div key={emp.id} className="bg-white p-6 rounded-xl shadow-sm border border-base-200 flex flex-col gap-4 group hover:border-primary/20 transition-all">
+            <div 
+              key={emp.id} 
+              onClick={() => navigate(`/employees/${emp.id}`)}
+              className="bg-white p-6 rounded-xl shadow-sm border border-base-200 flex flex-col gap-4 group hover:border-primary/40 hover:shadow-md transition-all cursor-pointer"
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/5 border border-primary/5 rounded-xl flex items-center justify-center text-primary font-black uppercase text-xs">
+                  <div className="w-12 h-12 bg-primary/5 border border-primary/5 rounded-xl flex items-center justify-center text-primary font-black uppercase text-xs group-hover:bg-primary group-hover:text-white transition-colors">
                     {emp.first_name[0]}{emp.last_name[0]}
                   </div>
                   <div className="space-y-0.5">
-                    <h3 className="font-black text-sm text-base-content uppercase tracking-tight leading-tight">{emp.first_name} {emp.last_name}</h3>
+                    <h3 className="font-black text-sm text-base-content uppercase tracking-tight leading-tight group-hover:text-primary transition-colors">{emp.first_name} {emp.last_name}</h3>
                     <p className="text-[10px] font-black opacity-30 uppercase tracking-widest">#{emp.id.toString().padStart(4, '0')}</p>
                   </div>
                 </div>
                 
                 {canEdit && (
-                  <div className="dropdown dropdown-end">
+                  <div className="dropdown dropdown-end" onClick={(e) => e.stopPropagation()}>
                     <label tabIndex={0} className="btn btn-ghost btn-xs btn-circle opacity-30 hover:opacity-100">
                       <MoreVertical className="w-4 h-4" />
                     </label>

@@ -80,6 +80,7 @@ function App() {
           
           <Route path="dtr" element={<DTR />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="employees/:id" element={<Profile />} />
 
           {/* Payroll - Role based switching */}
           <Route

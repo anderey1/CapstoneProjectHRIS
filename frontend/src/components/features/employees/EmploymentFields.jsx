@@ -1,5 +1,5 @@
 import React from 'react';
-import { ROLES } from '../../../utils/constants';
+import { ROLES, DEPED_POSITIONS } from '../../../utils/constants';
 
 /**
  * Work Info Fields (Employment)
@@ -26,12 +26,18 @@ const EmploymentFields = ({ schools, register, errors }) => {
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Position</label>
-          <input 
+          <select 
             {...register("position", { required: "Position is required" })}
-            type="text" 
-            placeholder="e.g. Admin Officer II" 
-            className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.position ? 'border-error' : ''}`} 
-          />
+            className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.position ? 'border-error' : ''}`}
+          >
+            <option value="">Select Position</option>
+            <optgroup label="TEACHING ROLES">
+              {DEPED_POSITIONS.TEACHING.map(p => <option key={p} value={p}>{p}</option>)}
+            </optgroup>
+            <optgroup label="NON-TEACHING ROLES">
+              {DEPED_POSITIONS.NON_TEACHING.map(p => <option key={p} value={p}>{p}</option>)}
+            </optgroup>
+          </select>
           {errors.position && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.position.message}</span>}
         </div>
       </div>

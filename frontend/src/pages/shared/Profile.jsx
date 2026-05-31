@@ -1,22 +1,30 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
   User, Mail, Briefcase, Building2, MapPin, 
   Calendar, Wallet, Camera, Fingerprint,
-  UserCircle, CalendarCheck
+  UserCircle, CalendarCheck, Users, GraduationCap,
+  Award, History, Globe
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 
 /**
- * My Profile Page
+ * My Profile / Employee Detailed View
  * 
  * Simple, professional redesign for viewing personal and work details.
+ * Expanded to include full PDS history sections.
  */
 const Profile = () => {
+  const { id } = useParams();
+
   const { data: me, isLoading } = useQuery({
-    queryKey: ['me'],
-    queryFn: () => api.get('employees/me/').then(res => res.data)
+    queryKey: id ? ['employee', id] : ['me'],
+    queryFn: () => {
+        const endpoint = id ? `employees/${id}/` : 'employees/me/';
+        return api.get(endpoint).then(res => res.data);
+    }
   });
 
   if (isLoading) return (
@@ -54,11 +62,11 @@ const Profile = () => {
                 {me?.first_name} {me?.last_name}
               </h1>
               <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-primary/10">
-                {me?.user_details?.role}
+                {me?.user_details?.role || 'STAFF'}
               </div>
             </div>
             <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex items-center gap-2">
-              <Briefcase className="w-3.5 h-3.5" /> {me?.position} • {me?.department}
+              <Briefcase className="w-3.5 h-3.5" /> {me?.position || 'No Position'} • {me?.department || 'Unassigned'}
             </p>
           </div>
         </div>
@@ -80,16 +88,25 @@ const Profile = () => {
                   <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><User className="w-4 h-4 opacity-30" /></div>
                   <div>
                     <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Username</p>
-                    <p className="text-sm font-bold text-base-content">{me?.user_details?.username}</p>
+                    <p className="text-sm font-bold text-base-content">{me?.user_details?.username || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Mail className="w-4 h-4 opacity-30" /></div>
                   <div>
                     <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Email</p>
-                    <p className="text-sm font-bold text-base-content">{me?.user_details?.email}</p>
+                    <p className="text-sm font-bold text-base-content">{me?.user_details?.email || 'N/A'}</p>
                   </div>
                 </div>
+                {me?.mobile_no && (
+                   <div className="flex items-center gap-4">
+                     <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Globe className="w-4 h-4 opacity-30" /></div>
+                     <div>
+                       <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Mobile</p>
+                       <p className="text-sm font-bold text-base-content">{me.mobile_no}</p>
+                     </div>
+                   </div>
+                )}
               </div>
             </div>
 
@@ -103,7 +120,7 @@ const Profile = () => {
                   <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Calendar className="w-4 h-4 opacity-30" /></div>
                   <div>
                     <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Joined</p>
-                    <p className="text-sm font-bold text-base-content">{new Date(me?.date_hired).toLocaleDateString()}</p>
+                    <p className="text-sm font-bold text-base-content">{me?.date_hired ? new Date(me.date_hired).toLocaleDateString() : 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -113,28 +130,107 @@ const Profile = () => {
                     <p className="text-sm font-bold text-primary">₱{parseFloat(me?.salary || 0).toLocaleString()}</p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Leave Summary */}
-          <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-8">Leave Balance</h3>
-            <div className="max-w-md mx-auto">
-              <div className="p-6 bg-base-50 rounded-xl border border-base-100 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center border border-primary/10">
-                    <CalendarCheck className="w-5 h-5" />
-                  </div>
+                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><CalendarCheck className="w-4 h-4 opacity-30" /></div>
                   <div>
-                    <h4 className="text-2xl font-black text-base-content">{me?.leave_balance || 0}</h4>
-                    <p className="text-[9px] font-black uppercase opacity-40 tracking-widest">Available Credits</p>
+                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Balance</p>
+                    <p className="text-sm font-bold text-base-content">{me?.leave_balance || 0} Days Available</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Detailed PDS History Sections */}
+          <div className="space-y-8">
+            
+            {/* 1. Family Background */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
+                <Users className="w-4 h-4 text-primary" /> II. Family Background
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {me?.family?.length > 0 ? me.family.map((f, idx) => (
+                   <div key={idx} className="p-4 bg-base-50 rounded-lg border border-base-100 space-y-1">
+                      <div className="flex justify-between items-start">
+                         <p className="font-black text-xs uppercase tracking-tight">{f.relationship === 'CHILD' ? f.full_name : `${f.first_name} ${f.surname}`}</p>
+                         <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">{f.relationship}</span>
+                      </div>
+                      {f.occupation && <p className="text-[10px] font-bold opacity-40 uppercase">{f.occupation}</p>}
+                   </div>
+                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
+              </div>
+            </div>
+
+            {/* 2. Educational Background */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
+                <GraduationCap className="w-4 h-4 text-primary" /> III. Educational Background
+              </h3>
+              <div className="space-y-4">
+                {me?.education?.length > 0 ? me.education.map((e, idx) => (
+                   <div key={idx} className="flex gap-6 p-4 bg-base-50 rounded-lg border border-base-100">
+                      <div className="w-10 h-10 rounded bg-white flex items-center justify-center font-black text-primary text-[10px] uppercase shadow-sm border border-base-100 shrink-0">
+                         {e.level?.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                         <div className="flex justify-between items-start">
+                            <h4 className="font-black text-xs uppercase tracking-tight truncate">{e.school_name}</h4>
+                            <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">{e.level}</span>
+                         </div>
+                         <p className="text-[10px] font-bold opacity-40 uppercase truncate">{e.degree_course}</p>
+                         <p className="text-[9px] font-black text-primary/60 uppercase mt-2">Class of {e.year_graduated || 'N/A'}</p>
+                      </div>
+                   </div>
+                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
+              </div>
+            </div>
+
+            {/* 3. Civil Service Eligibility */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
+                <Award className="w-4 h-4 text-primary" /> IV. Eligibility
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {me?.eligibilities?.length > 0 ? me.eligibilities.map((e, idx) => (
+                   <div key={idx} className="p-4 bg-base-50 rounded-lg border border-base-100 space-y-1">
+                      <p className="font-black text-xs uppercase tracking-tight">{e.service}</p>
+                      <div className="flex justify-between items-center text-[10px] font-bold opacity-40 uppercase">
+                         <span>Rating: {e.rating || 'N/A'}</span>
+                         <span>{e.date_of_exam ? new Date(e.date_of_exam).getFullYear() : ''}</span>
+                      </div>
+                   </div>
+                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
+              </div>
+            </div>
+
+            {/* 4. Work Experience */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
+                <History className="w-4 h-4 text-primary" /> V. Work Experience
+              </h3>
+              <div className="space-y-4">
+                {me?.work_experience?.length > 0 ? me.work_experience.map((w, idx) => (
+                   <div key={idx} className="flex gap-6 p-4 bg-base-50 rounded-lg border border-base-100">
+                      <div className="w-10 h-10 rounded bg-white flex items-center justify-center font-black text-primary text-[10px] uppercase shadow-sm border border-base-100 shrink-0">
+                         {w.is_gov_service ? 'GOV' : 'PVT'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                         <div className="flex justify-between items-start">
+                            <h4 className="font-black text-xs uppercase tracking-tight truncate">{w.position_title}</h4>
+                            <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">
+                               {w.date_from ? new Date(w.date_from).getFullYear() : ''} — {w.is_present ? 'Present' : (w.date_to ? new Date(w.date_to).getFullYear() : '')}
+                            </span>
+                         </div>
+                         <p className="text-[10px] font-bold opacity-40 uppercase truncate">{w.agency}</p>
+                         <p className="text-[9px] font-black text-primary/60 uppercase mt-2">₱{parseFloat(w.monthly_salary || 0).toLocaleString()} / MONTH</p>
+                      </div>
+                   </div>
+                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
+              </div>
+            </div>
+
+          </div>
         </div>
 
         {/* Sidebar: Map */}
@@ -165,6 +261,29 @@ const Profile = () => {
                  {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Office Boundary
                </span>
             </div>
+          </div>
+
+          {/* Gov IDs Sidebar Card */}
+          <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6">
+             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+                <Fingerprint className="w-4 h-4 text-primary" /> Verified IDs
+             </h3>
+             <div className="space-y-4">
+                {[
+                   { label: 'UMID', val: me?.umid_id },
+                   { label: 'Pag-IBIG', val: me?.pagibig_id },
+                   { label: 'PhilHealth', val: me?.philhealth_no },
+                   { label: 'PhilSys', val: me?.philsys_id },
+                   { label: 'TIN', val: me?.tin_no },
+                   { label: 'Agency No', val: me?.agency_employee_no }
+                ].filter(id => id.val).map(id => (
+                   <div key={id.label}>
+                      <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">{id.label}</p>
+                      <p className="text-xs font-black text-base-content tracking-wider">{id.val}</p>
+                   </div>
+                ))}
+                {!me?.umid_id && !me?.pagibig_id && <p className="text-[10px] font-bold opacity-20 uppercase">No ID records found</p>}
+             </div>
           </div>
         </div>
 

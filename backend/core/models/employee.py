@@ -84,10 +84,10 @@ class Employee(models.Model):
     civil_status = models.CharField(max_length=20, null=True, blank=True)
     
     # Government IDs
-    gsis_id = models.CharField(max_length=30, null=True, blank=True)
+    umid_id = models.CharField(max_length=30, null=True, blank=True)
     pagibig_id = models.CharField(max_length=30, null=True, blank=True)
     philhealth_no = models.CharField(max_length=30, null=True, blank=True)
-    sss_no = models.CharField(max_length=30, null=True, blank=True)
+    philsys_id = models.CharField(max_length=30, null=True, blank=True)
     tin_no = models.CharField(max_length=30, null=True, blank=True)
     agency_employee_no = models.CharField(max_length=30, null=True, blank=True) # Employee ID
     
@@ -98,14 +98,20 @@ class Employee(models.Model):
     permanent_address = models.TextField(null=True, blank=True)
 
     # Work Information
-    position = models.CharField(max_length=50)
-    department = models.CharField(max_length=50)
+    position = models.CharField(max_length=50, null=True, blank=True)
+    department = models.CharField(max_length=50, null=True, blank=True)
     school = models.ForeignKey(School, on_delete=models.SET_NULL, null=True, blank=True, related_name='personnel')
-    salary = models.DecimalField(max_digits=12, decimal_places=2)
+    salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     date_hired = models.DateField(null=True, blank=True)
 
-    # Leave Balance (Unified 15 days for all types)
-    leave_balance = models.DecimalField(max_digits=5, decimal_places=2, default=15.0)
+    # Leave Balances (Standard CSC)
+    vacation_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
+    sick_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
+
+    # Legacy field for compatibility if needed, but we'll use the ones above
+    @property
+    def leave_balance(self):
+        return self.vacation_leave_balance + self.sick_leave_balance
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

@@ -46,7 +46,10 @@ const Employees = () => {
       closeModal();
       showToast('Employee added!');
     },
-    onError: () => alert('Failed to add employee.')
+    onError: (err) => {
+      console.error("Add staff error:", err.response?.data);
+      alert('Failed to add employee. Check console for details.');
+    }
   });
 
   const updateMutation = useMutation({
@@ -56,7 +59,10 @@ const Employees = () => {
       closeModal();
       showToast('Record updated!');
     },
-    onError: () => alert('Update failed.')
+    onError: (err) => {
+      console.error("Update staff error:", err.response?.data);
+      alert('Update failed. Check console for details.');
+    }
   });
 
   const deleteMutation = useMutation({
@@ -78,11 +84,11 @@ const Employees = () => {
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
-  const handleFormSubmit = (data) => {
+  const handleFormSubmit = async (data) => {
     if (selectedEmployee) {
-      updateMutation.mutate(data);
+      await updateMutation.mutateAsync(data);
     } else {
-      addMutation.mutate(data);
+      await addMutation.mutateAsync(data);
     }
   };
 

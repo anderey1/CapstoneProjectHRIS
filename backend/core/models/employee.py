@@ -108,6 +108,9 @@ class Employee(models.Model):
     bank_name = models.CharField(max_length=100, default="Land Bank of the Philippines")
     account_number = models.CharField(max_length=20, null=True, blank=True)
 
+    # Biometric Data (JSON string of 128-float array)
+    face_descriptor = models.TextField(null=True, blank=True)
+
     # Leave Balances (Standard CSC)
     vacation_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
     sick_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)

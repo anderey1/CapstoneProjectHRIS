@@ -64,9 +64,19 @@ class ProvidentLoan(models.Model):
     def clean(self):
         """Validate co-maker salary is equal or higher than applicant's."""
         if self.co_maker and self.employee:
+            # Check if either salary is None before comparing
+            if self.employee.salary is None:
+                raise ValidationError({
+                    'employee': "Employee must have a salary set before applying for a loan."
+                })
+            if self.co_maker.salary is None:
+                raise ValidationError({
+                    'co_maker': "Co-maker must have a salary set to be validated."
+                })
+
             if self.co_maker.salary < self.employee.salary:
                 raise ValidationError({
-                    'co_maker': "Co-maker's salary must be equal to or higher than the applicant's salary."
+                    'co_maker': f"Co-maker's salary (₱{self.co_maker.salary}) must be equal to or higher than the applicant's salary (₱{self.employee.salary})."
                 })
             if self.co_maker == self.employee:
                 raise ValidationError({

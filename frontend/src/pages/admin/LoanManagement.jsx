@@ -90,7 +90,7 @@ const LoanManagement = () => {
   });
 
   const disburseMutation = useMutation({
-    mutationFn: (id) => api.post(`loans/${id}/release_funds/`),
+    mutationFn: (id) => api.post(`loans/${id}/release-funds/`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
       setSelectedLoan(null);

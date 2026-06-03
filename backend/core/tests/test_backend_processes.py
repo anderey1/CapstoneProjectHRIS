@@ -286,7 +286,7 @@ class TestHRISBackendSuite:
         data = {
             "first_name": "Test",
             "last_name": "Applicant",
-            "position_applied": "Office Aide",
+            "position_applied": "Teacher I",
             "email": "test@applicant.com",
             "phone": "09123456789"
         }

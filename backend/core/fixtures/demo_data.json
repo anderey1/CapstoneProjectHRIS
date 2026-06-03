@@ -1,0 +1,197 @@
+[
+  {
+    "model": "core.user",
+    "pk": 1,
+    "fields": {
+      "username": "admin",
+      "email": "admin@deped.gov.ph",
+      "role": "ADMIN",
+      "is_staff": true,
+      "is_superuser": true,
+      "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
+    }
+  },
+  {
+    "model": "core.user",
+    "pk": 2,
+    "fields": {
+      "username": "hr_lucena",
+      "email": "hr@deped.gov.ph",
+      "role": "HR",
+      "is_staff": true,
+      "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
+    }
+  },
+  {
+    "model": "core.user",
+    "pk": 3,
+    "fields": {
+      "username": "accountant_main",
+      "email": "finance@deped.gov.ph",
+      "role": "ACCOUNTANT",
+      "is_staff": true,
+      "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
+    }
+  },
+  {
+    "model": "core.user",
+    "pk": 4,
+    "fields": {
+      "username": "marites.cruz",
+      "email": "marites.cruz@deped.gov.ph",
+      "role": "EMPLOYEE",
+      "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
+    }
+  },
+  {
+    "model": "core.user",
+    "pk": 5,
+    "fields": {
+      "username": "juandelacruz",
+      "email": "juan.delacruz@deped.gov.ph",
+      "role": "EMPLOYEE",
+      "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
+    }
+  },
+  {
+    "model": "core.school",
+    "pk": 1,
+    "fields": {
+      "name": "Lucena City National High School",
+      "latitude": "13.936700",
+      "longitude": "121.615000",
+      "radius_meters": 150
+    }
+  },
+  {
+    "model": "core.school",
+    "pk": 2,
+    "fields": {
+      "name": "Gulang-Gulang Elementary School",
+      "latitude": "13.945000",
+      "longitude": "121.620000",
+      "radius_meters": 100
+    }
+  },
+  {
+    "model": "core.employee",
+    "pk": 1,
+    "fields": {
+      "user": 4,
+      "first_name": "Marites",
+      "last_name": "Cruz",
+      "agency_employee_no": "2024-LC-001",
+      "salary": "35000.00",
+      "school": 1,
+      "position": "Teacher III",
+      "department": "Senior High School",
+      "bank_name": "Land Bank of the Philippines",
+      "account_number": "001234567890"
+    }
+  },
+  {
+    "model": "core.employee",
+    "pk": 2,
+    "fields": {
+      "user": 5,
+      "first_name": "Juan",
+      "last_name": "Dela Cruz",
+      "agency_employee_no": "2024-LC-002",
+      "salary": "28500.00",
+      "school": 1,
+      "position": "Administrative Officer II",
+      "department": "Operations",
+      "bank_name": "Land Bank of the Philippines",
+      "account_number": "009876543210"
+    }
+  },
+  {
+    "model": "core.providentloan",
+    "pk": 1,
+    "fields": {
+      "employee": 1,
+      "loan_amount": "50000.00",
+      "interest_rate": "6.00",
+      "term_months": 24,
+      "status": "released",
+      "purpose": "medical",
+      "monthly_payment": "2208.33",
+      "total_amount": "53000.00",
+      "date_applied": "2026-01-10"
+    }
+  },
+  {
+    "model": "core.providentloan",
+    "pk": 2,
+    "fields": {
+      "employee": 2,
+      "loan_amount": "10000.00",
+      "interest_rate": "5.00",
+      "term_months": 12,
+      "status": "approved",
+      "purpose": "general",
+      "monthly_payment": "875.00",
+      "total_amount": "10500.00",
+      "date_applied": "2026-05-15"
+    }
+  },
+  {
+    "model": "core.payroll",
+    "pk": 1,
+    "fields": {
+      "employee": 1,
+      "cutoff_period": "May 1-15 (1st Quatrain)",
+      "days_worked": "11.0",
+      "basic_salary": "17500.00",
+      "gross_salary": "17500.00",
+      "sss": "675.00",
+      "philhealth": "437.50",
+      "pagibig": "100.00",
+      "tax": "531.25",
+      "loans": "1104.17",
+      "total_deductions": "2847.92",
+      "net_salary": "14652.08",
+      "status": "released",
+      "date_generated": "2026-05-16T08:00:00Z",
+      "date_released": "2026-05-18T10:00:00Z"
+    }
+  },
+  {
+    "model": "core.payroll",
+    "pk": 2,
+    "fields": {
+      "employee": 2,
+      "cutoff_period": "May 1-15 (1st Quatrain)",
+      "days_worked": "10.0",
+      "basic_salary": "12954.55",
+      "gross_salary": "12954.55",
+      "sss": "641.25",
+      "philhealth": "356.25",
+      "pagibig": "100.00",
+      "tax": "0.00",
+      "loans": "0.00",
+      "total_deductions": "1097.50",
+      "net_salary": "11857.05",
+      "status": "approved",
+      "date_generated": "2026-05-17T09:30:00Z"
+    }
+  },
+  {
+    "model": "core.applicant",
+    "pk": 1,
+    "fields": {
+      "first_name": "Maria",
+      "last_name": "Santos",
+      "email": "maria@example.com",
+      "phone": "09123456789",
+      "position_applied": "Teacher I",
+      "status": "initial_evaluation",
+      "education_score": "9.50",
+      "training_score": "8.00",
+      "experience_score": "7.50",
+      "total_score": "25.00",
+      "date_applied": "2026-05-20T14:20:00Z",
+      "last_status_update": "2026-05-20T14:20:00Z"
+    }
+  }
+]

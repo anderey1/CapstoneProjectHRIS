@@ -104,6 +104,10 @@ class Employee(models.Model):
     salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     date_hired = models.DateField(null=True, blank=True)
 
+    # Bank Information (Mock Disbursement)
+    bank_name = models.CharField(max_length=100, default="Land Bank of the Philippines")
+    account_number = models.CharField(max_length=20, null=True, blank=True)
+
     # Leave Balances (Standard CSC)
     vacation_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
     sick_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)

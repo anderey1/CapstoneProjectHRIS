@@ -5,10 +5,12 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db import transaction
 from decimal import Decimal
-from ..models import Employee, ProvidentLoan, LoanPayment, Payroll, Role, AuditLog
+from ..models import Employee, ProvidentLoan, LoanPayment, Payroll, Role, AuditLog, Attendance
 from ..serializers import PayrollSerializer
 from ..permissions import IsAdminOrHR, IsAccountant, IsAdmin
+from ..utils import parse_cutoff_dates
 
 class PayrollViewSet(viewsets.ModelViewSet):
     queryset = Payroll.objects.all().order_by('-date_generated')
@@ -36,10 +38,39 @@ class PayrollViewSet(viewsets.ModelViewSet):
             return Response({"detail": "employee_id is required."}, status=400)
             
         employee = get_object_or_404(Employee, id=employee_id)
+        
+        # Validation: Employee must have a salary set
+        if employee.salary is None:
+            return Response({
+                "detail": f"Employee {employee} has no salary set. Please set a salary in their profile before generating payroll."
+            }, status=400)
+
         cutoff = request.data.get('cutoff', request.data.get('cutoff_period', 'Unknown Cutoff'))
+        
+        # Calculate Days Worked from Attendance
+        start_date, end_date = parse_cutoff_dates(cutoff)
+        days_worked = Decimal('11.0') # Default for semi-monthly if no attendance data found
+        
+        if start_date and end_date:
+            # Count distinct days present/late in the range
+            present_days = Attendance.objects.filter(
+                employee=employee,
+                date__range=(start_date, end_date),
+                status__in=['present', 'late']
+            ).values('date').distinct().count()
+            
+            # If we found attendance records, use that count. 
+            # Otherwise, assume full attendance (standard for many gov roles unless flagged)
+            if present_days > 0:
+                days_worked = Decimal(str(present_days))
 
         # Get employee's basic monthly salary to calculate dynamic deductions
         monthly_salary = employee.salary
+        
+        # Calculate semi-monthly basic salary based on attendance
+        # Formula: (Monthly Salary / 22 standard working days) * days_worked
+        daily_rate = monthly_salary / Decimal('22.0')
+        calculated_salary = (daily_rate * days_worked).quantize(Decimal('0.01'))
 
         # 1. SSS Deduction: 4.5% of monthly salary, split per cutoff (capped at 675.00 per cutoff)
         sss_deduction = (monthly_salary * Decimal('0.045')) / Decimal('2.0')
@@ -77,9 +108,6 @@ class PayrollViewSet(viewsets.ModelViewSet):
             'tax': tax_deduction.quantize(Decimal('0.01'))
         }
 
-        # Calculate semi-monthly basic salary
-        semi_monthly_salary = (monthly_salary / Decimal('2.0')).quantize(Decimal('0.01'))
-
         # Fetch active released provident loan to deduct payment
         active_loan = ProvidentLoan.objects.filter(employee=employee, status='released').first()
         loan_deduction = Decimal('0.00')
@@ -101,7 +129,8 @@ class PayrollViewSet(viewsets.ModelViewSet):
                 return Response({"detail": f"Cannot re-generate payroll in {existing_payroll.status} status."}, status=400)
             
             payroll = existing_payroll
-            payroll.basic_salary = semi_monthly_salary
+            payroll.days_worked = days_worked
+            payroll.basic_salary = calculated_salary
             payroll.loans = loan_deduction
             payroll.sss = DEDUCTIONS['sss']
             payroll.philhealth = DEDUCTIONS['philhealth']
@@ -112,7 +141,8 @@ class PayrollViewSet(viewsets.ModelViewSet):
             payroll = Payroll.objects.create(
                 employee=employee,
                 cutoff_period=cutoff,
-                basic_salary=semi_monthly_salary,
+                days_worked=days_worked,
+                basic_salary=calculated_salary,
                 loans=loan_deduction,
                 **DEDUCTIONS
             )
@@ -140,21 +170,22 @@ class PayrollViewSet(viewsets.ModelViewSet):
         if payroll.status != 'approved':
             return Response({"detail": f"Cannot release payroll in {payroll.status} status. It must be approved first."}, status=400)
             
-        payroll.status = 'released'
-        payroll.date_released = timezone.now()
-        payroll.save()
+        with transaction.atomic():
+            payroll.status = 'released'
+            payroll.date_released = timezone.now()
+            payroll.save()
 
-        # Record Loan Repayment if deduction was part of this payroll
-        if payroll.loans > 0:
-            # Important: We only deduct from 'released' loans (funds already disbursed)
-            active_loan = ProvidentLoan.objects.filter(employee=payroll.employee, status='released').first()
-            if active_loan:
-                LoanPayment.objects.create(loan=active_loan, amount_paid=payroll.loans)
-                AuditLog.objects.create(
-                    user=request.user, 
-                    action=f"Released payroll loan deduction: {payroll.employee} (₱{payroll.loans})"
-                )
-        
-        AuditLog.objects.create(user=request.user, action=f"Released payroll: {payroll.employee} ({payroll.cutoff_period})")
+            # Record Loan Repayment if deduction was part of this payroll
+            if payroll.loans > 0:
+                # Important: We only deduct from 'released' loans (funds already disbursed)
+                active_loan = ProvidentLoan.objects.filter(employee=payroll.employee, status='released').first()
+                if active_loan:
+                    LoanPayment.objects.create(loan=active_loan, amount_paid=payroll.loans)
+                    AuditLog.objects.create(
+                        user=request.user, 
+                        action=f"Released payroll loan deduction: {payroll.employee} (₱{payroll.loans})"
+                    )
+            
+            AuditLog.objects.create(user=request.user, action=f"Released payroll: {payroll.employee} ({payroll.cutoff_period})")
+            
         return Response({"message": "Payroll released successfully.", "status": "released"})
-

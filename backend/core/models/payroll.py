@@ -13,7 +13,12 @@ class Payroll(models.Model):
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payrolls')
     cutoff_period = models.CharField(max_length=50, default="May 1-15, 2026")
-    basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    
+    # Timekeeping
+    days_worked = models.DecimalField(max_digits=4, decimal_places=1, default=11.0) # Standard 11 days per cutoff
+    
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2) # This is now the calculated salary based on attendance
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0) # Total before deductions
     
     # Deductions
     sss = models.DecimalField(max_digits=10, decimal_places=2, default=0)

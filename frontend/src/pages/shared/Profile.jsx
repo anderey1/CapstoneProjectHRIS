@@ -1,23 +1,29 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   User, Mail, Briefcase, Building2, MapPin, 
   Calendar, Wallet, Camera, Fingerprint,
   UserCircle, CalendarCheck, Users, GraduationCap,
-  Award, History, Globe
+  Award, History, Globe, ShieldCheck, Loader2, X,
+  CheckCircle2
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import { loadFaceModels, extractFaceDescriptor } from '../../utils/faceAuth';
 
 /**
  * My Profile / Employee Detailed View
  * 
  * Simple, professional redesign for viewing personal and work details.
- * Expanded to include full PDS history sections.
+ * Expanded to include full PDS history sections and biometric enrollment.
  */
 const Profile = () => {
   const { id } = useParams();
+  const queryClient = useQueryClient();
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [enrollStep, setEnrollStep] = useState('idle'); // idle, loading, ready, capturing, success, error
+  const videoRef = useRef(null);
 
   const { data: me, isLoading } = useQuery({
     queryKey: id ? ['employee', id] : ['me'],
@@ -26,6 +32,76 @@ const Profile = () => {
         return api.get(endpoint).then(res => res.data);
     }
   });
+
+  const enrollMutation = useMutation({
+    mutationFn: (descriptor) => {
+      const endpoint = id ? `employees/${id}/` : 'employees/me/';
+      return api.patch(endpoint, { face_descriptor: JSON.stringify(Array.from(descriptor)) });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: id ? ['employee', id] : ['me'] });
+      setEnrollStep('success');
+      setTimeout(() => {
+        setIsEnrolling(false);
+        setEnrollStep('idle');
+      }, 3000);
+    },
+    onError: (err) => {
+      console.error("Enrollment failed:", err.response?.data);
+      setEnrollStep('error');
+    }
+  });
+
+  const startEnrollment = async () => {
+    setIsEnrolling(true);
+    setEnrollStep('loading');
+    
+    const loaded = await loadFaceModels();
+    if (!loaded) {
+      setEnrollStep('error');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setEnrollStep('ready');
+      }
+    } catch (err) {
+      console.error(err);
+      setEnrollStep('error');
+    }
+  };
+
+  const captureFace = async () => {
+    if (!videoRef.current) return;
+    setEnrollStep('capturing');
+    
+    const descriptor = await extractFaceDescriptor(videoRef.current);
+    
+    // Stop camera safely
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject;
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    if (descriptor) {
+      enrollMutation.mutate(descriptor);
+    } else {
+      setEnrollStep('error');
+      alert("Face not detected. Please try again in better lighting.");
+    }
+  };
+
+  const cancelEnrollment = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setIsEnrolling(false);
+    setEnrollStep('idle');
+  };
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
@@ -64,6 +140,11 @@ const Profile = () => {
               <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-primary/10">
                 {me?.user_details?.role || 'STAFF'}
               </div>
+              {me?.face_descriptor && (
+                <div className="px-3 py-1 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest border border-success/10 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> Face Verified
+                </div>
+              )}
             </div>
             <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex items-center gap-2">
               <Briefcase className="w-3.5 h-3.5" /> {me?.position || 'No Position'} • {me?.department || 'Unassigned'}
@@ -78,10 +159,88 @@ const Profile = () => {
         <div className="lg:col-span-2 space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Biometric Enrollment Card */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6 md:col-span-2">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+                <Fingerprint className="w-4 h-4 text-primary" /> Biometric Identity
+              </h3>
+              
+              {!isEnrolling ? (
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-base-50 rounded-2xl border border-dashed border-base-300">
+                  <div className="space-y-1 text-center md:text-left">
+                    <p className="font-black text-sm uppercase tracking-tight">Face Recognition Enrollment</p>
+                    <p className="text-[10px] font-bold opacity-40 uppercase">Required for secure attendance logging</p>
+                  </div>
+                  <button 
+                    onClick={startEnrollment}
+                    className="btn btn-primary btn-sm rounded-lg font-black uppercase tracking-widest px-6"
+                  >
+                    {me?.face_descriptor ? 'Update Face Data' : 'Enroll My Face'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div className="relative aspect-video max-w-md mx-auto bg-black rounded-2xl overflow-hidden border-4 border-base-200 shadow-2xl">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      muted 
+                      className={`w-full h-full object-cover ${enrollStep === 'capturing' ? 'grayscale opacity-50' : ''}`}
+                    />
+                    
+                    {enrollStep === 'loading' && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60 text-white">
+                        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">Initializing AI Models...</p>
+                      </div>
+                    )}
+                    
+                    {enrollStep === 'capturing' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
+                         <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+
+                    {enrollStep === 'success' && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-success/80 text-white">
+                        <CheckCircle2 className="w-16 h-16" />
+                        <p className="text-sm font-black uppercase tracking-widest">Enrollment Successful</p>
+                      </div>
+                    )}
+
+                    {enrollStep === 'error' && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-error/80 text-white p-4 text-center">
+                        <X className="w-16 h-16" />
+                        <p className="text-sm font-black uppercase tracking-widest">Enrollment Failed</p>
+                        <p className="text-[9px] font-bold uppercase opacity-80 mt-1">Check console or permissions</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-center gap-4">
+                    {enrollStep === 'ready' && (
+                      <button 
+                        onClick={captureFace}
+                        className="btn btn-primary rounded-xl font-black uppercase tracking-widest px-10 h-12"
+                      >
+                        <Camera className="w-4 h-4 mr-2" /> Capture Reference
+                      </button>
+                    )}
+                    <button 
+                      onClick={cancelEnrollment}
+                      className="btn btn-ghost rounded-xl font-black uppercase tracking-widest text-[10px]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Account Info */}
             <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6">
               <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <Fingerprint className="w-4 h-4 text-primary" /> Personal Info
+                <ShieldCheck className="w-4 h-4 text-primary" /> Personal Info
               </h3>
               <div className="space-y-6">
                 <div className="flex items-center gap-4">

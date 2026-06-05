@@ -1,4 +1,4 @@
-from .employee import SchoolViewSet, EmployeeViewSet
+from .employee import SchoolViewSet, EmployeeViewSet, SalaryGradeViewSet
 from .attendance import AttendanceViewSet
 from .leave import LeaveViewSet
 from .loan import LoanViewSet
@@ -13,6 +13,7 @@ from .pds import PDSExtractionView
 __all__ = [
     'SchoolViewSet',
     'EmployeeViewSet',
+    'SalaryGradeViewSet',
     'AttendanceViewSet',
     'LeaveViewSet',
     'LoanViewSet',

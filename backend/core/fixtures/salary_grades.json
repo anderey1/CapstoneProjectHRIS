@@ -1,0 +1,62 @@
+[
+  {
+    "model": "core.salarygrade",
+    "pk": 1,
+    "fields": { "grade": 11, "amount": "28512.00", "label": "Teacher I" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 2,
+    "fields": { "grade": 12, "amount": "30898.00", "label": "Teacher II" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 3,
+    "fields": { "grade": 13, "amount": "33575.00", "label": "Teacher III" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 4,
+    "fields": { "grade": 14, "amount": "36619.00", "label": "Teacher IV / Head Teacher I" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 5,
+    "fields": { "grade": 15, "amount": "39672.00", "label": "Teacher V" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 6,
+    "fields": { "grade": 16, "amount": "43030.00", "label": "Teacher VI / Head Teacher III" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 7,
+    "fields": { "grade": 18, "amount": "50601.00", "label": "Master Teacher I" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 8,
+    "fields": { "grade": 19, "amount": "55614.00", "label": "Master Teacher II / Principal I" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 9,
+    "fields": { "grade": 20, "amount": "62100.00", "label": "Master Teacher III / Principal II" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 10,
+    "fields": { "grade": 21, "amount": "68918.00", "label": "Master Teacher IV / Principal III" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 11,
+    "fields": { "grade": 22, "amount": "76903.00", "label": "Principal IV" }
+  },
+  {
+    "model": "core.salarygrade",
+    "pk": 12,
+    "fields": { "grade": 26, "amount": "124792.00", "label": "Schools Division Superintendent" }
+  }
+]

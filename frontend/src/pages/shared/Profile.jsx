@@ -173,20 +173,25 @@ const Profile = () => {
                   </div>
                   <button 
                     onClick={startEnrollment}
-                    className="btn btn-primary btn-sm rounded-lg font-black uppercase tracking-widest px-6"
+                    className="btn btn-primary btn-sm rounded-lg font-black uppercase tracking-widest px-6 w-full md:w-auto"
                   >
                     {me?.face_descriptor ? 'Update Face Data' : 'Enroll My Face'}
                   </button>
                 </div>
               ) : (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="relative aspect-video max-w-md mx-auto bg-black rounded-2xl overflow-hidden border-4 border-base-200 shadow-2xl">
+                  <div className="relative aspect-square w-full max-w-sm mx-auto bg-black rounded-2xl overflow-hidden border-4 border-base-200 shadow-2xl">
                     <video 
                       ref={videoRef} 
                       autoPlay 
                       muted 
                       className={`w-full h-full object-cover ${enrollStep === 'capturing' ? 'grayscale opacity-50' : ''}`}
                     />
+                    
+                    {/* Circle guide for face placement */}
+                    <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none flex items-center justify-center">
+                       <div className="w-full h-full border-2 border-primary/30 rounded-full" />
+                    </div>
                     
                     {enrollStep === 'loading' && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60 text-white">

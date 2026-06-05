@@ -194,23 +194,23 @@ const Attendance = () => {
 
       {/* 2. Proximity Radar Card */}
       <div className={`card border shadow-sm overflow-hidden ${isInRange ? 'border-success/20 bg-success/5' : 'border-base-300 bg-base-100'}`}>
-        <div className="p-8 flex flex-col items-center text-center space-y-4">
+        <div className="p-6 md:p-8 flex flex-col items-center text-center space-y-4">
           
           {/* Radar Animation */}
           <div className="relative">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center z-10 relative bg-white border-2 shadow-md ${isInRange ? 'border-success text-success' : 'border-base-300 text-base-content/20'}`}>
-              <Navigation className={`w-10 h-10 ${isInRange ? 'animate-pulse' : ''}`} />
+            <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center z-10 relative bg-white border-2 shadow-md ${isInRange ? 'border-success text-success' : 'border-base-300 text-base-content/20'}`}>
+              <Navigation className={`w-8 h-8 md:w-10 md:h-10 ${isInRange ? 'animate-pulse' : ''}`} />
             </div>
             {isInRange && (
-              <div className="absolute top-0 left-0 w-24 h-24 rounded-full bg-success/20 animate-ping"></div>
+              <div className="absolute top-0 left-0 w-20 h-20 md:w-24 md:h-24 rounded-full bg-success/20 animate-ping"></div>
             )}
           </div>
 
           <div>
-            <h2 className="text-xl font-black uppercase">
+            <h2 className="text-lg md:text-xl font-black uppercase">
               {geoStatus === 'locating' ? 'Finding you...' : (isInRange ? 'At Work' : 'Outside Office')}
             </h2>
-            <p className="text-xs opacity-50 font-semibold uppercase tracking-widest mt-1">
+            <p className="text-[10px] md:text-xs opacity-50 font-semibold uppercase tracking-widest mt-1">
               {distance ? `${Math.round(distance)} meters from office` : 'Checking your location...'}
             </p>
           </div>
@@ -218,7 +218,7 @@ const Attendance = () => {
           <button 
             onClick={handleStartAuth}
             disabled={geoStatus !== 'ready' || checkInMutation.isPending}
-            className={`btn btn-lg w-full max-w-xs rounded-xl shadow-lg border-none text-white ${isInRange ? 'btn-success' : 'btn-neutral'}`}
+            className={`btn btn-md md:btn-lg w-full max-w-xs rounded-xl shadow-lg border-none text-white ${isInRange ? 'btn-success' : 'btn-neutral'}`}
           >
             {checkInMutation.isPending ? <span className="loading loading-spinner" /> : (isInRange ? 'Scan Face & Record' : 'Record (Outside)')}
           </button>

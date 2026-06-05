@@ -66,6 +66,25 @@ class EmployeeManager(models.Manager):
             return employee
 
 # -------------------------
+# SALARY GRADE
+# -------------------------
+class SalaryGrade(models.Model):
+    """
+    Standardized Salary Grade based on SSL (Salary Standardization Law).
+    """
+    grade = models.IntegerField(unique=True) # e.g., 1 to 33
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    label = models.CharField(max_length=100, null=True, blank=True, help_text="e.g., 'Teacher I', 'Principal II'")
+
+    class Meta:
+        ordering = ['grade']
+
+    def __str__(self):
+        label_str = f" [{self.label}]" if self.label else ""
+        return f"SG {self.grade}{label_str} (₱{self.amount:,.2f})"
+
+
+# -------------------------
 # EMPLOYEE
 # -------------------------
 class Employee(models.Model):
@@ -98,10 +117,14 @@ class Employee(models.Model):
     permanent_address = models.TextField(null=True, blank=True)
 
     # Work Information
-    position = models.CharField(max_length=50, null=True, blank=True)
-    department = models.CharField(max_length=50, null=True, blank=True)
+    position = models.CharField(max_length=100, null=True, blank=True)
+    department = models.CharField(max_length=100, null=True, blank=True)
     school = models.ForeignKey(School, on_delete=models.SET_NULL, null=True, blank=True, related_name='personnel')
-    salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    
+    # Salary Grade Linkage
+    salary_grade = models.ForeignKey(SalaryGrade, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees')
+    salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Base monthly salary. Auto-filled if Position or Salary Grade is set.")
+    
     date_hired = models.DateField(null=True, blank=True)
 
     # Bank Information (Mock Disbursement)
@@ -119,6 +142,19 @@ class Employee(models.Model):
     @property
     def leave_balance(self):
         return self.vacation_leave_balance + self.sick_leave_balance
+
+    def save(self, *args, **kwargs):
+        # 1. If position is provided, try to auto-match the Salary Grade
+        if self.position and not self.salary_grade:
+            matched_sg = SalaryGrade.objects.filter(label__iexact=self.position.strip()).first()
+            if matched_sg:
+                self.salary_grade = matched_sg
+
+        # 2. Auto-sync salary with SalaryGrade amount if linked
+        if self.salary_grade:
+            self.salary = self.salary_grade.amount
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

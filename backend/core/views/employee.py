@@ -3,9 +3,18 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from ..models import Employee, School, Role, AuditLog
-from ..serializers import EmployeeSerializer, SchoolSerializer
+from ..models import Employee, School, Role, AuditLog, SalaryGrade
+from ..serializers import EmployeeSerializer, SchoolSerializer, SalaryGradeSerializer
 from ..permissions import IsAdminOrHR, IsSupervisor, IsAdminOrHRorSupervisor
+
+class SalaryGradeViewSet(viewsets.ModelViewSet):
+    queryset = SalaryGrade.objects.all()
+    serializer_class = SalaryGradeSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAdminOrHRorSupervisor()]
 
 class SchoolViewSet(viewsets.ModelViewSet):
     queryset = School.objects.all()
@@ -35,7 +44,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'me']:
             return [IsAuthenticated()]
-        return [IsAdminOrHR()]
+        return [IsAdminOrHRorSupervisor()]
 
     def get_queryset(self):
         user = self.request.user
@@ -64,31 +73,36 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         # Ensure profile exists
         if not hasattr(user, 'employee_profile'):
             if request.method == 'PATCH':
-                return Response({"detail": "User has no employee profile to update."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # GET fallback for system users (Admin)
-            is_admin = user.is_superuser or user.role == Role.ADMIN
-            return Response({
-                "id": None,
-                "first_name": user.first_name or user.username,
-                "last_name": user.last_name or "(No Profile)",
-                "position": "System User" if is_admin else "Unassigned",
-                "department": "Management" if is_admin else "General",
-                "user_details": {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                    "role": user.role,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name
-                },
-                "salary": 0,
-                "leave_balance": 0,
-                "date_hired": None,
-                "school_details": None
-            })
-
-        employee = user.employee_profile
+                # Auto-create profile for system users so they can have biometrics/contact info
+                employee = Employee.objects.create(
+                    user=user,
+                    first_name=user.first_name or user.username,
+                    last_name=user.last_name or ""
+                )
+            else:
+                # GET fallback for system users (Admin)
+                is_admin = user.is_superuser or user.role == Role.ADMIN
+                return Response({
+                    "id": None,
+                    "first_name": user.first_name or user.username,
+                    "last_name": user.last_name or "(No Profile)",
+                    "position": "System User" if is_admin else "Unassigned",
+                    "department": "Management" if is_admin else "General",
+                    "user_details": {
+                        "id": user.id,
+                        "username": user.username,
+                        "email": user.email,
+                        "role": user.role,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name
+                    },
+                    "salary": 0,
+                    "leave_balance": 0,
+                    "date_hired": None,
+                    "school_details": None
+                })
+        else:
+            employee = user.employee_profile
         
         if request.method == 'PATCH':
             # Security: Whitelist fields for self-update

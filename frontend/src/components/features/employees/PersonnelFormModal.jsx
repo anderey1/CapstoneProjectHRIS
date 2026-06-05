@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import { X, User, Briefcase, ChevronRight, FileText, AlertCircle, BookOpen } from 'lucide-react';
+import api from '../../../api/axios';
 import { ROLES } from '../../../utils/constants';
 import PersonalFields from './PersonalFields';
 import EmploymentFields from './EmploymentFields';
@@ -63,6 +65,12 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
       setShowPDSImport(false);
     }
   }, [isOpen, initialData, reset, setValue]);
+
+  const { data: salaryGrades } = useQuery({
+    queryKey: ['salary-grades'],
+    queryFn: () => api.get('/salary-grades/').then(res => res.data.results),
+    enabled: isOpen // Only fetch when modal is open
+  });
 
   if (!isOpen) return null;
 
@@ -321,7 +329,10 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                 <div className={activeTab !== 'employment' ? 'hidden' : ''}>
                   <EmploymentFields 
                     schools={schools} 
+                    salaryGrades={salaryGrades}
                     register={register} 
+                    setValue={setValue}
+                    watch={watch}
                     errors={errors}
                     employeeRole={employeeRole} 
                     setEmployeeRole={setEmployeeRole} 

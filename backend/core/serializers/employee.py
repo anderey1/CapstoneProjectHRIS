@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from ..models import Employee, School, Role
+from ..models import Employee, School, Role, SalaryGrade
 from .pds_details import (
     FamilyMemberSerializer, EducationSerializer, 
     EligibilitySerializer, WorkExperienceSerializer
@@ -18,9 +18,15 @@ class SchoolSerializer(serializers.ModelSerializer):
         model = School
         fields = '__all__'
 
+class SalaryGradeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SalaryGrade
+        fields = '__all__'
+
 class EmployeeSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)
     school_details = SchoolSerializer(source='school', read_only=True)
+    salary_grade_details = SalaryGradeSerializer(source='salary_grade', read_only=True)
     
     # Nested PDS Data
     family = FamilyMemberSerializer(many=True, required=False)
@@ -28,10 +34,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
     eligibilities = EligibilitySerializer(many=True, required=False)
     work_experience = WorkExperienceSerializer(many=True, required=False)
     
-    # Handle school ID for input, details for output
+    # Handle FK IDs for input
     school = serializers.PrimaryKeyRelatedField(
         queryset=School.objects.all(), 
         required=False, 
+        allow_null=True
+    )
+    salary_grade = serializers.PrimaryKeyRelatedField(
+        queryset=SalaryGrade.objects.all(),
+        required=False,
         allow_null=True
     )
     
@@ -48,7 +59,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'date_of_birth', 'place_of_birth', 'sex', 'civil_status',
             'umid_id', 'pagibig_id', 'philhealth_no', 'philsys_id', 'tin_no', 'agency_employee_no',
             'mobile_no', 'residential_address', 'permanent_address',
-            'position', 'department', 'school', 'school_details', 'salary', 'date_hired', 
+            'position', 'department', 'school', 'school_details', 
+            'salary_grade', 'salary_grade_details', 'salary', 'date_hired', 
             'leave_balance', 'vacation_leave_balance', 'sick_leave_balance',
             'face_descriptor',
             'family', 'education', 'eligibilities', 'work_experience',

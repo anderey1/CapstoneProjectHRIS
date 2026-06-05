@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     AttendanceViewSet, LoanViewSet, EmployeeViewSet,
     LeaveViewSet, PayrollViewSet, PerformanceReviewViewSet,
-    ApplicantViewSet, AuditLogViewSet, SchoolViewSet,
+    ApplicantViewSet, AuditLogViewSet, SchoolViewSet, SalaryGradeViewSet,
     PDSExtractionView,
     dashboard_stats, dashboard_ai_summary, analytics_detail
 )
@@ -18,6 +18,7 @@ router.register(r'performance', PerformanceReviewViewSet)
 router.register(r'applicants', ApplicantViewSet)
 router.register(r'audit-logs', AuditLogViewSet)
 router.register(r'schools', SchoolViewSet)
+router.register(r'salary-grades', SalaryGradeViewSet)
 
 
 urlpatterns = [

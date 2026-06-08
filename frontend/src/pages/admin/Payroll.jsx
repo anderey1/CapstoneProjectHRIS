@@ -203,7 +203,7 @@ const Payroll = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Cutoff Period</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Pay Period</label>
                     <select
                       className="select select-bordered w-full bg-base-50 border-base-200 hover:border-primary transition-all rounded-xl text-sm font-bold h-14"
                       value={cutoff}
@@ -224,12 +224,12 @@ const Payroll = () => {
                   disabled={generateMutation.isPending}
                 >
                   {!generateMutation.isPending && <FileText className="w-4 h-4 mr-2" />}
-                  Generate Payslip Draft
+                  Create Draft Payslip
                 </button>
                 
                 <div className="p-4 bg-info/5 rounded-xl border border-info/10">
                    <p className="text-[9px] font-bold text-info leading-relaxed uppercase opacity-80 italic">
-                     * System automatically calculates SSS, PhilHealth, Pag-IBIG, Tax, and active Loan deductions.
+                     * System automatically calculates required gov't deductions and active loans.
                    </p>
                 </div>
               </div>

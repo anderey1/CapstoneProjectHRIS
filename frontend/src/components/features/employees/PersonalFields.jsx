@@ -149,7 +149,33 @@ const PersonalFields = ({ isEdit, register, errors }) => {
         </div>
       </div>
 
-      {/* 5. Account Details */}
+      {/* 5. E-Signature Overlay */}
+      <div className="space-y-4">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Digital Signature</h4>
+        <div className="flex flex-col md:flex-row gap-6 items-start">
+           {isEdit && register("e_signature_preview") && (
+              <div className="w-32 h-16 bg-base-100 border border-base-200 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
+                 {register("e_signature_preview").value ? (
+                    <img src={register("e_signature_preview").value} alt="Current Sig" className="max-h-full max-w-full object-contain" />
+                 ) : (
+                    <span className="text-[8px] font-black opacity-20 uppercase">No Signature</span>
+                 )}
+              </div>
+           )}
+           <div className="space-y-1.5 flex-1">
+             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Upload Signature Image</label>
+             <input 
+               {...register("e_signature_file")}
+               type="file" 
+               accept="image/*"
+               className="file-input file-input-bordered file-input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-bold" 
+             />
+             <p className="text-[8px] font-bold opacity-30 uppercase ml-1">PNG with transparent background is best</p>
+           </div>
+        </div>
+      </div>
+
+      {/* 6. Account Details */}
       {!isEdit && (
         <div className="space-y-4">
           <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Account Details</h4>

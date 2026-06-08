@@ -18,6 +18,7 @@ import MyLeaves from './pages/employee/MyLeaves';
 import Payroll from './pages/admin/Payroll';
 import MyPayroll from './pages/employee/MyPayroll';
 import AttendanceManagement from './pages/admin/AttendanceManagement';
+import LocationTracking from './pages/admin/LocationTracking';
 import Attendance from './pages/shared/Attendance';
 import DTR from './pages/shared/DTR';
 import Profile from './pages/shared/Profile';
@@ -76,6 +77,11 @@ function App() {
           <Route
             path="attendance"
             element={isManagement ? <AttendanceManagement /> : <Attendance />}
+          />
+          
+          <Route
+            path="location-tracking"
+            element={isAdminOrHR ? <LocationTracking /> : <Navigate to="/" replace />}
           />
           
           <Route path="dtr" element={<DTR />} />

@@ -46,7 +46,12 @@ const LeaveManagement = () => {
       onError: (err) => alert(err.response?.data?.detail || "Rejection failed.")
    });
 
-   const filteredLeaves = leaves.filter(l => activeTab === 'pending' ? l.status === 'pending' : l.status !== 'pending');
+   const filteredLeaves = leaves.filter(l => {
+      if (activeTab === 'pending') return l.status === 'pending';
+      if (activeTab === 'accepted') return l.status === 'approved';
+      if (activeTab === 'rejected') return l.status === 'rejected';
+      return true;
+   });
 
    if (isLoading) return (
       <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
@@ -64,25 +69,34 @@ const LeaveManagement = () => {
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                      <CalendarRange className="w-5 h-5" />
                   </div>
-                  <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Leave Requests</h1>
+                  <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Leave Applications</h1>
                </div>
                <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">CSC Form No. 6 Review Portal</p>
             </div>
          </div>
 
          {/* Simple Tabs */}
-         <div className="flex gap-2 bg-base-200/50 p-1 rounded-xl w-fit border border-base-200">
+         <div className="flex gap-2 bg-base-200/50 p-1 rounded-xl w-fit border border-base-200 overflow-x-auto no-scrollbar max-w-full">
             <button
-               className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'pending' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+               className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'pending' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
                onClick={() => setActiveTab('pending')}
             >
-               Pending ({leaves.filter(l => l.status === 'pending').length})
+               Pending 
+               <span className="bg-primary/10 px-1.5 py-0.5 rounded text-[10px]">{leaves.filter(l => l.status === 'pending').length}</span>
             </button>
             <button
-               className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
-               onClick={() => setActiveTab('history')}
+               className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'accepted' ? 'bg-white text-success shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+               onClick={() => setActiveTab('accepted')}
             >
-               Accepted
+               Approved
+               <span className="bg-success/10 px-1.5 py-0.5 rounded text-[10px]">{leaves.filter(l => l.status === 'approved').length}</span>
+            </button>
+            <button
+               className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'rejected' ? 'bg-white text-error shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+               onClick={() => setActiveTab('rejected')}
+            >
+               Rejected
+               <span className="bg-error/10 px-1.5 py-0.5 rounded text-[10px]">{leaves.filter(l => l.status === 'rejected').length}</span>
             </button>
          </div>
 
@@ -167,20 +181,20 @@ const LeaveManagement = () => {
                            <p className="font-black text-xs text-primary uppercase">{selectedLeave.leave_type.replace('_', ' ')}</p>
                         </div>
                         <div className="p-4 bg-base-50 border border-base-200 rounded-lg">
-                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Inclusive Dates</p>
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Dates Requested</p>
                            <p className="font-bold text-[10px]">
                              {new Date(selectedLeave.start_date).toLocaleDateString()} - {new Date(selectedLeave.end_date).toLocaleDateString()}
                            </p>
                         </div>
                         <div className="p-4 bg-base-50 border border-base-200 rounded-lg">
-                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Applied Days</p>
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Days</p>
                            <p className="font-black text-xs">{selectedLeave.working_days_applied} Work Day(s)</p>
                         </div>
                      </div>
 
-                     {/* Credit Certification (Section 7.A) */}
+                     {/* Credit Certification */}
                      <div className="space-y-3 p-6 bg-primary/5 rounded-xl border border-primary/10">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Section 7.A: Current Leave Credits</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Leave Balances</h4>
                         <div className="grid grid-cols-2 gap-6">
                            <div className="text-center p-3 bg-white border border-primary/20 rounded-lg">
                               <p className="text-[10px] font-black opacity-40 uppercase mb-1">Vacation Balance</p>
@@ -193,15 +207,15 @@ const LeaveManagement = () => {
                         </div>
                      </div>
 
-                     {/* Details (Section 6.B) */}
+                     {/* Details */}
                      <div className="space-y-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 px-1">Section 6.B: Details of Application</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 px-1">Application Details</h4>
                         
                         {selectedLeave.location_details && (
                            <div className="flex items-start gap-4 p-4 bg-base-50 border border-base-200 rounded-lg">
                               <MapPin className="w-4 h-4 text-primary opacity-40 mt-1" />
                               <div>
-                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Location Details</p>
+                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Where will the staff be?</p>
                                  <p className="text-xs font-bold">{selectedLeave.is_within_philippines ? 'WITHIN PHILIPPINES' : 'ABROAD'}: {selectedLeave.location_details}</p>
                               </div>
                            </div>
@@ -211,7 +225,7 @@ const LeaveManagement = () => {
                            <div className="flex items-start gap-4 p-4 bg-base-50 border border-base-200 rounded-lg">
                               <Activity className="w-4 h-4 text-secondary opacity-40 mt-1" />
                               <div>
-                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Clinical Details</p>
+                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Medical Details</p>
                                  <p className="text-xs font-bold uppercase">{selectedLeave.is_in_hospital ? 'IN HOSPITAL' : 'OUT PATIENT'}: {selectedLeave.illness_details}</p>
                               </div>
                            </div>

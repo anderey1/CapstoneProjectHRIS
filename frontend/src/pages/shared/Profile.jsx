@@ -6,7 +6,7 @@ import {
   Calendar, Wallet, Camera, Fingerprint,
   UserCircle, CalendarCheck, Users, GraduationCap,
   Award, History, Globe, ShieldCheck, Loader2, X,
-  CheckCircle2
+  CheckCircle2, Signature
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
@@ -22,8 +22,10 @@ const Profile = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isUploadingSig, setIsUploadingSig] = useState(false);
   const [enrollStep, setEnrollStep] = useState('idle'); // idle, loading, ready, capturing, success, error
   const videoRef = useRef(null);
+  const sigInputRef = useRef(null);
 
   const { data: me, isLoading } = useQuery({
     queryKey: id ? ['employee', id] : ['me'],
@@ -51,6 +53,35 @@ const Profile = () => {
       setEnrollStep('error');
     }
   });
+
+  const sigMutation = useMutation({
+    mutationFn: (file) => {
+      const formData = new FormData();
+      formData.append('e_signature', file);
+      const endpoint = id ? `employees/${id}/` : 'employees/me/';
+      return api.patch(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: id ? ['employee', id] : ['me'] });
+      setIsUploadingSig(false);
+      alert("E-Signature updated successfully!");
+    },
+    onError: (err) => {
+      console.error("Signature upload failed:", err.response?.data);
+      setIsUploadingSig(false);
+      alert("Failed to upload signature. Please try again.");
+    }
+  });
+
+  const handleSigUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIsUploadingSig(true);
+      sigMutation.mutate(file);
+    }
+  };
 
   const startEnrollment = async () => {
     setIsEnrolling(true);
@@ -240,6 +271,57 @@ const Profile = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* E-Signature Card */}
+            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6 md:col-span-2">
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+                <Signature className="w-4 h-4 text-primary" /> E-Signature Overlay
+              </h3>
+              
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8 p-6 bg-base-50 rounded-2xl border border-dashed border-base-300">
+                <div className="space-y-4 text-center md:text-left flex-1">
+                  <div className="space-y-1">
+                    <p className="font-black text-sm uppercase tracking-tight">Electronic Signature</p>
+                    <p className="text-[10px] font-bold opacity-40 uppercase">Used for automated DTR generation and paperless forms</p>
+                  </div>
+                  
+                  <div className="h-24 w-full md:w-64 bg-white rounded-xl border border-base-200 flex items-center justify-center p-2 relative group overflow-hidden shadow-inner">
+                    {me?.e_signature ? (
+                      <img 
+                        src={me.e_signature} 
+                        alt="E-Signature" 
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <p className="text-[9px] font-black opacity-20 uppercase tracking-widest">No Signature Uploaded</p>
+                    )}
+                    {isUploadingSig && (
+                      <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3 w-full md:w-auto">
+                  <input 
+                    type="file" 
+                    ref={sigInputRef}
+                    onChange={handleSigUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button 
+                    onClick={() => sigInputRef.current?.click()}
+                    disabled={isUploadingSig}
+                    className="btn btn-primary btn-sm rounded-lg font-black uppercase tracking-widest px-6 w-full shadow-md shadow-primary/20"
+                  >
+                    {me?.e_signature ? 'Update Signature' : 'Upload Signature'}
+                  </button>
+                  <p className="text-[8px] font-bold opacity-30 uppercase text-center">PNG or JPG with transparent bg preferred</p>
+                </div>
+              </div>
             </div>
 
             {/* Account Info */}

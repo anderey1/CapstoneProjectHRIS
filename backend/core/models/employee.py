@@ -138,6 +138,9 @@ class Employee(models.Model):
     vacation_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
     sick_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
 
+    # E-Signature for DTRs/Forms
+    e_signature = models.ImageField(upload_to='e_signatures/', null=True, blank=True)
+
     # Legacy field for compatibility if needed, but we'll use the ones above
     @property
     def leave_balance(self):

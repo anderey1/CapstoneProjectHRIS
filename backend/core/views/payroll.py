@@ -46,9 +46,22 @@ class PayrollViewSet(viewsets.ModelViewSet):
             }, status=400)
 
         cutoff = request.data.get('cutoff', request.data.get('cutoff_period', 'Unknown Cutoff'))
-        
-        # Calculate Days Worked from Attendance
         start_date, end_date = parse_cutoff_dates(cutoff)
+        
+        # 1. Verification: Ensure all DTR records in cutoff are approved
+        if start_date and end_date:
+            unapproved_count = Attendance.objects.filter(
+                employee=employee,
+                date__range=(start_date, end_date),
+                is_dtr_approved=False
+            ).count()
+            
+            if unapproved_count > 0:
+                return Response({
+                    "detail": f"Cannot generate payroll. {unapproved_count} attendance records in this cutoff are not yet approved by HR."
+                }, status=400)
+
+        # 2. Calculate Days Worked from Attendance
         days_worked = Decimal('11.0') # Default for semi-monthly if no attendance data found
         
         if start_date and end_date:

@@ -62,7 +62,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'position', 'department', 'school', 'school_details', 
             'salary_grade', 'salary_grade_details', 'salary', 'date_hired', 
             'leave_balance', 'vacation_leave_balance', 'sick_leave_balance',
-            'face_descriptor',
+            'face_descriptor', 'e_signature',
             'family', 'education', 'eligibilities', 'work_experience',
             'username', 'email', 'password', 'role'
         )

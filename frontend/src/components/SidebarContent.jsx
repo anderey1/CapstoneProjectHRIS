@@ -13,7 +13,8 @@ import {
   KanbanSquare,
   ShieldAlert,
   ChevronRight,
-  School
+  School,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -42,7 +43,8 @@ const SidebarContent = ({ closeDrawer }) => {
       title: 'Time & Leave',
       links: [
         { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record (DTR)', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
+        { to: '/location-tracking', icon: <MapPin className="w-4 h-4" />, label: 'Location Tracking', roles: ['ADMIN', 'HR'] },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
         { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR', 'EMPLOYEE'] },
       ]
     },

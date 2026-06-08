@@ -5,7 +5,31 @@
   themes: light --default;
 }
 
+@theme {
+  --color-primary: #0038a8;
+  --color-primary-content: #ffffff;
+  --color-secondary: #ffcd00;
+  --color-secondary-content: #1e293b;
+  --color-accent: #3b82f6;
+  --color-accent-content: #ffffff;
+}
+
 :root {
+  --primary: #0038a8;
+  --primary-content: #ffffff;
+  --secondary: #ffcd00;
+  --secondary-content: #1e293b;
+  --accent: #3b82f6;
+  --accent-content: #ffffff;
+  --neutral: #1e293b;
+  --neutral-content: #ffffff;
+  --base-100: #ffffff;
+  --base-200: #f8fafc;
+  --base-300: #f1f5f9;
+  --info: #3b82f6;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;

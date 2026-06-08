@@ -86,10 +86,34 @@ const Employees = () => {
   };
 
   const handleFormSubmit = async (data) => {
-    if (selectedEmployee) {
-      await updateMutation.mutateAsync(data);
+    // Check if there's a file to upload
+    const hasFile = data.e_signature_file && data.e_signature_file.length > 0;
+    
+    let payload = data;
+    
+    if (hasFile) {
+      payload = new FormData();
+      // Append all fields to FormData
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === 'e_signature_file') {
+          payload.append('e_signature', value[0]);
+        } else if (key === 'family' || key === 'education' || key === 'eligibilities' || key === 'work_experience') {
+          // DRF MultiPartParser needs JSON strings for nested fields
+          payload.append(key, JSON.stringify(value));
+        } else if (value !== null && value !== undefined) {
+          payload.append(key, value);
+        }
+      });
     } else {
-      await addMutation.mutateAsync(data);
+      // Clean up helper fields from JSON payload
+      delete payload.e_signature_file;
+      delete payload.e_signature_preview;
+    }
+
+    if (selectedEmployee) {
+      await updateMutation.mutateAsync(payload);
+    } else {
+      await addMutation.mutateAsync(payload);
     }
   };
 
@@ -125,7 +149,7 @@ const Employees = () => {
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
               <Users className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Employees</h1>
+            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Staff List</h1>
           </div>
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Staff Management Portal</p>
         </div>
@@ -137,7 +161,7 @@ const Employees = () => {
             className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-6"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Add Employee
+            Add Staff Member
           </button>
         ): null}
 

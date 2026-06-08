@@ -1,0 +1,316 @@
+
+  Project HRIS_Lucena_City {
+    database_type: 'PostgreSQL'
+    Note: 'HRIS with HR Management + Descriptive Analytics for DepEd - Lucena City'
+  }
+
+  Enum Role {
+    ADMIN
+    HR
+    SUPERVISOR
+    ACCOUNTANT
+    EMPLOYEE
+  }
+
+  Table User {
+    id integer [pk]
+    username varchar
+    email varchar
+    role Role
+    first_name varchar
+    last_name varchar
+    is_active boolean
+    is_staff boolean
+    date_joined datetime
+  }
+
+  Table School {
+    id integer [pk]
+    name varchar
+    latitude decimal
+    longitude decimal
+    radius_meters integer [default: 100]
+  }
+
+  Table SalaryGrade {
+    id integer [pk]
+    grade integer [unique]
+    amount decimal
+    label varchar
+  }
+
+  Table Employee {
+    id integer [pk]
+    user_id integer [unique]
+    first_name varchar
+    last_name varchar
+    middle_name varchar
+    name_extension varchar
+    date_of_birth date
+    place_of_birth varchar
+    sex varchar
+    civil_status varchar
+    
+    umid_id varchar
+    pagibig_id varchar
+    philhealth_no varchar
+    philsys_id varchar
+    tin_no varchar
+    agency_employee_no varchar
+    
+    mobile_no varchar
+    email varchar
+    residential_address text
+    permanent_address text
+    
+    position varchar
+    department varchar
+    school_id integer
+    salary_grade_id integer
+    salary decimal
+    date_hired date
+    
+    bank_name varchar
+    account_number varchar
+    face_descriptor text
+    
+    vacation_leave_balance decimal
+    sick_leave_balance decimal
+  }
+
+  Table Attendance {
+    id integer [pk]
+    employee_id integer
+    date date
+    am_in time
+    am_out time
+    pm_in time
+    pm_out time
+    ot_in time
+    ot_out time
+    status varchar
+    is_dtr_approved boolean
+    dtr_approved_by_id integer
+    dtr_approved_at datetime
+    latitude decimal
+    longitude decimal
+    is_geo_flagged boolean
+    
+    Indexes {
+      (employee_id, date) [unique]
+    }
+  }
+
+  Table AuditLog {
+    id integer [pk]
+    user_id integer
+    action text
+    timestamp datetime
+  }
+
+  Table LeaveRequest {
+    id integer [pk]
+    employee_id integer
+    leave_type varchar
+    other_type_details varchar
+    is_within_philippines boolean
+    location_details varchar
+    illness_details varchar
+    is_in_hospital boolean
+    study_type varchar
+    is_monetization boolean
+    is_terminal_leave boolean
+    start_date date
+    end_date date
+    working_days_applied decimal
+    commutation varchar
+    date_applied datetime
+    status varchar
+    supporting_document varchar
+    disapproval_reason text
+    approved_days_with_pay decimal
+    approved_days_without_pay decimal
+    approved_others varchar
+  }
+
+  Table ProvidentLoan {
+    id integer [pk]
+    employee_id integer
+    loan_amount decimal
+    interest_rate decimal
+    term_months integer
+    monthly_payment decimal
+    total_amount decimal
+    status varchar
+    date_applied date
+    purpose varchar
+    letter_request text
+    co_maker_id integer
+    co_maker_name varchar
+    remarks text
+    reviewed_by_id integer
+    reviewed_at datetime
+  }
+
+  Table LoanDocument {
+    id integer [pk]
+    loan_id integer
+    doc_type varchar
+    file varchar
+    uploaded_at datetime
+  }
+
+  Table LoanPayment {
+    id integer [pk]
+    loan_id integer
+    amount_paid decimal
+    payment_date date
+    remaining_balance decimal
+  }
+
+  Table Payroll {
+    id integer [pk]
+    employee_id integer
+    cutoff_period varchar
+    days_worked decimal
+    basic_salary decimal
+    gross_salary decimal
+    sss decimal
+    philhealth decimal
+    pagibig decimal
+    tax decimal
+    loans decimal
+    total_deductions decimal
+    net_salary decimal
+    status varchar
+    date_generated datetime
+    date_released datetime
+  }
+
+  Table PerformanceReview {
+    id integer [pk]
+    employee_id integer
+    period varchar
+    punctuality_score integer
+    quality_score integer
+    behavior_score integer
+    ai_summary text
+    is_promotion_eligible boolean
+    date_evaluated datetime
+  }
+
+  Table Applicant {
+    id integer [pk]
+    first_name varchar
+    last_name varchar
+    email varchar
+    phone varchar
+    position_applied varchar
+    school_division varchar
+    education_score decimal
+    training_score decimal
+    experience_score decimal
+    interview_score decimal
+    exam_score decimal
+    total_score decimal
+    status varchar
+    last_status_update datetime
+    is_notified boolean
+    pds_file varchar
+    resume varchar
+    notes text
+    date_applied datetime
+  }
+
+  Table PDSUpload {
+    id integer [pk]
+    employee_id integer
+    file varchar
+    uploaded_at datetime
+    confidence_avg float
+    status varchar
+    raw_response json
+    extracted_data json
+  }
+
+  Table FamilyMember {
+    id integer [pk]
+    employee_id integer
+    relationship varchar
+    surname varchar
+    first_name varchar
+    middle_name varchar
+    full_name varchar
+    extension varchar
+    occupation varchar
+    employer varchar
+    date_of_birth date
+  }
+
+  Table Education {
+    id integer [pk]
+    employee_id integer
+    level varchar
+    school_name varchar
+    degree_course varchar
+    period_from varchar
+    period_to varchar
+    highest_level varchar
+    year_graduated varchar
+    honors_received varchar
+  }
+
+  Table Eligibility {
+    id integer [pk]
+    employee_id integer
+    service varchar
+    rating varchar
+    date_of_exam date
+    place_of_exam varchar
+    license_number varchar
+    validity_date date
+  }
+
+  Table WorkExperience {
+    id integer [pk]
+    employee_id integer
+    date_from date
+    date_to date
+    is_present boolean
+    position_title varchar
+    agency varchar
+    monthly_salary decimal
+    salary_grade varchar
+    status_of_appointment varchar
+    is_gov_service boolean
+  }
+
+  // Relationships
+  Ref: Employee.user_id - User.id
+  Ref: Employee.school_id > School.id
+  Ref: Employee.salary_grade_id > SalaryGrade.id
+
+  Ref: Attendance.employee_id > Employee.id
+  Ref: Attendance.dtr_approved_by_id > User.id
+
+  Ref: AuditLog.user_id > User.id
+
+  Ref: LeaveRequest.employee_id > Employee.id
+
+  Ref: ProvidentLoan.employee_id > Employee.id
+  Ref: ProvidentLoan.co_maker_id > Employee.id
+  Ref: ProvidentLoan.reviewed_by_id > User.id
+
+  Ref: LoanDocument.loan_id > ProvidentLoan.id
+  Ref: LoanPayment.loan_id > ProvidentLoan.id
+
+  Ref: Payroll.employee_id > Employee.id
+
+  Ref: PerformanceReview.employee_id > Employee.id
+
+  Ref: PDSUpload.employee_id > Employee.id
+
+  Ref: FamilyMember.employee_id > Employee.id
+  Ref: Education.employee_id > Employee.id
+  Ref: Eligibility.employee_id > Employee.id
+  Ref: WorkExperience.employee_id > Employee.id

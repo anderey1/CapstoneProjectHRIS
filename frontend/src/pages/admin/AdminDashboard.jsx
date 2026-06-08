@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 
 
-const COLORS = ['#4f46e5', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6'];
+const COLORS = ['#0038a8', '#ffcd00', '#3b82f6', '#facc15', '#60a5fa'];
 
 /**
  * Admin Home (Dashboard)
@@ -55,6 +55,12 @@ const Dashboard = () => {
     queryFn: () => api.get('analytics/leave/').then(res => res.data)
   });
 
+  const { data: aiSummary } = useQuery({
+    queryKey: ['dashboard-ai-summary'],
+    queryFn: () => api.get('dashboard/summary/').then(res => res.data),
+    refetchInterval: 600000 // 10 mins
+  });
+
   const isLoading = statsLoading || deptLoading || loanLoading || attLoading;
 
   if (isLoading) return (
@@ -93,7 +99,7 @@ const Dashboard = () => {
     <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
@@ -104,6 +110,26 @@ const Dashboard = () => {
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Daily system overview</p>
         </div>
       </div>
+
+      {/* Gemini AI Summary Alert */}
+      {aiSummary?.ai_summary && (
+        <div className="bg-gradient-to-r from-primary to-secondary p-[1px] rounded-xl shadow-lg shadow-primary/10 group">
+          <div className="bg-white rounded-[11px] p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
+             <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center text-primary shrink-0 animate-pulse">
+                <ShieldCheck className="w-6 h-6" />
+             </div>
+             <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Gemini AI Executive Summary</h3>
+                   <div className="badge badge-primary badge-outline text-[8px] font-black h-4 px-1">LIVE</div>
+                </div>
+                <p className="text-sm font-bold text-base-content leading-relaxed">
+                   "{aiSummary.ai_summary}"
+                </p>
+             </div>
+          </div>
+        </div>
+      )}
 
       {user?.role === 'ACCOUNTANT' ? (
         <AccountantDashboard stats={stats} />

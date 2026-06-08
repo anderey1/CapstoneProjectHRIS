@@ -7,21 +7,19 @@ import AddApplicantModal from '../../components/features/recruitment/AddApplican
 
 /**
  * DepEd Recruitment Board
- * Columns based on DepEd Order No. 007, s. 2023 / DO 19, s. 2022
  */
 const COLUMNS = [
-  { id: 'applied', label: 'Applied', color: 'bg-slate-50 text-slate-500 border-slate-200' },
-  { id: 'initial_evaluation', label: 'QS Check', color: 'bg-blue-50 text-blue-500 border-blue-200' },
-  { id: 'comparative_assessment', label: 'Assessment', color: 'bg-indigo-50 text-indigo-500 border-indigo-200' },
-  { id: 'interview', label: 'Interview (BEI)', color: 'bg-purple-50 text-purple-500 border-purple-200' },
-  { id: 'appointment_proposed', label: 'Proposed', color: 'bg-amber-50 text-amber-500 border-amber-200' },
-  { id: 'hired', label: 'Hired/Appointed', color: 'bg-emerald-50 text-emerald-500 border-emerald-200' },
-  { id: 'rejected', label: 'Not Selected', color: 'bg-rose-50 text-rose-500 border-rose-200' }
+  { id: 'applied', label: 'New Applications', color: 'bg-blue-50 text-blue-700 border-blue-100' },
+  { id: 'initial_evaluation', label: 'Initial Review', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { id: 'comparative_assessment', label: 'Staff Evaluation', color: 'bg-blue-50 text-blue-700 border-blue-100' },
+  { id: 'interview', label: 'Interviews', color: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
+  { id: 'appointment_proposed', label: 'Ready for Hiring', color: 'bg-blue-50 text-blue-700 border-blue-100' },
+  { id: 'hired', label: 'Hired', color: 'bg-success/10 text-success border-success/20' },
+  { id: 'rejected', label: 'Not Selected', color: 'bg-error/10 text-error border-error/20' }
 ];
 
 const Recruitment = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('board'); // 'board' or 'rqa'
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [statusNote, setStatusNote] = useState('');
@@ -84,10 +82,6 @@ const Recruitment = () => {
     a.position_applied.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const rqaApplicants = [...applicants]
-    .filter(a => a.is_rqa_eligible)
-    .sort((a, b) => b.total_score - a.total_score);
-
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700 h-[calc(100vh-100px)] flex flex-col">
 
@@ -104,20 +98,6 @@ const Recruitment = () => {
         </div>
 
         <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="flex bg-base-200 p-1 rounded-xl border border-base-300">
-             <button 
-                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'board' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
-                onClick={() => setActiveTab('board')}
-             >
-                Pipeline
-             </button>
-             <button 
-                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'rqa' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
-                onClick={() => setActiveTab('rqa')}
-             >
-                RQA Ranking
-             </button>
-          </div>
           <div className="relative flex-1 md:w-64">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-30" />
              <input 
@@ -140,7 +120,7 @@ const Recruitment = () => {
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center text-primary"><span className="loading loading-spinner loading-lg" /></div>
-      ) : activeTab === 'board' ? (
+      ) : (
         <div className="flex-1 overflow-x-auto pb-8 flex gap-6 scrollbar-thin">
           {COLUMNS.map((column) => (
             <div key={column.id} className="flex-shrink-0 w-80 flex flex-col gap-4">
@@ -213,94 +193,14 @@ const Recruitment = () => {
             </div>
           ))}
         </div>
-      ) : (
-        /* RQA Ranking View */
-        <div className="flex-1 overflow-y-auto bg-white rounded-2xl border border-base-200 shadow-sm animate-in slide-in-from-right-4 duration-500">
-           <div className="p-8 border-b border-base-100 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-md z-10">
-              <div>
-                 <h2 className="text-lg font-black uppercase tracking-tight text-base-content">Registry of Qualified Applicants (RQA)</h2>
-                 <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mt-1">Candidates with ≥ 50.00 Total Points</p>
-              </div>
-              <div className="px-4 py-2 bg-primary/5 text-primary rounded-xl border border-primary/10 font-black text-xs uppercase tracking-widest">
-                 {rqaApplicants.length} Qualified
-              </div>
-           </div>
-           
-           <div className="overflow-x-auto">
-              <table className="table table-zebra w-full">
-                 <thead>
-                    <tr className="bg-base-50/50 border-b border-base-100">
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest opacity-40">Rank</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest opacity-40">Candidate</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest opacity-40">Position</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest opacity-40 text-center">HRMPSB Points</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest opacity-40">Status</th>
-                       <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest opacity-40"></th>
-                    </tr>
-                 </thead>
-                 <tbody>
-                    {rqaApplicants.map((applicant, index) => (
-                       <tr key={applicant.id} className="hover:bg-primary/5 transition-colors cursor-pointer group" onClick={() => {
-                           setSelectedApplicant(applicant);
-                           setIsEditingScores(false);
-                       }}>
-                          <td className="px-8 py-6">
-                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${index < 3 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-base-100 border border-base-200 opacity-40'}`}>
-                                {index + 1}
-                             </div>
-                          </td>
-                          <td className="px-8 py-6">
-                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-base-100 border border-base-200 flex items-center justify-center text-xs font-black text-primary uppercase">
-                                   {applicant.first_name[0]}{applicant.last_name[0]}
-                                </div>
-                                <div>
-                                   <p className="font-bold text-sm text-base-content">{applicant.first_name} {applicant.last_name}</p>
-                                   <p className="text-[10px] font-medium opacity-40">{applicant.email}</p>
-                                </div>
-                             </div>
-                          </td>
-                          <td className="px-8 py-6">
-                             <span className="text-[10px] font-black uppercase tracking-widest bg-base-100 px-3 py-1 rounded-full border border-base-200">
-                                {applicant.position_applied}
-                             </span>
-                          </td>
-                          <td className="px-8 py-6 text-center">
-                             <div className="inline-flex flex-col items-center">
-                                <span className="text-xl font-black text-primary">{applicant.total_score}</span>
-                                <span className="text-[8px] font-black opacity-30 uppercase tracking-tighter">Total Pts</span>
-                             </div>
-                          </td>
-                          <td className="px-8 py-6">
-                             <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest inline-block ${
-                                COLUMNS.find(c => c.id === applicant.status)?.color || 'bg-base-100'
-                             }`}>
-                                {COLUMNS.find(c => c.id === applicant.status)?.label || applicant.status}
-                             </div>
-                          </td>
-                          <td className="px-8 py-6 text-right">
-                             <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ChevronRight className="w-4 h-4 text-primary" />
-                             </button>
-                          </td>
-                       </tr>
-                    ))}
-                 </tbody>
-              </table>
-              {rqaApplicants.length === 0 && (
-                 <div className="py-40 flex flex-col items-center justify-center opacity-20 italic font-black uppercase tracking-[0.3em]">
-                    <Star className="w-16 h-16 mb-4" />
-                    No candidates reached the 50pt threshold yet
-                 </div>
-              )}
-           </div>
-        </div>
       )}
+      
+      {showAddModal && <AddApplicantModal onClose={() => setShowAddModal(false)} />}
 
       {/* Applicant Detail / Status Update Modal */}
       {selectedApplicant && (
          <div className="modal modal-open">
-            <div className="modal-box rounded-xl max-w-4xl p-0 overflow-hidden shadow-2xl border border-base-300 bg-white h-[85vh] flex flex-col">
+            <div className="modal-box rounded-xl max-w-4xl p-0 overflow-hidden shadow-2xl border border-base-300 bg-white h-[85vh] flex flex-col">     
                <div className="bg-base-50/50 border-b border-base-200 p-8 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-4">
                      <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-black uppercase shadow-lg shadow-primary/20">
@@ -316,7 +216,7 @@ const Recruitment = () => {
 
                <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                     
+
                      {/* Left: Info & Contact */}
                      <div className="space-y-6">
                         <section className="space-y-4">
@@ -362,7 +262,7 @@ const Recruitment = () => {
                         <section className="space-y-4">
                            <div className="flex items-center justify-between">
                               <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
-                                 <Star className="w-3 h-3" /> HRMPSB Assessment (Registry Points)
+                                 <Star className="w-3 h-3" /> Staff Evaluation Scores
                               </h4>
                               {!isEditingScores ? (
                                 <button 
@@ -398,7 +298,7 @@ const Recruitment = () => {
                                 </div>
                               )}
                            </div>
-                           
+
                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                               {[
                                  { key: 'education_score', label: 'Education', max: 10 },
@@ -459,11 +359,11 @@ const Recruitment = () => {
                               <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                                  Update Pipeline Status
                               </h4>
-                              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest">
+                              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest">      
                                  Current: {COLUMNS.find(c => c.id === selectedApplicant.status)?.label}
                               </div>
                            </div>
-                           
+
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="space-y-2">
                                  <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">New Stage</label>
@@ -479,7 +379,7 @@ const Recruitment = () => {
                               <div className="space-y-2">
                                  <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Internal Remarks</label>
                                  <textarea 
-                                    className="textarea textarea-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-medium h-12"
+                                    className="textarea textarea-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-medium h-12"       
                                     placeholder="Add reason for status change..."
                                     value={statusNote}
                                     onChange={(e) => setStatusNote(e.target.value)}
@@ -514,8 +414,6 @@ const Recruitment = () => {
             <div className="modal-backdrop bg-black/60 backdrop-blur-sm" onClick={() => setSelectedApplicant(null)}></div>
          </div>
       )}
-
-      {showAddModal && <AddApplicantModal onClose={() => setShowAddModal(false)} />}
     </div>
   );
 };

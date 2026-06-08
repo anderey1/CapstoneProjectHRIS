@@ -34,7 +34,7 @@ const AuditLogs = () => {
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">System Logs</h1>
+            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Activity History</h1>
           </div>
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">History of all activities</p>
         </div>

@@ -41,7 +41,11 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     if (isOpen) {
       setBackendError(null);
       if (initialData) {
-        reset(initialData);
+        reset({
+          ...initialData,
+          e_signature_preview: initialData.e_signature,
+          e_signature_file: null
+        });
         if (initialData.user_details?.role) {
           setValue('role', initialData.user_details.role);
         }
@@ -56,7 +60,9 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
           family: [],
           education: [],
           eligibilities: [],
-          work_experience: []
+          work_experience: [],
+          e_signature_file: null,
+          e_signature_preview: null
         });
         // Double-ensure the role is EMPLOYEE for new records
         setValue('role', ROLES.EMPLOYEE);
@@ -217,12 +223,12 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
         <div className="bg-base-50/50 border-b border-base-100 p-8 flex items-center justify-between">
           <div>
             <h3 className="font-black text-xl text-base-content uppercase tracking-tight">
-              {isEdit ? 'Update Staff' : 'Add Staff'}
+              {isEdit ? 'Update Record' : 'New Employee Record'}
             </h3>
             <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mt-1">
               {isEdit 
                 ? `Editing record for ${initialData.first_name}` 
-                : 'Register a new employee record'}
+                : 'Register a new staff member'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -233,7 +239,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                 className="btn btn-outline btn-primary btn-xs rounded-md text-[9px] font-black uppercase tracking-widest px-3"
               >
                 <FileText className="w-3 h-3 mr-1" />
-                Import PDS
+                Import Personal Data Sheet (PDS)
               </button>
             )}
             <button 

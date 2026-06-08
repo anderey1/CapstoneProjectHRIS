@@ -20,6 +20,7 @@ const Employees = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
+  const ROLE = 'HR'
 
   // 1. Data Fetching
   const { data: employees, isLoading } = useQuery({
@@ -102,10 +103,11 @@ const Employees = () => {
       <span className="loading loading-spinner loading-lg text-primary"></span>
     </div>
   );
+  console.log(user)
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
-      
+
       {/* Toast Notification */}
       {successMsg && (
         <div className="toast toast-top toast-end z-[100] mt-16">
@@ -127,14 +129,18 @@ const Employees = () => {
           </div>
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Staff Management Portal</p>
         </div>
-        
-        <button 
-          onClick={() => setActiveModal('form')} 
-          className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-6"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          Add Employee
-        </button>
+
+
+        {ROLE == user.role ? (
+          <button
+            onClick={() => setActiveModal('form')}
+            className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-6"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add Employee
+          </button>
+        ): null}
+
       </div>
 
       {/* Filters Bar */}
@@ -149,13 +155,13 @@ const Employees = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <div className="flex items-center gap-2 w-full lg:w-auto">
           <button className="btn btn-ghost bg-base-50 border-base-200 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6">
             <Filter className="w-3 h-3 mr-2 opacity-50" />
             Filter
           </button>
-          
+
           <button
             onClick={() => exportToCSV(employees, 'Staff_List')}
             className="btn btn-ghost bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6"

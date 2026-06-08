@@ -82,7 +82,7 @@ const LeaveManagement = () => {
                className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
                onClick={() => setActiveTab('history')}
             >
-               Resolved
+               Accepted
             </button>
          </div>
 

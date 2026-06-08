@@ -48,11 +48,6 @@ const DTR = () => {
           </div>
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Daily Time Record logs</p>
         </div>
-        
-        <button className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8">
-          <Download className="w-4 h-4 mr-2" />
-          Download
-        </button>
       </div>
 
       {/* DTR Data Table */}

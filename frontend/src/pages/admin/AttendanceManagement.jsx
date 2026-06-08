@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
-import { CalendarCheck, History } from 'lucide-react';
+import { History } from 'lucide-react';
 
 // Sub-components
 import AttendanceStats from '../../components/features/attendance/AttendanceStats';
-import AttendanceMap from '../../components/features/attendance/AttendanceMap';
 import AttendanceLogs from '../../components/features/attendance/AttendanceLogs';
+import DailyQRDisplay from '../../components/features/attendance/DailyQRDisplay';
 
 /**
  * Attendance Management (Admin/HR View)
@@ -18,8 +18,7 @@ const AttendanceManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('All');
   const [flaggedOnly, setFlaggedOnly] = useState(false);
-  
-  const center = [13.9408, 121.6210]; // Lucena City Center
+  const [showQR, setShowQR] = useState(false);
 
   // 1. Data Fetching
   const { data: records, isLoading } = useQuery({
@@ -30,17 +29,7 @@ const AttendanceManagement = () => {
     },
   });
 
-  // 2. Daily QR Fetch
-  const { data: qrData } = useQuery({
-    queryKey: ['daily-qr'],
-    queryFn: async () => {
-      const res = await api.get('attendance/get_daily_qr/');
-      return res.data;
-    },
-    refetchInterval: 60000,
-  });
-
-  // 3. Filtering
+  // 2. Filtering
   const filteredRecords = (records || [])?.filter(rec => {
     const matchesSearch = (rec.employee_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDept = deptFilter === 'All' || rec.department === deptFilter;
@@ -70,31 +59,27 @@ const AttendanceManagement = () => {
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
               <History className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Daily Records</h1>
+            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Daily Attendance</h1>
           </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Monitor staff attendance and location</p>
+          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Track staff attendance and location</p>
         </div>
 
-        <div className="w-full lg:w-auto animate-in fade-in duration-1000">
-          <AttendanceStats stats={stats} />
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+          <button 
+            onClick={() => setShowQR(!showQR)}
+            className="btn btn-neutral rounded-lg text-xs font-black uppercase tracking-widest px-8 w-full sm:w-auto"
+          >
+            {showQR ? 'Hide QR Code' : 'Display Daily QR'}
+          </button>
+          <div className="hidden lg:block animate-in fade-in duration-1000">
+            <AttendanceStats stats={stats} />
+          </div>
         </div>
       </div>
 
-      {/* Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Sidebar: Map & Proximity */}
-        <div className="xl:col-span-1 space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-             <AttendanceMap 
-                records={filteredRecords} 
-                qrData={qrData} 
-                center={center} 
-             />
-          </div>
-        </div>
-
         {/* Main: Logs List */}
-        <div className="xl:col-span-2">
+        <div className={`${showQR ? 'xl:col-span-2' : 'xl:col-span-3'} transition-all duration-500`}>
           <AttendanceLogs 
             records={filteredRecords}
             isLoading={isLoading}
@@ -106,6 +91,13 @@ const AttendanceManagement = () => {
             setFlaggedOnly={setFlaggedOnly}
           />
         </div>
+
+        {/* QR Display Sidebar */}
+        {showQR && (
+          <div className="xl:col-span-1 animate-in slide-in-from-right-8 duration-500">
+            <DailyQRDisplay />
+          </div>
+        )}
       </div>
     </div>
   );

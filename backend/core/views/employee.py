@@ -106,7 +106,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         
         if request.method == 'PATCH':
             # Security: Whitelist fields for self-update
-            allowed_fields = ['face_descriptor', 'mobile_no', 'residential_address', 'permanent_address']
+            allowed_fields = ['face_descriptor', 'mobile_no', 'residential_address', 'permanent_address', 'e_signature']
             update_data = {k: v for k, v in request.data.items() if k in allowed_fields}
             
             if not update_data:

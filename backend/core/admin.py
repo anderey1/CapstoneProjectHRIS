@@ -39,8 +39,8 @@ class SchoolAdmin(admin.ModelAdmin):
 # -------------------------
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'date', 'time_in', 'time_out', 'status', 'is_geo_flagged')
-    list_filter = ('status', 'date', 'is_geo_flagged')
+    list_display = ('employee', 'date', 'am_in', 'am_out', 'pm_in', 'pm_out', 'status', 'is_dtr_approved')
+    list_filter = ('status', 'date', 'is_dtr_approved', 'is_geo_flagged')
     search_fields = ('employee__first_name', 'employee__last_name')
 
 @admin.register(LeaveRequest)

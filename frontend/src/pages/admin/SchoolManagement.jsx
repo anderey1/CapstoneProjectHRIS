@@ -17,7 +17,7 @@ import SchoolFormModal from '../../components/features/school/SchoolFormModal';
  */
 const SchoolManagement = () => {
   const { user } = useAuth();
-  const canEdit = user?.role === ROLES.ADMIN || user?.role === ROLES.SUPERVISOR;
+  const canEdit = user?.role === ROLES.ADMINISTRATIVE;
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSchool, setSelectedSchool] = useState(null);

@@ -1,12 +1,14 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F, Value
+from django.db.models.functions import Coalesce
 from ..models import Employee, ProvidentLoan, Attendance, LeaveRequest, Payroll, PerformanceReview, Applicant
 from ..utils import generate_hr_summary
+from ..permissions import IsManagement
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsManagement])
 def dashboard_stats(request):
     total_payroll = Payroll.objects.filter(status='released').aggregate(total=Sum('net_salary'))['total'] or 0
     pending_payroll_approval = Payroll.objects.filter(status='draft').count()
@@ -38,7 +40,7 @@ def dashboard_stats(request):
     })
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsManagement])
 def dashboard_ai_summary(request):
     """
     Returns an AI-powered summary of system data.
@@ -57,7 +59,7 @@ def dashboard_ai_summary(request):
     })
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsManagement])
 def analytics_detail(request, metric):
     """
     Generic analytics endpoint that routes to specific chart data.
@@ -65,7 +67,17 @@ def analytics_detail(request, metric):
     if metric == 'attendance':
         data = Attendance.objects.values('status').annotate(count=Count('status'))
     elif metric == 'leave':
-        data = LeaveRequest.objects.values('leave_type').annotate(count=Count('leave_type'))
+        data = LeaveRequest.objects.annotate(
+            reason=Coalesce(
+                F('illness_details'),
+                F('location_details'),
+                F('study_type'),
+                F('other_type_details'),
+                Value('General Purposes')
+            )
+        ).values('leave_type', 'reason').annotate(
+            count=Sum('working_days_applied')
+        ).order_by('-count')
     elif metric == 'payroll':
         data = Payroll.objects.filter(status='released').values('cutoff_period').annotate(
             total_net=Sum('net_salary'),

@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from ..models import Employee, ProvidentLoan, LoanDocument, Role, AuditLog
 from ..serializers import LoanSerializer, LoanDocumentSerializer
-from ..permissions import IsAdminOrHR, IsHR, IsSupervisor, IsAccountant, IsAdmin
+from ..permissions import IsAdminOrHR, IsHR, IsSuperintendent, IsAccountant, IsAdmin
 
 # Required documents for every loan application
 BASE_REQUIRED_DOCS = ['laf', 'letter_request', 'auth_deduct', 'payslip', 'deped_id', 'comaker_payslip']
@@ -30,7 +30,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR, Role.SUPERVISOR, Role.ACCOUNTANT]:
+        if user.is_superuser or user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
             return ProvidentLoan.objects.all().order_by('-date_applied')
         return ProvidentLoan.objects.filter(employee__user=user).order_by('-date_applied')
 
@@ -38,7 +38,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         user = self.request.user
         employee_id = self.request.data.get('employee')
         # 1. Target Employee Identification
-        if user.role in [Role.ADMIN, Role.HR] and employee_id:
+        if user.role in [Role.ADMINISTRATIVE, Role.HR] and employee_id:
             employee = get_object_or_404(Employee, id=employee_id)
         else:
             employee = Employee.objects.filter(user=user).first()
@@ -61,7 +61,7 @@ class LoanViewSet(viewsets.ModelViewSet):
     # ---------------------------
     # APPROVE / REJECT
     # ---------------------------
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSupervisor])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSuperintendent])
     def approve(self, request, pk=None):
         loan = self.get_object()
         if loan.status != 'pending':
@@ -76,7 +76,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Approved Loan: {loan.employee}")
         return Response({"message": "Loan approved.", "status": "approved"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSupervisor])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSuperintendent])
     def reject(self, request, pk=None):
         loan = self.get_object()
         if loan.status != 'pending':
@@ -115,7 +115,7 @@ class LoanViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsAccountant], url_path='release-funds')
     def release_funds(self, request, pk=None):
-        """Accountant action to release money after supervisor approval."""
+        """Accountant action to release money after superintendent approval."""
         loan = self.get_object()
         if loan.status != 'approved':
             return Response({"detail": "Only approved loans can be released."}, status=status.HTTP_400_BAD_REQUEST)

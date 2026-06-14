@@ -19,7 +19,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT]:
+        if user.is_superuser or user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
             return Payroll.objects.all().order_by('-date_generated')
         return Payroll.objects.filter(employee__user=user).order_by('-date_generated')
 

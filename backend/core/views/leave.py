@@ -17,7 +17,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.role in [Role.ADMIN, Role.HR]:
+        if user.is_superuser or user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
             return LeaveRequest.objects.all().order_by('-date_applied')
         return LeaveRequest.objects.filter(employee__user=user).order_by('-date_applied')
 

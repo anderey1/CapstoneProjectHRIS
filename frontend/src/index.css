@@ -6,27 +6,27 @@
 }
 
 @theme {
-  --color-primary: #0038a8;
+  --color-primary: oklch(48.8% 0.243 264.376);
   --color-primary-content: #ffffff;
-  --color-secondary: #ffcd00;
+  --color-secondary: oklch(90.5% 0.182 98.111);
   --color-secondary-content: #1e293b;
-  --color-accent: #3b82f6;
+  --color-accent: oklch(57.7% 0.245 27.325);
   --color-accent-content: #ffffff;
 }
 
 :root {
-  --primary: #0038a8;
+  --primary: oklch(48.8% 0.243 264.376);
   --primary-content: #ffffff;
-  --secondary: #ffcd00;
+  --secondary: oklch(90.5% 0.182 98.111);
   --secondary-content: #1e293b;
-  --accent: #3b82f6;
+  --accent: oklch(57.7% 0.245 27.325);
   --accent-content: #ffffff;
   --neutral: #1e293b;
   --neutral-content: #ffffff;
   --base-100: #ffffff;
   --base-200: #f8fafc;
   --base-300: #f1f5f9;
-  --info: #3b82f6;
+  --info: oklch(57.7% 0.245 27.325);
   --success: #22c55e;
   --warning: #f59e0b;
   --error: #ef4444;

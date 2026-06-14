@@ -35,7 +35,7 @@ function App() {
   const { user } = useAuth();
 
   const isAdminOrHR = user && ['ADMIN', 'HR'].includes(user.role);
-  const isManagement = user && ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERVISOR'].includes(user.role);
+  const isManagement = user && ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERINTENDENT'].includes(user.role);
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -106,10 +106,10 @@ function App() {
             element={isAdminOrHR ? <Recruitment /> : <Navigate to="/" replace />}
           />
 
-          {/* Schools/Geofencing - Admin/Supervisor only */}
+          {/* Schools/Geofencing - Admin/Superintendent only */}
           <Route
             path="schools"
-            element={['ADMIN', 'SUPERVISOR'].includes(user?.role) ? <SchoolManagement /> : <Navigate to="/" replace />}
+            element={['ADMIN', 'SUPERINTENDENT'].includes(user?.role) ? <SchoolManagement /> : <Navigate to="/" replace />}
           />
 
           {/* Audit Logs - Admin/HR only */}

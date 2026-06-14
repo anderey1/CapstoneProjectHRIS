@@ -9,11 +9,11 @@ import AddApplicantModal from '../../components/features/recruitment/AddApplican
  * DepEd Recruitment Board
  */
 const COLUMNS = [
-  { id: 'applied', label: 'New Applications', color: 'bg-blue-50 text-blue-700 border-blue-100' },
-  { id: 'initial_evaluation', label: 'Initial Review', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'comparative_assessment', label: 'Staff Evaluation', color: 'bg-blue-50 text-blue-700 border-blue-100' },
-  { id: 'interview', label: 'Interviews', color: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
-  { id: 'appointment_proposed', label: 'Ready for Hiring', color: 'bg-blue-50 text-blue-700 border-blue-100' },
+  { id: 'applied', label: 'New Applications', color: 'bg-primary/10 text-primary border-primary/20' },
+  { id: 'initial_evaluation', label: 'Initial Review', color: 'bg-primary/20 text-primary border-primary/30' },
+  { id: 'comparative_assessment', label: 'Staff Evaluation', color: 'bg-primary/10 text-primary border-primary/20' },
+  { id: 'interview', label: 'Interviews', color: 'bg-secondary/20 text-base-content border-secondary/30' },
+  { id: 'appointment_proposed', label: 'Ready for Hiring', color: 'bg-primary/10 text-primary border-primary/20' },
   { id: 'hired', label: 'Hired', color: 'bg-success/10 text-success border-success/20' },
   { id: 'rejected', label: 'Not Selected', color: 'bg-error/10 text-error border-error/20' }
 ];

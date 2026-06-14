@@ -25,7 +25,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     formState: { errors } 
   } = useForm({
     defaultValues: initialData || {
-      role: ROLES.EMPLOYEE,
+      role: ROLES.TEACHING,
       department: '',
       school: '',
       salary: '',
@@ -52,7 +52,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
       } else {
         // Explicitly set all defaults for a fresh "Add Staff" form
         reset({
-          role: ROLES.EMPLOYEE,
+          role: ROLES.TEACHING,
           department: '',
           school: '',
           salary: '',
@@ -64,8 +64,9 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
           e_signature_file: null,
           e_signature_preview: null
         });
-        // Double-ensure the role is EMPLOYEE for new records
-        setValue('role', ROLES.EMPLOYEE);
+        // Double-ensure the role is TEACHING for new records
+        setValue('role', ROLES.TEACHING);
+
       }
       setActiveTab('personal');
       setShowPDSImport(false);

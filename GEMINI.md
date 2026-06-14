@@ -93,12 +93,13 @@
 - Track annual balances
 - Store: `employee`, `type`, `dates`, `status`, `reason`
 
-### 4. Performance Rating (AI/ML Innovation)
+### 4. Performance Rating (AI-Enhanced Innovation)
 - HR rates: punctuality, quality, behavior
 - Auto-compute punctuality from attendance
 - Gemini API gen perf summary
 - Promotion flag: score + tenure + attendance
 - Store: `employee`, `period`, `scores`, `rating`, AI summary, promo flag
+
 
 ### 5. Recruitment (Supporting Feature)
 - Tracking: Applied → Screened → Interviewed → Hired/Rejected

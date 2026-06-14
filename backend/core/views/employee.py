@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from ..models import Employee, School, Role, AuditLog, SalaryGrade
 from ..serializers import EmployeeSerializer, SchoolSerializer, SalaryGradeSerializer
-from ..permissions import IsAdminOrHR, IsSupervisor, IsAdminOrHRorSupervisor
+from ..permissions import IsAdminOrHR, IsSuperintendent, IsAdminOrHRorSuperintendent
 
 class SalaryGradeViewSet(viewsets.ModelViewSet):
     queryset = SalaryGrade.objects.all()
@@ -14,7 +14,7 @@ class SalaryGradeViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
-        return [IsAdminOrHRorSupervisor()]
+        return [IsAdminOrHRorSuperintendent()]
 
 class SchoolViewSet(viewsets.ModelViewSet):
     queryset = School.objects.all()
@@ -23,7 +23,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
-        return [IsAdminOrHRorSupervisor()]
+        return [IsAdminOrHRorSuperintendent()]
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -44,13 +44,13 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'me']:
             return [IsAuthenticated()]
-        return [IsAdminOrHRorSupervisor()]
+        return [IsAdminOrHRorSuperintendent()]
 
     def get_queryset(self):
         user = self.request.user
         if not user.is_authenticated:
             return Employee.objects.none()
-        if user.role in [Role.ADMIN, Role.HR, Role.SUPERVISOR, Role.ACCOUNTANT]:
+        if user.is_superuser or user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
             return Employee.objects.all()
         return Employee.objects.filter(user=user)
 
@@ -81,7 +81,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 )
             else:
                 # GET fallback for system users (Admin)
-                is_admin = user.is_superuser or user.role == Role.ADMIN
+                is_admin = user.is_superuser or user.role in [Role.ADMIN, Role.ADMINISTRATIVE]
                 return Response({
                     "id": None,
                     "first_name": user.first_name or user.username,

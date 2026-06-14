@@ -1,5 +1,6 @@
 # pyrefly: ignore [missing-import]
 from django.db import models
+from django.utils import timezone
 from .employee import Employee
 
 # -------------------------
@@ -13,7 +14,7 @@ class Attendance(models.Model):
     ]
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_records')
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.now)
     
     # DTR Time Slots (Civil Service Form 48)
     am_in = models.TimeField(null=True, blank=True)

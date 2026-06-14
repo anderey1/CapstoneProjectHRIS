@@ -26,7 +26,7 @@ const AttendanceLogs = ({
   const [approvalMsg, setApprovalMsg] = useState(null);
 
   // Permission Check
-  const isHR = user?.role === ROLES.HR || user?.role === ROLES.ADMIN;
+  const isHR = user?.role === ROLES.HR || user?.role === ROLES.ADMINISTRATIVE;
 
   const approveDtrMutation = useMutation({
     mutationFn: (data) => api.post('attendance/approve_dtr/', data),

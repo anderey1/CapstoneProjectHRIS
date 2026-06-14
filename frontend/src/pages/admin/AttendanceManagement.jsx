@@ -7,7 +7,6 @@ import { History } from 'lucide-react';
 // Sub-components
 import AttendanceStats from '../../components/features/attendance/AttendanceStats';
 import AttendanceLogs from '../../components/features/attendance/AttendanceLogs';
-import DailyQRDisplay from '../../components/features/attendance/DailyQRDisplay';
 
 /**
  * Attendance Management (Admin/HR View)
@@ -18,7 +17,6 @@ const AttendanceManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('All');
   const [flaggedOnly, setFlaggedOnly] = useState(false);
-  const [showQR, setShowQR] = useState(false);
 
   // 1. Data Fetching
   const { data: records, isLoading } = useQuery({
@@ -64,40 +62,23 @@ const AttendanceManagement = () => {
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Track staff attendance and location</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-          <button 
-            onClick={() => setShowQR(!showQR)}
-            className="btn btn-neutral rounded-lg text-xs font-black uppercase tracking-widest px-8 w-full sm:w-auto"
-          >
-            {showQR ? 'Hide QR Code' : 'Display Daily QR'}
-          </button>
-          <div className="hidden lg:block animate-in fade-in duration-1000">
-            <AttendanceStats stats={stats} />
-          </div>
+        <div className="w-full lg:w-auto animate-in fade-in duration-1000">
+          <AttendanceStats stats={stats} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Main: Logs List */}
-        <div className={`${showQR ? 'xl:col-span-2' : 'xl:col-span-3'} transition-all duration-500`}>
-          <AttendanceLogs 
-            records={filteredRecords}
-            isLoading={isLoading}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            deptFilter={deptFilter}
-            setDeptFilter={setDeptFilter}
-            flaggedOnly={flaggedOnly}
-            setFlaggedOnly={setFlaggedOnly}
-          />
-        </div>
-
-        {/* QR Display Sidebar */}
-        {showQR && (
-          <div className="xl:col-span-1 animate-in slide-in-from-right-8 duration-500">
-            <DailyQRDisplay />
-          </div>
-        )}
+      {/* Main: Logs List */}
+      <div className="w-full">
+        <AttendanceLogs 
+          records={filteredRecords}
+          isLoading={isLoading}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          deptFilter={deptFilter}
+          setDeptFilter={setDeptFilter}
+          flaggedOnly={flaggedOnly}
+          setFlaggedOnly={setFlaggedOnly}
+        />
       </div>
     </div>
   );

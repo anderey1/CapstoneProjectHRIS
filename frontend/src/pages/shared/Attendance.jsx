@@ -44,7 +44,43 @@ const Attendance = () => {
     refetchInterval: 300000, // Refresh every 5 mins
   });
 
-  // ... (keep history and GPS logic)
+  // 3. Fetch Recent Attendance History
+  const { data: records, isLoading: historyLoading } = useQuery({
+    queryKey: [QUERY_KEYS.ATTENDANCE],
+    queryFn: () => api.get('attendance/').then(res => res.data.results || res.data)
+  });
+
+  const workstation = me?.school_details;
+  const OFFICE_POS = { 
+    lat: workstation?.latitude ? parseFloat(workstation.latitude) : 13.9408, 
+    lng: workstation?.longitude ? parseFloat(workstation.longitude) : 121.6210 
+  };
+  const RADIUS = workstation?.radius_meters || 100;
+
+  // 4. GPS Tracking
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGeoStatus('denied');
+      return;
+    }
+
+    const watcher = navigator.geolocation.watchPosition(
+      (pos) => {
+        setCurrentPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoStatus('ready');
+      },
+      (err) => {
+        console.error(err);
+        setGeoStatus('denied');
+      },
+      { enableHighAccuracy: true }
+    );
+
+    return () => navigator.geolocation.clearWatch(watcher);
+  }, []);
+
+  const distance = currentPos ? calculateDistance(currentPos.lat, currentPos.lng, OFFICE_POS.lat, OFFICE_POS.lng) : null;
+  const isInRange = distance !== null && distance <= RADIUS;
 
   // 5. Check-In Mutation
   const checkInMutation = useMutation({
@@ -69,22 +105,7 @@ const Attendance = () => {
     }
   });
 
-  const handleStartQRScan = () => {
-    setShowScanner(true);
-  };
-
-  const handleQRDetected = () => {
-    // Mocking a successful scan
-    setShowScanner(false);
-    handleStartAuth();
-  };
-
   const handleStartAuth = async () => {
-    if (!qrData?.token) {
-      alert("Unable to verify daily session. Please try again.");
-      return;
-    }
-
     if (!me?.face_descriptor) {
       alert("Please enroll your face in the Profile page first before checking in.");
       return;
@@ -139,7 +160,7 @@ const Attendance = () => {
       setFaceStatus('success');
       // Proceed to submission
       checkInMutation.mutate({
-        qr_token: qrData.token,
+        qr_token: qrData?.token || 'legacy_face_only',
         lat: currentPos.lat,
         lng: currentPos.lng
       });
@@ -192,15 +213,15 @@ const Attendance = () => {
           </div>
 
           <button 
-            onClick={handleStartQRScan}
+            onClick={handleStartAuth}
             disabled={geoStatus !== 'ready' || checkInMutation.isPending}
             className={`btn btn-md md:btn-lg w-full max-w-xs rounded-xl shadow-lg border-none text-white ${isInRange ? 'btn-success' : 'btn-neutral'}`}
           >
-            {checkInMutation.isPending ? <span className="loading loading-spinner" /> : (isInRange ? 'Scan School QR' : 'Record (Outside)')}
+            {checkInMutation.isPending ? <span className="loading loading-spinner" /> : (isInRange ? 'Scan Face & Record' : 'Record (Outside)')}
           </button>
 
           <div className="flex items-center gap-2 text-[9px] font-black uppercase opacity-40">
-             <ShieldCheck className="w-3 h-3 text-success" /> Identity + Geo + Time Verification Active
+             <ShieldCheck className="w-3 h-3 text-success" /> Identity + Geo Verification Active
           </div>
 
           {geoStatus === 'denied' && (
@@ -219,43 +240,7 @@ const Attendance = () => {
         </div>
       )}
 
-      {/* 4. QR Scanner Modal (Mock) */}
-      {showScanner && (
-        <div className="modal modal-open">
-          <div className="modal-box p-0 rounded-2xl overflow-hidden max-w-sm bg-black border border-white/10 shadow-2xl">
-            <div className="relative aspect-square flex items-center justify-center bg-zinc-900">
-               <div className="w-64 h-64 border-2 border-primary/40 rounded-3xl flex items-center justify-center relative">
-                  <div className="absolute inset-0 border-4 border-primary rounded-3xl animate-pulse opacity-20"></div>
-                  <Camera className="w-12 h-12 text-primary opacity-20" />
-                  
-                  {/* Scanning Line Animation */}
-                  <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(79,70,229,0.8)] animate-[scan_2s_linear_infinite]"></div>
-               </div>
-               
-               <div className="absolute bottom-8 left-0 w-full text-center">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Align QR Code within frame</p>
-               </div>
-            </div>
-
-            <div className="p-8 bg-white flex flex-col gap-6">
-               <div className="text-center space-y-1">
-                  <h3 className="text-base font-black uppercase tracking-tight text-base-content">QR Attendance Scanner</h3>
-                  <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Scanning for school terminal...</p>
-               </div>
-               
-               <button onClick={handleQRDetected} className="btn btn-primary w-full rounded-xl uppercase font-black text-xs h-16 shadow-lg shadow-primary/20">
-                  Simulate QR Detect
-               </button>
-               
-               <button onClick={() => setShowScanner(false)} className="btn btn-ghost btn-sm text-[10px] font-black uppercase tracking-widest">
-                  Cancel
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Face Auth Modal */}
+      {/* 4. Face Auth Modal */}
       {showFaceAuth && (
         <div className="modal modal-open">
           <div className="modal-box p-0 rounded-2xl overflow-hidden max-w-sm bg-black border border-white/10 shadow-2xl">
@@ -328,20 +313,37 @@ const Attendance = () => {
             <thead>
               <tr className="bg-base-50/30 text-[10px] uppercase tracking-widest opacity-40 border-b border-base-100">
                 <th className="px-6 py-4">Date</th>
-                <th>Time In</th>
-                <th>Time Out</th>
+                <th className="text-center">AM In/Out</th>
+                <th className="text-center">PM In/Out</th>
+                <th className="text-center">OT In/Out</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-base-100">
               {historyLoading ? (
-                <tr><td colSpan="4" className="text-center py-20"><span className="loading loading-spinner text-primary" /></td></tr>
+                <tr><td colSpan="5" className="text-center py-20"><span className="loading loading-spinner text-primary" /></td></tr>
               ) : records?.length > 0 ? (
                 records.slice(0, 5).map(rec => (
                   <tr key={rec.id} className="hover:bg-base-50/50 transition-colors">
                     <td className="font-bold text-xs px-6">{rec.date}</td>
-                    <td className="text-success font-black text-[11px] tracking-tight">{rec.time_in?.substring(0, 5) || '--:--'}</td>
-                    <td className="text-error font-black text-[11px] tracking-tight">{rec.time_out?.substring(0, 5) || '--:--'}</td>
+                    <td className="text-center">
+                      <div className="flex flex-col">
+                        <span className="text-success font-black text-[10px] tracking-tight">{rec.am_in?.substring(0, 5) || '--:--'}</span>
+                        <span className="text-error font-black text-[10px] tracking-tight">{rec.am_out?.substring(0, 5) || '--:--'}</span>
+                      </div>
+                    </td>
+                    <td className="text-center">
+                      <div className="flex flex-col">
+                        <span className="text-success font-black text-[10px] tracking-tight">{rec.pm_in?.substring(0, 5) || '--:--'}</span>
+                        <span className="text-error font-black text-[10px] tracking-tight">{rec.pm_out?.substring(0, 5) || '--:--'}</span>
+                      </div>
+                    </td>
+                    <td className="text-center">
+                      <div className="flex flex-col">
+                        <span className="text-primary font-black text-[10px] tracking-tight">{rec.ot_in?.substring(0, 5) || '--:--'}</span>
+                        <span className="text-primary font-black text-[10px] tracking-tight">{rec.ot_out?.substring(0, 5) || '--:--'}</span>
+                      </div>
+                    </td>
                     <td>
                       <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${rec.is_geo_flagged ? 'bg-error/10 text-error' : (rec.status === 'present' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning')}`}>
                         {rec.is_geo_flagged ? 'Flagged' : rec.status}

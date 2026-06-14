@@ -10,9 +10,11 @@ class PerformanceReview(models.Model):
     period = models.CharField(max_length=50) # e.g., "Q1 2026"
     
     # Scores (1-5 scale)
-    punctuality_score = models.IntegerField()
-    quality_score = models.IntegerField()
-    behavior_score = models.IntegerField()
+    punctuality_score = models.IntegerField(null=True, blank=True)
+    quality_score = models.IntegerField(null=True, blank=True)
+    behavior_score = models.IntegerField(null=True, blank=True)
+    
+    ipcrf_file = models.FileField(upload_to='ipcrf_uploads/', null=True, blank=True)
     
     ai_summary = models.TextField(null=True, blank=True)
     is_promotion_eligible = models.BooleanField(default=False)

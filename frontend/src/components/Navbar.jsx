@@ -15,8 +15,8 @@ const Navbar = () => {
       {/* Start Section: Branding */}
       <div className="navbar-start">
         <Link to="/" className="flex flex-col ml-1 hover:opacity-80 transition-opacity">
-          <span className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] leading-none">DepEd Lucena</span>
-          <span className="text-sm font-black text-base-content tracking-tight">HR Management</span>
+          <span className="text-[10px] font-black text-[#0038A8] opacity-60 uppercase tracking-[0.2em] leading-none">DepEd Lucena</span>
+          <span className="text-sm font-black text-[#0038A8] tracking-tight italic">HR Management</span>
         </Link>
       </div>
 

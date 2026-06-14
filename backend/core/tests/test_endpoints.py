@@ -32,7 +32,7 @@ def school(db):
 def admin_user(db):
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    user = User.objects.create_user(username='admin', password='password123', role=Role.ADMIN)
+    user = User.objects.create_user(username='admin', password='password123', role=Role.ADMINISTRATIVE)
     return user
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def staff_user(db, school):
     user_data = {
         "username": "teacher1",
         "password": "password123",
-        "role": Role.EMPLOYEE
+        "role": Role.TEACHING
     }
     employee_data = {
         "first_name": "Juan",

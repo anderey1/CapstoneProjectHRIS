@@ -1,0 +1,92 @@
+[
+  {
+    "model": "core.ipcrfkra",
+    "pk": 1,
+    "fields": {
+      "name": "Content Knowledge and Pedagogy",
+      "weight": "22.50",
+      "description": "Applies knowledge of content within and across curriculum teaching areas."
+    }
+  },
+  {
+    "model": "core.ipcrfkra",
+    "pk": 2,
+    "fields": {
+      "name": "Learning Environment and Diversity of Learners",
+      "weight": "22.50",
+      "description": "Maintains learning environments that are responsive to learner's diversity."
+    }
+  },
+  {
+    "model": "core.ipcrfkra",
+    "pk": 3,
+    "fields": {
+      "name": "Curriculum and Planning",
+      "weight": "20.00",
+      "description": "Plans and manages the teaching and learning process to meet curriculum requirements."
+    }
+  },
+  {
+    "model": "core.ipcrfkra",
+    "pk": 4,
+    "fields": {
+      "name": "Assessment and Reporting",
+      "weight": "20.00",
+      "description": "Monitors and evaluates learner progress and achievement."
+    }
+  },
+  {
+    "model": "core.ipcrfkra",
+    "pk": 5,
+    "fields": {
+      "name": "Plus Factor",
+      "weight": "15.00",
+      "description": "Performs various related activities that contribute to the teaching-learning process."
+    }
+  },
+  {
+    "model": "core.ipcrfobjective",
+    "pk": 1,
+    "fields": {
+      "kra": 1,
+      "description": "Applied knowledge of content within and across curriculum teaching areas.",
+      "timeline": "Year-round"
+    }
+  },
+  {
+    "model": "core.ipcrfobjective",
+    "pk": 2,
+    "fields": {
+      "kra": 1,
+      "description": "Used a range of teaching strategies that enhance learner achievement in literacy and numeracy skills.",
+      "timeline": "Year-round"
+    }
+  },
+  {
+    "model": "core.ipcrfobjective",
+    "pk": 3,
+    "fields": {
+      "kra": 2,
+      "description": "Established safe and secure learning environments to enhance learning through the consistent implementation of policies.",
+      "timeline": "Year-round"
+    }
+  },
+  {
+    "model": "core.ipcrfobjective",
+    "pk": 4,
+    "fields": {
+      "kra": 3,
+      "description": "Planned, managed and implemented developmentally sequenced teaching and learning processes.",
+      "timeline": "Year-round"
+    }
+  },
+  {
+    "model": "core.ipcrfobjective",
+    "pk": 5,
+    "fields": {
+      "kra": 5,
+      "description": "Performed various related activities that contribute to the teaching-learning process.",
+      "timeline": "Year-round"
+    }
+  }
+]

@@ -298,7 +298,7 @@ const LoanManagement = () => {
                   <div className="flex items-start gap-2 p-3 bg-base-50 rounded-lg border border-base-100">
                     <MessageSquare className="w-3 h-3 mt-0.5 opacity-30 shrink-0" />
                     <div>
-                      <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">Supervisor Remarks</p>
+                      <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">Superintendent Remarks</p>
                       <p className="text-[10px] font-bold text-base-content/70 line-clamp-2">{loan.remarks}</p>
                     </div>
                   </div>
@@ -453,7 +453,7 @@ const LoanManagement = () => {
                 <div className="p-4 bg-warning/5 rounded-lg border border-warning/10 flex items-start gap-3">
                   <MessageSquare className="w-4 h-4 text-warning opacity-60 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Supervisor Remarks</p>
+                    <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Superintendent Remarks</p>
                     <p className="text-xs font-bold text-base-content/70">{selectedLoan.remarks}</p>
                     {selectedLoan.reviewed_by_name && (
                       <p className="text-[9px] font-bold opacity-30 mt-1 uppercase">— {selectedLoan.reviewed_by_name}, {selectedLoan.reviewed_at ? new Date(selectedLoan.reviewed_at).toLocaleDateString() : ''}</p>
@@ -466,7 +466,7 @@ const LoanManagement = () => {
               {selectedLoan.status === 'pending' && (
                 <div className="space-y-4 pt-4 border-t border-base-100">
                   <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Decision</h4>
-                  {(user?.role === ROLES.ADMIN || user?.role === ROLES.SUPERVISOR) ? (
+                  {(user?.role === ROLES.ADMINISTRATIVE) ? (
                     <>
                       {/* Approve Section */}
                       <div className="p-4 bg-success/5 border border-success/10 rounded-xl space-y-3">

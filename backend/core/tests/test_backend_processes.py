@@ -165,7 +165,7 @@ class TestHRISBackendSuite:
         assert ProvidentLoan.objects.get(id=loan.id).status == 'released'
 
     # --- LOAN WORKFLOW TESTS ---
-    def test_loan_approve_workflow(self, staff_user, supervisor_client):
+    def test_loan_approve_workflow(self, staff_user, superintendent_client):
         # Create pending loan
         loan = ProvidentLoan.objects.create(
             employee=staff_user.employee_profile,
@@ -180,12 +180,12 @@ class TestHRISBackendSuite:
         assert staff_client.post(approve_url).status_code == status.HTTP_403_FORBIDDEN
 
         # 2. Supervisor can approve
-        assert supervisor_client.post(approve_url).status_code == status.HTTP_200_OK
+        assert superintendent_client.post(approve_url).status_code == status.HTTP_200_OK
         loan.refresh_from_db()
         assert loan.status == 'approved'
 
         # 3. Cannot approve already approved
-        assert supervisor_client.post(approve_url).status_code == status.HTTP_400_BAD_REQUEST
+        assert superintendent_client.post(approve_url).status_code == status.HTTP_400_BAD_REQUEST
 
     def test_loan_release_funds_workflow(self, hr_client, accountant_client, staff_user):
         # Create approved loan

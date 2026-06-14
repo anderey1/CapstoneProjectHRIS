@@ -50,7 +50,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True, required=False, allow_blank=True)
     email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    role = serializers.ChoiceField(choices=Role.choices, default=Role.EMPLOYEE, write_only=True, required=False)
+    role = serializers.ChoiceField(choices=Role.choices, default=Role.TEACHING, write_only=True, required=False)
 
     class Meta:
         model = Employee

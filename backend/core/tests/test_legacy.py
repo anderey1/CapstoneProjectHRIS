@@ -22,7 +22,7 @@ class HRISCRUDTests(APITestCase):
 
         # 2. Create Admin User
         self.admin_user = User.objects.create_user(
-            username='admin', password='password123', role=Role.ADMIN
+            username='admin', password='password123', role=Role.ADMINISTRATIVE
         )
         self.admin_employee = Employee.objects.create(
             user=self.admin_user, first_name="Admin", last_name="User",
@@ -40,7 +40,7 @@ class HRISCRUDTests(APITestCase):
 
         # 4. Create Regular Employee User
         self.emp_user = User.objects.create_user(
-            username='employee1', password='password123', role=Role.EMPLOYEE
+            username='employee1', password='password123', role=Role.TEACHING
         )
         self.employee = Employee.objects.create(
             user=self.emp_user, first_name="Juan", last_name="Dela Cruz",
@@ -77,7 +77,7 @@ class HRISCRUDTests(APITestCase):
             "username": "new_emp",
             "email": "new@example.com",
             "password": "password123",
-            "role": "EMPLOYEE",
+            "role": "TEACHING",
             "first_name": "Maria",
             "last_name": "Clara",
             "position": "Teacher II",
@@ -273,7 +273,8 @@ class HRISCRUDTests(APITestCase):
         emp_url = reverse('employee-list')
         self.client.post(emp_url, {
             "username": "audit_test", "email": "audit@test.com", "password": "password123",
-            "role": "EMPLOYEE", "first_name": "Audit", "last_name": "Test",
+            "role": "TEACHING",
+ "first_name": "Audit", "last_name": "Test",
             "position": "Staff", "department": "IT", "salary": 20000, "school": self.school.id
         })
 

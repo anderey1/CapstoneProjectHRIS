@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Award, Target, TrendingUp, UserCheck, ShieldCheck, FileText, Printer, Clock } from 'lucide-react';
+import { X, Award, Target, TrendingUp, UserCheck, ShieldCheck, FileText, Printer, Clock, Download } from 'lucide-react';
 
 /**
  * Performance Details Modal (IPCRF View)
@@ -9,7 +9,8 @@ import { X, Award, Target, TrendingUp, UserCheck, ShieldCheck, FileText, Printer
 const IPCRFDetailsModal = ({ review, onClose }) => {
   if (!review) return null;
 
-  const avg = (review.punctuality_score + review.quality_score + review.behavior_score) / 3;
+  const scores = [review.punctuality_score, review.quality_score, review.behavior_score].filter(s => s !== null && s !== undefined);
+  const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
   return (
     <div className="modal modal-open">
@@ -50,7 +51,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                     <Clock className="w-3.5 h-3.5 text-success" />
                     <span className="text-[9px] font-black uppercase opacity-40 tracking-widest">Punctual</span>
                  </div>
-                 <p className="text-4xl font-black text-base-content">{review.punctuality_score}.0</p>
+                 <p className="text-4xl font-black text-base-content">{review.punctuality_score !== null ? `${review.punctuality_score}.0` : 'N/A'}</p>
               </div>
 
               <div className="bg-base-50 p-6 rounded-xl border border-base-100 relative overflow-hidden group">
@@ -58,7 +59,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                     <TrendingUp className="w-3.5 h-3.5 text-primary" />
                     <span className="text-[9px] font-black uppercase opacity-40 tracking-widest">Quality</span>
                  </div>
-                 <p className="text-4xl font-black text-base-content">{review.quality_score}.0</p>
+                 <p className="text-4xl font-black text-base-content">{review.quality_score !== null ? `${review.quality_score}.0` : 'N/A'}</p>
               </div>
 
               <div className="bg-base-50 p-6 rounded-xl border border-base-100 relative overflow-hidden group">
@@ -66,24 +67,38 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                     <UserCheck className="w-3.5 h-3.5 text-warning" />
                     <span className="text-[9px] font-black uppercase opacity-40 tracking-widest">Behavior</span>
                  </div>
-                 <p className="text-4xl font-black text-base-content">{review.behavior_score}.0</p>
+                 <p className="text-4xl font-black text-base-content">{review.behavior_score !== null ? `${review.behavior_score}.0` : 'N/A'}</p>
               </div>
            </div>
 
-           {/* Executive Summary */}
+           {/* Executive Summary & IPCRF File */}
            <div className="bg-white p-8 rounded-xl border border-base-200 shadow-inner space-y-6">
-              <div className="flex items-center gap-2">
-                 <ShieldCheck className="w-4 h-4 text-primary opacity-40" />
-                 <h4 className="text-[10px] font-black uppercase opacity-40 tracking-[0.2em]">Summary</h4>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-primary opacity-40" />
+                  <h4 className="text-[10px] font-black uppercase opacity-40 tracking-[0.2em]">Summary</h4>
+                </div>
+                {review.ipcrf_file && (
+                  <a 
+                    href={review.ipcrf_file} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-1 bg-primary/5 text-primary rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-primary/10 transition-colors"
+                  >
+                    <Download className="w-3 h-3" />
+                    Download IPCRF File
+                  </a>
+                )}
               </div>
+              
               <p className="text-lg font-bold text-base-content leading-relaxed italic">
-                 "{review.ai_summary}"
+                 "{review.ai_summary || (review.ipcrf_file ? 'IPCRF document uploaded for review.' : 'No evaluation summary available.')}"
               </p>
               
               <div className="mt-8 pt-8 border-t border-base-100 flex justify-between items-center">
                  <div>
                     <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-1">Overall Rating</p>
-                    <p className="text-4xl font-black text-primary tracking-tighter">{avg.toFixed(2)}</p>
+                    <p className="text-4xl font-black text-primary tracking-tighter">{avg > 0 ? avg.toFixed(2) : 'N/A'}</p>
                  </div>
                  <div className="text-right">
                     <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-2">Eligibility</p>

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
-import { FileText, Award, Calendar, ChevronRight, BarChart3 } from 'lucide-react';
+import { FileText, Award, Calendar, ChevronRight, BarChart3, Plus } from 'lucide-react';
 import IPCRFDetailsModal from '../../components/features/performance/IPCRFDetailsModal';
+import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal';
 
 /**
  * My Performance Ratings (Employee IPCRF)
@@ -12,6 +13,7 @@ import IPCRFDetailsModal from '../../components/features/performance/IPCRFDetail
  */
 const MyIPCRF = () => {
   const [selectedReview, setSelectedReview] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   const { data: reviews = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.PERFORMANCE],
@@ -41,6 +43,14 @@ const MyIPCRF = () => {
           </div>
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Your ratings and eligibility</p>
         </div>
+
+        <button 
+          onClick={() => setShowUploadModal(true)}
+          className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Upload IPCRF
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -100,6 +110,12 @@ const MyIPCRF = () => {
         <IPCRFDetailsModal 
           review={selectedReview} 
           onClose={() => setSelectedReview(null)} 
+        />
+      )}
+
+      {showUploadModal && (
+        <IPCRFFormModal 
+          onClose={() => setShowUploadModal(false)} 
         />
       )}
     </div>

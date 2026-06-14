@@ -160,7 +160,7 @@ def generate_performance_summary(scores, attendance_data=None):
         if avg >= 4.5: return "Outstanding performance across all metrics."
         elif avg >= 3.0: return "Satisfactory performance. Meets standard requirements."
         return "Needs improvement in certain areas."
-    
+
     try:
         client = genai.Client(api_key=api_key)
         prompt = f"Provide a brief, professional performance evaluation summary (1-2 sentences) for an employee with these scores: {json.dumps(scores)}. Attendance context: {attendance_data or 'Not provided'}. Focus on strengths and potential."
@@ -172,7 +172,6 @@ def generate_performance_summary(scores, attendance_data=None):
     except Exception as e:
         print(f"Gemini Error (Performance): {e}")
         return "Standard performance evaluation based on scoring criteria. Meets division expectations for the current period."
-
 def haversine(lat1, lon1, lat2, lon2):
     """
     Calculate the great circle distance between two points 

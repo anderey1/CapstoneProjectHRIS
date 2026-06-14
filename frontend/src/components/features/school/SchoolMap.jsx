@@ -130,8 +130,8 @@ const SchoolMap = ({
               center={[lat, lng]} 
               radius={school.radius_meters} 
               pathOptions={{ 
-                color: isSelected ? '#10b981' : '#4f46e5', 
-                fillColor: isSelected ? '#10b981' : '#4f46e5', 
+                color: isSelected ? '#10b981' : 'oklch(48.8% 0.243 264.376)', 
+                fillColor: isSelected ? '#10b981' : 'oklch(48.8% 0.243 264.376)', 
                 fillOpacity: isSelected ? 0.25 : 0.12,
                 weight: isSelected ? 3 : 1.5
               }} 
@@ -147,7 +147,7 @@ const SchoolMap = ({
           <Circle 
             center={tempMarker} 
             radius={100} 
-            pathOptions={{ color: '#eab308', fillColor: '#eab308', fillOpacity: 0.1, dashArray: '5, 5' }} 
+            pathOptions={{ color: 'oklch(90.5% 0.182 98.111)', fillColor: 'oklch(90.5% 0.182 98.111)', fillOpacity: 0.1, dashArray: '5, 5' }} 
           />
         </>
       )}

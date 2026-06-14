@@ -5,7 +5,7 @@
     "fields": {
       "username": "admin",
       "email": "admin@deped.gov.ph",
-      "role": "ADMIN",
+      "role": "ADMINISTRATIVE",
       "is_staff": true,
       "is_superuser": true,
       "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
@@ -28,7 +28,7 @@
     "fields": {
       "username": "accountant_main",
       "email": "finance@deped.gov.ph",
-      "role": "ACCOUNTANT",
+      "role": "NON_TEACHING",
       "is_staff": true,
       "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
     }
@@ -39,7 +39,7 @@
     "fields": {
       "username": "marites.cruz",
       "email": "marites.cruz@deped.gov.ph",
-      "role": "EMPLOYEE",
+      "role": "TEACHING",
       "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
     }
   },
@@ -49,7 +49,7 @@
     "fields": {
       "username": "juandelacruz",
       "email": "juan.delacruz@deped.gov.ph",
-      "role": "EMPLOYEE",
+      "role": "TEACHING",
       "password": "pbkdf2_sha256$1200000$EzRJXLUbCq3wuxftk3Qkb3$dEtsnqFcsXB1P/vS0w/OPCIBFNHoRdsCySEEd3Wf39s="
     }
   },

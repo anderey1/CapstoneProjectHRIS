@@ -7,11 +7,16 @@ from django.contrib.auth.models import AbstractUser
 # ROLES
 # -------------------------
 class Role(models.TextChoices):
-    ADMIN = 'ADMIN', 'Admin'
+    # Core System Roles
+    ADMIN = 'ADMIN', 'Administrator'
     HR = 'HR', 'HR Staff'
-    SUPERVISOR = 'SUPERVISOR', 'Supervisor'
     ACCOUNTANT = 'ACCOUNTANT', 'Accountant'
-    EMPLOYEE = 'EMPLOYEE', 'Employee'
+    SUPERINTENDENT = 'SUPERINTENDENT', 'Superintendent'
+    
+    # Staff Categories
+    TEACHING = 'TEACHING', 'Teaching Staff'
+    NON_TEACHING = 'NON_TEACHING', 'Non-Teaching Staff'
+    ADMINISTRATIVE = 'ADMINISTRATIVE', 'Administrative Staff'
 
 
 # -------------------------
@@ -21,8 +26,9 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
-        default=Role.EMPLOYEE
+        default=Role.TEACHING
     )
+
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -58,7 +64,7 @@ class EmployeeManager(models.Manager):
                 username=user_data['username'],
                 email=user_data.get('email', ''),
                 password=user_data['password'],
-                role=user_data.get('role', Role.EMPLOYEE),
+                role=user_data.get('role', Role.TEACHING),
                 first_name=employee_data.get('first_name', ''),
                 last_name=employee_data.get('last_name', '')
             )
@@ -157,6 +163,11 @@ class Employee(models.Model):
         if self.salary_grade:
             self.salary = self.salary_grade.amount
             
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+     
         super().save(*args, **kwargs)
 
     def __str__(self):

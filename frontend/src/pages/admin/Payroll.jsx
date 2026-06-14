@@ -24,9 +24,9 @@ const Payroll = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Roles permission check
-  const isAdmin = user?.role === ROLES.ADMIN;
+  const isAdmin = user?.role === ROLES.ADMINISTRATIVE;
   const isHR = user?.role === ROLES.HR;
-  const isAccountant = user?.role === ROLES.ACCOUNTANT;
+  const isAccountant = user?.role === ROLES.NON_TEACHING;
 
   // Can generate if Admin, HR, or Accountant
   const canGenerate = isAdmin || isHR || isAccountant;

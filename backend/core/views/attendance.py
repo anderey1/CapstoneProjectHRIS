@@ -23,7 +23,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERVISOR]:
+        if user.is_superuser or user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
             return Attendance.objects.all()
         return Attendance.objects.filter(employee__user=user)
 
@@ -71,27 +71,36 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         
         attendance, created = Attendance.objects.get_or_create(
             employee=employee, 
-            date=today,
-            defaults={'status': get_attendance_status(now)}
+            date=today
         )
+
+        # Update status if it's currently 'present' and we detect a 'late' condition
+        current_status = get_attendance_status(now)
+        if attendance.status == 'present' and current_status == 'late':
+            attendance.status = 'late'
 
         slot_mapped = None
         message = ""
 
-        # Slot Windows (Strict Chronological Check)
-        # AM IN: 6:00 - 11:59
-        if current_time >= datetime.strptime("06:00", "%H:%M").time() and current_time < datetime.strptime("12:00", "%H:%M").time():
+        # Helper to convert string to time object
+        def t(time_str):
+            return datetime.strptime(time_str, "%H:%M").time()
+
+        # Slot Windows (More inclusive for late shifts/OT)
+        
+        # AM IN: 5:00 - 11:59
+        if t("05:00") <= current_time < t("12:00"):
             if not attendance.am_in:
                 attendance.am_in = current_time
                 slot_mapped = "am_in"
                 message = "AM IN recorded."
-            elif current_time >= datetime.strptime("11:00", "%H:%M").time() and not attendance.am_out:
+            elif current_time >= t("10:00") and not attendance.am_out:
                 attendance.am_out = current_time
                 slot_mapped = "am_out"
                 message = "AM OUT recorded."
 
         # AM OUT / PM IN overlap: 12:00 - 13:00
-        if not slot_mapped and current_time >= datetime.strptime("12:00", "%H:%M").time() and current_time < datetime.strptime("13:00", "%H:%M").time():
+        if not slot_mapped and t("12:00") <= current_time < t("13:00"):
             if not attendance.am_out:
                 attendance.am_out = current_time
                 slot_mapped = "am_out"
@@ -101,20 +110,18 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 slot_mapped = "pm_in"
                 message = "PM IN recorded."
 
-        # PM IN / PM OUT: 13:00 - 20:00
-        if not slot_mapped and current_time >= datetime.strptime("13:00", "%H:%M").time() and current_time < datetime.strptime("20:00", "%H:%M").time():
+        # PM IN / PM OUT: 13:00 - 23:59
+        if not slot_mapped and t("13:00") <= current_time <= t("23:59"):
             if not attendance.pm_in:
                 attendance.pm_in = current_time
                 slot_mapped = "pm_in"
                 message = "PM IN recorded."
-            elif current_time >= datetime.strptime("16:00", "%H:%M").time() and not attendance.pm_out:
+            elif current_time >= t("15:00") and not attendance.pm_out:
                 attendance.pm_out = current_time
                 slot_mapped = "pm_out"
                 message = "PM OUT recorded."
-
-        # OT: After PM OUT is filled or after 17:00
-        if not slot_mapped and current_time >= datetime.strptime("17:00", "%H:%M").time():
-            if attendance.pm_out:
+            elif attendance.pm_out:
+                # If PM OUT is already filled, check for OT
                 if not attendance.ot_in:
                     attendance.ot_in = current_time
                     slot_mapped = "ot_in"
@@ -123,14 +130,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                     attendance.ot_out = current_time
                     slot_mapped = "ot_out"
                     message = "OT OUT recorded."
-            elif not attendance.pm_out and current_time >= datetime.strptime("16:00", "%H:%M").time():
-                 # Fallback for late PM OUT
-                attendance.pm_out = current_time
-                slot_mapped = "pm_out"
-                message = "PM OUT recorded."
 
         if not slot_mapped:
-            return Response({"detail": "No valid slot available for this time or attendance already completed."}, status=400)
+            return Response({"detail": f"No valid slot available for this time ({current_time.strftime('%H:%M')}) or attendance already completed."}, status=400)
 
         # Update Geo data
         attendance.latitude = lat
@@ -198,7 +200,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             return Response({"detail": "month (YYYY-MM) is required."}, status=400)
             
         # Role-based access: Employees only see their own DTR
-        if user.role not in [Role.ADMIN, Role.HR, Role.ACCOUNTANT]:
+        if user.role not in [Role.ADMINISTRATIVE, Role.HR]:
             if not hasattr(user, 'employee_profile'):
                 return Response({"detail": "User has no employee profile."}, status=400)
             employee = user.employee_profile

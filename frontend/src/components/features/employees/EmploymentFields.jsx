@@ -9,6 +9,7 @@ import { ROLES, DEPED_POSITIONS } from '../../../utils/constants';
 const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, errors }) => {
   const selectedPosition = watch('position');
   const selectedSG = watch('salary_grade');
+  const selectedRole = watch('role');
 
   // Auto-set Salary & SG when position changes
   useEffect(() => {
@@ -23,6 +24,23 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
     }
   }, [selectedPosition, salaryGrades, setValue]);
 
+  // Filter positions based on role
+  const getFilteredPositions = () => {
+    if (selectedRole === ROLES.TEACHING) return DEPED_POSITIONS.TEACHING;
+    if (selectedRole === ROLES.ADMINISTRATIVE) return DEPED_POSITIONS.ADMINISTRATIVE;
+    if (selectedRole === ROLES.NON_TEACHING) return DEPED_POSITIONS.NON_TEACHING;
+    if (selectedRole === ROLES.HR) return DEPED_POSITIONS.NON_TEACHING;
+    
+    // Fallback for unselected
+    return [
+      ...DEPED_POSITIONS.TEACHING,
+      ...DEPED_POSITIONS.ADMINISTRATIVE,
+      ...DEPED_POSITIONS.NON_TEACHING
+    ];
+  };
+
+  const filteredPositions = getFilteredPositions();
+
   // Find label for display
   const currentSGDetails = salaryGrades?.find(sg => sg.id === parseInt(selectedSG));
 
@@ -35,11 +53,11 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             {...register("role", { required: "Role is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.role ? 'border-error' : ''}`}
           >
-            <option value={ROLES.EMPLOYEE}>Employee</option>
+            <option value="">Select Role</option>
+            <option value={ROLES.TEACHING}>Teaching Staff</option>
+            <option value={ROLES.ADMINISTRATIVE}>Administrative Staff</option>
+            <option value={ROLES.NON_TEACHING}>Non-Teaching Staff</option>
             <option value={ROLES.HR}>HR Staff</option>
-            <option value={ROLES.ADMIN}>Administrator</option>
-            <option value={ROLES.SUPERVISOR}>Supervisor</option>
-            <option value={ROLES.ACCOUNTANT}>Accountant</option>
           </select>
           {errors.role && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.role.message}</span>}
         </div>
@@ -50,15 +68,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.position ? 'border-error' : ''}`}
           >
             <option value="">Select Position</option>
-            <optgroup label="TEACHING ROLES">
-              {DEPED_POSITIONS.TEACHING.map(p => <option key={p} value={p}>{p}</option>)}
-            </optgroup>
-            <optgroup label="ADMINISTRATIVE ROLES">
-              {DEPED_POSITIONS.ADMINISTRATIVE.map(p => <option key={p} value={p}>{p}</option>)}
-            </optgroup>
-            <optgroup label="NON-TEACHING ROLES">
-              {DEPED_POSITIONS.NON_TEACHING.map(p => <option key={p} value={p}>{p}</option>)}
-            </optgroup>
+            {filteredPositions.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
           {errors.position && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.position.message}</span>}
         </div>

@@ -17,7 +17,7 @@ const DTR = () => {
   const [downloading, setDownloading] = useState(false);
 
   // Only allow Employees to export PDF
-  const isEmployee = user?.role === ROLES.EMPLOYEE;
+  const isEmployee = [ROLES.TEACHING, ROLES.ADMINISTRATIVE, ROLES.NON_TEACHING].includes(user?.role);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth],

@@ -34,7 +34,7 @@ def school(db):
 
 @pytest.fixture
 def admin_user(db):
-    user = User.objects.create_user(username='admin', password='password123', role=Role.ADMIN)
+    user = User.objects.create_user(username='admin', password='password123', role=Role.ADMINISTRATIVE)
     return user
 
 @pytest.fixture
@@ -74,7 +74,7 @@ def staff_user(db, school):
     user_data = {
         "username": "teacher1",
         "password": "password123",
-        "role": Role.EMPLOYEE
+        "role": Role.TEACHING
     }
     employee_data = {
         "first_name": "Juan",
@@ -88,16 +88,16 @@ def staff_user(db, school):
     return employee.user
 
 @pytest.fixture
-def supervisor_user(db, school):
+def superintendent_user(db, school):
     user_data = {
         "username": "supervisor",
         "password": "password123",
-        "role": Role.SUPERVISOR
+        "role": Role.ADMINISTRATIVE
     }
     employee_data = {
         "first_name": "Supervisor",
         "last_name": "User",
-        "position": "Supervisor",
+        "position": "Superintendent",
         "department": "Instructional",
         "school": school,
         "salary": 50000
@@ -106,10 +106,10 @@ def supervisor_user(db, school):
     return employee.user
 
 @pytest.fixture
-def supervisor_client(supervisor_user):
+def superintendent_client(superintendent_user):
     from rest_framework.test import APIClient
     client = APIClient()
-    client.force_authenticate(user=supervisor_user)
+    client.force_authenticate(user=superintendent_user)
     return client
 
 @pytest.fixture
@@ -117,7 +117,7 @@ def accountant_user(db, school):
     user_data = {
         "username": "accountant",
         "password": "password123",
-        "role": Role.ACCOUNTANT
+        "role": Role.NON_TEACHING
     }
     employee_data = {
         "first_name": "Accountant",
@@ -149,7 +149,7 @@ def another_staff_user(db, school):
     user_data = {
         "username": "teacher2",
         "password": "password123",
-        "role": Role.EMPLOYEE
+        "role": Role.TEACHING
     }
     employee_data = {
         "first_name": "Maria",
@@ -161,3 +161,4 @@ def another_staff_user(db, school):
     }
     employee = Employee.objects.create_with_user(user_data, employee_data)
     return employee.user
+

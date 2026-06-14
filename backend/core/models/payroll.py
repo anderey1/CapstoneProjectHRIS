@@ -1,5 +1,6 @@
 from django.db import models
 from .employee import Employee
+from decimal import Decimal
 
 # -------------------------
 # PAYROLL
@@ -15,19 +16,19 @@ class Payroll(models.Model):
     cutoff_period = models.CharField(max_length=50, default="May 1-15, 2026")
     
     # Timekeeping
-    days_worked = models.DecimalField(max_digits=4, decimal_places=1, default=11.0) # Standard 11 days per cutoff
+    days_worked = models.DecimalField(max_digits=4, decimal_places=1, default=Decimal('11.0')) # Standard 11 days per cutoff
     
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2) # This is now the calculated salary based on attendance
-    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0) # Total before deductions
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00')) # Total before deductions
     
     # Deductions
-    sss = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    philhealth = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    pagibig = models.DecimalField(max_digits=10, decimal_places=2, default=100.00)
-    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    loans = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    sss = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    philhealth = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    pagibig = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('100.00'))
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    loans = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     
-    total_deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_deductions = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     net_salary = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     date_generated = models.DateTimeField(auto_now_add=True)

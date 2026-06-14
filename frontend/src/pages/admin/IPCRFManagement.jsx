@@ -15,7 +15,7 @@ const IPCRFManagement = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
-  const canRate = ['ADMIN', 'HR', 'SUPERVISOR'].includes(user?.role);
+  const canRate = ['ADMIN', 'HR', 'SUPERINTENDENT'].includes(user?.role);
 
   // 1. Data Fetching
   const { data: reviews, isLoading } = useQuery({
@@ -74,9 +74,8 @@ const IPCRFManagement = () => {
               <tr className="bg-base-50/50 border-b border-base-200 uppercase text-[10px] tracking-widest font-black opacity-50">
                 <th className="px-6 py-4 text-primary">Employee</th>
                 <th className="px-6 py-4">Period</th>
+                <th className="px-6 py-4">IPCRF</th>
                 <th className="px-6 py-4">Scores</th>
-                <th className="px-6 py-4">Eligibility</th>
-                <th className="px-6 py-4">Summary</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -86,31 +85,38 @@ const IPCRFManagement = () => {
                   <td className="px-6 py-4 font-bold text-sm text-base-content">{r.employee_name}</td>
                   <td className="px-6 py-4 text-xs font-medium opacity-60 uppercase">{r.period}</td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <span className="badge badge-outline border-success/30 text-success font-black text-[9px] px-2 py-2">P:{r.punctuality_score}</span>
-                      <span className="badge badge-outline border-primary/30 text-primary font-black text-[9px] px-2 py-2">Q:{r.quality_score}</span>
-                      <span className="badge badge-outline border-warning/30 text-warning font-black text-[9px] px-2 py-2">B:{r.behavior_score}</span>
-                    </div>
+                    {r.ipcrf_file ? (
+                      <a 
+                        href={r.ipcrf_file} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn btn-ghost btn-xs text-primary font-black hover:bg-primary/5 flex items-center gap-1"
+                      >
+                        <FileText className="w-3 h-3" />
+                        Download
+                      </a>
+                    ) : (
+                      <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">No File</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
-                      {r.is_promotion_eligible 
-                          ? <span className="px-3 py-1 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-wider">Eligible</span> 
-                          : <span className="px-3 py-1 bg-base-100 text-base-content/40 rounded-full text-[9px] font-black uppercase tracking-wider">Regular</span>}
-                  </td>
-                  <td className="px-6 py-4 max-w-xs">
-                    <p className="text-[11px] italic font-medium leading-relaxed opacity-60 line-clamp-2">
-                      {r.ai_summary}
-                    </p>
+                    <div className="flex gap-2">
+                      <span className="badge badge-outline border-success/30 text-success font-black text-[9px] px-2 py-2">P:{r.punctuality_score || '-'}</span>
+                      <span className="badge badge-outline border-primary/30 text-primary font-black text-[9px] px-2 py-2">Q:{r.quality_score || '-'}</span>
+                      <span className="badge badge-outline border-warning/30 text-warning font-black text-[9px] px-2 py-2">B:{r.behavior_score || '-'}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {canRate && (
-                      <button
-                        className="btn btn-ghost btn-xs text-error font-black hover:bg-error/5"
-                        onClick={() => handleDelete(r.id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    <div className="flex justify-end gap-2">
+                      {canRate && (
+                        <button
+                          className="btn btn-ghost btn-xs text-error font-black hover:bg-error/5"
+                          onClick={() => handleDelete(r.id)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

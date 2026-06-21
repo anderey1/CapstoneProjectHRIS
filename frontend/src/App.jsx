@@ -34,8 +34,8 @@ import SchoolManagement from './pages/admin/SchoolManagement';
 function App() {
   const { user } = useAuth();
 
-  const isAdminOrHR = user && ['ADMIN', 'HR'].includes(user.role);
-  const isManagement = user && ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERINTENDENT'].includes(user.role);
+  const isAdminOrHR = user && ['ADMIN', 'HR', 'ADMINISTRATIVE'].includes(user.role);
+  const isManagement = user && ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -106,10 +106,10 @@ function App() {
             element={isAdminOrHR ? <Recruitment /> : <Navigate to="/" replace />}
           />
 
-          {/* Schools/Geofencing - Admin/Superintendent only */}
+          {/* Schools/Geofencing - Management only */}
           <Route
             path="schools"
-            element={['ADMIN', 'SUPERINTENDENT'].includes(user?.role) ? <SchoolManagement /> : <Navigate to="/" replace />}
+            element={isManagement ? <SchoolManagement /> : <Navigate to="/" replace />}
           />
 
           {/* Audit Logs - Admin/HR only */}

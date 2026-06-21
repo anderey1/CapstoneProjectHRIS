@@ -29,13 +29,13 @@ const SidebarContent = ({ closeDrawer }) => {
     {
       title: 'Main',
       links: [
-        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['ADMINISTRATIVE', 'HR', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'SUPERINTENDENT'] },
       ]
     },
     {
       title: 'Staff',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['HR', 'ADMINISTRATIVE'] },
         { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Hiring', roles: ['ADMINISTRATIVE', 'HR'] },
       ]
     },
@@ -43,16 +43,16 @@ const SidebarContent = ({ closeDrawer }) => {
       title: 'Time & Leave',
       links: [
         { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/location-tracking', icon: <MapPin className="w-4 h-4" />, label: 'Location Tracking', roles: ['ADMINISTRATIVE', 'HR'] },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/location-tracking', icon: <MapPin className="w-4 h-4" />, label: 'Location Tracking', roles: ['HR'] },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record', roles: ['HR'] },
         { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
       ]
     },
     {
       title: 'Money',
       links: [
-        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['ADMINISTRATIVE', 'NON_TEACHING', 'HR'] },
-        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['ADMINISTRATIVE', 'NON_TEACHING', 'HR', 'TEACHING'] },
+        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['HR', 'ACCOUNTANT'] },
+        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING', 'ACCOUNTANT'] },
       ]
     },
     {
@@ -64,7 +64,7 @@ const SidebarContent = ({ closeDrawer }) => {
     {
       title: 'Settings',
       links: [
-        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['ADMINISTRATIVE', 'HR', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'SUPERINTENDENT'] },
         { to: '/schools', icon: <School className="w-4 h-4" />, label: 'School Geofencing', roles: ['ADMINISTRATIVE'] },
         { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['ADMINISTRATIVE', 'HR'] },
       ]

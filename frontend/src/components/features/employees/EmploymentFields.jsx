@@ -30,6 +30,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
     if (selectedRole === ROLES.ADMINISTRATIVE) return DEPED_POSITIONS.ADMINISTRATIVE;
     if (selectedRole === ROLES.NON_TEACHING) return DEPED_POSITIONS.NON_TEACHING;
     if (selectedRole === ROLES.HR) return DEPED_POSITIONS.NON_TEACHING;
+    if (selectedRole === ROLES.ACCOUNTANT) return DEPED_POSITIONS.NON_TEACHING;
     
     // Fallback for unselected
     return [
@@ -58,6 +59,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             <option value={ROLES.ADMINISTRATIVE}>Administrative Staff</option>
             <option value={ROLES.NON_TEACHING}>Non-Teaching Staff</option>
             <option value={ROLES.HR}>HR Staff</option>
+            <option value={ROLES.ACCOUNTANT}>Accountant</option>
           </select>
           {errors.role && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.role.message}</span>}
         </div>

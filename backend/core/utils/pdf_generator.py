@@ -8,7 +8,9 @@ from django.conf import settings
 from io import BytesIO
 from datetime import date
 import calendar
+from reportlab.lib import colors
 import os
+
 
 def generate_form_48(employee, month_str, attendance_records, cutoff=None):
     """

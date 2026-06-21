@@ -3,9 +3,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from datetime import datetime
 from ..permissions import IsAdminOrHR, IsAccountant
-from ..models import Attendance, Role
+from ..models import Attendance, Employee, Role
 from ..serializers import AttendanceSerializer
 from ..utils import validate_attendance_geo, get_attendance_status, generate_daily_qr_token
 from ..utils.pdf_generator import generate_form_48
@@ -199,15 +200,17 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         if not month:
             return Response({"detail": "month (YYYY-MM) is required."}, status=400)
             
-        # Role-based access: Employees only see their own DTR
-        if user.role not in [Role.ADMINISTRATIVE, Role.HR]:
-            if not hasattr(user, 'employee_profile'):
-                return Response({"detail": "User has no employee profile."}, status=400)
-            employee = user.employee_profile
-        else:
-            if not employee_id:
-                return Response({"detail": "employee_id is required for administrative staff."}, status=400)
+        # Allow HR/admin to export for a selected employee when provided;
+        # otherwise fall back to the logged-in user's own profile.
+        if employee_id:
             employee = get_object_or_404(Employee, id=employee_id)
+        else:
+            employee = getattr(user, 'employee_profile', None)
+            if not employee:
+                return Response(
+                    {"detail": "No employee profile is linked to this account."},
+                    status=400
+                )
             
         try:
             year, month_num = map(int, month.split('-'))

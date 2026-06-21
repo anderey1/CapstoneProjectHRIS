@@ -22,6 +22,37 @@ const COLORS = [
   'oklch(70% 0.15 250)'         // Variant for blue
 ];
 
+const LEAVE_TYPE_LABELS = {
+  vacation: 'Vacation Leave',
+  'vacation leave': 'Vacation Leave',
+  forced: 'Mandatory/Forced Leave',
+  'mandatory/forced leave': 'Mandatory/Forced Leave',
+  sick: 'Sick Leave',
+  'sick leave': 'Sick Leave',
+  maternity: 'Maternity Leave',
+  'maternity leave': 'Maternity Leave',
+  paternity: 'Paternity Leave',
+  'paternity leave': 'Paternity Leave',
+  special_privilege: 'Special Privilege Leave',
+  'special privilege leave': 'Special Privilege Leave',
+  solo_parent: 'Solo Parent Leave',
+  'solo parent leave': 'Solo Parent Leave',
+  study: 'Study Leave',
+  'study leave': 'Study Leave',
+  vawc: '10-Day VAWC Leave',
+  '10-day vawc leave': '10-Day VAWC Leave',
+  rehabilitation: 'Rehabilitation Privilege',
+  'rehabilitation privilege': 'Rehabilitation Privilege',
+  women_special: 'Special Leave Benefits for Women',
+  'special leave benefits for women': 'Special Leave Benefits for Women',
+  emergency: 'Special Emergency (Calamity) Leave',
+  'special emergency (calamity) leave': 'Special Emergency (Calamity) Leave',
+  adoption: 'Adoption Leave',
+  'adoption leave': 'Adoption Leave',
+  others: 'Others',
+  'others leave': 'Others'
+};
+
 /**
  * Admin Home (Dashboard)
  * 
@@ -80,20 +111,69 @@ const Dashboard = () => {
     count: item.count
   })) || [];
 
+  const normalizeText = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    return String(value)
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const formatReadableLabel = (value) => {
+    const text = normalizeText(value);
+    if (!text) return '';
+
+    return text
+      .split(' ')
+      .map(word => {
+        if (!word) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(' ');
+  };
+
   const formattedAttData = attData?.map(item => ({
-    name: item.status?.toUpperCase() || 'UNKNOWN',
+    name: formatReadableLabel(item.status) || 'Unknown Status',
     count: item.count
   })) || [];
 
   const formattedRecData = recruitmentData?.map(item => ({
-    name: item.status?.toUpperCase() || 'UNKNOWN',
+    name: formatReadableLabel(item.status) || 'Unknown Stage',
     count: item.count
   })) || [];
 
-  const formattedLeaveData = leaveTypeData?.map(item => ({
-    name: `${item.leave_type?.toUpperCase() || 'OTHER'} (${item.reason?.toUpperCase() || 'GENERAL'})`,
-    value: Number(item.count) || 0
-  })).slice(0, 6) || [];
+  const leaveChartItems = Array.isArray(leaveTypeData)
+    ? leaveTypeData
+    : leaveTypeData?.results || [];
+
+  const formattedLeaveData = leaveChartItems
+    .map(item => {
+      const rawLeaveType =
+        item.leave_label ||
+        item.leave_type ||
+        item.leaveType ||
+        item.type ||
+        item.name ||
+        item.label;
+
+      const normalizedKey = normalizeText(rawLeaveType)
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const explicitLabel = LEAVE_TYPE_LABELS[normalizedKey] ||
+        LEAVE_TYPE_LABELS[normalizedKey.replace(/\s+/g, '_')] ||
+        LEAVE_TYPE_LABELS[normalizedKey.replace(/\s+/g, '')];
+      const fallbackLabel = formatReadableLabel(rawLeaveType);
+      const label = explicitLabel || fallbackLabel || 'Leave';
+
+      return {
+        name: label,
+        value: Number(item.count || item.value || 0)
+      };
+    })
+    .filter(item => item.name && item.value > 0)
+    .slice(0, 6);
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
@@ -211,13 +291,11 @@ const Dashboard = () => {
                         cursor={false} 
                         contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }} 
                       />
-                      <Bar 
-                        dataKey="count" 
-                        fill="oklch(57.7% 0.245 27.325)" 
-                        radius={[0, 8, 8, 0]} 
-                        barSize={28}
-                        activeBar={{ fill: 'oklch(57.7% 0.245 27.325)' }}
-                      />
+                      <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={28}>
+                        {formattedRecData.map((entry, index) => (
+                          <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -258,6 +336,7 @@ const Dashboard = () => {
                           outerRadius={100}
                           paddingAngle={10}
                           dataKey="value"
+                          nameKey="name"
                         >
                           {formattedLeaveData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
@@ -374,13 +453,7 @@ const Dashboard = () => {
               <div className="h-[250px] w-full relative z-10">
                 {formattedAttData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={formattedAttData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="oklch(57.7% 0.245 27.325)" stopOpacity={0.2} />
-                          <stop offset="95%" stopColor="oklch(57.7% 0.245 27.325)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
+                    <BarChart data={formattedAttData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.05} />
                       <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
@@ -388,17 +461,12 @@ const Dashboard = () => {
                         cursor={false}
                         contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }} 
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="oklch(57.7% 0.245 27.325)" 
-                        strokeWidth={4} 
-                        fillOpacity={1} 
-                        fill="url(#colorCount)" 
-                        activeDot={{ r: 6, strokeWidth: 0, fill: 'oklch(57.7% 0.245 27.325)' }}
-                        animationDuration={1500}
-                      />
-                    </AreaChart>
+                      <Bar dataKey="count" radius={[10, 10, 0, 0]} barSize={36}>
+                        {formattedAttData.map((entry, index) => (
+                          <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No daily activity recorded</div>

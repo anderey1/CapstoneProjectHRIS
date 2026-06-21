@@ -4,6 +4,7 @@ import { Clock, CheckCircle2, XCircle, Clock as ClockIcon, ChevronRight, FileTex
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
+import { ROLES } from '../../utils/constants';
 
 /**
  * Leaves Management (Admin/HR View) - CSC Form No. 6 Compliant
@@ -15,7 +16,8 @@ const LeaveManagement = () => {
    const [selectedLeave, setSelectedLeave] = useState(null);
    const [rejectionReason, setRejectionReason] = useState('');
 
-   const canManage = user?.role === 'ADMIN' || user?.role === 'HR';
+   const canReview = ['ADMIN', ROLES.ADMINISTRATIVE, ROLES.HR].includes(user?.role);
+   const canApprove = ['ADMIN', ROLES.ADMINISTRATIVE].includes(user?.role);
 
    // 1. Data Fetching
    const { data: leaves = [], isLoading } = useQuery({
@@ -284,7 +286,7 @@ const LeaveManagement = () => {
                               ></textarea>
                            </div>
                            
-                           {canManage ? (
+                           {canApprove ? (
                               <div className="grid grid-cols-2 gap-4">
                                  <button
                                     onClick={() => rejectMutation.mutate({ id: selectedLeave.id, reason: rejectionReason })}
@@ -298,8 +300,12 @@ const LeaveManagement = () => {
                                     disabled={approveMutation.isPending}
                                     className="btn btn-primary rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
                                  >
-                                    Approve for CSC
+                                    Confirm Approval
                                  </button>
+                              </div>
+                           ) : canReview ? (
+                              <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-60">
+                                 HR review only. Admin can confirm the final approval.
                               </div>
                            ) : (
                               <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">

@@ -13,11 +13,14 @@ import { ROLES } from '../../utils/constants';
  */
 const DTR = () => {
   const { user } = useAuth();
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [selectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [downloading, setDownloading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // Only allow Employees to export PDF
-  const isEmployee = [ROLES.TEACHING, ROLES.ADMINISTRATIVE, ROLES.NON_TEACHING].includes(user?.role);
+  // Allow employees and HR/admin roles to export PDF records.
+  const canExport = [ROLES.TEACHING, ROLES.ADMINISTRATIVE, ROLES.NON_TEACHING, ROLES.HR, 'ADMIN', 'SUPERINTENDENT', 'ACCOUNTANT'].includes(user?.role);
+  const canSelectEmployee = ['ADMIN', 'HR', 'ADMINISTRATIVE', 'SUPERINTENDENT', 'ACCOUNTANT'].includes(user?.role);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth],
@@ -28,22 +31,53 @@ const DTR = () => {
     },
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees_for_dtr'],
+    queryFn: async () => {
+      const response = await api.get('employees/');
+      return Array.isArray(response.data) ? response.data : response.data.results || [];
+    },
+    enabled: canSelectEmployee,
+  });
+
   const handleDownload = async (cutoff) => {
     try {
       setDownloading(true);
-      const response = await api.get(`attendance/dtr_pdf/?month=${selectedMonth}&cutoff=${cutoff}`, {
+      setErrorMessage('');
+
+      if (canSelectEmployee && !selectedEmployeeId) {
+        throw new Error('Please select an employee before exporting.');
+      }
+
+      const response = await api.get('attendance/dtr_pdf/', {
+        params: {
+          month: selectedMonth,
+          cutoff,
+          ...(selectedEmployeeId ? { employee_id: selectedEmployeeId } : {}),
+        },
         responseType: 'blob'
       });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const blob = response.data;
+      if (!(blob instanceof Blob) || blob.size === 0) {
+        throw new Error('The server returned an empty PDF response.');
+      }
+
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `DTR_${selectedMonth}_Cutoff_${cutoff}.pdf`);
+      link.setAttribute('download', `DTR_${selectedMonth}_Cutoff_${cutoff || 'Full'}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Download failed", error);
+      console.error('Download failed', error);
+      setErrorMessage(
+        error?.response?.data?.detail ||
+        error?.message ||
+        'Unable to generate the PDF right now.'
+      );
     } finally {
       setDownloading(false);
     }
@@ -59,7 +93,7 @@ const DTR = () => {
     <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
@@ -70,8 +104,22 @@ const DTR = () => {
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Daily Time Record logs (Form 48)</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-            {isEmployee && (
+        <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
+            {canSelectEmployee && (
+              <select
+                className="select select-bordered select-sm w-full md:min-w-[240px] md:w-auto font-bold text-xs uppercase"
+                value={selectedEmployeeId}
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+              >
+                <option value="">Select employee</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.first_name} {emp.last_name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {canExport && (
               <div className="dropdown dropdown-end">
                   <label tabIndex={0} className={`btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-6 font-black uppercase tracking-widest text-[11px] ${downloading ? 'loading' : ''}`}>
                       <Download className="w-4 h-4 mr-2" />
@@ -79,15 +127,22 @@ const DTR = () => {
                   </label>
                   <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 border border-base-200 rounded-xl w-52 mt-2">
                       <li className="menu-title font-black text-[9px] uppercase tracking-widest opacity-40">Choose Cutoff</li>
-                      <li><button onClick={() => handleDownload('1')} className="font-bold text-xs uppercase py-3">1st Cutoff (1-15)</button></li>
-                      <li><button onClick={() => handleDownload('2')} className="font-bold text-xs uppercase py-3">2nd Cutoff (16-31)</button></li>
-                      <li><button onClick={() => handleDownload('split')} className="font-bold text-xs uppercase py-3">Split (Both Cards)</button></li>
-                      <li><button onClick={() => handleDownload('')} className="font-bold text-xs uppercase py-3">Full Month (Copy)</button></li>
+                      <li><button type="button" onClick={() => handleDownload('1')} className="font-bold text-xs uppercase py-3">1st Cutoff (1-15)</button></li>
+                      <li><button type="button" onClick={() => handleDownload('2')} className="font-bold text-xs uppercase py-3">2nd Cutoff (16-31)</button></li>
+                      <li><button type="button" onClick={() => handleDownload('split')} className="font-bold text-xs uppercase py-3">Split (Both Cards)</button></li>
+                      <li><button type="button" onClick={() => handleDownload('')} className="font-bold text-xs uppercase py-3">Full Month (Copy)</button></li>
                   </ul>
               </div>
             )}
         </div>
       </div>
+
+      {errorMessage && (
+        <div className="alert alert-error rounded-xl shadow-sm">
+          <AlertCircle className="w-4 h-4" />
+          <span className="text-xs font-bold uppercase tracking-widest">{errorMessage}</span>
+        </div>
+      )}
 
       {/* DTR Data Table */}
       <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">

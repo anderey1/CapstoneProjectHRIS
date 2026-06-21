@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Count, Sum, F, Value
+from django.db.models import Count, Sum, F, Value, Case, When
 from django.db.models.functions import Coalesce
 from ..models import Employee, ProvidentLoan, Attendance, LeaveRequest, Payroll, PerformanceReview, Applicant
 from ..utils import generate_hr_summary
@@ -74,8 +74,25 @@ def analytics_detail(request, metric):
                 F('study_type'),
                 F('other_type_details'),
                 Value('General Purposes')
+            ),
+            leave_label=Case(
+                When(leave_type='vacation', then=Value('Vacation Leave')),
+                When(leave_type='forced', then=Value('Mandatory/Forced Leave')),
+                When(leave_type='sick', then=Value('Sick Leave')),
+                When(leave_type='maternity', then=Value('Maternity Leave')),
+                When(leave_type='paternity', then=Value('Paternity Leave')),
+                When(leave_type='special_privilege', then=Value('Special Privilege Leave')),
+                When(leave_type='solo_parent', then=Value('Solo Parent Leave')),
+                When(leave_type='study', then=Value('Study Leave')),
+                When(leave_type='vawc', then=Value('10-Day VAWC Leave')),
+                When(leave_type='rehabilitation', then=Value('Rehabilitation Privilege')),
+                When(leave_type='women_special', then=Value('Special Leave Benefits for Women')),
+                When(leave_type='emergency', then=Value('Special Emergency (Calamity) Leave')),
+                When(leave_type='adoption', then=Value('Adoption Leave')),
+                When(leave_type='others', then=Value('Others')),
+                default=F('leave_type')
             )
-        ).values('leave_type', 'reason').annotate(
+        ).values('leave_type', 'leave_label', 'reason').annotate(
             count=Sum('working_days_applied')
         ).order_by('-count')
     elif metric == 'payroll':

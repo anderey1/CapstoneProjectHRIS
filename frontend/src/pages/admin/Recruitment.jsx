@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
-import { User, Mail, Phone, Trash2, ChevronRight, Layout, Search, Star, FileText, CheckCircle2, XCircle, Info, MessageSquare } from 'lucide-react';
+import { Plus, User, Mail, Phone, Trash2, ChevronRight, Layout, Search, Star, FileText, CheckCircle2, XCircle, Info, MessageSquare } from 'lucide-react';
+import AddApplicantModal from '../../components/features/recruitment/AddApplicantModal';
 
 /**
  * DepEd Recruitment Board
@@ -19,6 +20,7 @@ const COLUMNS = [
 
 const Recruitment = () => {
   const queryClient = useQueryClient();
+  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [statusNote, setStatusNote] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,6 +108,13 @@ const Recruitment = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
              />
           </div>
+          <button
+            className="btn btn-primary btn-sm rounded-lg shadow-lg shadow-primary/20 px-6 font-black uppercase tracking-widest text-[10px]"
+            onClick={() => setShowAddModal(true)}
+          >
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            New Applicant
+          </button>
         </div>
       </div>
 
@@ -185,6 +194,9 @@ const Recruitment = () => {
           ))}
         </div>
       )}
+      {/* Add Applicant Modal */}
+      {showAddModal && <AddApplicantModal onClose={() => setShowAddModal(false)} />}
+
       
       {/* Applicant Detail / Status Update Modal */}
       {selectedApplicant && (

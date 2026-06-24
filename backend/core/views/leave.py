@@ -7,7 +7,7 @@ from django.utils import timezone
 from datetime import datetime
 from ..models import LeaveRequest, Role, AuditLog, Employee
 from ..serializers import LeaveRequestSerializer
-from ..permissions import IsAdminOrHR
+from ..permissions import IsAdminOrHR, IsSuperintendent
 from ..utils import calculate_working_days
 
 class LeaveViewSet(viewsets.ModelViewSet):
@@ -76,7 +76,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
         serializer.save(employee=employee, working_days_applied=duration)
         AuditLog.objects.create(user=user, action=f"Filed {leave_type} leave: {start_date} to {end_date}")
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent])
     def approve(self, request, pk=None):
         leave = self.get_object()
         if leave.status != 'pending':
@@ -109,7 +109,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Approved {leave.leave_type} leave for {leave.employee} ({duration} days)")
         return Response({"message": "Leave request approved", "days_deducted": duration})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent])
     def reject(self, request, pk=None):
         leave = self.get_object()
         if leave.status != 'pending':

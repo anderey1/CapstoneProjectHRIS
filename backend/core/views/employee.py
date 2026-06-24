@@ -122,3 +122,17 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         # Default GET
         serializer = self.get_serializer(employee)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
+    def award_yearly_credits(self, request):
+        from decimal import Decimal
+        # Award +15.0 to vacation and sick leave balances of all employees
+        employees = Employee.objects.all()
+        count = employees.count()
+        for emp in employees:
+            emp.vacation_leave_balance += Decimal('15.0')
+            emp.sick_leave_balance += Decimal('15.0')
+            emp.save()
+        
+        AuditLog.objects.create(user=request.user, action=f"Awarded yearly leave credits (+15 days) to all {count} employees.")
+        return Response({"message": f"Successfully awarded 15 leave credits to {count} employees."})

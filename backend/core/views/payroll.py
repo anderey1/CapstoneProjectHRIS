@@ -9,7 +9,7 @@ from django.db import transaction
 from decimal import Decimal
 from ..models import Employee, ProvidentLoan, LoanPayment, Payroll, Role, AuditLog, Attendance
 from ..serializers import PayrollSerializer
-from ..permissions import IsAdminOrHR, IsAccountant, IsAdmin
+from ..permissions import IsAdminOrHR, IsAccountant, IsAdmin, IsSuperintendent
 from ..utils import parse_cutoff_dates
 
 class PayrollViewSet(viewsets.ModelViewSet):
@@ -163,7 +163,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(payroll)
         return Response(serializer.data, status=http_status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['POST'], permission_classes=[IsAdminOrHR])
+    @action(detail=True, methods=['POST'], permission_classes=[IsSuperintendent])
     def approve(self, request, pk=None):
         """Approves a draft payroll record."""
         payroll = self.get_object()
@@ -176,7 +176,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Approved payroll: {payroll.employee} ({payroll.cutoff_period})")
         return Response({"message": "Payroll approved.", "status": "approved"})
 
-    @action(detail=True, methods=['POST'], permission_classes=[IsAdmin | IsAccountant], url_path='release')
+    @action(detail=True, methods=['POST'], permission_classes=[IsAccountant], url_path='release')
     def release(self, request, pk=None):
         """Finalizes and releases payroll, recording loan deductions if any."""
         payroll = self.get_object()
@@ -202,3 +202,140 @@ class PayrollViewSet(viewsets.ModelViewSet):
             AuditLog.objects.create(user=request.user, action=f"Released payroll: {payroll.employee} ({payroll.cutoff_period})")
             
         return Response({"message": "Payroll released successfully.", "status": "released"})
+
+    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHR | IsAccountant])
+    def bulk_generate(self, request):
+        cutoff = request.data.get('cutoff', request.data.get('cutoff_period'))
+        if not cutoff:
+            return Response({"detail": "cutoff_period is required."}, status=400)
+            
+        start_date, end_date = parse_cutoff_dates(cutoff)
+        
+        employees = Employee.objects.filter(user__is_active=True)
+        generated_count = 0
+        updated_count = 0
+        skipped = []
+        
+        with transaction.atomic():
+            for employee in employees:
+                # 1. Salary check
+                if employee.salary is None:
+                    skipped.append({
+                        "employee": str(employee),
+                        "reason": "No salary set on profile"
+                    })
+                    continue
+                
+                # 2. Check for unapproved DTR records
+                if start_date and end_date:
+                    unapproved_count = Attendance.objects.filter(
+                        employee=employee,
+                        date__range=(start_date, end_date),
+                        is_dtr_approved=False
+                    ).count()
+                    
+                    if unapproved_count > 0:
+                        skipped.append({
+                            "employee": str(employee),
+                            "reason": f"{unapproved_count} unapproved DTR record(s)"
+                        })
+                        continue
+                
+                # 3. Calculate Days Worked
+                days_worked = Decimal('11.0')
+                if start_date and end_date:
+                    present_days = Attendance.objects.filter(
+                        employee=employee,
+                        date__range=(start_date, end_date),
+                        status__in=['present', 'late']
+                    ).values('date').distinct().count()
+                    if present_days > 0:
+                        days_worked = Decimal(str(present_days))
+                
+                # Calculations
+                monthly_salary = employee.salary
+                daily_rate = monthly_salary / Decimal('22.0')
+                calculated_salary = (daily_rate * days_worked).quantize(Decimal('0.01'))
+                
+                # SSS
+                sss_deduction = (monthly_salary * Decimal('0.045')) / Decimal('2.0')
+                if sss_deduction > Decimal('675.00'):
+                    sss_deduction = Decimal('675.00')
+                elif sss_deduction < Decimal('0.00'):
+                    sss_deduction = Decimal('0.00')
+                    
+                # PhilHealth
+                philhealth_deduction = (monthly_salary * Decimal('0.025')) / Decimal('2.0')
+                if philhealth_deduction > Decimal('500.00'):
+                    philhealth_deduction = Decimal('500.00')
+                elif philhealth_deduction < Decimal('0.00'):
+                    philhealth_deduction = Decimal('0.00')
+                    
+                # Pag-IBIG
+                pagibig_deduction = Decimal('100.00')
+                if monthly_salary < Decimal('5000.00'):
+                    pagibig_deduction = (monthly_salary * Decimal('0.02')) / Decimal('2.0')
+                    
+                # Tax
+                if monthly_salary > Decimal('20833.33'):
+                    monthly_tax = (monthly_salary - Decimal('20833.33')) * Decimal('0.15')
+                    tax_deduction = monthly_tax / Decimal('2.0')
+                else:
+                    tax_deduction = Decimal('0.00')
+                    
+                DEDUCTIONS = {
+                    'sss': sss_deduction.quantize(Decimal('0.01')),
+                    'philhealth': philhealth_deduction.quantize(Decimal('0.01')),
+                    'pagibig': pagibig_deduction.quantize(Decimal('0.01')),
+                    'tax': tax_deduction.quantize(Decimal('0.01'))
+                }
+                
+                # Fetch active provident loan
+                active_loan = ProvidentLoan.objects.filter(employee=employee, status='released').first()
+                loan_deduction = Decimal('0.00')
+                if active_loan:
+                    standard_deduction = (active_loan.monthly_payment / Decimal('2.0')).quantize(Decimal('0.01'))
+                    remaining = active_loan.current_balance
+                    loan_deduction = min(standard_deduction, remaining)
+                    
+                existing_payroll = Payroll.objects.filter(employee=employee, cutoff_period=cutoff).first()
+                
+                if existing_payroll:
+                    if existing_payroll.status != 'draft':
+                        skipped.append({
+                            "employee": str(employee),
+                            "reason": f"Payroll already processed ({existing_payroll.status} status)"
+                        })
+                        continue
+                    
+                    existing_payroll.days_worked = days_worked
+                    existing_payroll.basic_salary = calculated_salary
+                    existing_payroll.loans = loan_deduction
+                    existing_payroll.sss = DEDUCTIONS['sss']
+                    existing_payroll.philhealth = DEDUCTIONS['philhealth']
+                    existing_payroll.pagibig = DEDUCTIONS['pagibig']
+                    existing_payroll.tax = DEDUCTIONS['tax']
+                    existing_payroll.save()
+                    updated_count += 1
+                else:
+                    Payroll.objects.create(
+                        employee=employee,
+                        cutoff_period=cutoff,
+                        days_worked=days_worked,
+                        basic_salary=calculated_salary,
+                        loans=loan_deduction,
+                        **DEDUCTIONS
+                    )
+                    generated_count += 1
+                    
+        AuditLog.objects.create(
+            user=request.user,
+            action=f"Bulk generated payroll for cutoff {cutoff}: generated {generated_count}, updated {updated_count}, skipped {len(skipped)}"
+        )
+        
+        return Response({
+            "message": "Bulk payroll generation complete.",
+            "generated": generated_count,
+            "updated": updated_count,
+            "skipped": skipped
+        }, status=200)

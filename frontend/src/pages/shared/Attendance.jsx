@@ -1,47 +1,35 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  MapPin, Navigation, CheckCircle2, AlertTriangle, 
-  Clock, History, Camera, ShieldCheck, Loader2, X 
+  MapPin, CheckCircle2, AlertTriangle, 
+  Clock, History, ShieldCheck
 } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-import { calculateDistance } from '../../utils/haversine';
-import { loadFaceModels, extractFaceDescriptor, isFaceMatch } from '../../utils/faceAuth';
 
 /**
- * Attendance Recording with Biometric Verification
- * 
- * Triple-factor authentication:
- * 1. Time (Daily Session Token)
- * 2. Location (Geo-fencing within school radius)
- * 3. Identity (Face-API.js local recognition)
+ * Attendance Recording - Core HRIS Implementation
+ * Simple Clock In / Out flow without Biometric or Geo-blocking (removed for pre-oral defense)
  */
 const Attendance = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [currentPos, setCurrentPos] = useState(null);
-  const [geoStatus, setGeoStatus] = useState('locating'); // locating, ready, denied
+  const [currentPos, setCurrentPos] = useState({ lat: 13.9408, lng: 121.6210 });
+  const [geoStatus, setGeoStatus] = useState('locating');
   const [message, setMessage] = useState(null);
-  
-  // QR & Face Verification State
-  const [showScanner, setShowScanner] = useState(false);
-  const [showFaceAuth, setShowFaceAuth] = useState(false);
-  const [faceStatus, setFaceStatus] = useState('idle'); // idle, loading, ready, verifying, success, fail
-  const videoRef = useRef(null);
 
-  // 1. Fetch User Profile (for workstation coordinates and face descriptor)
+  // 1. Fetch User Profile
   const { data: me } = useQuery({
     queryKey: ['me'],
     queryFn: () => api.get('employees/me/').then(res => res.data)
   });
 
-  // 2. Fetch Daily Token (Security layer)
+  // 2. Fetch Daily Token
   const { data: qrData } = useQuery({
     queryKey: ['daily-qr'],
     queryFn: () => api.get('attendance/get_daily_qr/').then(res => res.data),
-    refetchInterval: 300000, // Refresh every 5 mins
+    refetchInterval: 300000,
   });
 
   // 3. Fetch Recent Attendance History
@@ -51,20 +39,15 @@ const Attendance = () => {
   });
 
   const workstation = me?.school_details;
-  const OFFICE_POS = { 
-    lat: workstation?.latitude ? parseFloat(workstation.latitude) : 13.9408, 
-    lng: workstation?.longitude ? parseFloat(workstation.longitude) : 121.6210 
-  };
-  const RADIUS = workstation?.radius_meters || 100;
 
-  // 4. GPS Tracking
+  // 4. GPS Tracking (for recording coordinate stamp, but no range block)
   useEffect(() => {
     if (!navigator.geolocation) {
       setGeoStatus('denied');
       return;
     }
 
-    const watcher = navigator.geolocation.watchPosition(
+    navigator.geolocation.getCurrentPosition(
       (pos) => {
         setCurrentPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGeoStatus('ready');
@@ -75,12 +58,7 @@ const Attendance = () => {
       },
       { enableHighAccuracy: true }
     );
-
-    return () => navigator.geolocation.clearWatch(watcher);
   }, []);
-
-  const distance = currentPos ? calculateDistance(currentPos.lat, currentPos.lng, OFFICE_POS.lat, OFFICE_POS.lng) : null;
-  const isInRange = distance !== null && distance <= RADIUS;
 
   // 5. Check-In Mutation
   const checkInMutation = useMutation({
@@ -88,11 +66,9 @@ const Attendance = () => {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ATTENDANCE] });
       setMessage({ 
-        type: res.data.is_geo_flagged ? 'warning' : 'success', 
+        type: 'success', 
         text: res.data.message 
       });
-      setShowFaceAuth(false);
-      setShowScanner(false);
       setTimeout(() => setMessage(null), 5000);
     },
     onError: (err) => {
@@ -100,88 +76,31 @@ const Attendance = () => {
         type: 'error', 
         text: err.response?.data?.detail || 'Attendance check-in failed.' 
       });
-      setFaceStatus('fail');
       setTimeout(() => setMessage(null), 5000);
     }
   });
 
-  const handleStartAuth = async () => {
-    if (!me?.face_descriptor) {
-      alert("Please enroll your face in the Profile page first before checking in.");
-      return;
-    }
-    
-    setShowFaceAuth(true);
-    setFaceStatus('loading');
-
-    const loaded = await loadFaceModels();
-    if (!loaded) {
-      alert("Failed to load biometric engine.");
-      setShowFaceAuth(false);
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setFaceStatus('ready');
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Camera access denied.");
-      setShowFaceAuth(false);
-    }
-  };
-
-  const handleVerifyAndSubmit = async () => {
-    if (!videoRef.current) return;
-    setFaceStatus('verifying');
-
-    const currentDescriptor = await extractFaceDescriptor(videoRef.current);
-    
-    // Stop camera
-    const stream = videoRef.current.srcObject;
-    stream.getTracks().forEach(track => track.stop());
-
-    if (!currentDescriptor) {
-      alert("Face not detected. Look directly at camera.");
-      setFaceStatus('ready');
-      // Restart camera
-      const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      videoRef.current.srcObject = newStream;
-      return;
-    }
-
-    const savedDescriptor = JSON.parse(me.face_descriptor);
-    const isMatch = isFaceMatch(currentDescriptor, savedDescriptor);
-
-    if (isMatch) {
-      setFaceStatus('success');
-      // Proceed to submission
-      checkInMutation.mutate({
-        qr_token: qrData?.token || 'legacy_face_only',
-        lat: currentPos.lat,
-        lng: currentPos.lng
-      });
-    } else {
-      setFaceStatus('fail');
-      alert("Identity verification failed. Account owner must be the one checking in.");
-      setShowFaceAuth(false);
-    }
+  const handleClockIn = () => {
+    checkInMutation.mutate({
+      qr_token: qrData?.token || 'legacy_face_only',
+      lat: currentPos.lat,
+      lng: currentPos.lng
+    });
   };
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       
-      {/* 1. Header & Quick Summary */}
+      {/* 1. Header */}
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
             <Clock className="w-6 h-6 text-primary" />
             Check In / Out
           </h1>
-          <p className="text-xs opacity-50 font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+          <p className="text-xs opacity-50 font-medium">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
         </div>
         <div className="text-right">
           <p className="text-[10px] font-bold opacity-40 uppercase">Station</p>
@@ -189,44 +108,42 @@ const Attendance = () => {
         </div>
       </div>
 
-      {/* 2. Proximity Radar Card */}
-      <div className={`card border shadow-sm overflow-hidden ${isInRange ? 'border-success/20 bg-success/5' : 'border-base-300 bg-base-100'}`}>
-        <div className="p-6 md:p-8 flex flex-col items-center text-center space-y-4">
+      {/* 2. Simplified Clock-in Card */}
+      <div className="card border border-base-200 bg-white shadow-sm overflow-hidden">
+        <div className="p-6 md:p-8 flex flex-col items-center text-center space-y-6">
           
-          {/* Radar Animation */}
-          <div className="relative">
-            <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center z-10 relative bg-white border-2 shadow-md ${isInRange ? 'border-success text-success' : 'border-base-300 text-base-content/20'}`}>
-              <Navigation className={`w-8 h-8 md:w-10 md:h-10 ${isInRange ? 'animate-pulse' : ''}`} />
-            </div>
-            {isInRange && (
-              <div className="absolute top-0 left-0 w-20 h-20 md:w-24 md:h-24 rounded-full bg-success/20 animate-ping"></div>
-            )}
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center bg-primary/10 text-primary border-2 border-primary/5">
+            <Clock className="w-8 h-8 md:w-10 md:h-10 animate-pulse" />
           </div>
 
           <div>
             <h2 className="text-lg md:text-xl font-black uppercase">
-              {geoStatus === 'locating' ? 'Finding you...' : (isInRange ? 'At Work' : 'Outside Office')}
+              Time Clock Recorder
             </h2>
             <p className="text-[10px] md:text-xs opacity-50 font-semibold uppercase tracking-widest mt-1">
-              {distance ? `${Math.round(distance)} meters from office` : 'Checking your location...'}
+              Click the button below to submit your daily clock stamp
             </p>
           </div>
 
           <button 
-            onClick={handleStartAuth}
-            disabled={geoStatus !== 'ready' || checkInMutation.isPending}
-            className={`btn btn-md md:btn-lg w-full max-w-xs rounded-xl shadow-lg border-none text-white ${isInRange ? 'btn-success' : 'btn-neutral'}`}
+            onClick={handleClockIn}
+            disabled={checkInMutation.isPending}
+            className="btn btn-primary btn-md md:btn-lg w-full max-w-xs rounded-xl shadow-lg font-black uppercase text-xs tracking-widest text-white border-none"
           >
-            {checkInMutation.isPending ? <span className="loading loading-spinner" /> : (isInRange ? 'Scan Face & Record' : 'Record (Outside)')}
+            {checkInMutation.isPending ? (
+              <span className="loading loading-spinner" />
+            ) : (
+              'Submit Attendance Log'
+            )}
           </button>
 
           <div className="flex items-center gap-2 text-[9px] font-black uppercase opacity-40">
-             <ShieldCheck className="w-3 h-3 text-success" /> Identity + Geo Verification Active
+             <ShieldCheck className="w-3 h-3 text-success" /> Standard DTR Logging Active
           </div>
 
           {geoStatus === 'denied' && (
-            <div className="text-error text-xs font-bold flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /> GPS Access Required
+            <div className="text-warning text-xs font-bold flex items-center gap-2">
+              <MapPin className="w-4 h-4" /> Location services disabled (defaulting coordinates)
             </div>
           )}
         </div>
@@ -234,75 +151,13 @@ const Attendance = () => {
 
       {/* 3. Feedback Message */}
       {message && (
-        <div className={`alert rounded-xl text-white font-bold shadow-md animate-in slide-in-from-top-4 ${message.type === 'success' ? 'alert-success' : (message.type === 'warning' ? 'alert-warning' : 'alert-error')}`}>
+        <div className={`alert rounded-xl text-white font-bold shadow-md animate-in slide-in-from-top-4 ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
           {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
           <span>{message.text}</span>
         </div>
       )}
 
-      {/* 4. Face Auth Modal */}
-      {showFaceAuth && (
-        <div className="modal modal-open">
-          <div className="modal-box p-0 rounded-2xl overflow-hidden max-w-sm bg-black border border-white/10 shadow-2xl">
-             <div className="relative aspect-square">
-                <video ref={videoRef} autoPlay muted className="w-full h-full object-cover" />
-                
-                {/* Overlays */}
-                <div className="absolute inset-0 border-[40px] border-black/60 pointer-events-none flex items-center justify-center">
-                   <div className="w-full h-full border-2 border-primary/50 rounded-full" />
-                </div>
-
-                {faceStatus === 'loading' && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white gap-4">
-                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                     <p className="text-[10px] font-black uppercase tracking-widest">Biometric Init...</p>
-                  </div>
-                )}
-
-                {faceStatus === 'verifying' && (
-                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-primary/20 backdrop-blur-sm text-white">
-                      <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs font-black uppercase tracking-widest mt-4">Verifying Identity...</p>
-                   </div>
-                )}
-
-                {faceStatus === 'success' && (
-                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-success text-white">
-                      <CheckCircle2 className="w-20 h-20 animate-bounce" />
-                      <p className="text-sm font-black uppercase tracking-widest mt-4">Identity Confirmed</p>
-                   </div>
-                )}
-             </div>
-
-             <div className="p-8 bg-white flex flex-col gap-6">
-                <div className="text-center space-y-1">
-                   <h3 className="text-base font-black uppercase tracking-tight text-base-content">Facial Authentication</h3>
-                   <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Look directly at camera to verify</p>
-                </div>
-                
-                {faceStatus === 'ready' && (
-                   <button onClick={handleVerifyAndSubmit} className="btn btn-primary w-full rounded-xl uppercase font-black text-xs h-16 shadow-lg shadow-primary/20">
-                      Verify Face
-                   </button>
-                )}
-                
-                <button 
-                  onClick={() => {
-                    if (videoRef.current?.srcObject) {
-                      videoRef.current.srcObject.getTracks().forEach(t => t.stop());
-                    }
-                    setShowFaceAuth(false);
-                  }} 
-                  className="btn btn-ghost btn-sm text-[10px] font-black uppercase tracking-widest"
-                >
-                  Cancel
-                </button>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Recent History Table */}
+      {/* 4. Recent History Table */}
       <div className="bg-white border border-base-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="p-5 border-b border-base-100 flex items-center gap-2 bg-base-50/50">
           <History className="w-4 h-4 opacity-40" />
@@ -345,14 +200,14 @@ const Attendance = () => {
                       </div>
                     </td>
                     <td>
-                      <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${rec.is_geo_flagged ? 'bg-error/10 text-error' : (rec.status === 'present' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning')}`}>
-                        {rec.is_geo_flagged ? 'Flagged' : rec.status}
+                      <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${rec.status === 'present' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                        {rec.status}
                       </span>
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="4" className="text-center py-20 opacity-30 italic font-bold uppercase text-[10px] tracking-widest">No attendance history</td></tr>
+                <tr><td colSpan="5" className="text-center py-20 opacity-30 italic font-bold uppercase text-[10px] tracking-widest">No attendance history</td></tr>
               )}
             </tbody>
           </table>

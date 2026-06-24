@@ -29,44 +29,42 @@ const SidebarContent = ({ closeDrawer }) => {
     {
       title: 'Main',
       links: [
-        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
       ]
     },
     {
       title: 'Staff',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING'] },
-        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Hiring', roles: ['ADMINISTRATIVE', 'HR'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Hiring', roles: ['HR', 'SUPERINTENDENT'] },
       ]
     },
     {
       title: 'Time & Leave',
       links: [
-        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/location-tracking', icon: <MapPin className="w-4 h-4" />, label: 'Location Tracking', roles: ['ADMINISTRATIVE', 'HR'] },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
       ]
     },
     {
       title: 'Money',
       links: [
-        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['ADMINISTRATIVE', 'NON_TEACHING', 'HR'] },
-        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['ADMINISTRATIVE', 'NON_TEACHING', 'HR', 'TEACHING'] },
+        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING'] },
       ]
     },
     {
       title: 'Work Quality',
       links: [
-        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance', roles: ['ADMINISTRATIVE', 'HR'] },
+        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance', roles: ['HR', 'SUPERINTENDENT'] },
       ]
     },
     {
       title: 'Settings',
       links: [
-        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['ADMINISTRATIVE', 'HR', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/schools', icon: <School className="w-4 h-4" />, label: 'School Geofencing', roles: ['ADMINISTRATIVE'] },
-        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['ADMINISTRATIVE', 'HR'] },
+        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT'] },
       ]
     }
   ];

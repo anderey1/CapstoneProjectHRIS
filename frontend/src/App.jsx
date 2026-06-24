@@ -81,7 +81,7 @@ function App() {
           
           <Route
             path="location-tracking"
-            element={isAdminOrHR ? <LocationTracking /> : <Navigate to="/" replace />}
+            element={<Navigate to="/" replace />}
           />
           
           <Route path="dtr" element={<DTR />} />
@@ -106,10 +106,10 @@ function App() {
             element={isAdminOrHR ? <Recruitment /> : <Navigate to="/" replace />}
           />
 
-          {/* Schools/Geofencing - Management only */}
+          {/* Schools/Geofencing - Disabled */}
           <Route
             path="schools"
-            element={isManagement ? <SchoolManagement /> : <Navigate to="/" replace />}
+            element={<Navigate to="/" replace />}
           />
 
           {/* Audit Logs - Admin/HR only */}

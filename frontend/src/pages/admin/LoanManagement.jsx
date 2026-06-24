@@ -466,7 +466,7 @@ const LoanManagement = () => {
               {selectedLoan.status === 'pending' && (
                 <div className="space-y-4 pt-4 border-t border-base-100">
                   <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Decision</h4>
-                  {(user?.role === ROLES.ADMINISTRATIVE) ? (
+                  {(user?.role === 'SUPERINTENDENT') ? (
                     <>
                       {/* Approve Section */}
                       <div className="p-4 bg-success/5 border border-success/10 rounded-xl space-y-3">
@@ -516,7 +516,7 @@ const LoanManagement = () => {
               {selectedLoan.status === 'approved' && (
                 <div className="space-y-4 pt-4 border-t border-base-100">
                   <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Disbursement</h4>
-                  {(user?.role === 'ADMIN' || user?.role === 'ACCOUNTANT') ? (
+                  {(user?.role === 'ACCOUNTANT') ? (
                     <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
                       <p className="text-[10px] font-bold text-primary/70 uppercase leading-relaxed text-center mb-2">
                         Verify fund availability before releasing.

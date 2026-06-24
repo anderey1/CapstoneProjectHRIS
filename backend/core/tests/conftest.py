@@ -92,7 +92,7 @@ def superintendent_user(db, school):
     user_data = {
         "username": "supervisor",
         "password": "password123",
-        "role": Role.ADMINISTRATIVE
+        "role": Role.SUPERINTENDENT
     }
     employee_data = {
         "first_name": "Supervisor",
@@ -117,7 +117,7 @@ def accountant_user(db, school):
     user_data = {
         "username": "accountant",
         "password": "password123",
-        "role": Role.NON_TEACHING
+        "role": Role.ACCOUNTANT
     }
     employee_data = {
         "first_name": "Accountant",

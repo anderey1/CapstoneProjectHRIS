@@ -67,17 +67,21 @@ def analytics_detail(request, metric):
     if metric == 'attendance':
         data = Attendance.objects.values('status').annotate(count=Count('status'))
     elif metric == 'leave':
-        data = LeaveRequest.objects.annotate(
-            reason=Coalesce(
-                F('illness_details'),
-                F('location_details'),
-                F('study_type'),
-                F('other_type_details'),
-                Value('General Purposes')
-            )
-        ).values('leave_type', 'reason').annotate(
-            count=Sum('working_days_applied')
-        ).order_by('-count')
+        from ..models import Role
+        teaching_leaves = LeaveRequest.objects.filter(
+            employee__user__role=Role.TEACHING,
+            status='approved'
+        ).values('leave_type').annotate(count=Count('employee', distinct=True))
+
+        non_teaching_leaves = LeaveRequest.objects.filter(
+            employee__user__role=Role.NON_TEACHING,
+            status='approved'
+        ).values('leave_type').annotate(count=Count('employee', distinct=True))
+
+        data = {
+            "teaching": list(teaching_leaves),
+            "non_teaching": list(non_teaching_leaves)
+        }
     elif metric == 'payroll':
         data = Payroll.objects.filter(status='released').values('cutoff_period').annotate(
             total_net=Sum('net_salary'),

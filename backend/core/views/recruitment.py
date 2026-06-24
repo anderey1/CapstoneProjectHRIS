@@ -4,13 +4,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from ..models import Applicant, AuditLog
 from ..serializers import ApplicantSerializer
-from ..permissions import IsAdminOrHR
+from ..permissions import IsAdminOrHRorSuperintendent
 from ..notifications import send_applicant_notification
 
 class ApplicantViewSet(viewsets.ModelViewSet):
     queryset = Applicant.objects.all().order_by('-date_applied')
     serializer_class = ApplicantSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrHR]
+    permission_classes = [IsAuthenticated, IsAdminOrHRorSuperintendent]
 
     @action(detail=True, methods=['post'], url_path='change-status')
     def change_status(self, request, pk=None):

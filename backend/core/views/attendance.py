@@ -59,10 +59,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         if not employee.school:
             return Response({"detail": "Profile has no assigned school workstation."}, status=400)
 
-        # 2. Geo-Validation
-        is_in_zone, distance = validate_attendance_geo(
-            lat, lng, employee.school.latitude, employee.school.longitude, employee.school.radius_meters
-        )
+        # 2. Geo-Validation (Bypassed for Core HRIS)
+        is_in_zone, distance = True, 0.0
 
         # 3. Slot-Based Logic
         now = timezone.now()

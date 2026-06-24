@@ -100,10 +100,10 @@ function App() {
             element={isManagement ? <IPCRFManagement /> : <MyIPCRF />}
           />
 
-          {/* Recruitment - Admin/HR only */}
+          {/* Recruitment - HR or Superintendent */}
           <Route
             path="recruitment"
-            element={isAdminOrHR ? <Recruitment /> : <Navigate to="/" replace />}
+            element={(isAdminOrHR || user?.role === 'SUPERINTENDENT') ? <Recruitment /> : <Navigate to="/" replace />}
           />
 
           {/* Schools/Geofencing - Disabled */}

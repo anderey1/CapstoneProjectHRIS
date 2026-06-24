@@ -24,16 +24,16 @@ const Payroll = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Roles permission check
-  const isAdmin = user?.role === ROLES.ADMINISTRATIVE;
-  const isHR = user?.role === ROLES.HR;
-  const isAccountant = user?.role === ROLES.NON_TEACHING;
+  const isSuperintendent = user?.role === 'SUPERINTENDENT';
+  const isHR = user?.role === 'HR';
+  const isAccountant = user?.role === 'ACCOUNTANT';
 
-  // Can generate if Admin, HR, or Accountant
-  const canGenerate = isAdmin || isHR || isAccountant;
-  // Can approve if Admin or HR
-  const canApprove = isAdmin || isHR;
-  // Can release if Admin or Accountant
-  const canRelease = isAdmin || isAccountant;
+  // Can generate if HR or Accountant
+  const canGenerate = isHR || isAccountant;
+  // Can approve if Superintendent
+  const canApprove = isSuperintendent;
+  // Can release if Accountant
+  const canRelease = isAccountant;
 
   // 1. Data Fetching
   const { data: employees, isLoading: loadingEmployees } = useQuery({
@@ -54,6 +54,19 @@ const Payroll = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAYROLL] });
     },
     onError: (err) => setMessage({ type: 'error', text: err.response?.data?.detail || 'Generation failed.' })
+  });
+
+  const bulkGenerateMutation = useMutation({
+    mutationFn: (data) => api.post('payroll/bulk_generate/', data),
+    onSuccess: (res) => {
+      const skippedCount = res.data.skipped?.length || 0;
+      setMessage({ 
+        type: 'success', 
+        text: `Bulk generation complete. Generated: ${res.data.generated}, Updated: ${res.data.updated}, Skipped: ${skippedCount}.` 
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PAYROLL] });
+    },
+    onError: (err) => setMessage({ type: 'error', text: err.response?.data?.detail || 'Bulk generation failed.' })
   });
 
   const approveMutation = useMutation({
@@ -90,6 +103,14 @@ const Payroll = () => {
     }
 
     generateMutation.mutate({ employee_id: selectedEmployee, cutoff });
+  };
+
+  const handleBulkGenerate = () => {
+    if (!cutoff) {
+      setMessage({ type: 'error', text: 'Please select a pay period cutoff first.' });
+      return;
+    }
+    bulkGenerateMutation.mutate({ cutoff_period: cutoff });
   };
 
   const filteredPayrolls = allPayrolls?.filter(p => 
@@ -218,14 +239,27 @@ const Payroll = () => {
                   </div>
                 </div>
 
-                <button
-                  className={`btn btn-primary w-full rounded-xl h-16 uppercase font-black text-[11px] tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all ${generateMutation.isPending ? 'loading' : ''}`}
-                  onClick={handleGenerate}
-                  disabled={generateMutation.isPending}
-                >
-                  {!generateMutation.isPending && <FileText className="w-4 h-4 mr-2" />}
-                  Create Draft Payslip
-                </button>
+                <div className="space-y-4">
+                  <button
+                    className={`btn btn-primary w-full rounded-xl h-14 uppercase font-black text-[10px] tracking-wider shadow-md shadow-primary/10 hover:shadow-lg hover:-translate-y-0.5 transition-all ${generateMutation.isPending ? 'loading' : ''}`}
+                    onClick={handleGenerate}
+                    disabled={generateMutation.isPending}
+                  >
+                    {!generateMutation.isPending && <FileText className="w-4 h-4 mr-2" />}
+                    Generate for Selected Employee
+                  </button>
+
+                  <div className="divider text-[9px] font-black uppercase tracking-widest opacity-35">OR</div>
+
+                  <button
+                    className={`btn btn-secondary w-full rounded-xl h-14 uppercase font-black text-[10px] tracking-wider shadow-md shadow-secondary/10 hover:shadow-lg hover:-translate-y-0.5 transition-all text-white ${bulkGenerateMutation.isPending ? 'loading' : ''}`}
+                    onClick={handleBulkGenerate}
+                    disabled={bulkGenerateMutation.isPending || !cutoff}
+                  >
+                    {!bulkGenerateMutation.isPending && <Users className="w-4 h-4 mr-2" />}
+                    Bulk Generate Payroll
+                  </button>
+                </div>
                 
                 <div className="p-4 bg-info/5 rounded-xl border border-info/10">
                    <p className="text-[9px] font-bold text-info leading-relaxed uppercase opacity-80 italic">

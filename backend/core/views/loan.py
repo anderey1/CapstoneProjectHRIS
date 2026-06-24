@@ -61,7 +61,7 @@ class LoanViewSet(viewsets.ModelViewSet):
     # ---------------------------
     # APPROVE / REJECT
     # ---------------------------
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSuperintendent])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent])
     def approve(self, request, pk=None):
         loan = self.get_object()
         if loan.status != 'pending':
@@ -76,7 +76,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Approved Loan: {loan.employee}")
         return Response({"message": "Loan approved.", "status": "approved"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminOrHR | IsSuperintendent])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent])
     def reject(self, request, pk=None):
         loan = self.get_object()
         if loan.status != 'pending':
@@ -113,7 +113,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Resubmitted Loan #{loan.id}")
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsAccountant], url_path='release-funds')
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant], url_path='release-funds')
     def release_funds(self, request, pk=None):
         """Accountant action to release money after superintendent approval."""
         loan = self.get_object()

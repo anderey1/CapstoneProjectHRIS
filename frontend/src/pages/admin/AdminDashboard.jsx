@@ -90,10 +90,15 @@ const Dashboard = () => {
     count: item.count
   })) || [];
 
-  const formattedLeaveData = leaveTypeData?.map(item => ({
-    name: `${item.leave_type?.toUpperCase() || 'OTHER'} (${item.reason?.toUpperCase() || 'GENERAL'})`,
+  const formattedTeachingLeaveData = leaveTypeData?.teaching?.map(item => ({
+    name: item.leave_type?.toUpperCase() || 'OTHER',
     value: Number(item.count) || 0
-  })).slice(0, 6) || [];
+  })) || [];
+
+  const formattedNonTeachingLeaveData = leaveTypeData?.non_teaching?.map(item => ({
+    name: item.leave_type?.toUpperCase() || 'OTHER',
+    value: Number(item.count) || 0
+  })) || [];
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
@@ -233,54 +238,110 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Leave Mix */}
-            <div className="lg:col-span-4 bg-white border border-base-200 shadow-sm rounded-2xl p-8">
+            {/* Leave Allocations */}
+            <div className="lg:col-span-12 bg-white border border-base-200 shadow-sm rounded-2xl p-8">
               <div className="flex items-center gap-3 mb-8">
                  <PieChartIcon className="w-4 h-4 text-accent" />
-                 <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Leave Allocation</h3>
+                 <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Leave Allocations</h3>
               </div>
-              <div className="h-[280px] w-full relative">
-                {formattedLeaveData.length > 0 ? (
-                  <>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[10px] font-black opacity-30 uppercase">Total</span>
-                      <span className="text-3xl font-black">
-                        {formattedLeaveData.reduce((acc, curr) => acc + curr.value, 0)}
-                      </span>
-                    </div>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={formattedLeaveData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={75}
-                          outerRadius={100}
-                          paddingAngle={10}
-                          dataKey="value"
-                        >
-                          {formattedLeaveData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
-                          ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </>
-                ) : (
-                  <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No leave data</div>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3 mt-6">
-                {formattedLeaveData.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-base-50 rounded-lg">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                    <div className="truncate">
-                      <p className="text-[10px] font-bold opacity-60 uppercase truncate">{item.name}</p>
-                      <p className="text-xs font-black text-base-content">{item.value} Days</p>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                {/* Teaching Staff Leaves */}
+                <div className="space-y-6">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#0038A8] text-center bg-blue-50/50 py-2 rounded-lg">Teaching Staff Leaves</h4>
+                  <div className="h-[220px] w-full relative">
+                    {formattedTeachingLeaveData.length > 0 ? (
+                      <>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-[9px] font-black opacity-30 uppercase">Total</span>
+                          <span className="text-2xl font-black">
+                            {formattedTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0)}
+                          </span>
+                        </div>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={formattedTeachingLeaveData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={6}
+                              dataKey="value"
+                            >
+                              {formattedTeachingLeaveData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
+                              ))}
+                            </Pie>
+                            <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </>
+                    ) : (
+                      <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No active teaching leaves</div>
+                    )}
                   </div>
-                ))}
+                  <div className="grid grid-cols-2 gap-2">
+                    {formattedTeachingLeaveData.map((item, index) => (
+                      <div key={index} className="flex items-center gap-2 p-1.5 bg-base-50 rounded-lg">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                        <div className="truncate">
+                          <p className="text-[9px] font-bold opacity-60 uppercase truncate">{item.name}</p>
+                          <p className="text-xs font-black text-base-content">{item.value} Employee(s)</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Non-Teaching Staff Leaves */}
+                <div className="space-y-6">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#0038A8] text-center bg-blue-50/50 py-2 rounded-lg">Non-Teaching Staff Leaves</h4>
+                  <div className="h-[220px] w-full relative">
+                    {formattedNonTeachingLeaveData.length > 0 ? (
+                      <>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-[9px] font-black opacity-30 uppercase">Total</span>
+                          <span className="text-2xl font-black">
+                            {formattedNonTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0)}
+                          </span>
+                        </div>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={formattedNonTeachingLeaveData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={6}
+                              dataKey="value"
+                            >
+                              {formattedNonTeachingLeaveData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} strokeWidth={0} />
+                              ))}
+                            </Pie>
+                            <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </>
+                    ) : (
+                      <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No active non-teaching leaves</div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {formattedNonTeachingLeaveData.map((item, index) => (
+                      <div key={index} className="flex items-center gap-2 p-1.5 bg-base-50 rounded-lg">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[(index + 2) % COLORS.length] }}></div>
+                        <div className="truncate">
+                          <p className="text-[9px] font-bold opacity-60 uppercase truncate">{item.name}</p>
+                          <p className="text-xs font-black text-base-content">{item.value} Employee(s)</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             </div>
 

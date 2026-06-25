@@ -142,7 +142,7 @@ def generate_hr_summary(data_context):
         client = genai.Client(api_key=api_key)
         prompt = f"As an HR Analytics assistant, provide a 2-sentence concise executive summary of this HR data: {json.dumps(data_context)}. Focus on overall workforce health and loan activity."
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model="gemini-2.5-flash-lite",
             contents=prompt
         )
         return response.text.strip()
@@ -165,7 +165,7 @@ def generate_performance_summary(scores, attendance_data=None):
         client = genai.Client(api_key=api_key)
         prompt = f"Provide a brief, professional performance evaluation summary (1-2 sentences) for an employee with these scores: {json.dumps(scores)}. Attendance context: {attendance_data or 'Not provided'}. Focus on strengths and potential."
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=prompt
         )
         return response.text.strip()

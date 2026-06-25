@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 
 // Pages
 import Login from './pages/Login';
+import Apply from './pages/Apply';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import Employees from './pages/admin/Employees';
@@ -34,14 +35,18 @@ import SchoolManagement from './pages/admin/SchoolManagement';
 function App() {
   const { user } = useAuth();
 
-  const isAdminOrHR = user && ['ADMIN', 'HR', 'ADMINISTRATIVE'].includes(user.role);
-  const isManagement = user && ['ADMIN', 'HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
+  const isAdminOrHR = user && ['HR', 'ADMINISTRATIVE'].includes(user.role);
+  const isManagement = user && ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
+  const canManageLeaves = user && ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
+  const canManageAttendance = user && ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
+  const canManagePerformance = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
 
   return (
     <div className="min-h-screen bg-base-200">
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/apply" element={<Apply />} />
 
         {/* Protected Layout Shell */}
         <Route 
@@ -61,22 +66,25 @@ function App() {
             element={isManagement ? <Employees /> : <Navigate to="/" replace />} 
           />
           
-          {/* Loans - Role based switching */}
+          {/* Loans - Dedicated Pages */}
+          <Route path="my-loans" element={<MyLoans />} />
           <Route 
-            path="loans" 
-            element={isManagement ? <LoanManagement /> : <MyLoans />} 
+            path="loan-management" 
+            element={isManagement ? <LoanManagement /> : <Navigate to="/" replace />} 
           />
 
-          {/* Leave Management - Role based switching */}
+          {/* Leaves - Dedicated Pages */}
+          <Route path="my-leaves" element={<MyLeaves />} />
           <Route 
-            path="leave" 
-            element={isManagement ? <LeaveManagement /> : <MyLeaves />} 
+            path="leave-management" 
+            element={canManageLeaves ? <LeaveManagement /> : <Navigate to="/" replace />} 
           />
           
-          {/* Attendance - Role based switching */}
-          <Route
-            path="attendance"
-            element={isManagement ? <AttendanceManagement /> : <Attendance />}
+          {/* Attendance - Dedicated Pages */}
+          <Route path="attendance" element={<Attendance />} />
+          <Route 
+            path="attendance-management" 
+            element={canManageAttendance ? <AttendanceManagement /> : <Navigate to="/" replace />} 
           />
           
           <Route
@@ -88,16 +96,18 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="employees/:id" element={<Profile />} />
 
-          {/* Payroll - Role based switching */}
-          <Route
-            path="payroll"
-            element={isManagement ? <Payroll /> : <MyPayroll />}
+          {/* Payroll - Dedicated Pages */}
+          <Route path="my-payslips" element={<MyPayroll />} />
+          <Route 
+            path="payroll-management" 
+            element={isManagement ? <Payroll /> : <Navigate to="/" replace />} 
           />
 
-          {/* IPCRF (Performance) - Role based switching */}
-          <Route
-            path="performance"
-            element={isManagement ? <IPCRFManagement /> : <MyIPCRF />}
+          {/* IPCRF (Performance) - Dedicated Pages */}
+          <Route path="my-performance" element={<MyIPCRF />} />
+          <Route 
+            path="performance-management" 
+            element={canManagePerformance ? <IPCRFManagement /> : <Navigate to="/" replace />} 
           />
 
           {/* Recruitment - HR or Superintendent */}

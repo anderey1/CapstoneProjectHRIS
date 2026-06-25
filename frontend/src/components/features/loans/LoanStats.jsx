@@ -7,9 +7,9 @@ import { Clock, CheckCircle2, Wallet, TrendingUp } from 'lucide-react';
  * Simple, professional redesign for loan overview.
  */
 const LoanStats = ({ loans }) => {
-  const pendingCount = loans?.filter(l => l.status === 'pending').length || 0;
+  const pendingCount = loans?.filter(l => l.status === 'pending' || l.status === 'verified').length || 0;
   const approvedCount = loans?.filter(l => l.status === 'approved').length || 0;
-  const totalActive = loans?.reduce((acc, l) => l.status === 'approved' ? acc + parseFloat(l.loan_amount) : acc, 0) || 0;
+  const totalActive = loans?.reduce((acc, l) => l.status === 'released' || l.status === 'paid' ? acc + parseFloat(l.loan_amount) : acc, 0) || 0;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">

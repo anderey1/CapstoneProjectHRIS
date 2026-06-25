@@ -124,7 +124,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
         <form onSubmit={handleFormSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 min-h-0">
           {/* Staff selector (Admin/HR) or info banner */}
-          {['ADMIN', 'HR'].includes(user?.role) ? (
+          {['HR'].includes(user?.role) ? (
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Select Staff</label>
               <select name="employee" className="select select-sm w-full bg-base-50 border-base-100 focus:border-secondary rounded-lg text-[10px] font-black uppercase tracking-widest" required onChange={handleInputChange}>
@@ -255,7 +255,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
           {/* Document Uploads */}
           <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Attach Documents (optional for now)</label>
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Attach Documents</label>
             <div className="space-y-2">
               {DOC_TYPES.slice(0, 6).map(doc => {
                 const attached = files.find(f => f.doc_type === doc.value);

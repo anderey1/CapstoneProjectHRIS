@@ -20,9 +20,11 @@ const LoanCard = ({ loan, user, onApprove, onReject, onResubmit, isProcessing })
 
   const getStatusBadge = (status) => {
     switch (status) {
+      case 'verified': return <div className="px-2 py-0.5 bg-info/10 text-info rounded-full text-[9px] font-black uppercase tracking-widest">Verified</div>;
       case 'approved': return <div className="px-2 py-0.5 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest">Approved</div>;
+      case 'released': return <div className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest">Released</div>;
       case 'rejected': return <div className="px-2 py-0.5 bg-error/10 text-error rounded-full text-[9px] font-black uppercase tracking-widest">Rejected</div>;
-      case 'paid': return <div className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest">Paid</div>;
+      case 'paid': return <div className="px-2 py-0.5 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest">Paid</div>;
       default: return <div className="px-2 py-0.5 bg-warning/10 text-warning rounded-full text-[9px] font-black uppercase tracking-widest">Pending</div>;
     }
   };
@@ -94,7 +96,7 @@ const LoanCard = ({ loan, user, onApprove, onReject, onResubmit, isProcessing })
         )}
 
         {/* Admin/HR Actions */}
-        {['ADMIN', 'HR'].includes(user?.role) && loan.status === 'pending' && (
+        {['HR'].includes(user?.role) && loan.status === 'pending' && (
           <div className="mt-6 pt-6 border-t border-base-50 space-y-3">
             {showRejectInput ? (
               <div className="space-y-2">
@@ -142,11 +144,11 @@ const LoanCard = ({ loan, user, onApprove, onReject, onResubmit, isProcessing })
           </div>
         )}
         
-        {/* Details link for approved loans */}
-        {loan.status === 'approved' && (
+        {/* Details link for approved/released loans */}
+        {(loan.status === 'approved' || loan.status === 'released') && (
           <div className="mt-6 pt-4 border-t border-base-50 flex items-center justify-between">
             <div className="text-[9px] font-black text-success uppercase tracking-widest opacity-60">
-              Active Amortization
+              {loan.status === 'released' ? 'Active Ledger' : 'Active Amortization'}
             </div>
             <button 
               onClick={() => setShowDetails(true)}
@@ -158,7 +160,7 @@ const LoanCard = ({ loan, user, onApprove, onReject, onResubmit, isProcessing })
         )}
 
         {/* View details for any status */}
-        {loan.status !== 'approved' && (
+        {loan.status !== 'approved' && loan.status !== 'released' && (
           <div className="mt-4 pt-4 border-t border-base-50 flex justify-between items-center">
              {loan.status === 'rejected' && onResubmit && (
                <button 

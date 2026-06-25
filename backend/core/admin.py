@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     User, Employee, School, Attendance, LeaveRequest, 
     ProvidentLoan, LoanPayment, LoanDocument, Payroll, 
-    PerformanceReview, Applicant, AuditLog
+    PerformanceReview, Applicant, ApplicantDocument, AuditLog
 )
 
 # -------------------------
@@ -94,11 +94,16 @@ class PerformanceReviewAdmin(admin.ModelAdmin):
         return round(avg, 2)
     get_average_score.short_description = 'Avg Score'
 
+class ApplicantDocumentInline(admin.TabularInline):
+    model = ApplicantDocument
+    extra = 0
+
 @admin.register(Applicant)
 class ApplicantAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'position_applied', 'status', 'date_applied')
     list_filter = ('status', 'position_applied')
     search_fields = ('first_name', 'last_name', 'position_applied')
+    inlines = [ApplicantDocumentInline]
 
 # -------------------------
 # SYSTEM

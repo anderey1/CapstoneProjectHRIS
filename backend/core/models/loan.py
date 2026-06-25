@@ -13,6 +13,7 @@ import os
 class ProvidentLoan(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('verified', 'Verified'),
         ('approved', 'Approved'),
         ('released', 'Released'),
         ('rejected', 'Rejected'),
@@ -36,6 +37,8 @@ class ProvidentLoan(models.Model):
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    station_code = models.CharField(max_length=50, blank=True, null=True)
+    date_granted = models.DateField(blank=True, null=True)
     date_applied = models.DateField(auto_now_add=True)
 
     # --- Loan Application Fields ---
@@ -159,12 +162,26 @@ class LoanDocument(models.Model):
 # -------------------------
 class LoanPayment(models.Model):
     loan = models.ForeignKey(ProvidentLoan, on_delete=models.CASCADE)
+    sequence = models.IntegerField(default=1)
     amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
+    principal_paid = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    interest_paid = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     payment_date = models.DateField(auto_now_add=True)
     remaining_balance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    posted_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.id: # Only for new payments
+            # Set sequence number
+            existing_count = LoanPayment.objects.filter(loan=self.loan).count()
+            self.sequence = existing_count + 1
+            
+            # Split payment into principal and interest based on interest rate
+            from decimal import Decimal
+            rate_decimal = Decimal(str(self.loan.interest_rate)) / Decimal('100.0')
+            self.principal_paid = (self.amount_paid / (Decimal('1.0') + rate_decimal)).quantize(Decimal('0.01'))
+            self.interest_paid = (self.amount_paid - self.principal_paid).quantize(Decimal('0.01'))
+
             # Sum all previous payments for this loan
             previous_payments = LoanPayment.objects.filter(loan=self.loan).aggregate(models.Sum('amount_paid'))['amount_paid__sum'] or 0
             self.remaining_balance = self.loan.total_amount - (previous_payments + self.amount_paid)

@@ -30,7 +30,7 @@ const Loans = () => {
       const response = await api.get('employees/');
       return response.data;
     },
-    enabled: !!(user && ['ADMIN', 'HR'].includes(user.role))
+    enabled: !!(user && ['HR'].includes(user.role))
   });
 
   // Mutations
@@ -101,7 +101,7 @@ const Loans = () => {
             Provident Loans
           </h1>
           <p className="text-sm opacity-50 font-medium mt-1">
-            {['ADMIN', 'HR'].includes(user?.role) ? 'Review and manage employee loan applications.' : 'Track your loan applications and history.'}
+            {['HR'].includes(user?.role) ? 'Review and manage employee loan applications.' : 'Track your loan applications and history.'}
           </p>
         </div>
         <button onClick={() => setActiveModal('apply')} className="btn btn-secondary shadow-lg shadow-secondary/20 rounded-2xl group">

@@ -6,7 +6,9 @@ from .employee import Employee
 # -------------------------
 class LeaveRequest(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
+        ('pending_supervisor', 'Pending Immediate Supervisor / Principal'),
+        ('pending_hr', 'Pending HR Officer'),
+        ('pending_superintendent', 'Pending Superintendent'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
     ]
@@ -66,10 +68,21 @@ class LeaveRequest(models.Model):
     
     # Application Info
     date_applied = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='pending_supervisor')
+    rejection_stage = models.CharField(max_length=25, choices=STATUS_CHOICES, null=True, blank=True, help_text="The stage at which the request was rejected")
     
     # Documentary Requirements
     supporting_document = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    travel_authority_document = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    clearance_document = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    maternity_notice_allocation = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    paternity_marriage_contract = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    vawc_medical_cert = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    rehab_letter_request = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    rehab_police_report = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    rehab_concurrence = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    women_special_histopath = models.FileField(upload_to='leave_documents/', null=True, blank=True)
+    women_special_operative_technique = models.FileField(upload_to='leave_documents/', null=True, blank=True)
     
     # 7. Details of Action
     disapproval_reason = models.TextField(null=True, blank=True)

@@ -192,7 +192,6 @@ const Dashboard = () => {
                     <BarChart3 className="w-4 h-4 text-secondary" />
                     <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Hiring Funnel Stage</h3>
                  </div>
-                 <span className="badge badge-secondary badge-outline font-black text-[9px] px-3">LIVE UPDATES</span>
               </div>
               <div className="h-[300px] w-full">
                 {formattedRecData.length > 0 ? (

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
-import { loadFaceModels, extractFaceDescriptor } from '../../utils/faceAuth';
+// import { loadFaceModels, extractFaceDescriptor } from '../../utils/faceAuth';
 
 /**
  * My Profile / Employee Detailed View
@@ -21,10 +21,10 @@ import { loadFaceModels, extractFaceDescriptor } from '../../utils/faceAuth';
 const Profile = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const [isEnrolling, setIsEnrolling] = useState(false);
+  // const [isEnrolling, setIsEnrolling] = useState(false);
   const [isUploadingSig, setIsUploadingSig] = useState(false);
-  const [enrollStep, setEnrollStep] = useState('idle'); // idle, loading, ready, capturing, success, error
-  const videoRef = useRef(null);
+  // const [enrollStep, setEnrollStep] = useState('idle'); // idle, loading, ready, capturing, success, error
+  // const videoRef = useRef(null);
   const sigInputRef = useRef(null);
 
   const { data: me, isLoading } = useQuery({
@@ -35,24 +35,24 @@ const Profile = () => {
     }
   });
 
-  const enrollMutation = useMutation({
-    mutationFn: (descriptor) => {
-      const endpoint = id ? `employees/${id}/` : 'employees/me/';
-      return api.patch(endpoint, { face_descriptor: JSON.stringify(Array.from(descriptor)) });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: id ? ['employee', id] : ['me'] });
-      setEnrollStep('success');
-      setTimeout(() => {
-        setIsEnrolling(false);
-        setEnrollStep('idle');
-      }, 3000);
-    },
-    onError: (err) => {
-      console.error("Enrollment failed:", err.response?.data);
-      setEnrollStep('error');
-    }
-  });
+  // const enrollMutation = useMutation({
+  //   mutationFn: (descriptor) => {
+  //     const endpoint = id ? `employees/${id}/` : 'employees/me/';
+  //     return api.patch(endpoint, { face_descriptor: JSON.stringify(Array.from(descriptor)) });
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: id ? ['employee', id] : ['me'] });
+  //     setEnrollStep('success');
+  //     setTimeout(() => {
+  //       setIsEnrolling(false);
+  //       setEnrollStep('idle');
+  //     }, 3000);
+  //   },
+  //   onError: (err) => {
+  //     console.error("Enrollment failed:", err.response?.data);
+  //     setEnrollStep('error');
+  //   }
+  // });
 
   const sigMutation = useMutation({
     mutationFn: (file) => {
@@ -83,56 +83,56 @@ const Profile = () => {
     }
   };
 
-  const startEnrollment = async () => {
-    setIsEnrolling(true);
-    setEnrollStep('loading');
-    
-    const loaded = await loadFaceModels();
-    if (!loaded) {
-      setEnrollStep('error');
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setEnrollStep('ready');
-      }
-    } catch (err) {
-      console.error(err);
-      setEnrollStep('error');
-    }
-  };
-
-  const captureFace = async () => {
-    if (!videoRef.current) return;
-    setEnrollStep('capturing');
-    
-    const descriptor = await extractFaceDescriptor(videoRef.current);
-    
-    // Stop camera safely
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject;
-      stream.getTracks().forEach(track => track.stop());
-    }
-
-    if (descriptor) {
-      enrollMutation.mutate(descriptor);
-    } else {
-      setEnrollStep('error');
-      alert("Face not detected. Please try again in better lighting.");
-    }
-  };
-
-  const cancelEnrollment = () => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject;
-      stream.getTracks().forEach(track => track.stop());
-    }
-    setIsEnrolling(false);
-    setEnrollStep('idle');
-  };
+  // const startEnrollment = async () => {
+  //   setIsEnrolling(true);
+  //   setEnrollStep('loading');
+  //   
+  //   const loaded = await loadFaceModels();
+  //   if (!loaded) {
+  //     setEnrollStep('error');
+  //     return;
+  //   }
+  // 
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+  //     if (videoRef.current) {
+  //       videoRef.current.srcObject = stream;
+  //       setEnrollStep('ready');
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     setEnrollStep('error');
+  //   }
+  // };
+  // 
+  // const captureFace = async () => {
+  //   if (!videoRef.current) return;
+  //   setEnrollStep('capturing');
+  //   
+  //   const descriptor = await extractFaceDescriptor(videoRef.current);
+  //   
+  //   // Stop camera safely
+  //   if (videoRef.current?.srcObject) {
+  //     const stream = videoRef.current.srcObject;
+  //     stream.getTracks().forEach(track => track.stop());
+  //   }
+  // 
+  //   if (descriptor) {
+  //     enrollMutation.mutate(descriptor);
+  //   } else {
+  //     setEnrollStep('error');
+  //     alert("Face not detected. Please try again in better lighting.");
+  //   }
+  // };
+  // 
+  // const cancelEnrollment = () => {
+  //   if (videoRef.current?.srcObject) {
+  //     const stream = videoRef.current.srcObject;
+  //     stream.getTracks().forEach(track => track.stop());
+  //   }
+  //   setIsEnrolling(false);
+  //   setEnrollStep('idle');
+  // };
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
@@ -171,11 +171,11 @@ const Profile = () => {
               <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-primary/10">
                 {me?.user_details?.role || 'STAFF'}
               </div>
-              {me?.face_descriptor && (
+              {/* {me?.face_descriptor && (
                 <div className="px-3 py-1 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest border border-success/10 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3" /> Face Verified
                 </div>
-              )}
+              )} */}
             </div>
             <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex items-center gap-2">
               <Briefcase className="w-3.5 h-3.5" /> {me?.position || 'No Position'} • {me?.department || 'Unassigned'}
@@ -190,7 +190,8 @@ const Profile = () => {
         <div className="lg:col-span-2 space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Biometric Enrollment Card */}
+            {/* Biometric Enrollment Card (Set aside for now) */}
+            {/* 
             <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6 md:col-span-2">
               <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
                 <Fingerprint className="w-4 h-4 text-primary" /> Biometric Identity
@@ -219,7 +220,6 @@ const Profile = () => {
                       className={`w-full h-full object-cover ${enrollStep === 'capturing' ? 'grayscale opacity-50' : ''}`}
                     />
                     
-                    {/* Circle guide for face placement */}
                     <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none flex items-center justify-center">
                        <div className="w-full h-full border-2 border-primary/30 rounded-full" />
                     </div>
@@ -272,6 +272,7 @@ const Profile = () => {
                 </div>
               )}
             </div>
+            */}
 
             {/* E-Signature Card */}
             <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6 md:col-span-2">

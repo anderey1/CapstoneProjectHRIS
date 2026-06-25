@@ -12,6 +12,16 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
+        username = attrs.get('username')
+        if username and '@' in username:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                user = User.objects.get(email__iexact=username)
+                attrs['username'] = user.username
+            except User.DoesNotExist:
+                pass
+
         data = super().validate(attrs)
         data['role'] = self.user.role
         data['username'] = self.user.username

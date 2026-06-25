@@ -8,7 +8,6 @@ from django.contrib.auth.models import AbstractUser
 # -------------------------
 class Role(models.TextChoices):
     # Core System Roles
-    ADMIN = 'ADMIN', 'Administrator'
     HR = 'HR', 'HR Staff'
     ACCOUNTANT = 'ACCOUNTANT', 'Accountant'
     SUPERINTENDENT = 'SUPERINTENDENT', 'Superintendent'
@@ -126,6 +125,14 @@ class Employee(models.Model):
     position = models.CharField(max_length=100, null=True, blank=True)
     department = models.CharField(max_length=100, null=True, blank=True)
     school = models.ForeignKey(School, on_delete=models.SET_NULL, null=True, blank=True, related_name='personnel')
+    supervisor = models.ForeignKey(
+        'self', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='subordinates',
+        help_text="Immediate supervisor (e.g. Principal or Head Teacher) who gives recommending approval."
+     )
     
     # Salary Grade Linkage
     salary_grade = models.ForeignKey(SalaryGrade, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees')
@@ -155,7 +162,7 @@ class Employee(models.Model):
     def save(self, *args, **kwargs):
         # 1. If position is provided, try to auto-match the Salary Grade
         if self.position and not self.salary_grade:
-            matched_sg = SalaryGrade.objects.filter(label__iexact=self.position.strip()).first()
+            matched_sg = SalaryGrade.objects.filter(label__icontains=self.position.strip()).first()
             if matched_sg:
                 self.salary_grade = matched_sg
 

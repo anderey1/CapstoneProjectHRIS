@@ -6,7 +6,7 @@ import React from 'react';
  * Simple, professional redesign with high-density labels and standard radius.
  * Expanded to include PDS (CS Form 212) fields.
  */
-const PersonalFields = ({ isEdit, register, errors }) => {
+const PersonalFields = ({ isEdit, register, errors, watch }) => {
   return (
     <div className="space-y-8">
       {/* 1. Basic Name Info */}
@@ -153,13 +153,9 @@ const PersonalFields = ({ isEdit, register, errors }) => {
       <div className="space-y-4">
         <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Digital Signature</h4>
         <div className="flex flex-col md:flex-row gap-6 items-start">
-           {isEdit && register("e_signature_preview") && (
+           {isEdit && watch("e_signature_preview") && (
               <div className="w-32 h-16 bg-base-100 border border-base-200 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
-                 {register("e_signature_preview").value ? (
-                    <img src={register("e_signature_preview").value} alt="Current Sig" className="max-h-full max-w-full object-contain" />
-                 ) : (
-                    <span className="text-[8px] font-black opacity-20 uppercase">No Signature</span>
-                 )}
+                 <img src={watch("e_signature_preview")} alt="Current Sig" className="max-h-full max-w-full object-contain" />
               </div>
            )}
            <div className="space-y-1.5 flex-1">

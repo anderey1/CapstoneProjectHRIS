@@ -15,7 +15,7 @@ const IPCRFManagement = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
-  const canRate = ['ADMIN', 'HR', 'SUPERINTENDENT'].includes(user?.role);
+  const canRate = ['HR', 'SUPERINTENDENT'].includes(user?.role);
 
   // 1. Data Fetching
   const { data: reviews, isLoading } = useQuery({
@@ -57,13 +57,15 @@ const IPCRFManagement = () => {
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Staff ratings and summaries</p>
         </div>
         
-        <button
-          className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8"
-          onClick={() => setShowModal(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Rate Performance
-        </button>
+        {canRate && (
+          <button
+            className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8"
+            onClick={() => setShowModal(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Rate Performance
+          </button>
+        )}
       </div>
 
       {/* Ratings Table */}

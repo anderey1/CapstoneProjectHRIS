@@ -12,7 +12,7 @@ import { useAuth } from '../../../context/AuthContext';
 const EmployeeTable = ({ employees, onDelete, onEdit }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const canEdit = ['ADMIN', 'HR'].includes(user?.role);
+  const canEdit = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
 
   return (
     <div className="space-y-6">
@@ -38,26 +38,31 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
                 </div>
                 
                 {canEdit && (
-                  <div className="dropdown dropdown-end" onClick={(e) => e.stopPropagation()}>
-                    <label tabIndex={0} className="btn btn-ghost btn-xs btn-circle opacity-30 hover:opacity-100">
-                      <MoreVertical className="w-4 h-4" />
-                    </label>
-                    <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-2xl bg-white rounded-lg w-32 border border-base-200">
-                      <li><button onClick={() => onEdit(emp)} className="text-[10px] font-black uppercase tracking-widest"><Edit className="w-3.5 h-3.5" /> Edit</button></li>
-                      <li><button onClick={() => onDelete(emp.id)} className="text-[10px] font-black uppercase tracking-widest text-error"><Trash2 className="w-3.5 h-3.5" /> Delete</button></li>
-                    </ul>
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 font-black uppercase text-[10px] tracking-wider px-2"
+                      onClick={() => onEdit(emp)}
+                    >
+                      <Edit className="w-3.5 h-3.5 mr-1" /> Edit
+                    </button>
+                    <button 
+                      className="btn btn-ghost btn-xs text-error hover:bg-error/10 font-black uppercase text-[10px] tracking-wider px-2"
+                      onClick={() => onDelete(emp.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                    </button>
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 bg-base-50 p-2.5 rounded-lg border border-base-100 overflow-hidden">
                   <Briefcase className="w-3.5 h-3.5 opacity-30" />
-                  <span className="text-[10px] font-bold text-base-content/60 uppercase truncate">{emp.position}</span>
+                  <span className="text-[10px] font-bold text-base-content/60 uppercase truncate">{emp.position} ({emp.department})</span>
                 </div>
                 <div className="flex items-center gap-2 bg-base-50 p-2.5 rounded-lg border border-base-100 overflow-hidden">
                   <Building2 className="w-3.5 h-3.5 opacity-30" />
-                  <span className="text-[10px] font-bold text-base-content/60 uppercase truncate">{emp.department}</span>
+                  <span className="text-[10px] font-bold text-base-content/60 uppercase truncate">{emp.school_details?.name || 'Division Office'}</span>
                 </div>
               </div>
 

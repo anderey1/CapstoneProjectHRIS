@@ -155,7 +155,7 @@ const Employees = () => {
         </div>
 
 
-        {ROLE == user.role ? (
+        {['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) ? (
           <button
             onClick={() => setActiveModal('form')}
             className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-6"
@@ -163,7 +163,7 @@ const Employees = () => {
             <UserPlus className="w-4 h-4 mr-2" />
             Add Staff Member
           </button>
-        ): null}
+        ) : null}
 
       </div>
 
@@ -213,14 +213,16 @@ const Employees = () => {
       </div>
 
       {/* Modal Overlay */}
-      <PersonnelFormModal
-        isOpen={activeModal === 'form'}
-        onClose={closeModal}
-        onSubmit={handleFormSubmit}
-        isPending={addMutation.isPending || updateMutation.isPending}
-        schools={schools}
-        initialData={selectedEmployee}
-      />
+      {activeModal === 'form' && (
+        <PersonnelFormModal
+          isOpen={true}
+          onClose={closeModal}
+          onSubmit={handleFormSubmit}
+          isPending={addMutation.isPending || updateMutation.isPending}
+          schools={schools}
+          initialData={selectedEmployee}
+        />
+      )}
     </div>
   );
 };

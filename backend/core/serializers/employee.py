@@ -27,6 +27,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)
     school_details = SchoolSerializer(source='school', read_only=True)
     salary_grade_details = SalaryGradeSerializer(source='salary_grade', read_only=True)
+    is_supervisor = serializers.SerializerMethodField()
+
+    def get_is_supervisor(self, obj):
+        return Employee.objects.filter(supervisor=obj).exists()
     
     # Nested PDS Data
     family = FamilyMemberSerializer(many=True, required=False)
@@ -64,7 +68,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'leave_balance', 'vacation_leave_balance', 'sick_leave_balance',
             'face_descriptor', 'e_signature',
             'family', 'education', 'eligibilities', 'work_experience',
-            'username', 'email', 'password', 'role'
+            'username', 'email', 'password', 'role',
+            'is_supervisor'
         )
         read_only_fields = ('user',)
 

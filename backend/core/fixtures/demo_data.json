@@ -74,6 +74,36 @@
     }
   },
   {
+    "model": "core.school",
+    "pk": 3,
+    "fields": {
+      "name": "Lucena West I Elementary School",
+      "latitude": "13.931000",
+      "longitude": "121.608000",
+      "radius_meters": 100
+    }
+  },
+  {
+    "model": "core.school",
+    "pk": 4,
+    "fields": {
+      "name": "Lucena West II Elementary School",
+      "latitude": "13.928000",
+      "longitude": "121.605000",
+      "radius_meters": 100
+    }
+  },
+  {
+    "model": "core.school",
+    "pk": 5,
+    "fields": {
+      "name": "Lucena East I Elementary School",
+      "latitude": "13.938000",
+      "longitude": "121.625000",
+      "radius_meters": 100
+    }
+  },
+  {
     "model": "core.employee",
     "pk": 1,
     "fields": {

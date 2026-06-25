@@ -85,7 +85,6 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                 setExtractedData(cleaned);
                 setConfidence(data.confidence_avg);
                 setErrorMsg(null);
-                if (onExtractionComplete) onExtractionComplete(cleaned);
             }
         }
     });
@@ -111,12 +110,24 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
 
     const handleSaveAsApplicant = () => {
         if (!extractedData) return;
+
+        const validPositions = [
+            'Teacher I', 'Teacher II', 'Teacher III', 'Master Teacher I', 'Master Teacher II', 'SPED Teacher I',
+            'Administrative Officer I', 'Administrative Officer II', 'Administrative Assistant I', 'Administrative Assistant II',
+            'Registrar I', 'Accountant I', 'School Principal I'
+        ];
+        
+        let position = extractedData.position || 'Teacher I';
+        const match = validPositions.find(p => p.toLowerCase() === position.trim().toLowerCase());
+        position = match || 'Teacher I';
+
         const applicantData = {
             first_name: extractedData.first_name || '',
+            middle_name: extractedData.middle_name || extractedData.middlename || '',
             last_name: extractedData.last_name || '',
             email: extractedData.email || '',
             phone: extractedData.mobile_no || extractedData.telephone_no || '',
-            position_applied: 'PDS Import',
+            position_applied: position,
             status: 'applied'
         };
         saveApplicantMutation.mutate(applicantData);
@@ -193,7 +204,29 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
 
                         <div className="bg-white border border-base-200 rounded-2xl p-6 shadow-sm overflow-hidden flex-1">
                             <div className="max-h-[400px] overflow-y-auto pr-4 custom-scrollbar space-y-5">
-                                {Object.entries(extractedData).map(([key, value]) => (
+                                {/* Nested Sections Summary */}
+                                <div className="grid grid-cols-2 gap-4 bg-base-50 p-4 rounded-xl border border-base-200 text-left mb-4">
+                                    <div className="text-xs">
+                                        <span className="block text-[8px] font-black opacity-40 uppercase">Family Background</span>
+                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.family?.length || 0} members extracted</span>
+                                    </div>
+                                    <div className="text-xs">
+                                        <span className="block text-[8px] font-black opacity-40 uppercase">Education Background</span>
+                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.education?.length || 0} records extracted</span>
+                                    </div>
+                                    <div className="text-xs">
+                                        <span className="block text-[8px] font-black opacity-40 uppercase">Civil Service Eligibility</span>
+                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.eligibilities?.length || 0} records extracted</span>
+                                    </div>
+                                    <div className="text-xs">
+                                        <span className="block text-[8px] font-black opacity-40 uppercase">Work Experience</span>
+                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.work_experience?.length || 0} records extracted</span>
+                                    </div>
+                                </div>
+
+                                {Object.entries(extractedData)
+                                    .filter(([key, value]) => !Array.isArray(value) && typeof value !== 'object')
+                                    .map(([key, value]) => (
                                     <div key={key} className="space-y-1.5 group">
                                         <div className="flex justify-between items-center ml-1">
                                             <label className="text-[9px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">
@@ -203,7 +236,7 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                                         </div>
                                         <input
                                             type="text"
-                                            value={value}
+                                            value={value || ''}
                                             onChange={(e) => setExtractedData(prev => ({ ...prev, [key]: e.target.value }))}
                                             className={`input input-bordered w-full bg-base-50/50 focus:bg-white rounded-xl text-xs font-bold h-10 transition-all ${!value ? 'border-warning/50' : 'border-base-200'}`}
                                             placeholder={`Enter ${key.replace(/_/g, ' ')}`}
@@ -221,20 +254,30 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
                                 <RefreshCw className="w-3 h-3 mr-2" />
                                 Re-Scan
                             </button>
-                            <button
-                                className="btn btn-primary flex-[2] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 h-12"
-                                onClick={handleSaveAsApplicant}
-                                disabled={saveApplicantMutation.isPending}
-                            >
-                                {saveApplicantMutation.isPending ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <>
-                                        <UserPlus className="w-4 h-4 mr-2" />
-                                        Commit to Database
-                                    </>
-                                )}
-                            </button>
+                            {onExtractionComplete ? (
+                                <button
+                                    className="btn btn-primary flex-[2] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 h-12"
+                                    onClick={() => onExtractionComplete(extractedData)}
+                                >
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Apply to Employee Form
+                                </button>
+                            ) : (
+                                <button
+                                    className="btn btn-primary flex-[2] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 h-12"
+                                    onClick={handleSaveAsApplicant}
+                                    disabled={saveApplicantMutation.isPending}
+                                >
+                                    {saveApplicantMutation.isPending ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <UserPlus className="w-4 h-4 mr-2" />
+                                            Commit to Database
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

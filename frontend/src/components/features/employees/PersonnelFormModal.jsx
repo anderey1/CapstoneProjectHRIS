@@ -75,7 +75,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
 
   const { data: salaryGrades } = useQuery({
     queryKey: ['salary-grades'],
-    queryFn: () => api.get('/salary-grades/').then(res => res.data.results),
+    queryFn: () => api.get('/salary-grades/').then(res => Array.isArray(res.data) ? res.data : res.data.results || []),
     enabled: isOpen // Only fetch when modal is open
   });
 
@@ -331,6 +331,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                     isEdit={isEdit} 
                     register={register} 
                     errors={errors} 
+                    watch={watch}
                   />
                 </div>
                 <div className={activeTab !== 'employment' ? 'hidden' : ''}>

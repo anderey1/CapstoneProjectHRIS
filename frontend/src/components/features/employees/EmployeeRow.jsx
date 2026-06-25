@@ -11,7 +11,7 @@ import { useAuth } from '../../../context/AuthContext';
 const EmployeeRow = ({ emp, onDelete, onEdit }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const canEdit = ['ADMIN', 'HR'].includes(user?.role);
+  const canEdit = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
 
   const handleRowClick = () => {
     navigate(`/employees/${emp.id}`);
@@ -41,7 +41,9 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
       <td className="px-6 py-5">
         <div className="flex flex-col">
           <div className="text-[11px] font-black text-base-content uppercase tracking-tight">{emp.position}</div>
-          <div className="text-[10px] font-black opacity-30 uppercase tracking-widest">{emp.department}</div>
+          <div className="text-[10px] font-black opacity-30 uppercase tracking-widest">
+            {emp.department} • {emp.school_details?.name || 'Division Office'}
+          </div>
         </div>
       </td>
       <td className="px-6 py-5 text-[11px] font-black text-primary uppercase tracking-tighter">
@@ -52,23 +54,21 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
           {emp.date_hired ? new Date(emp.date_hired).toLocaleDateString() : '---'}
         </div>
       </td>
-      <td className="px-8 py-5 text-right">
+      <td className="px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
         {canEdit && (
-          <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-            <label tabIndex={0} className="btn btn-ghost btn-xs btn-circle opacity-30 hover:opacity-100">
-              <MoreVertical className="w-4 h-4" />
-            </label>
-            <ul tabIndex={0} className="dropdown-content z-[50] menu p-2 shadow-2xl bg-white rounded-lg w-36 border border-base-200 mt-1">
-              <li><button className="text-[10px] font-black uppercase tracking-widest" onClick={() => onEdit(emp)}><Edit className="w-3.5 h-3.5" /> Edit</button></li>
-              <li>
-                <button
-                  className="text-[10px] font-black uppercase tracking-widest text-error"
-                  onClick={() => onDelete(emp.id)}
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                </button>
-              </li>
-            </ul>
+          <div className="flex justify-end gap-1">
+            <button 
+              className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 font-black uppercase text-[10px] tracking-wider px-3"
+              onClick={() => onEdit(emp)}
+            >
+              <Edit className="w-3.5 h-3.5 mr-1" /> Edit
+            </button>
+            <button 
+              className="btn btn-ghost btn-xs text-error hover:bg-error/10 font-black uppercase text-[10px] tracking-wider px-3"
+              onClick={() => onDelete(emp.id)}
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+            </button>
           </div>
         )}
       </td>

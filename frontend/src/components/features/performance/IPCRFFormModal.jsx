@@ -14,7 +14,7 @@ import { useAuth } from '../../../context/AuthContext';
 const IPCRFFormModal = ({ onClose, review }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = ['ADMIN', 'HR', 'SUPERINTENDENT'].includes(user?.role);
+  const isAdmin = ['HR', 'SUPERINTENDENT'].includes(user?.role);
 
   const { data: employees, isLoading: loadingEmployees } = useQuery({
     queryKey: [QUERY_KEYS.EMPLOYEES],

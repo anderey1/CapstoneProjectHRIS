@@ -67,12 +67,19 @@ const AddApplicantModal = ({ onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">First Name</label>
               <input 
                 className="input input-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
                 {...register('first_name', { required: true })} 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Middle Name</label>
+              <input 
+                className="input input-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
+                {...register('middle_name')} 
               />
             </div>
             <div className="space-y-1.5">

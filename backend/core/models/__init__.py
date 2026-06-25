@@ -3,7 +3,7 @@ from .attendance import Attendance
 from .leave import LeaveRequest
 from .loan import ProvidentLoan, LoanPayment, LoanDocument
 from .payroll import Payroll
-from .recruitment import Applicant
+from .recruitment import Applicant, ApplicantDocument
 from .performance import PerformanceReview
 from .audit import AuditLog
 from .pds import PDSUpload
@@ -22,6 +22,7 @@ __all__ = [
     'LoanDocument',
     'Payroll',
     'Applicant',
+    'ApplicantDocument',
     'PerformanceReview',
     'IPCRFKRA',
     'IPCRFObjective',

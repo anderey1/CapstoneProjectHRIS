@@ -18,6 +18,27 @@ const COLUMNS = [
   { id: 'rejected', label: 'Not Selected', color: 'bg-error/10 text-error border-error/20' }
 ];
 
+const formatDocType = (type) => {
+  const mapping = {
+    letter_of_intent: 'Letter of Intent',
+    pds_file: 'Personal Data Sheet (PDS)',
+    resume: 'Resume / CV',
+    prc_documents: 'PRC Documents',
+    eligibility_certificate: 'Eligibility Certificate',
+    tor: 'Transcript of Records (TOR)',
+    certificates_of_training: 'Certificate of Training',
+    employment_documents: 'Employment Document',
+    latest_appointment: 'Latest Appointment',
+    performance_rating: 'Performance Rating',
+    specialized_training: 'Specialized Training Certificate',
+    checklist: 'Checklist of Requirements',
+    omnibus: 'Omnibus Sworn Statement',
+    cav: 'Certification on the Authenticity (CAV)',
+    privacy_consent: 'Data Privacy Consent'
+  };
+  return mapping[type] || type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
+
 const Recruitment = () => {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -78,7 +99,7 @@ const Recruitment = () => {
   };
 
   const filteredApplicants = applicants.filter(a => 
-    `${a.first_name} ${a.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `${a.first_name} ${a.middle_name || ''} ${a.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     a.position_applied.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -162,7 +183,7 @@ const Recruitment = () => {
                       </div>
 
                       <div>
-                        <h3 className="font-bold text-sm text-base-content leading-tight group-hover:text-primary transition-colors">{applicant.first_name} {applicant.last_name}</h3>
+                        <h3 className="font-bold text-sm text-base-content leading-tight group-hover:text-primary transition-colors">{applicant.first_name} {applicant.middle_name ? applicant.middle_name + ' ' : ''}{applicant.last_name}</h3>
                         <p className="text-[10px] font-black opacity-30 uppercase tracking-tight mt-0.5">{applicant.position_applied}</p>
                       </div>
 
@@ -207,7 +228,7 @@ const Recruitment = () => {
                         {selectedApplicant.first_name[0]}{selectedApplicant.last_name[0]}
                      </div>
                      <div>
-                        <h3 className="font-black text-2xl text-base-content uppercase tracking-tight leading-none">{selectedApplicant.first_name} {selectedApplicant.last_name}</h3>
+                        <h3 className="font-black text-2xl text-base-content uppercase tracking-tight leading-none">{selectedApplicant.first_name} {selectedApplicant.middle_name ? selectedApplicant.middle_name + ' ' : ''}{selectedApplicant.last_name}</h3>
                         <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] mt-2">Applied for: {selectedApplicant.position_applied}</p>
                      </div>
                   </div>
@@ -243,17 +264,47 @@ const Recruitment = () => {
                            <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
                               <FileText className="w-3 h-3" /> Documents
                            </h4>
-                           <div className="space-y-3">
-                              {selectedApplicant.resume ? (
-                                 <a href={selectedApplicant.resume} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
-                                    <div className="flex items-center gap-3">
-                                       <FileText className="w-5 h-5 text-primary opacity-40" />
-                                       <span className="text-[10px] font-black uppercase tracking-widest">Resume / CV</span>
-                                    </div>
-                                    <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                 </a>
-                              ) : <p className="text-[10px] italic opacity-20 text-center">No resume uploaded</p>}
-                           </div>
+                            <div className="space-y-3">
+                               {selectedApplicant.resume ? (
+                                  <a href={selectedApplicant.resume} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
+                                     <div className="flex items-center gap-3">
+                                        <FileText className="w-5 h-5 text-primary opacity-40" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Resume / CV</span>
+                                     </div>
+                                     <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </a>
+                               ) : null}
+                               
+                               {selectedApplicant.pds_file ? (
+                                  <a href={selectedApplicant.pds_file} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
+                                     <div className="flex items-center gap-3">
+                                        <FileText className="w-5 h-5 text-primary opacity-40" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Personal Data Sheet (PDS)</span>
+                                     </div>
+                                     <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </a>
+                               ) : null}
+
+                                {selectedApplicant.documents && selectedApplicant.documents
+                                  .filter(doc => doc.document_type !== 'resume' && doc.document_type !== 'pds_file')
+                                  .map(doc => (
+                                     <a key={doc.id} href={doc.file} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                           <FileText className="w-5 h-5 text-primary opacity-40 shrink-0" />
+                                           <div className="min-w-0">
+                                              <span className="text-[10px] font-black uppercase tracking-widest block">{formatDocType(doc.document_type)}</span>
+                                              <span className="text-[8px] opacity-40 font-bold block truncate max-w-[180px]">{doc.filename}</span>
+                                           </div>
+                                        </div>
+                                        <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                     </a>
+                                  ))
+                                }
+
+                                {!selectedApplicant.resume && !selectedApplicant.pds_file && (!selectedApplicant.documents || selectedApplicant.documents.length === 0) && (
+                                   <p className="text-[10px] italic opacity-20 text-center">No documents uploaded</p>
+                                )}
+                            </div>
                         </section>
                      </div>
 

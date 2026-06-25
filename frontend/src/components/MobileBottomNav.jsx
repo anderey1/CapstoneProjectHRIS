@@ -6,7 +6,7 @@ const MobileBottomNav = ({ toggleDrawer }) => {
   const navItems = [
     { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Home' },
     { to: '/attendance', icon: <CalendarCheck className="w-5 h-5" />, label: 'Log' },
-    { to: '/leave', icon: <Clock className="w-5 h-5" />, label: 'Leave' },
+    { to: '/my-leaves', icon: <Clock className="w-5 h-5" />, label: 'Leave' },
     { to: '/profile', icon: <UserCircle className="w-5 h-5" />, label: 'Me' },
   ];
 

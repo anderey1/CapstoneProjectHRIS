@@ -27,44 +27,39 @@ const SidebarContent = ({ closeDrawer }) => {
 
   const menuGroups = [
     {
-      title: 'Main',
+      title: 'Main Menu',
       links: [
-        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
+        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home Dashboard', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
       ]
     },
     {
-      title: 'Staff',
+      title: 'Employee Portal',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees', roles: ['HR', 'SUPERINTENDENT'] },
-        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Hiring', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Time In / Out', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'My DTR (Form 48)', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
+        { to: '/my-leaves', icon: <Clock className="w-4 h-4" />, label: 'My Leave Applications', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
+        { to: '/my-payslips', icon: <Wallet className="w-4 h-4" />, label: 'My Payslips / Salaries', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
+        { to: '/my-loans', icon: <FileText className="w-4 h-4" />, label: 'My Provident Loans', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
+        { to: '/my-performance', icon: <BarChart2 className="w-4 h-4" />, label: 'My Performance Ratings', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
       ]
     },
     {
-      title: 'Time & Leave',
+      title: 'Admin Operations',
       links: [
-        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'Daily Record', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/leave', icon: <Clock className="w-4 h-4" />, label: 'Leaves', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
-      ]
-    },
-    {
-      title: 'Money',
-      links: [
-        { to: '/payroll', icon: <Wallet className="w-4 h-4" />, label: 'Payroll', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/loans', icon: <FileText className="w-4 h-4" />, label: 'Loans', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING'] },
-      ]
-    },
-    {
-      title: 'Work Quality',
-      links: [
-        { to: '/performance', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees List', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Job Applicants', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'DTR Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Approvals', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ['HR', 'SUPERINTENDENT'] },
       ]
     },
     {
       title: 'Settings',
       links: [
-        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Profile', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING'] },
-        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'System Logs', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT'] },
+        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'Account Profile', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
+        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
       ]
     }
   ];

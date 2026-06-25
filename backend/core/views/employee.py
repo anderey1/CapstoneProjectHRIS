@@ -10,6 +10,7 @@ from ..permissions import IsAdminOrHR, IsSuperintendent, IsAdminOrHRorSuperinten
 class SalaryGradeViewSet(viewsets.ModelViewSet):
     queryset = SalaryGrade.objects.all()
     serializer_class = SalaryGradeSerializer
+    pagination_class = None
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -19,6 +20,7 @@ class SalaryGradeViewSet(viewsets.ModelViewSet):
 class SchoolViewSet(viewsets.ModelViewSet):
     queryset = School.objects.all()
     serializer_class = SchoolSerializer
+    pagination_class = None
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -50,7 +52,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return Employee.objects.none()
-        if user.is_superuser or user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
+        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
             return Employee.objects.all()
         return Employee.objects.filter(user=user)
 
@@ -81,7 +83,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 )
             else:
                 # GET fallback for system users (Admin)
-                is_admin = user.is_superuser or user.role in [Role.ADMIN, Role.ADMINISTRATIVE]
+                is_admin = user.is_superuser or user.role in [Role.ADMINISTRATIVE]
                 return Response({
                     "id": None,
                     "first_name": user.first_name or user.username,

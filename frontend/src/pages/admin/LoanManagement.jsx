@@ -9,6 +9,7 @@ import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 import { ROLES } from '../../utils/constants';
+import SubsidiaryLedger from '../../components/features/loans/SubsidiaryLedger';
 
 const PURPOSE_LABELS = {
   general: 'General',
@@ -78,6 +79,16 @@ const LoanManagement = () => {
   });
 
   // Mutations
+  const verifyMutation = useMutation({
+    mutationFn: (id) => api.post(`loans/${id}/verify/`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
+      setSelectedLoan(null);
+      showToast('Loan documents verified successfully!');
+    },
+    onError: (err) => showToast(err.response?.data?.detail || 'Verification failed.', 'error'),
+  });
+
   const approveMutation = useMutation({
     mutationFn: ({ id, remarks }) => api.post(`loans/${id}/approve/`, { remarks }),
     onSuccess: () => {
@@ -117,18 +128,20 @@ const LoanManagement = () => {
 
   // Filtering
   const pendingLoans = loans.filter(l => l.status === 'pending');
+  const verifiedLoans = loans.filter(l => l.status === 'verified');
   const approvedLoans = loans.filter(l => l.status === 'approved');
   const releasedLoans = loans.filter(l => l.status === 'released');
   const rejectedLoans = loans.filter(l => l.status === 'rejected');
   const paidLoans = loans.filter(l => l.status === 'paid');
 
   const filteredLoans = activeTab === 'pending' ? pendingLoans
+    : activeTab === 'verified' ? verifiedLoans
     : activeTab === 'approved' ? approvedLoans
-    : activeTab === 'released' ? releasedLoans
+    : activeTab === 'released' ? [...releasedLoans, ...paidLoans]
     : activeTab === 'rejected' ? rejectedLoans
     : paidLoans;
 
-  const totalReleasedValue = [...approvedLoans, ...releasedLoans, ...paidLoans].reduce((acc, l) => acc + parseFloat(l.loan_amount || 0), 0);
+  const totalReleasedValue = [...releasedLoans, ...paidLoans].reduce((acc, l) => acc + parseFloat(l.loan_amount || 0), 0);
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
@@ -169,8 +182,18 @@ const LoanManagement = () => {
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">Pending</p>
+            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">To Verify</p>
             <p className="text-2xl font-black text-base-content tracking-tighter">{pendingLoans.length}</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-base-200 shadow-sm flex items-center gap-4 group hover:border-info/20 transition-all">
+          <div className="w-10 h-10 bg-info/5 text-info border border-info/5 rounded-lg flex items-center justify-center">
+            <Clock className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">To Approve</p>
+            <p className="text-2xl font-black text-base-content tracking-tighter">{verifiedLoans.length}</p>
           </div>
         </div>
 
@@ -179,18 +202,8 @@ const LoanManagement = () => {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">Approved</p>
+            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">Wait Release</p>
             <p className="text-2xl font-black text-base-content tracking-tighter">{approvedLoans.length}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-base-200 shadow-sm flex items-center gap-4 group hover:border-error/20 transition-all">
-          <div className="w-10 h-10 bg-error/5 text-error border border-error/5 rounded-lg flex items-center justify-center">
-            <XCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">Rejected</p>
-            <p className="text-2xl font-black text-base-content tracking-tighter">{rejectedLoans.length}</p>
           </div>
         </div>
 
@@ -199,7 +212,7 @@ const LoanManagement = () => {
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">Released</p>
+            <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">Total Released</p>
             <p className="text-2xl font-black text-base-content tracking-tighter">₱{totalReleasedValue.toLocaleString()}</p>
           </div>
         </div>
@@ -208,9 +221,10 @@ const LoanManagement = () => {
       {/* Tabs */}
       <div className="flex gap-2 bg-base-200/50 p-1 rounded-xl w-fit border border-base-200">
         {[
-          { key: 'pending', label: 'Pending', count: pendingLoans.length },
+          { key: 'pending', label: 'Verify Docs', count: pendingLoans.length },
+          { key: 'verified', label: 'Superintendent Approval', count: verifiedLoans.length },
           { key: 'approved', label: 'Wait Release', count: approvedLoans.length },
-          { key: 'released', label: 'Active', count: releasedLoans.length },
+          { key: 'released', label: 'Active / Paid', count: releasedLoans.length + paidLoans.length },
           { key: 'rejected', label: 'Rejected', count: rejectedLoans.length },
         ].map(tab => (
           <button
@@ -360,188 +374,235 @@ const LoanManagement = () => {
             {/* Modal Body */}
             <div className="p-8 space-y-6 overflow-y-auto flex-1 min-h-0">
 
-              {/* Financial Breakdown */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-base-50 rounded-xl border border-base-100">
-                  <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-1">Principal</p>
-                  <p className="text-xl font-black text-secondary tracking-tighter">₱{parseFloat(selectedLoan.loan_amount).toLocaleString()}</p>
-                </div>
-                <div className="p-4 bg-base-50 rounded-xl border border-base-100">
-                  <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-1">Monthly</p>
-                  <p className="text-xl font-black text-primary tracking-tighter">₱{parseFloat(selectedLoan.monthly_payment).toLocaleString()}</p>
-                </div>
-                <div className="p-4 bg-base-50 rounded-xl border border-base-100">
-                  <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-1">Total</p>
-                  <p className="text-xl font-black text-base-content tracking-tighter">₱{parseFloat(selectedLoan.total_amount).toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6 text-[10px] font-black opacity-40 uppercase tracking-widest px-1">
-                <span>Rate: {selectedLoan.interest_rate}%</span>
-                <span>Term: {selectedLoan.term_months} months</span>
-              </div>
-
-              {/* Application Details */}
-              <div className="space-y-3">
-                <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Application Details</h4>
-
-                {(selectedLoan.co_maker_name_display || selectedLoan.co_maker_name) && (
-                  <div className="flex items-center gap-3 p-4 bg-base-50 rounded-lg border border-base-100">
-                    <Users className="w-4 h-4 opacity-30" />
-                    <div>
-                      <p className="text-[9px] font-black opacity-30 uppercase tracking-widest">Co-Maker</p>
-                      <p className="text-xs font-bold">{selectedLoan.co_maker_name_display || selectedLoan.co_maker_name}</p>
+              {(selectedLoan.status === 'released' || selectedLoan.status === 'paid') ? (
+                <SubsidiaryLedger 
+                  loan={selectedLoan} 
+                  userCanPost={user?.role === 'ACCOUNTANT' || user?.role === 'ADMINISTRATIVE' || user?.is_superuser} 
+                />
+              ) : (
+                <>
+                  {/* Financial Breakdown */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 bg-base-50 rounded-xl border border-base-100">
+                      <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-1">Principal</p>
+                      <p className="text-xl font-black text-secondary tracking-tighter">₱{parseFloat(selectedLoan.loan_amount).toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 bg-base-50 rounded-xl border border-base-100">
+                      <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-1">Monthly</p>
+                      <p className="text-xl font-black text-primary tracking-tighter">₱{parseFloat(selectedLoan.monthly_payment).toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 bg-base-50 rounded-xl border border-base-100">
+                      <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-1">Total</p>
+                      <p className="text-xl font-black text-base-content tracking-tighter">₱{parseFloat(selectedLoan.total_amount).toLocaleString()}</p>
                     </div>
                   </div>
-                )}
 
-                {selectedLoan.letter_request && (
-                  <div className="p-4 bg-base-50 rounded-lg border border-base-100">
-                    <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-2">Letter Request</p>
-                    <p className="text-xs font-medium leading-relaxed italic text-base-content/70 whitespace-pre-wrap">"{selectedLoan.letter_request}"</p>
+                  <div className="flex items-center gap-6 text-[10px] font-black opacity-40 uppercase tracking-widest px-1">
+                    <span>Rate: {selectedLoan.interest_rate}%</span>
+                    <span>Term: {selectedLoan.term_months} months</span>
                   </div>
-                )}
-              </div>
 
-              {/* Document Checklist */}
-              {checklist && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40">Documents</h4>
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                      checklist.all_required_submitted
-                        ? 'bg-success/10 text-success'
-                        : 'bg-warning/10 text-warning'
-                    }`}>
-                      {checklist.all_required_submitted ? 'Complete' : 'Incomplete'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {checklist.checklist?.map((doc) => {
-                      const uploadedDoc = documents.find(d => d.doc_type === doc.doc_type);
-                      return (
-                        <div key={doc.doc_type} className="flex items-center justify-between p-3 bg-base-50 rounded-lg border border-base-100">
-                          <div className="flex items-center gap-2">
-                            {doc.submitted
-                              ? <FileCheck className="w-3.5 h-3.5 text-success" />
-                              : <Circle className="w-3.5 h-3.5 opacity-20" />
-                            }
-                            <span className="text-[10px] font-bold uppercase tracking-wide">{doc.label}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {uploadedDoc?.file && (
-                              <a 
-                                href={getFileUrl(uploadedDoc.file)} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="btn btn-ghost btn-xs text-primary font-black uppercase tracking-widest hover:bg-primary/5"
-                              >
-                                <Eye className="w-3 h-3" /> View
-                              </a>
-                            )}
-                            {!doc.required && <span className="text-[8px] font-black text-info/50 uppercase">Optional</span>}
-                          </div>
+                  {/* Application Details */}
+                  <div className="space-y-3">
+                    <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Application Details</h4>
+
+                    {(selectedLoan.co_maker_name_display || selectedLoan.co_maker_name) && (
+                      <div className="flex items-center gap-3 p-4 bg-base-50 rounded-lg border border-base-100">
+                        <Users className="w-4 h-4 opacity-30" />
+                        <div>
+                          <p className="text-[9px] font-black opacity-30 uppercase tracking-widest">Co-Maker</p>
+                          <p className="text-xs font-bold">{selectedLoan.co_maker_name_display || selectedLoan.co_maker_name}</p>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                      </div>
+                    )}
 
-              {/* Existing Remarks (for resolved loans) */}
-              {selectedLoan.remarks && selectedLoan.status !== 'pending' && (
-                <div className="p-4 bg-warning/5 rounded-lg border border-warning/10 flex items-start gap-3">
-                  <MessageSquare className="w-4 h-4 text-warning opacity-60 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Superintendent Remarks</p>
-                    <p className="text-xs font-bold text-base-content/70">{selectedLoan.remarks}</p>
-                    {selectedLoan.reviewed_by_name && (
-                      <p className="text-[9px] font-bold opacity-30 mt-1 uppercase">— {selectedLoan.reviewed_by_name}, {selectedLoan.reviewed_at ? new Date(selectedLoan.reviewed_at).toLocaleDateString() : ''}</p>
+                    {selectedLoan.letter_request && (
+                      <div className="p-4 bg-base-50 rounded-lg border border-base-100">
+                        <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-2">Letter Request</p>
+                        <p className="text-xs font-medium leading-relaxed italic text-base-content/70 whitespace-pre-wrap">"{selectedLoan.letter_request}"</p>
+                      </div>
                     )}
                   </div>
-                </div>
-              )}
 
-              {/* Action Section */}
-              {selectedLoan.status === 'pending' && (
-                <div className="space-y-4 pt-4 border-t border-base-100">
-                  <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Decision</h4>
-                  {(user?.role === 'SUPERINTENDENT') ? (
-                    <>
-                      {/* Approve Section */}
-                      <div className="p-4 bg-success/5 border border-success/10 rounded-xl space-y-3">
-                        <textarea
-                          value={approveRemarks}
-                          onChange={(e) => setApproveRemarks(e.target.value)}
-                          placeholder="Remarks for approval (optional)..."
-                          rows={2}
-                          className="textarea textarea-sm w-full bg-white border-success/20 focus:border-success rounded-lg text-xs font-bold"
-                        />
-                        <button
-                          onClick={() => approveMutation.mutate({ id: selectedLoan.id, remarks: approveRemarks })}
-                          disabled={approveMutation.isPending}
-                          className="btn btn-success btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-success/20"
-                        >
-                          {approveMutation.isPending ? 'Processing...' : 'Approve Application'}
-                        </button>
+                  {/* Document Checklist */}
+                  {checklist && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between px-1">
+                        <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40">Documents</h4>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                          checklist.all_required_submitted
+                            ? 'bg-success/10 text-success'
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          {checklist.all_required_submitted ? 'Complete' : 'Incomplete'}
+                        </span>
                       </div>
-
-                      {/* Reject Section */}
-                      <div className="p-4 bg-error/5 border border-error/10 rounded-xl space-y-3">
-                        <textarea
-                          value={rejectRemarks}
-                          onChange={(e) => setRejectRemarks(e.target.value)}
-                          placeholder="Reason for rejection (required)..."
-                          rows={2}
-                          className="textarea textarea-sm w-full bg-white border-error/20 focus:border-error rounded-lg text-xs font-bold"
-                        />
-                        <button
-                          onClick={() => rejectMutation.mutate({ id: selectedLoan.id, remarks: rejectRemarks })}
-                          disabled={rejectMutation.isPending || !rejectRemarks.trim()}
-                          className="btn btn-outline border-error/30 text-error hover:bg-error hover:border-error btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
-                        >
-                          {rejectMutation.isPending ? 'Processing...' : 'Reject Application'}
-                        </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {checklist.checklist?.map((doc) => {
+                          const uploadedDoc = documents.find(d => d.doc_type === doc.doc_type);
+                          return (
+                            <div key={doc.doc_type} className="flex items-center justify-between p-3 bg-base-50 rounded-lg border border-base-100">
+                              <div className="flex items-center gap-2">
+                                {doc.submitted
+                                  ? <FileCheck className="w-3.5 h-3.5 text-success" />
+                                  : <Circle className="w-3.5 h-3.5 opacity-20" />
+                                }
+                                <span className="text-[10px] font-bold uppercase tracking-wide">{doc.label}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {uploadedDoc?.file && (
+                                  <a 
+                                    href={getFileUrl(uploadedDoc.file)} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="btn btn-ghost btn-xs text-primary font-black uppercase tracking-widest hover:bg-primary/5"
+                                  >
+                                    <Eye className="w-3 h-3" /> View
+                                  </a>
+                                )}
+                                {!doc.required && <span className="text-[8px] font-black text-info/50 uppercase">Optional</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </>
-                  ) : (
-                    <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
-                      You do not have permission to approve or reject loan applications.
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* Release Section (Accountant) */}
-              {selectedLoan.status === 'approved' && (
-                <div className="space-y-4 pt-4 border-t border-base-100">
-                  <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Disbursement</h4>
-                  {(user?.role === 'ACCOUNTANT') ? (
-                    <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
-                      <p className="text-[10px] font-bold text-primary/70 uppercase leading-relaxed text-center mb-2">
-                        Verify fund availability before releasing.
-                      </p>
-                      <button
-                        onClick={() => disburseMutation.mutate(selectedLoan.id)}
-                        disabled={disburseMutation.isPending}
-                        className="btn btn-primary btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
-                      >
-                        {disburseMutation.isPending ? 'Processing...' : 'Release Funds (Payout)'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
-                      Waiting for Accountant disbursement.
+                  {/* Existing Remarks (for resolved loans) */}
+                  {selectedLoan.remarks && selectedLoan.status !== 'pending' && (
+                    <div className="p-4 bg-warning/5 rounded-lg border border-warning/10 flex items-start gap-3">
+                      <MessageSquare className="w-4 h-4 text-warning opacity-60 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Superintendent Remarks</p>
+                        <p className="text-xs font-bold text-base-content/70">{selectedLoan.remarks}</p>
+                        {selectedLoan.reviewed_by_name && (
+                          <p className="text-[9px] font-bold opacity-30 mt-1 uppercase">— {selectedLoan.reviewed_by_name}, {selectedLoan.reviewed_at ? new Date(selectedLoan.reviewed_at).toLocaleDateString() : ''}</p>
+                        )}
+                      </div>
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* Close for resolved */}
-              {selectedLoan.status !== 'pending' && selectedLoan.status !== 'approved' && (
-                <button onClick={() => setSelectedLoan(null)} className="btn btn-block bg-base-100 border-base-200 rounded-lg font-black text-xs uppercase tracking-widest">
-                  Close Record
-                </button>
+                  {/* Action Section (Accountant Verification) */}
+                  {selectedLoan.status === 'pending' && (
+                    <div className="space-y-4 pt-4 border-t border-base-100">
+                      <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Accountant Verification</h4>
+                      {(user?.role === 'ACCOUNTANT' || user?.is_superuser) ? (
+                        <>
+                          <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
+                            <p className="text-[10px] font-bold text-primary/70 uppercase leading-relaxed text-center">
+                              Verify that all required documents are uploaded and valid before endorsing to the Superintendent.
+                            </p>
+                            <button
+                              onClick={() => verifyMutation.mutate(selectedLoan.id)}
+                              disabled={verifyMutation.isPending}
+                              className="btn btn-primary btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
+                            >
+                              {verifyMutation.isPending ? 'Verifying...' : 'Verify & Endorse Loan Documents'}
+                            </button>
+                          </div>
+
+                          {/* Reject Section */}
+                          <div className="p-4 bg-error/5 border border-error/10 rounded-xl space-y-3">
+                            <textarea
+                              value={rejectRemarks}
+                              onChange={(e) => setRejectRemarks(e.target.value)}
+                              placeholder="Reason for rejection/returned files (required)..."
+                              rows={2}
+                              className="textarea textarea-sm w-full bg-white border-error/20 focus:border-error rounded-lg text-xs font-bold"
+                            />
+                            <button
+                              onClick={() => rejectMutation.mutate({ id: selectedLoan.id, remarks: rejectRemarks })}
+                              disabled={rejectMutation.isPending || !rejectRemarks.trim()}
+                              className="btn btn-outline border-error/30 text-error hover:bg-error hover:border-error btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
+                            >
+                              {rejectMutation.isPending ? 'Processing...' : 'Reject Application'}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
+                          Only Accountants can verify loan documents.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Section (Superintendent Approval) */}
+                  {selectedLoan.status === 'verified' && (
+                    <div className="space-y-4 pt-4 border-t border-base-100">
+                      <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Superintendent Approval</h4>
+                      {(user?.role === 'SUPERINTENDENT' || user?.is_superuser) ? (
+                        <>
+                          {/* Approve Section */}
+                          <div className="p-4 bg-success/5 border border-success/10 rounded-xl space-y-3">
+                            <textarea
+                              value={approveRemarks}
+                              onChange={(e) => setApproveRemarks(e.target.value)}
+                              placeholder="Remarks for approval (optional)..."
+                              rows={2}
+                              className="textarea textarea-sm w-full bg-white border-success/20 focus:border-success rounded-lg text-xs font-bold"
+                            />
+                            <button
+                              onClick={() => approveMutation.mutate({ id: selectedLoan.id, remarks: approveRemarks })}
+                              disabled={approveMutation.isPending}
+                              className="btn btn-success btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-success/20"
+                            >
+                              {approveMutation.isPending ? 'Processing...' : 'Approve Application'}
+                            </button>
+                          </div>
+
+                          {/* Reject Section */}
+                          <div className="p-4 bg-error/5 border border-error/10 rounded-xl space-y-3">
+                            <textarea
+                              value={rejectRemarks}
+                              onChange={(e) => setRejectRemarks(e.target.value)}
+                              placeholder="Reason for rejection (required)..."
+                              rows={2}
+                              className="textarea textarea-sm w-full bg-white border-error/20 focus:border-error rounded-lg text-xs font-bold"
+                            />
+                            <button
+                              onClick={() => rejectMutation.mutate({ id: selectedLoan.id, remarks: rejectRemarks })}
+                              disabled={rejectMutation.isPending || !rejectRemarks.trim()}
+                              className="btn btn-outline border-error/30 text-error hover:bg-error hover:border-error btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
+                            >
+                              {rejectMutation.isPending ? 'Processing...' : 'Reject Application'}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
+                          Waiting for Superintendent approval.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Release Section (Accountant) */}
+                  {selectedLoan.status === 'approved' && (
+                    <div className="space-y-4 pt-4 border-t border-base-100">
+                      <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Disbursement</h4>
+                      {(user?.role === 'ACCOUNTANT' || user?.is_superuser) ? (
+                        <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
+                          <p className="text-[10px] font-bold text-primary/70 uppercase leading-relaxed text-center mb-2">
+                            Verify fund availability before releasing.
+                          </p>
+                          <button
+                            onClick={() => disburseMutation.mutate(selectedLoan.id)}
+                            disabled={disburseMutation.isPending}
+                            className="btn btn-primary btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
+                          >
+                            {disburseMutation.isPending ? 'Processing...' : 'Release Funds (Payout)'}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
+                          Waiting for Accountant disbursement.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

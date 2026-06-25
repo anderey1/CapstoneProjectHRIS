@@ -14,12 +14,12 @@ def dashboard_stats(request):
     pending_payroll_approval = Payroll.objects.filter(status='draft').count()
     ready_for_release = Payroll.objects.filter(status='approved').count()
 
-    total_loans_disbursed = ProvidentLoan.objects.filter(status='paid').aggregate(total=Sum('loan_amount'))['total'] or 0
+    total_loans_disbursed = ProvidentLoan.objects.filter(status__in=['released', 'paid']).aggregate(total=Sum('loan_amount'))['total'] or 0
     approved_loans_pending = ProvidentLoan.objects.filter(status='approved').aggregate(total=Sum('loan_amount'))['total'] or 0
-    pending_loan_count = ProvidentLoan.objects.filter(status='pending').count()
+    pending_loan_count = ProvidentLoan.objects.filter(status='verified').count()
     
     attendance_alerts = Attendance.objects.filter(is_geo_flagged=True).count()
-    pending_leaves = LeaveRequest.objects.filter(status='pending').count()
+    pending_leaves = LeaveRequest.objects.filter(status__in=['pending_supervisor', 'pending_hr', 'pending_superintendent']).count()
     active_applicants = Applicant.objects.exclude(status__in=['hired', 'rejected']).count()
     pending_ipcrf = Employee.objects.exclude(performance_reviews__isnull=False).count()
 
@@ -48,7 +48,7 @@ def dashboard_ai_summary(request):
     data_context = {
         "total_employees": Employee.objects.count(),
         "total_loans": ProvidentLoan.objects.count(),
-        "approved_loans": ProvidentLoan.objects.filter(status='approved').count(),
+        "approved_loans": ProvidentLoan.objects.filter(status__in=['approved', 'released', 'paid']).count(),
         "total_departments": Employee.objects.values('department').distinct().count(),
     }
     

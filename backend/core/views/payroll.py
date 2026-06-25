@@ -9,8 +9,9 @@ from django.db import transaction
 from decimal import Decimal
 from ..models import Employee, ProvidentLoan, LoanPayment, Payroll, Role, AuditLog, Attendance
 from ..serializers import PayrollSerializer
-from ..permissions import IsAdminOrHR, IsAccountant, IsAdmin, IsSuperintendent
+from ..permissions import IsAdminOrHR, IsAccountant, IsSuperintendent
 from ..utils import parse_cutoff_dates
+from ..utils.pdf_generator import generate_general_payroll_pdf, generate_disbursement_voucher_pdf
 
 class PayrollViewSet(viewsets.ModelViewSet):
     queryset = Payroll.objects.all().order_by('-date_generated')
@@ -19,7 +20,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.role in [Role.ADMIN, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
+        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
             return Payroll.objects.all().order_by('-date_generated')
         return Payroll.objects.filter(employee__user=user).order_by('-date_generated')
 
@@ -30,7 +31,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
         )
         instance.delete()
 
-    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHR | IsAccountant])
+    @action(detail=False, methods=['POST'], permission_classes=[IsAccountant])
     def generate(self, request):
         """Generates a payroll record for a specific employee."""
         employee_id = request.data.get('employee_id')
@@ -203,7 +204,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
             
         return Response({"message": "Payroll released successfully.", "status": "released"})
 
-    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHR | IsAccountant])
+    @action(detail=False, methods=['POST'], permission_classes=[IsAccountant])
     def bulk_generate(self, request):
         cutoff = request.data.get('cutoff', request.data.get('cutoff_period'))
         if not cutoff:
@@ -339,3 +340,116 @@ class PayrollViewSet(viewsets.ModelViewSet):
             "updated": updated_count,
             "skipped": skipped
         }, status=200)
+
+    @action(detail=False, methods=['POST'], permission_classes=[IsSuperintendent])
+    def bulk_approve(self, request):
+        cutoff = request.data.get('cutoff', request.data.get('cutoff_period'))
+        if not cutoff:
+            return Response({"detail": "cutoff_period is required."}, status=400)
+        
+        draft_payrolls = Payroll.objects.filter(cutoff_period=cutoff, status='draft')
+        if not draft_payrolls.exists():
+            return Response({"detail": f"No draft payroll records found for cutoff: {cutoff}."}, status=400)
+        
+        count = draft_payrolls.count()
+        with transaction.atomic():
+            draft_payrolls.update(status='approved')
+            AuditLog.objects.create(
+                user=request.user, 
+                action=f"Bulk approved {count} payroll records for cutoff: {cutoff}"
+            )
+            
+        return Response({
+            "message": f"Successfully approved {count} payroll records.",
+            "count": count
+        }, status=200)
+
+    @action(detail=False, methods=['POST'], permission_classes=[IsAccountant])
+    def bulk_release(self, request):
+        cutoff = request.data.get('cutoff', request.data.get('cutoff_period'))
+        if not cutoff:
+            return Response({"detail": "cutoff_period is required."}, status=400)
+        
+        approved_payrolls = Payroll.objects.filter(cutoff_period=cutoff, status='approved')
+        if not approved_payrolls.exists():
+            return Response({"detail": f"No approved payroll records found for cutoff: {cutoff}."}, status=400)
+        
+        count = approved_payrolls.count()
+        with transaction.atomic():
+            for payroll in approved_payrolls:
+                payroll.status = 'released'
+                payroll.date_released = timezone.now()
+                payroll.save()
+                
+                # Record Loan Repayment if deduction was part of this payroll
+                if payroll.loans > 0:
+                    active_loan = ProvidentLoan.objects.filter(employee=payroll.employee, status='released').first()
+                    if active_loan:
+                        LoanPayment.objects.create(loan=active_loan, amount_paid=payroll.loans)
+                        AuditLog.objects.create(
+                            user=request.user, 
+                            action=f"Released payroll loan deduction: {payroll.employee} (₱{payroll.loans})"
+                        )
+                        
+            AuditLog.objects.create(
+                user=request.user, 
+                action=f"Bulk released {count} payroll records for cutoff: {cutoff}"
+            )
+            
+        return Response({
+            "message": f"Successfully released {count} payroll records.",
+            "count": count
+        }, status=200)
+
+    @action(detail=False, methods=['GET'], permission_classes=[IsAccountant | IsSuperintendent | IsAdminOrHR], url_path='export_payroll_sheet')
+    def export_payroll_sheet(self, request):
+        cutoff = request.query_params.get('cutoff_period') or request.query_params.get('cutoff')
+        if not cutoff:
+            return Response({"detail": "cutoff_period is required."}, status=400)
+            
+        payrolls = Payroll.objects.filter(cutoff_period=cutoff).order_by('employee__last_name')
+        if not payrolls.exists():
+            return Response({"detail": f"No payroll records found for cutoff: {cutoff}."}, status=404)
+            
+        from django.http import HttpResponse
+        pdf_content = generate_general_payroll_pdf(cutoff, payrolls)
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        filename = f"General_Payroll_{cutoff.replace(' ', '_').replace(',', '')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(detail=False, methods=['GET'], permission_classes=[IsAccountant | IsSuperintendent | IsAdminOrHR], url_path='export_disbursement_voucher')
+    def export_disbursement_voucher(self, request):
+        cutoff = request.query_params.get('cutoff_period') or request.query_params.get('cutoff')
+        if not cutoff:
+            return Response({"detail": "cutoff_period is required."}, status=400)
+            
+        payrolls = Payroll.objects.filter(cutoff_period=cutoff).order_by('employee__last_name')
+        if not payrolls.exists():
+            return Response({"detail": f"No payroll records found for cutoff: {cutoff}."}, status=404)
+            
+        from django.http import HttpResponse
+        pdf_content = generate_disbursement_voucher_pdf(cutoff, payrolls)
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        filename = f"Disbursement_Voucher_{cutoff.replace(' ', '_').replace(',', '')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated], url_path='export_payslip')
+    def export_payslip(self, request, pk=None):
+        payroll = self.get_object()
+        if not request.user.is_superuser and request.user.role not in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT]:
+            if payroll.employee.user != request.user:
+                return Response({"detail": "You do not have permission to view this payslip."}, status=403)
+                
+        if payroll.status != 'released':
+            return Response({"detail": "Payslip is not yet released."}, status=400)
+            
+        from django.http import HttpResponse
+        from ..utils.pdf_generator import generate_payslip_pdf
+        
+        pdf_content = generate_payslip_pdf(payroll)
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        filename = f"Payslip_{payroll.employee.last_name}_{payroll.cutoff_period.replace(' ', '_').replace(',', '')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response

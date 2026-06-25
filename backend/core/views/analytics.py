@@ -23,6 +23,13 @@ def dashboard_stats(request):
     active_applicants = Applicant.objects.exclude(status__in=['hired', 'rejected']).count()
     pending_ipcrf = Employee.objects.exclude(performance_reviews__isnull=False).count()
 
+    # Calculate the most frequently requested leave type
+    most_used = LeaveRequest.objects.values('leave_type').annotate(count=Count('id')).order_by('-count').first()
+    most_used_leave = "None"
+    if most_used:
+        type_choices_dict = dict(LeaveRequest.TYPE_CHOICES)
+        most_used_leave = type_choices_dict.get(most_used['leave_type'], most_used['leave_type'])
+
     return Response({
         "total_employees": Employee.objects.count(),
         "total_loans": ProvidentLoan.objects.count(),
@@ -37,7 +44,9 @@ def dashboard_stats(request):
         "pending_leaves": pending_leaves,
         "active_applicants": active_applicants,
         "pending_ipcrf": pending_ipcrf,
+        "most_used_leave": most_used_leave,
     })
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsManagement])

@@ -1,58 +1,154 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  User, Mail, Briefcase, Building2, MapPin, 
-  Calendar, Wallet, Camera, Fingerprint,
-  UserCircle, CalendarCheck, Users, GraduationCap,
-  Award, History, Globe, ShieldCheck, Loader2, X,
-  CheckCircle2, Signature
+  User, Mail, Briefcase, MapPin, 
+  Camera, Fingerprint, UserCircle, Users, 
+  GraduationCap, Award, History, Globe, 
+  ShieldCheck, Loader2, X, CheckCircle2, 
+  Signature, Plus, Pencil, Trash2, FileText, 
+  Download, Upload, AlertCircle, AlertTriangle,
+  FileCheck, Shield, FileX, Sparkles, Building2, Check
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
-// import { loadFaceModels, extractFaceDescriptor } from '../../utils/faceAuth';
 
-/**
- * My Profile / Employee Detailed View
- * 
- * Simple, professional redesign for viewing personal and work details.
- * Expanded to include full PDS history sections and biometric enrollment.
- */
+const TABS = [
+  { id: 'personal', label: 'Personal Information', icon: User },
+  { id: 'family', label: 'Family Background', icon: Users },
+  { id: 'education', label: 'Educational Background', icon: GraduationCap },
+  { id: 'eligibility', label: 'Eligibility', icon: Award },
+  { id: 'work', label: 'Work Experience', icon: History },
+  { id: 'ids', label: 'Verified IDs', icon: Fingerprint },
+  { id: 'documents', label: 'Required Documents', icon: FileText }
+];
+
+const REQUIRED_DOCS_LIST = [
+  { key: 'letter_of_intent', name: 'Letter of Intent', description: 'Addressed to Schools Division Superintendent Susan D. Orbiana.', mandatory: true },
+  { key: 'pds_file', name: 'Personal Data Sheet (PDS)', description: 'Duly accomplished and notarized Current/Revised 2025 PDS.', mandatory: true },
+  { key: 'tor', name: 'Transcript of Records (TOR)', description: 'Complete academic records including graduate/post-graduate units.', mandatory: true },
+  { key: 'checklist', name: 'Checklist of Requirements', description: 'Duly signed Checklist of Requirements.', mandatory: true },
+  { key: 'omnibus', name: 'Omnibus Sworn Statement', description: 'Notarized Omnibus Sworn Statement.', mandatory: true },
+  { key: 'cav', name: 'Certification on the Authenticity (CAV)', description: 'CAV of submitted school documents.', mandatory: true },
+  { key: 'privacy_consent', name: 'Data Privacy Consent Form', description: 'Signed Data Privacy Consent Form.', mandatory: true },
+  { key: 'prc_documents', name: 'PRC ID / License', description: 'Photocopy of Professional Regulation Commission ID/License (if applicable).', mandatory: false },
+  { key: 'eligibility_certificate', name: 'Eligibility Certificate', description: 'Photocopy of rating or certificate (if applicable).', mandatory: false },
+  { key: 'employment_documents', name: 'Employment Documents', description: 'Service Record or Certificate of Employment.', mandatory: false },
+  { key: 'latest_appointment', name: 'Latest Appointment', description: 'Copy of latest employment appointment.', mandatory: false },
+  { key: 'performance_rating', name: 'Performance Rating', description: 'Performance rating for the latest period (if applicable).', mandatory: false },
+  { key: 'certificates_of_training', name: 'Certificates of Training', description: 'Completed training certificates.', mandatory: false },
+  { key: 'specialized_training', name: 'Specialized Training', description: 'Specialized training credentials.', mandatory: false }
+];
+
+const GOVERNMENT_IDS_LIST = [
+  { id: 'umid_id', label: 'UMID Card', desc: 'Unified Multi-Purpose ID' },
+  { id: 'pagibig_id', label: 'Pag-IBIG ID', desc: 'HDMF Pag-IBIG Membership Card' },
+  { id: 'philhealth_no', label: 'PhilHealth Member ID', desc: 'PhilHealth Identification Card' },
+  { id: 'philsys_id', label: 'National ID (PhilSys)', desc: 'Philippine Identification System Card' },
+  { id: 'tin_no', label: 'TIN / BIR ID', desc: 'Taxpayer Identification Number ID' },
+  { id: 'agency_employee_no', label: 'Agency Employee ID', desc: 'DepEd Official Employee ID Card' }
+];
+
 const Profile = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  // const [isEnrolling, setIsEnrolling] = useState(false);
-  const [isUploadingSig, setIsUploadingSig] = useState(false);
-  // const [enrollStep, setEnrollStep] = useState('idle'); // idle, loading, ready, capturing, success, error
-  // const videoRef = useRef(null);
+  
   const sigInputRef = useRef(null);
+  const photoInputRef = useRef(null);
+  const docInputRef = useRef(null);
+  const idFileInputRef = useRef(null);
+  
+  const [activeTab, setActiveTab] = useState('personal');
+  const [isUploadingSig, setIsUploadingSig] = useState(false);
+  
+  // Custom Local Storage Mocks for high-fidelity interactive simulation
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [simulatedDocs, setSimulatedDocs] = useState({});
+  const [simulatedIDs, setSimulatedIDs] = useState({});
+  const [activeDocUpload, setActiveDocUpload] = useState(null);
+  const [activeIDUpload, setActiveIDUpload] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
 
+  // Modals state for PDS CRUD
+  const [activeModal, setActiveModal] = useState(null); // 'personal', 'education', 'work', 'eligibility', 'family'
+  const [modalData, setModalData] = useState(null);
+  const [modalIndex, setModalIndex] = useState(null);
+
+  // Fetch current user / employee details
   const { data: me, isLoading } = useQuery({
     queryKey: id ? ['employee', id] : ['me'],
     queryFn: () => {
-        const endpoint = id ? `employees/${id}/` : 'employees/me/';
-        return api.get(endpoint).then(res => res.data);
+      const endpoint = id ? `employees/${id}/` : 'employees/me/';
+      return api.get(endpoint).then(res => res.data);
     }
   });
 
-  // const enrollMutation = useMutation({
-  //   mutationFn: (descriptor) => {
-  //     const endpoint = id ? `employees/${id}/` : 'employees/me/';
-  //     return api.patch(endpoint, { face_descriptor: JSON.stringify(Array.from(descriptor)) });
-  //   },
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: id ? ['employee', id] : ['me'] });
-  //     setEnrollStep('success');
-  //     setTimeout(() => {
-  //       setIsEnrolling(false);
-  //       setEnrollStep('idle');
-  //     }, 3000);
-  //   },
-  //   onError: (err) => {
-  //     console.error("Enrollment failed:", err.response?.data);
-  //     setEnrollStep('error');
-  //   }
-  // });
+  // Check user role for admin features
+  const userRole = localStorage.getItem('user_role') || me?.user_details?.role || 'TEACHING';
+  const isAdmin = userRole === 'HR' || userRole === 'SUPERINTENDENT' || userRole === 'ADMINISTRATIVE';
+
+  // Load localStorage mocks on component mount / profile data load
+  useEffect(() => {
+    if (me?.id) {
+      const storedPhoto = localStorage.getItem(`hris_profile_photo_${me.id}`);
+      if (storedPhoto) setProfilePhoto(storedPhoto);
+
+      const storedDocs = localStorage.getItem(`hris_profile_docs_${me.id}`);
+      if (storedDocs) {
+        setSimulatedDocs(JSON.parse(storedDocs));
+      } else {
+        // Build initial checklist status
+        const initial = {};
+        if (me.pds_file) {
+          initial['pds_file'] = {
+            fileName: 'Accomplished_PDS.pdf',
+            uploadDate: new Date().toLocaleDateString(),
+            verified: true,
+            fileData: me.pds_file
+          };
+        }
+        setSimulatedDocs(initial);
+      }
+
+      const storedIDs = localStorage.getItem(`hris_profile_ids_${me.id}`);
+      if (storedIDs) {
+        setSimulatedIDs(JSON.parse(storedIDs));
+      } else {
+        // Populate existing values
+        const initialIDs = {};
+        GOVERNMENT_IDS_LIST.forEach(item => {
+          if (me[item.id]) {
+            initialIDs[item.id] = {
+              number: me[item.id],
+              uploadDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+              verified: true,
+              fileName: `${item.id}_card.png`,
+              fileData: null
+            };
+          }
+        });
+        setSimulatedIDs(initialIDs);
+      }
+    }
+  }, [me]);
+
+  // Mutations
+  const updateMutation = useMutation({
+    mutationFn: (updatedFields) => {
+      const endpoint = id ? `employees/${id}/` : 'employees/me/';
+      return api.patch(endpoint, updatedFields);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: id ? ['employee', id] : ['me'] });
+      setActiveModal(null);
+      setModalData(null);
+      setModalIndex(null);
+    },
+    onError: (err) => {
+      console.error(err);
+      alert("Failed to update profile details: " + (err.response?.data?.detail || "Please try again."));
+    }
+  });
 
   const sigMutation = useMutation({
     mutationFn: (file) => {
@@ -66,10 +162,9 @@ const Profile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: id ? ['employee', id] : ['me'] });
       setIsUploadingSig(false);
-      alert("E-Signature updated successfully!");
     },
     onError: (err) => {
-      console.error("Signature upload failed:", err.response?.data);
+      console.error(err);
       setIsUploadingSig(false);
       alert("Failed to upload signature. Please try again.");
     }
@@ -83,60 +178,175 @@ const Profile = () => {
     }
   };
 
-  // const startEnrollment = async () => {
-  //   setIsEnrolling(true);
-  //   setEnrollStep('loading');
-  //   
-  //   const loaded = await loadFaceModels();
-  //   if (!loaded) {
-  //     setEnrollStep('error');
-  //     return;
-  //   }
-  // 
-  //   try {
-  //     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-  //     if (videoRef.current) {
-  //       videoRef.current.srcObject = stream;
-  //       setEnrollStep('ready');
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     setEnrollStep('error');
-  //   }
-  // };
-  // 
-  // const captureFace = async () => {
-  //   if (!videoRef.current) return;
-  //   setEnrollStep('capturing');
-  //   
-  //   const descriptor = await extractFaceDescriptor(videoRef.current);
-  //   
-  //   // Stop camera safely
-  //   if (videoRef.current?.srcObject) {
-  //     const stream = videoRef.current.srcObject;
-  //     stream.getTracks().forEach(track => track.stop());
-  //   }
-  // 
-  //   if (descriptor) {
-  //     enrollMutation.mutate(descriptor);
-  //   } else {
-  //     setEnrollStep('error');
-  //     alert("Face not detected. Please try again in better lighting.");
-  //   }
-  // };
-  // 
-  // const cancelEnrollment = () => {
-  //   if (videoRef.current?.srcObject) {
-  //     const stream = videoRef.current.srcObject;
-  //     stream.getTracks().forEach(track => track.stop());
-  //   }
-  //   setIsEnrolling(false);
-  //   setEnrollStep('idle');
-  // };
+  // Profile Photo Upload Handlers
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        localStorage.setItem(`hris_profile_photo_${me?.id || 'default'}`, base64String);
+        setProfilePhoto(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Required Documents Simulated Upload Handlers
+  const triggerDocUpload = (docKey) => {
+    setActiveDocUpload(docKey);
+    docInputRef.current?.click();
+  };
+
+  const handleDocFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file && activeDocUpload && me?.id) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const updated = {
+          ...simulatedDocs,
+          [activeDocUpload]: {
+            fileName: file.name,
+            uploadDate: new Date().toLocaleDateString(),
+            verified: false,
+            fileData: reader.result
+          }
+        };
+        setSimulatedDocs(updated);
+        localStorage.setItem(`hris_profile_docs_${me.id}`, JSON.stringify(updated));
+        setActiveDocUpload(null);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteDoc = (docKey) => {
+    if (window.confirm("Are you sure you want to delete this document upload?")) {
+      const updated = { ...simulatedDocs };
+      delete updated[docKey];
+      setSimulatedDocs(updated);
+      localStorage.setItem(`hris_profile_docs_${me.id}`, JSON.stringify(updated));
+    }
+  };
+
+  const handleVerifyDoc = (docKey, status) => {
+    if (me?.id) {
+      const updated = {
+        ...simulatedDocs,
+        [docKey]: {
+          ...simulatedDocs[docKey],
+          verified: status
+        }
+      };
+      setSimulatedDocs(updated);
+      localStorage.setItem(`hris_profile_docs_${me.id}`, JSON.stringify(updated));
+    }
+  };
+
+  // Government Verified ID File Upload Handlers
+  const triggerIDUpload = (idKey) => {
+    setActiveIDUpload(idKey);
+    idFileInputRef.current?.click();
+  };
+
+  const handleIDFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file && activeIDUpload && me?.id) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Ask for the ID Number
+        const currentNum = simulatedIDs[activeIDUpload]?.number || '';
+        const idNumber = window.prompt(`Enter your ID Number for ${GOVERNMENT_IDS_LIST.find(i => i.id === activeIDUpload)?.label}:`, currentNum);
+        
+        if (idNumber !== null) {
+          const updated = {
+            ...simulatedIDs,
+            [activeIDUpload]: {
+              number: idNumber,
+              uploadDate: new Date().toLocaleDateString(),
+              verified: false,
+              fileName: file.name,
+              fileData: reader.result
+            }
+          };
+          setSimulatedIDs(updated);
+          localStorage.setItem(`hris_profile_ids_${me.id}`, JSON.stringify(updated));
+
+          // Call the backend PATCH to update ID text field in the database
+          updateMutation.mutate({ [activeIDUpload]: idNumber });
+        }
+        setActiveIDUpload(null);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteID = (idKey) => {
+    if (window.confirm(`Are you sure you want to delete the uploaded card and number for this ID?`)) {
+      const updated = { ...simulatedIDs };
+      delete updated[idKey];
+      setSimulatedIDs(updated);
+      localStorage.setItem(`hris_profile_ids_${me.id}`, JSON.stringify(updated));
+
+      // Reset ID number on backend
+      updateMutation.mutate({ [idKey]: '' });
+    }
+  };
+
+  const handleVerifyID = (idKey, status) => {
+    if (me?.id) {
+      const updated = {
+        ...simulatedIDs,
+        [idKey]: {
+          ...simulatedIDs[idKey],
+          verified: status
+        }
+      };
+      setSimulatedIDs(updated);
+      localStorage.setItem(`hris_profile_ids_${me.id}`, JSON.stringify(updated));
+    }
+  };
+
+  const handlePreviewDoc = (doc) => {
+    const docData = simulatedDocs[doc.key];
+    if (docData?.fileData) {
+      setPreviewFile({
+        title: doc.name,
+        data: docData.fileData,
+        fileName: docData.fileName
+      });
+    } else {
+      alert("No visual mockup uploaded. Simulating preview container.");
+      setPreviewFile({
+        title: doc.name,
+        data: "MOCK_PDF",
+        fileName: docData?.fileName || `${doc.key}.pdf`
+      });
+    }
+  };
+
+  const handlePreviewIDCard = (doc) => {
+    const cardData = simulatedIDs[doc.id];
+    if (cardData?.fileData) {
+      setPreviewFile({
+        title: doc.label,
+        data: cardData.fileData,
+        fileName: cardData.fileName
+      });
+    } else {
+      // Simulate placeholder thumbnail
+      setPreviewFile({
+        title: doc.label,
+        data: "MOCK_CARD",
+        fileName: cardData?.fileName || `${doc.id}_card.png`,
+        number: cardData?.number || me[doc.id]
+      });
+    }
+  };
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
-      <span className="loading loading-spinner loading-lg text-primary" />
+      <span className="loading loading-spinner loading-lg text-[#0038A8]" />
     </div>
   );
 
@@ -146,166 +356,975 @@ const Profile = () => {
     lng: workstation?.longitude ? parseFloat(workstation.longitude) : 121.6210
   };
 
+  // Profile Completion Calculation
+  const getProfileCompletion = () => {
+    const fields = [
+      me?.first_name, me?.last_name, me?.middle_name, me?.date_of_birth,
+      me?.civil_status, me?.mobile_no, me?.email, me?.residential_address,
+      me?.permanent_address, me?.umid_id, me?.pagibig_id, me?.philhealth_no
+    ];
+    const filled = fields.filter(Boolean).length;
+    return Math.round((filled / fields.length) * 100);
+  };
+
+  const completion = getProfileCompletion();
+
+  // Save Modal Action
+  const handleSaveModal = () => {
+    if (!modalData) return;
+    
+    if (activeModal === 'personal') {
+      updateMutation.mutate(modalData);
+    } else if (activeModal === 'education') {
+      const currentList = [...(me?.education || [])];
+      if (modalIndex !== null) {
+        currentList[modalIndex] = modalData;
+      } else {
+        currentList.push(modalData);
+      }
+      updateMutation.mutate({ education: currentList });
+    } else if (activeModal === 'work') {
+      const currentList = [...(me?.work_experience || [])];
+      if (modalIndex !== null) {
+        currentList[modalIndex] = modalData;
+      } else {
+        currentList.push(modalData);
+      }
+      updateMutation.mutate({ work_experience: currentList });
+    } else if (activeModal === 'eligibility') {
+      const currentList = [...(me?.eligibilities || [])];
+      if (modalIndex !== null) {
+        currentList[modalIndex] = modalData;
+      } else {
+        currentList.push(modalData);
+      }
+      updateMutation.mutate({ eligibilities: currentList });
+    } else if (activeModal === 'family') {
+      const currentList = [...(me?.family || [])];
+      if (modalIndex !== null) {
+        currentList[modalIndex] = modalData;
+      } else {
+        currentList.push(modalData);
+      }
+      updateMutation.mutate({ family: currentList });
+    }
+  };
+
+  // Delete Action
+  const handleDeleteNested = (section, index) => {
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
+    if (section === 'education') {
+      const list = me?.education?.filter((_, i) => i !== index) || [];
+      updateMutation.mutate({ education: list });
+    } else if (section === 'work') {
+      const list = me?.work_experience?.filter((_, i) => i !== index) || [];
+      updateMutation.mutate({ work_experience: list });
+    } else if (section === 'eligibility') {
+      const list = me?.eligibilities?.filter((_, i) => i !== index) || [];
+      updateMutation.mutate({ eligibilities: list });
+    } else if (section === 'family') {
+      const list = me?.family?.filter((_, i) => i !== index) || [];
+      updateMutation.mutate({ family: list });
+    }
+  };
+
+  // Form Fields Change Helpers
+  const handleFieldChange = (key, val) => {
+    setModalData(prev => ({ ...prev, [key]: val }));
+  };
+
+  // Document Counts
+  const uploadedDocsCount = REQUIRED_DOCS_LIST.filter(doc => simulatedDocs[doc.key]).length;
+
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
       
-      {/* Page Header / Profile Banner */}
-      <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-        <div className="h-32 bg-primary/10 relative">
-           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-primary/20 to-transparent"></div>
+      {/* Hidden File Inputs for Photo/Docs/IDs */}
+      <input 
+        type="file" 
+        ref={photoInputRef}
+        onChange={handlePhotoSelect}
+        accept="image/*"
+        className="hidden"
+      />
+      <input 
+        type="file" 
+        ref={docInputRef}
+        onChange={handleDocFileSelect}
+        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+        className="hidden"
+      />
+      <input 
+        type="file" 
+        ref={idFileInputRef}
+        onChange={handleIDFileSelect}
+        accept="image/*"
+        className="hidden"
+      />
+
+      {/* Modern Cover / Profile Header */}
+      <div className="bg-white rounded-2xl shadow-md border border-base-200 overflow-hidden">
+        {/* DepEd Styled Banner with Radial Decor */}
+        <div className="h-44 bg-gradient-to-r from-[#0038A8] via-[#002878] to-[#FCD116]/20 relative">
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(#ffffff_1.5px,transparent_1.5px)] [background-size:24px_24px]"></div>
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full text-[9px] text-white font-black uppercase tracking-widest border border-white/10">
+            <Sparkles className="w-3 h-3 text-[#FCD116]" /> DepEd Lucena City Division
+          </div>
         </div>
-        <div className="px-8 pb-8 -mt-12 flex flex-col md:flex-row items-end gap-6 relative z-10">
-          <div className="p-1.5 bg-white rounded-xl shadow-lg border border-base-100">
-            <div className="w-24 h-24 md:w-32 md:h-32 bg-base-100 rounded-lg flex items-center justify-center border border-base-200 overflow-hidden relative group">
-              <UserCircle size={60} className="text-primary opacity-20" />
-              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                <Camera className="text-primary w-6 h-6" />
+        
+        {/* Metadata Details Row */}
+        <div className="px-6 md:px-8 pb-8 -mt-20 flex flex-col md:flex-row items-center md:items-end gap-6 relative z-10 text-center md:text-left">
+          {/* Circular Profile Photo with Hover Overlay */}
+          <div className="p-1.5 bg-white rounded-full shadow-xl border border-base-200 shrink-0">
+            <div 
+              onClick={() => photoInputRef.current?.click()}
+              className="w-32 h-32 md:w-36 md:h-36 bg-base-100 rounded-full flex items-center justify-center border border-base-200 overflow-hidden relative group cursor-pointer shadow-inner"
+            >
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Profile Photo" className="w-full h-full object-cover" />
+              ) : (
+                <UserCircle size={100} className="text-[#0038A8] opacity-20" />
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity text-white text-[9px] font-black uppercase tracking-wider gap-1">
+                <Camera className="w-5 h-5 text-[#FCD116]" />
+                <span>Upload Photo</span>
               </div>
             </div>
           </div>
-          <div className="flex-1 pb-2">
-            <div className="flex flex-wrap items-center gap-3 mb-1">
-              <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">
-                {me?.first_name} {me?.last_name}
+          
+          <div className="flex-1 pb-2 space-y-2">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-base-content uppercase">
+                {me?.first_name} {me?.middle_name ? `${me.middle_name.charAt(0)}.` : ''} {me?.last_name} {me?.name_extension || ''}
               </h1>
-              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-primary/10">
+              <div className="px-2.5 py-0.5 bg-[#0038A8]/10 text-[#0038A8] rounded-full text-[8.5px] font-black uppercase tracking-wider border border-[#0038A8]/10 flex items-center gap-1">
+                <Shield className="w-3 h-3 text-[#0038A8]" />
                 {me?.user_details?.role || 'STAFF'}
               </div>
-              {/* {me?.face_descriptor && (
-                <div className="px-3 py-1 bg-success/10 text-success rounded-full text-[9px] font-black uppercase tracking-widest border border-success/10 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Face Verified
-                </div>
-              )} */}
+              
+              {/* Application Status Badge */}
+              <div className={`px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider border flex items-center gap-1 ${
+                me?.date_hired 
+                  ? 'bg-success/10 text-success border-success/15' 
+                  : 'bg-info/10 text-info border-info/15'
+              }`}>
+                <CheckCircle2 className="w-3 h-3" />
+                {me?.date_hired ? 'Appointed / Hired' : 'Comparative Assessment'}
+              </div>
             </div>
-            <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex items-center gap-2">
-              <Briefcase className="w-3.5 h-3.5" /> {me?.position || 'No Position'} • {me?.department || 'Unassigned'}
+            
+            <p className="text-xs font-black opacity-50 uppercase tracking-widest flex flex-wrap items-center justify-center md:justify-start gap-2">
+              <Briefcase className="w-4 h-4 text-[#0038A8]" /> {me?.position || 'Teacher I'} • {me?.department || 'Operations'}
             </p>
+            
+            <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-xs font-semibold opacity-40">
+              <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {me?.email || me?.user_details?.email}</span>
+              {me?.mobile_no && <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> {me.mobile_no}</span>}
+              <span className="flex items-center gap-1.5"><Fingerprint className="w-3.5 h-3.5" /> APPLICANT ID: #{me?.id?.toString().padStart(6, '0')}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2 md:pt-0 shrink-0">
+            <button 
+              onClick={() => {
+                setActiveModal('personal');
+                setModalData({ ...me });
+              }}
+              className="btn btn-outline hover:bg-[#0038A8] hover:text-white btn-sm rounded-lg font-black uppercase tracking-wider text-[10px] h-9 px-4 border-base-300 gap-1.5 transition-all"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit Profile
+            </button>
+            <button 
+              onClick={() => photoInputRef.current?.click()}
+              className="btn btn-primary bg-[#0038A8] hover:bg-[#002d86] border-none text-white btn-sm rounded-lg font-black uppercase tracking-wider text-[10px] h-9 px-4 gap-1.5 transition-all shadow-md shadow-[#0038A8]/20"
+            >
+              <Camera className="w-3.5 h-3.5" /> Change Photo
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Summary Statistics Panel */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 1. Profile Completion Card */}
+        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Profile Completion</span>
+            <span className="text-xl font-black text-[#0038A8] mt-1 block">{completion}% Completed</span>
+          </div>
+          <div className="radial-progress text-[#0038A8] shrink-0" style={{ "--value": completion, "--size": "2.8rem", "--thickness": "4px" }} role="progressbar" aria-valuenow={completion}>
+            <span className="text-[9px] font-black">{completion}%</span>
+          </div>
+        </div>
+
+        {/* 2. Submitted Applications Card */}
+        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Submitted Applications</span>
+            <span className="text-xl font-black text-base-content mt-1 block">1 Active Form</span>
+            <span className="text-[8.5px] font-bold text-success uppercase block mt-0.5">Teacher I (Lucena Division)</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-inner">
+            <Building2 className="w-5 h-5 text-[#0038A8]" />
+          </div>
+        </div>
+
+        {/* 3. Uploaded Documents Card */}
+        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Uploaded Documents</span>
+            <span className="text-xl font-black text-base-content mt-1 block">{uploadedDocsCount} / {REQUIRED_DOCS_LIST.length} Files</span>
+            <span className="text-[8.5px] font-bold text-success uppercase block mt-0.5">
+              {REQUIRED_DOCS_LIST.filter(d => d.mandatory).filter(d => simulatedDocs[d.key]).length} of {REQUIRED_DOCS_LIST.filter(d => d.mandatory).length} Mandatory
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-inner">
+            <FileText className="w-5 h-5 text-[#0038A8]" />
+          </div>
+        </div>
+
+        {/* 4. Eligibility Status Card */}
+        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Eligibility Status</span>
+            <span className="text-xl font-black text-base-content mt-1 block truncate max-w-[160px]">
+              {me?.eligibilities?.length > 0 ? me.eligibilities[0].service : 'Not Specified'}
+            </span>
+            <span className="text-[8.5px] font-bold text-success uppercase block mt-0.5">
+              {me?.eligibilities?.length > 0 ? `Rating: ${me.eligibilities[0].rating}%` : 'Register Civil Service or Board Exam'}
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-inner">
+            <Award className="w-5 h-5 text-[#0038A8]" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
-        {/* Main Info Area */}
-        <div className="lg:col-span-2 space-y-8">
+        {/* Main Tabbed Layout Container */}
+        <div className="lg:col-span-2 space-y-6">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Biometric Enrollment Card (Set aside for now) */}
-            {/* 
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6 md:col-span-2">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <Fingerprint className="w-4 h-4 text-primary" /> Biometric Identity
-              </h3>
-              
-              {!isEnrolling ? (
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-base-50 rounded-2xl border border-dashed border-base-300">
-                  <div className="space-y-1 text-center md:text-left">
-                    <p className="font-black text-sm uppercase tracking-tight">Face Recognition Enrollment</p>
-                    <p className="text-[10px] font-bold opacity-40 uppercase">Required for secure attendance logging</p>
+          {/* Responsive Navigation Tabs with smooth styling */}
+          <div className="bg-white rounded-2xl border border-base-200 p-2 flex flex-wrap gap-1 shadow-sm">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isSelected = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+                    isSelected 
+                      ? 'bg-[#0038A8] text-white shadow-md shadow-blue-900/10 scale-95' 
+                      : 'text-base-content/60 hover:text-base-content hover:bg-base-100'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab Display Panel Container */}
+          <div className="bg-white border border-base-200 rounded-3xl p-6 md:p-8 shadow-sm transition-all duration-300">
+            
+            {/* 1. PERSONAL INFORMATION */}
+            {activeTab === 'personal' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="flex justify-between items-center border-b border-base-100 pb-4">
+                  <div>
+                    <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Personal details</h3>
+                    <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Verify and update your basic profile variables</p>
                   </div>
                   <button 
-                    onClick={startEnrollment}
-                    className="btn btn-primary btn-sm rounded-lg font-black uppercase tracking-widest px-6 w-full md:w-auto"
+                    onClick={() => {
+                      setActiveModal('personal');
+                      setModalData({ ...me });
+                    }}
+                    className="btn btn-ghost hover:bg-[#0038A8]/10 btn-sm text-[#0038A8] font-black uppercase flex items-center gap-1 px-3"
                   >
-                    {me?.face_descriptor ? 'Update Face Data' : 'Enroll My Face'}
+                    <Pencil className="w-3.5 h-3.5" /> Edit
                   </button>
                 </div>
-              ) : (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="relative aspect-square w-full max-w-sm mx-auto bg-black rounded-2xl overflow-hidden border-4 border-base-200 shadow-2xl">
-                    <video 
-                      ref={videoRef} 
-                      autoPlay 
-                      muted 
-                      className={`w-full h-full object-cover ${enrollStep === 'capturing' ? 'grayscale opacity-50' : ''}`}
-                    />
-                    
-                    <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none flex items-center justify-center">
-                       <div className="w-full h-full border-2 border-primary/30 rounded-full" />
-                    </div>
-                    
-                    {enrollStep === 'loading' && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60 text-white">
-                        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">Initializing AI Models...</p>
-                      </div>
-                    )}
-                    
-                    {enrollStep === 'capturing' && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
-                         <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    )}
-
-                    {enrollStep === 'success' && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-success/80 text-white">
-                        <CheckCircle2 className="w-16 h-16" />
-                        <p className="text-sm font-black uppercase tracking-widest">Enrollment Successful</p>
-                      </div>
-                    )}
-
-                    {enrollStep === 'error' && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-error/80 text-white p-4 text-center">
-                        <X className="w-16 h-16" />
-                        <p className="text-sm font-black uppercase tracking-widest">Enrollment Failed</p>
-                        <p className="text-[9px] font-bold uppercase opacity-80 mt-1">Check console or permissions</p>
-                      </div>
-                    )}
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-base-content">
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Full Name</p>
+                    <p className="font-bold text-base-content mt-1 uppercase text-sm">
+                      {me?.first_name} {me?.middle_name || ''} {me?.last_name} {me?.name_extension || ''}
+                    </p>
                   </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Gender</p>
+                    <p className="font-bold text-base-content mt-1 uppercase text-sm">{me?.sex || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Date of Birth</p>
+                    <p className="font-bold text-base-content mt-1 text-sm">{me?.date_of_birth ? new Date(me.date_of_birth).toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Civil Status</p>
+                    <p className="font-bold text-base-content mt-1 uppercase text-sm">{me?.civil_status || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100 text-xs">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Place of Birth</p>
+                    <p className="font-bold text-base-content mt-1 uppercase leading-normal">{me?.place_of_birth || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Contact Number</p>
+                    <p className="font-bold text-base-content mt-1 text-sm">{me?.mobile_no || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100 sm:col-span-2 text-xs">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Residential Address</p>
+                    <p className="font-bold text-base-content mt-1 uppercase leading-relaxed text-[11px]">{me?.residential_address || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100 sm:col-span-2 text-xs">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Permanent Address</p>
+                    <p className="font-bold text-base-content mt-1 uppercase leading-relaxed text-[11px]">{me?.permanent_address || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                  <div className="flex justify-center gap-4">
-                    {enrollStep === 'ready' && (
-                      <button 
-                        onClick={captureFace}
-                        className="btn btn-primary rounded-xl font-black uppercase tracking-widest px-10 h-12"
-                      >
-                        <Camera className="w-4 h-4 mr-2" /> Capture Reference
-                      </button>
-                    )}
+            {/* 2. FAMILY BACKGROUND */}
+            {activeTab === 'family' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="flex justify-between items-center border-b border-base-100 pb-4">
+                  <div>
+                    <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Family Background</h3>
+                    <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Manage immediate family members and relations</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setActiveModal('family');
+                      setModalIndex(null);
+                      setModalData({ relationship: 'SPOUSE', surname: '', first_name: '', middle_name: '', extension: '', occupation: '', employer: '', date_of_birth: '' });
+                    }}
+                    className="btn btn-outline btn-sm rounded-lg border-base-300 font-black text-[#0038A8] hover:bg-[#0038A8] hover:text-white uppercase flex items-center gap-1 transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Add Member
+                  </button>
+                </div>
+
+                {me?.family?.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {me.family.map((f, idx) => (
+                      <div key={idx} className="p-5 bg-white border border-base-200 rounded-2xl space-y-3 relative group hover:border-[#0038A8]/20 hover:shadow-md transition-all shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-black text-xs uppercase tracking-tight text-base-content">
+                              {f.relationship === 'CHILD' ? f.full_name : `${f.first_name} ${f.surname}`}
+                            </p>
+                            <span className="px-2.5 py-0.5 bg-[#0038A8]/10 text-[#0038A8] border border-primary/5 rounded-full text-[8px] font-black uppercase tracking-wider mt-1.5 inline-block">
+                              {f.relationship}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => {
+                                  setActiveModal('family');
+                                  setModalIndex(idx);
+                                  setModalData({ ...f });
+                              }}
+                              className="btn btn-ghost btn-xs text-primary px-1 min-h-0 h-6"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteNested('family', idx)}
+                              className="btn btn-ghost btn-xs text-error px-1 min-h-0 h-6"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="text-[10px] font-bold text-base-content/50 uppercase border-t border-base-100 pt-2 space-y-1.5">
+                          {f.occupation && (
+                            <div>Occupation: <span className="text-base-content">{f.occupation}</span></div>
+                          )}
+                          {f.employer && (
+                            <div>Employer: <span className="text-base-content">{f.employer}</span></div>
+                          )}
+                          {f.date_of_birth && (
+                            <div>Date of Birth: <span className="text-base-content">{new Date(f.date_of_birth).toLocaleDateString()}</span></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-base-50/30 border-2 border-dashed border-base-200 rounded-2xl space-y-4">
+                    <div className="w-12 h-12 bg-base-100 border border-base-200 rounded-full flex items-center justify-center mx-auto text-base-content/30 shadow-inner">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase text-base-content/60 tracking-wider">No Family Members Registered</p>
+                      <p className="text-[10px] font-bold text-base-content/30 mt-1 max-w-[280px] mx-auto">Please add your family background information to complete your profile details.</p>
+                    </div>
                     <button 
-                      onClick={cancelEnrollment}
-                      className="btn btn-ghost rounded-xl font-black uppercase tracking-widest text-[10px]"
+                      onClick={() => {
+                        setActiveModal('family');
+                        setModalIndex(null);
+                        setModalData({ relationship: 'SPOUSE', surname: '', first_name: '', middle_name: '', extension: '', occupation: '', employer: '', date_of_birth: '' });
+                      }}
+                      className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-xs font-black uppercase tracking-wider rounded-lg h-9 px-4 transition-all"
                     >
-                      Cancel
+                      Add Spouse or Child
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
-            */}
+                )}
+              </div>
+            )}
 
-            {/* E-Signature Card */}
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6 md:col-span-2">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <Signature className="w-4 h-4 text-primary" /> E-Signature Overlay
-              </h3>
-              
-              <div className="flex flex-col md:flex-row items-center justify-between gap-8 p-6 bg-base-50 rounded-2xl border border-dashed border-base-300">
-                <div className="space-y-4 text-center md:text-left flex-1">
-                  <div className="space-y-1">
-                    <p className="font-black text-sm uppercase tracking-tight">Electronic Signature</p>
-                    <p className="text-[10px] font-bold opacity-40 uppercase">Used for automated DTR generation and paperless forms</p>
+            {/* 3. EDUCATIONAL BACKGROUND */}
+            {activeTab === 'education' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="flex justify-between items-center border-b border-base-100 pb-4">
+                  <div>
+                    <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Educational Background</h3>
+                    <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Manage your academic credentials and degrees</p>
                   </div>
-                  
-                  <div className="h-24 w-full md:w-64 bg-white rounded-xl border border-base-200 flex items-center justify-center p-2 relative group overflow-hidden shadow-inner">
-                    {me?.e_signature ? (
-                      <img 
-                        src={me.e_signature} 
-                        alt="E-Signature" 
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    ) : (
-                      <p className="text-[9px] font-black opacity-20 uppercase tracking-widest">No Signature Uploaded</p>
-                    )}
-                    {isUploadingSig && (
-                      <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <button 
+                    onClick={() => {
+                      setActiveModal('education');
+                      setModalIndex(null);
+                      setModalData({ level: 'BACCALAUREATE', school_name: '', degree_course: '', period_from: '', period_to: '', highest_level: '', year_graduated: '', honors_received: '' });
+                    }}
+                    className="btn btn-outline btn-sm rounded-lg border-base-300 font-black text-[#0038A8] hover:bg-[#0038A8] hover:text-white uppercase flex items-center gap-1 transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Add Education
+                  </button>
+                </div>
+
+                {me?.education?.length > 0 ? (
+                  <div className="space-y-4">
+                    {me.education.map((e, idx) => (
+                      <div key={idx} className="flex gap-4 p-5 bg-white border border-base-200 rounded-2xl relative group hover:border-[#0038A8]/20 hover:shadow-md transition-all shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center font-black text-xs uppercase shrink-0 border border-primary/10 shadow-inner">
+                          {e.level?.charAt(0) || 'E'}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start gap-4">
+                            <div>
+                              <h4 className="font-black text-xs uppercase tracking-tight text-base-content">
+                                {e.school_name}
+                              </h4>
+                              <p className="text-[10px] font-bold text-base-content/50 uppercase mt-0.5">
+                                {e.degree_course || 'No course specified'}
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                              <button 
+                                onClick={() => {
+                                  setActiveModal('education');
+                                  setModalIndex(idx);
+                                  setModalData({ ...e });
+                                }}
+                                className="btn btn-ghost btn-xs text-primary px-1 min-h-0 h-6"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteNested('education', idx)}
+                                className="btn btn-ghost btn-xs text-error px-1 min-h-0 h-6"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[9px] font-black uppercase text-[#0038A8] mt-4 border-t border-base-100 pt-3">
+                            <span>Level: {e.level?.replace('_', ' ')}</span>
+                            <span>Inclusive Dates: {e.period_from || 'N/A'} - {e.period_to || 'N/A'}</span>
+                            {e.year_graduated && <span>Graduated: {e.year_graduated}</span>}
+                            {e.honors_received && (
+                              <span className="text-success text-[8.5px] px-2 py-0.5 bg-success/10 border border-success/10 rounded-full flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" /> Honors: {e.honors_received}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
+                ) : (
+                  <div className="text-center py-12 bg-base-50/30 border-2 border-dashed border-base-200 rounded-2xl space-y-4">
+                    <div className="w-12 h-12 bg-base-100 border border-base-200 rounded-full flex items-center justify-center mx-auto text-base-content/30 shadow-inner">
+                      <GraduationCap className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase text-base-content/60 tracking-wider">No Education Credentials Added</p>
+                      <p className="text-[10px] font-bold text-base-content/30 mt-1 max-w-[280px] mx-auto">Please add your schools, inclusive dates, degrees, and academic achievements to finish recruitment forms.</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setActiveModal('education');
+                        setModalIndex(null);
+                        setModalData({ level: 'BACCALAUREATE', school_name: '', degree_course: '', period_from: '', period_to: '', highest_level: '', year_graduated: '', honors_received: '' });
+                      }}
+                      className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-xs font-black uppercase tracking-wider rounded-lg h-9 px-4 transition-all"
+                    >
+                      Add Degree or School
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 4. ELIGIBILITY */}
+            {activeTab === 'eligibility' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="flex justify-between items-center border-b border-base-100 pb-4">
+                  <div>
+                    <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Eligibility & Certifications</h3>
+                    <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Manage Civil Service or Board qualifications</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setActiveModal('eligibility');
+                      setModalIndex(null);
+                      setModalData({ service: '', rating: '', date_of_exam: '', place_of_exam: '', license_no: '', license_date: '' });
+                    }}
+                    className="btn btn-outline btn-sm rounded-lg border-base-300 font-black text-[#0038A8] hover:bg-[#0038A8] hover:text-white uppercase flex items-center gap-1 transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Add Certification
+                  </button>
                 </div>
 
-                <div className="space-y-3 w-full md:w-auto">
+                {me?.eligibilities?.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {me.eligibilities.map((el, idx) => (
+                      <div key={idx} className="p-5 bg-white border border-base-200 rounded-2xl relative group hover:border-[#0038A8]/20 hover:shadow-md transition-all shadow-sm space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <p className="font-black text-xs uppercase tracking-tight text-base-content pr-8">{el.service}</p>
+                            <span className="px-2 py-0.5 bg-success/10 text-success border border-success/5 rounded-full text-[8.5px] font-black uppercase tracking-wider mt-1.5 inline-block">
+                              Rating: {el.rating || 'Passed'}%
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 top-4">
+                            <button 
+                              onClick={() => {
+                                  setActiveModal('eligibility');
+                                  setModalIndex(idx);
+                                  setModalData({ ...el });
+                              }}
+                              className="btn btn-ghost btn-xs text-primary px-1 min-h-0 h-6"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteNested('eligibility', idx)}
+                              className="btn btn-ghost btn-xs text-error px-1 min-h-0 h-6"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="text-[9px] font-black uppercase text-base-content/40 pt-3 border-t border-base-100 space-y-1">
+                          {el.date_of_exam && <p>Exam Date: <span className="text-base-content font-bold">{new Date(el.date_of_exam).toLocaleDateString()}</span></p>}
+                          {el.place_of_exam && <p>Exam Place: <span className="text-base-content font-bold">{el.place_of_exam}</span></p>}
+                          {el.license_no && <p>License No: <span className="text-base-content font-bold">{el.license_no}</span></p>}
+                          {el.license_date && <p>License Validity: <span className="text-base-content font-bold">{new Date(el.license_date).toLocaleDateString()}</span></p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-base-50/30 border-2 border-dashed border-base-200 rounded-2xl space-y-4">
+                    <div className="w-12 h-12 bg-base-100 border border-base-200 rounded-full flex items-center justify-center mx-auto text-base-content/30 shadow-inner">
+                      <Award className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase text-base-content/60 tracking-wider">No Eligibility Credentials Added</p>
+                      <p className="text-[10px] font-bold text-base-content/30 mt-1 max-w-[280px] mx-auto">Please add active licenses or Civil Service exam pass certificates to authorize your recruitment.</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setActiveModal('eligibility');
+                        setModalIndex(null);
+                        setModalData({ service: '', rating: '', date_of_exam: '', place_of_exam: '', license_no: '', license_date: '' });
+                      }}
+                      className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-xs font-black uppercase tracking-wider rounded-lg h-9 px-4 transition-all"
+                    >
+                      Add Board or CSC Exam
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 5. WORK EXPERIENCE */}
+            {activeTab === 'work' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="flex justify-between items-center border-b border-base-100 pb-4">
+                  <div>
+                    <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Work History & Experience</h3>
+                    <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Manage your past job records and professional timeline</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setActiveModal('work');
+                      setModalIndex(null);
+                      setModalData({ date_from: '', date_to: '', position_title: '', agency: '', monthly_salary: '', salary_grade: '', status_of_appointment: 'PERMANENT', is_gov_service: false, is_present: false });
+                    }}
+                    className="btn btn-outline btn-sm rounded-lg border-base-300 font-black text-[#0038A8] hover:bg-[#0038A8] hover:text-white uppercase flex items-center gap-1 transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Add Experience
+                  </button>
+                </div>
+
+                {me?.work_experience?.length > 0 ? (
+                  <div className="space-y-4 relative pl-6 border-l-2 border-base-200 ml-3 py-1">
+                    {me.work_experience.map((w, idx) => (
+                      <div key={idx} className="relative group p-5 bg-white border border-base-200 rounded-2xl hover:border-[#0038A8]/20 hover:shadow-md transition-all shadow-sm space-y-3">
+                        {/* Timeline Circle Node */}
+                        <div className="absolute w-3.5 h-3.5 bg-[#0038A8] rounded-full -left-[31.5px] top-6 border-2 border-white ring-4 ring-[#0038A8]/10 shadow-sm"></div>
+                        
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <span className="text-[9px] font-black uppercase text-[#0038A8] tracking-wider bg-[#0038A8]/15 border border-[#0038A8]/5 px-2.5 py-0.5 rounded-full">
+                              {w.date_from ? new Date(w.date_from).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : ''} — {w.is_present ? 'Present' : (w.date_to ? new Date(w.date_to).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : '')}
+                            </span>
+                            <h4 className="font-black text-xs uppercase tracking-tight text-base-content mt-2">
+                              {w.position_title}
+                            </h4>
+                            <p className="text-[10px] font-bold text-base-content/40 uppercase mt-0.5">
+                              {w.agency}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => {
+                                  setActiveModal('work');
+                                  setModalIndex(idx);
+                                  setModalData({ ...w });
+                              }}
+                              className="btn btn-ghost btn-xs text-primary px-1 min-h-0 h-6"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteNested('work', idx)}
+                              className="btn btn-ghost btn-xs text-error px-1 min-h-0 h-6"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[9px] font-black uppercase text-base-content/65 pt-3 border-t border-base-100">
+                          <span>Salary: ₱{parseFloat(w.monthly_salary || 0).toLocaleString()} / mo</span>
+                          {w.salary_grade && (
+                            <span className="bg-[#FCD116]/10 text-amber-800 border border-amber-500/10 px-2 py-0.5 rounded-full font-black text-[8px]">
+                              Salary Grade: {w.salary_grade}
+                            </span>
+                          )}
+                          <span>Service: {w.is_gov_service ? 'Government' : 'Private'}</span>
+                          <span>Status: {w.status_of_appointment}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-base-50/30 border-2 border-dashed border-base-200 rounded-2xl space-y-4">
+                    <div className="w-12 h-12 bg-base-100 border border-base-200 rounded-full flex items-center justify-center mx-auto text-base-content/30 shadow-inner">
+                      <History className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase text-base-content/60 tracking-wider">No Work History Added</p>
+                      <p className="text-[10px] font-bold text-base-content/30 mt-1 max-w-[280px] mx-auto">Please add your past employment positions, salary details, and inclusive working dates.</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setActiveModal('work');
+                        setModalIndex(null);
+                        setModalData({ date_from: '', date_to: '', position_title: '', agency: '', monthly_salary: '', salary_grade: '', status_of_appointment: 'PERMANENT', is_gov_service: false, is_present: false });
+                      }}
+                      className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-xs font-black uppercase tracking-wider rounded-lg h-9 px-4 transition-all"
+                    >
+                      Add Job Record
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 6. VERIFIED GOVT IDS */}
+            {activeTab === 'ids' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="border-b border-base-100 pb-4">
+                  <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Government Verified IDs</h3>
+                  <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Scanned files and ID validation credentials</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {GOVERNMENT_IDS_LIST.map((doc) => {
+                    const number = me?.[doc.id];
+                    const idData = simulatedIDs[doc.id];
+                    const hasFile = !!idData?.fileName;
+                    const isVerified = !!idData?.verified;
+                    const uploadDate = idData?.uploadDate;
+
+                    return (
+                      <div key={doc.id} className="p-5 bg-white border border-base-200 rounded-2xl hover:border-[#0038A8]/20 hover:shadow-md transition-all flex flex-col justify-between space-y-4 shadow-sm relative group">
+                        
+                        <div className="flex gap-4 items-start">
+                          {/* Mini Stylized Card Mockup */}
+                          <div className="w-16 h-10 bg-gradient-to-br from-[#0038A8]/10 to-[#0038A8]/5 border border-[#0038A8]/10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner">
+                            {hasFile ? (
+                              <div className="w-full h-full relative flex items-center justify-center bg-blue-900/10">
+                                <FileText className="w-4 h-4 text-[#0038A8]" />
+                                <div className="absolute inset-0 bg-[#0038A8]/5 opacity-40"></div>
+                              </div>
+                            ) : (
+                              <Fingerprint className="w-5 h-5 text-[#0038A8]/45" />
+                            )}
+                          </div>
+                          
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <h4 className="font-black text-xs uppercase tracking-tight text-base-content truncate pr-4">{doc.label}</h4>
+                            </div>
+                            <p className="text-[8.5px] font-bold text-base-content/30 uppercase mt-0.5 leading-none">{doc.desc}</p>
+                            
+                            {number ? (
+                              <p className="text-xs font-black text-[#0038A8] tracking-wider mt-2.5 bg-[#0038A8]/5 px-2 py-1 rounded inline-block">{number}</p>
+                            ) : (
+                              <p className="text-xs font-semibold opacity-30 italic mt-2.5">Not Provided</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-[9px] pt-3 border-t border-base-100">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-bold opacity-30 uppercase tracking-widest text-[8px]">Status</span>
+                            <span className={`font-black uppercase tracking-wider flex items-center gap-1 ${
+                              number ? (isVerified ? 'text-success' : 'text-warning') : 'text-base-content/30'
+                            }`}>
+                              {number ? (
+                                <>
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  {isVerified ? 'Verified' : 'Pending Verification'}
+                                </>
+                              ) : 'Missing'}
+                            </span>
+                          </div>
+                          
+                          {uploadDate && (
+                            <div className="flex flex-col gap-0.5 text-right">
+                              <span className="font-bold opacity-30 uppercase tracking-widest text-[8px]">Uploaded</span>
+                              <span className="font-bold text-base-content/65">{uploadDate}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions buttons */}
+                        <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-base-100">
+                          {number ? (
+                            <>
+                              <button 
+                                onClick={() => handlePreviewIDCard(doc)}
+                                className="btn btn-ghost hover:bg-[#0038A8]/5 btn-xs text-[#0038A8] font-black uppercase px-2 min-h-0 h-7"
+                              >
+                                Preview
+                              </button>
+                              <button 
+                                onClick={() => triggerIDUpload(doc.id)}
+                                className="btn btn-ghost hover:bg-secondary/5 btn-xs text-secondary font-black uppercase px-2 min-h-0 h-7"
+                              >
+                                Replace
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteID(doc.id)}
+                                className="btn btn-ghost hover:bg-error/5 btn-xs text-error font-black uppercase px-2 min-h-0 h-7"
+                              >
+                                Delete
+                              </button>
+                              
+                              {/* Admin Approval Control Override */}
+                              {isAdmin && !isVerified && (
+                                <button 
+                                  onClick={() => handleVerifyID(doc.id, true)}
+                                  className="btn btn-success text-white btn-xs font-black uppercase px-2.5 min-h-0 h-7 rounded-lg shadow-sm"
+                                >
+                                  Approve ID
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <div className="w-full flex justify-end">
+                              <button 
+                                onClick={() => triggerIDUpload(doc.id)}
+                                className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-xs font-black uppercase tracking-wider rounded-lg h-8 px-3 transition-all flex items-center gap-1.5"
+                              >
+                                <Upload className="w-3.5 h-3.5" /> Upload ID Card
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 7. REQUIRED DOCUMENTS */}
+            {activeTab === 'documents' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="border-b border-base-100 pb-4">
+                  <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Required Documents Module</h3>
+                  <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Submit and verify mandatory recruitment documents</p>
+                </div>
+
+                <div className="space-y-3">
+                  {REQUIRED_DOCS_LIST.map((doc) => {
+                    const docData = simulatedDocs[doc.key];
+                    const hasFile = !!docData;
+                    const uploadDate = docData?.uploadDate;
+                    const isDocVerified = !!docData?.verified;
+                    const fileName = docData?.fileName;
+
+                    return (
+                      <div key={doc.key} className="p-4 bg-white border border-base-200 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-[#0038A8]/20 hover:shadow-md transition-all shadow-sm relative group">
+                        
+                        <div className="flex gap-4 items-start min-w-0 flex-1">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-inner ${
+                            hasFile ? 'bg-success/5 text-success border-success/10' : 'bg-primary/5 text-[#0038A8] border-primary/10'
+                          }`}>
+                            {hasFile ? <FileCheck className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                          </div>
+                          
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-black text-xs uppercase tracking-tight text-base-content flex items-center gap-1.5">
+                              {doc.name}
+                              {doc.mandatory && <span className="text-error font-extrabold">*</span>}
+                            </h4>
+                            <p className="text-[10px] font-bold text-base-content/40 leading-relaxed mt-0.5 max-w-lg">
+                              {doc.description}
+                            </p>
+                            
+                            {hasFile && (
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[9px] font-black uppercase text-base-content/50">
+                                <span>File: <span className="text-[#0038A8] font-black break-all">{fileName}</span></span>
+                                {uploadDate && <span>Uploaded: <span className="text-base-content">{uploadDate}</span></span>}
+                                <span>Status: <span className={isDocVerified ? 'text-success font-black' : 'text-warning font-black'}>
+                                  {isDocVerified ? 'Verified by Admin' : 'Pending Verification'}
+                                </span></span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0">
+                          {hasFile ? (
+                            <>
+                              <button 
+                                onClick={() => handlePreviewDoc(doc)}
+                                className="btn btn-ghost hover:bg-[#0038A8]/5 btn-xs text-[#0038A8] font-black uppercase px-2 min-h-0 h-8 flex items-center"
+                              >
+                                Preview
+                              </button>
+                              
+                              {/* Direct Download Simulation */}
+                              <a 
+                                href={docData.fileData || '#'} 
+                                download={fileName}
+                                onClick={(e) => {
+                                  if (!docData.fileData) {
+                                    e.preventDefault();
+                                    alert("Simulating standard file download package.");
+                                  }
+                                }}
+                                className="btn btn-ghost hover:bg-[#0038A8]/5 btn-xs text-primary font-black uppercase px-2 min-h-0 h-8 flex items-center"
+                              >
+                                Download
+                              </a>
+                              
+                              <button 
+                                onClick={() => triggerDocUpload(doc.key)}
+                                className="btn btn-ghost hover:bg-secondary/5 btn-xs text-secondary font-black uppercase px-2 min-h-0 h-8 flex items-center"
+                              >
+                                Replace
+                              </button>
+                              
+                              <button 
+                                onClick={() => handleDeleteDoc(doc.key)}
+                                className="btn btn-ghost hover:bg-error/5 btn-xs text-error font-black uppercase px-2 min-h-0 h-8 flex items-center"
+                              >
+                                Delete
+                              </button>
+
+                              {/* Admin Verification Control Toggle */}
+                              {isAdmin && (
+                                <button 
+                                  onClick={() => handleVerifyDoc(doc.key, !isDocVerified)}
+                                  className={`btn btn-xs font-black uppercase px-2.5 min-h-0 h-8 rounded-lg shadow-sm border-none text-white ${
+                                    isDocVerified ? 'bg-warning hover:bg-warning-dark' : 'bg-success hover:bg-success-dark'
+                                  }`}
+                                >
+                                  {isDocVerified ? 'Revoke Review' : 'Approve Doc'}
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <button 
+                              onClick={() => triggerDocUpload(doc.key)}
+                              className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-xs font-black uppercase tracking-wider rounded-lg h-8 px-3 transition-all flex items-center gap-1.5"
+                            >
+                              <Upload className="w-3.5 h-3.5" /> Upload File
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+
+        {/* Sidebar Components (Signature, Workstation Leaflet Map) */}
+        <div className="space-y-6">
+          
+          {/* E-Signature Overlay (Preserving backend attachment path!) */}
+          <div className="bg-white border border-base-200 shadow-sm rounded-3xl p-6 space-y-4">
+             <div className="flex items-center gap-2 pb-3 border-b border-base-100">
+                <Signature className="w-4 h-4 text-[#0038A8]" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-base-content/85">E-Signature Overlay</h3>
+             </div>
+             
+             <div className="space-y-4">
+                <div className="h-28 w-full bg-base-50/50 rounded-2xl border border-dashed border-base-200 flex items-center justify-center p-2 relative group overflow-hidden shadow-inner">
+                  {me?.e_signature ? (
+                    <img 
+                      src={me.e_signature} 
+                      alt="E-Signature" 
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <p className="text-[8px] font-black opacity-25 uppercase tracking-widest text-center">No E-Signature Uploaded</p>
+                  )}
+                  {isUploadingSig && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#0038A8]" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <input 
                     type="file" 
                     ref={sigInputRef}
@@ -316,225 +1335,659 @@ const Profile = () => {
                   <button 
                     onClick={() => sigInputRef.current?.click()}
                     disabled={isUploadingSig}
-                    className="btn btn-primary btn-sm rounded-lg font-black uppercase tracking-widest px-6 w-full shadow-md shadow-primary/20"
+                    className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-sm rounded-xl font-black uppercase tracking-widest text-[9px] w-full shadow-md shadow-blue-900/10 h-10 transition-all"
                   >
                     {me?.e_signature ? 'Update Signature' : 'Upload Signature'}
                   </button>
-                  <p className="text-[8px] font-bold opacity-30 uppercase text-center">PNG or JPG with transparent bg preferred</p>
+                  <p className="text-[7.5px] font-bold opacity-30 uppercase text-center">PNG / JPG file formatted signature image</p>
                 </div>
-              </div>
-            </div>
-
-            {/* Account Info */}
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-primary" /> Personal Info
-              </h3>
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><User className="w-4 h-4 opacity-30" /></div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Username</p>
-                    <p className="text-sm font-bold text-base-content">{me?.user_details?.username || 'N/A'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Mail className="w-4 h-4 opacity-30" /></div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Email</p>
-                    <p className="text-sm font-bold text-base-content">{me?.user_details?.email || 'N/A'}</p>
-                  </div>
-                </div>
-                {me?.mobile_no && (
-                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Globe className="w-4 h-4 opacity-30" /></div>
-                     <div>
-                       <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Mobile</p>
-                       <p className="text-sm font-bold text-base-content">{me.mobile_no}</p>
-                     </div>
-                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Job Info */}
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-primary" /> Work Info
-              </h3>
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Calendar className="w-4 h-4 opacity-30" /></div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Joined</p>
-                    <p className="text-sm font-bold text-base-content">{me?.date_hired ? new Date(me.date_hired).toLocaleDateString() : 'N/A'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><Wallet className="w-4 h-4 opacity-30" /></div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Monthly Pay</p>
-                    <p className="text-sm font-bold text-primary">₱{parseFloat(me?.salary || 0).toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-base-50 rounded-lg border border-base-100 flex items-center justify-center"><CalendarCheck className="w-4 h-4 opacity-30" /></div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase opacity-30 tracking-widest mb-0.5">Balance</p>
-                    <p className="text-sm font-bold text-base-content">{me?.leave_balance || 0} Days Available</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+             </div>
           </div>
 
-          {/* Detailed PDS History Sections */}
-          <div className="space-y-8">
-            
-            {/* 1. Family Background */}
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
-                <Users className="w-4 h-4 text-primary" /> II. Family Background
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {me?.family?.length > 0 ? me.family.map((f, idx) => (
-                   <div key={idx} className="p-4 bg-base-50 rounded-lg border border-base-100 space-y-1">
-                      <div className="flex justify-between items-start">
-                         <p className="font-black text-xs uppercase tracking-tight">{f.relationship === 'CHILD' ? f.full_name : `${f.first_name} ${f.surname}`}</p>
-                         <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">{f.relationship}</span>
-                      </div>
-                      {f.occupation && <p className="text-[10px] font-bold opacity-40 uppercase">{f.occupation}</p>}
-                   </div>
-                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
-              </div>
+          {/* Work Location Geofence Map */}
+          <div className="bg-white border border-base-200 shadow-sm rounded-3xl overflow-hidden flex flex-col min-h-[380px] z-0">
+            <div className="p-6 border-b border-base-100 bg-white">
+               <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Assigned Workstation</span>
+               <h3 className="text-xs font-black uppercase tracking-tight text-[#0038A8] mt-1">{workstation?.name || 'Lucena Division Office'}</h3>
             </div>
-
-            {/* 2. Educational Background */}
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
-                <GraduationCap className="w-4 h-4 text-primary" /> III. Educational Background
-              </h3>
-              <div className="space-y-4">
-                {me?.education?.length > 0 ? me.education.map((e, idx) => (
-                   <div key={idx} className="flex gap-6 p-4 bg-base-50 rounded-lg border border-base-100">
-                      <div className="w-10 h-10 rounded bg-white flex items-center justify-center font-black text-primary text-[10px] uppercase shadow-sm border border-base-100 shrink-0">
-                         {e.level?.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                         <div className="flex justify-between items-start">
-                            <h4 className="font-black text-xs uppercase tracking-tight truncate">{e.school_name}</h4>
-                            <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">{e.level}</span>
-                         </div>
-                         <p className="text-[10px] font-bold opacity-40 uppercase truncate">{e.degree_course}</p>
-                         <p className="text-[9px] font-black text-primary/60 uppercase mt-2">Class of {e.year_graduated || 'N/A'}</p>
-                      </div>
-                   </div>
-                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
-              </div>
-            </div>
-
-            {/* 3. Civil Service Eligibility */}
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
-                <Award className="w-4 h-4 text-primary" /> IV. Eligibility
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {me?.eligibilities?.length > 0 ? me.eligibilities.map((e, idx) => (
-                   <div key={idx} className="p-4 bg-base-50 rounded-lg border border-base-100 space-y-1">
-                      <p className="font-black text-xs uppercase tracking-tight">{e.service}</p>
-                      <div className="flex justify-between items-center text-[10px] font-bold opacity-40 uppercase">
-                         <span>Rating: {e.rating || 'N/A'}</span>
-                         <span>{e.date_of_exam ? new Date(e.date_of_exam).getFullYear() : ''}</span>
-                      </div>
-                   </div>
-                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
-              </div>
-            </div>
-
-            {/* 4. Work Experience */}
-            <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8">
-              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2 mb-8">
-                <History className="w-4 h-4 text-primary" /> V. Work Experience
-              </h3>
-              <div className="space-y-4">
-                {me?.work_experience?.length > 0 ? me.work_experience.map((w, idx) => (
-                   <div key={idx} className="flex gap-6 p-4 bg-base-50 rounded-lg border border-base-100">
-                      <div className="w-10 h-10 rounded bg-white flex items-center justify-center font-black text-primary text-[10px] uppercase shadow-sm border border-base-100 shrink-0">
-                         {w.is_gov_service ? 'GOV' : 'PVT'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                         <div className="flex justify-between items-start">
-                            <h4 className="font-black text-xs uppercase tracking-tight truncate">{w.position_title}</h4>
-                            <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">
-                               {w.date_from ? new Date(w.date_from).getFullYear() : ''} — {w.is_present ? 'Present' : (w.date_to ? new Date(w.date_to).getFullYear() : '')}
-                            </span>
-                         </div>
-                         <p className="text-[10px] font-bold opacity-40 uppercase truncate">{w.agency}</p>
-                         <p className="text-[9px] font-black text-primary/60 uppercase mt-2">₱{parseFloat(w.monthly_salary || 0).toLocaleString()} / MONTH</p>
-                      </div>
-                   </div>
-                )) : <p className="text-[10px] font-bold opacity-20 uppercase py-4">No records found</p>}
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Sidebar: Map */}
-        <div className="space-y-8 h-full">
-          <div className="bg-white border border-base-200 shadow-sm rounded-xl overflow-hidden flex flex-col h-full min-h-[400px]">
-            <div className="p-6 border-b border-base-100">
-               <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-1">Work Location</h3>
-               <p className="text-xs font-black uppercase tracking-tight text-primary">{workstation?.name || 'Home Office'}</p>
-            </div>
-            <div className="flex-1 min-h-[200px] z-0">
+            <div className="flex-1 min-h-[200px] z-0 relative">
                <MapContainer 
                  key={`${pos.lat}-${pos.lng}`}
                  center={[pos.lat, pos.lng]} 
-                 zoom={16} 
-                 style={{ height: '100%', width: '100%' }}
+                 zoom={15} 
+                 style={{ height: '100%', width: '100%', zIndex: 0 }}
                  zoomControl={false}
                  scrollWheelZoom={false}
                  dragging={false}
                >
                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                 <Circle center={[pos.lat, pos.lng]} radius={100} pathOptions={{ color: 'primary', fillColor: 'primary' }} />
+                 <Circle center={[pos.lat, pos.lng]} radius={100} pathOptions={{ color: '#0038A8', fillColor: '#0038A8' }} />
                  <Marker position={[pos.lat, pos.lng]} />
                </MapContainer>
             </div>
-            <div className="p-6 bg-base-50/50 flex items-center gap-3">
-               <MapPin className="text-primary w-4 h-4" />
-               <span className="text-[9px] font-black uppercase opacity-40 tracking-tighter">
-                 {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Office Boundary
+            <div className="p-4 bg-base-50/50 flex items-center gap-2 border-t border-base-200">
+               <MapPin className="text-[#0038A8] w-4 h-4 shrink-0" />
+               <span className="text-[8px] font-black uppercase opacity-45 tracking-wider leading-relaxed">
+                 {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Geofenced Boundaries (100m)
                </span>
             </div>
           </div>
 
-          {/* Gov IDs Sidebar Card */}
-          <div className="bg-white border border-base-200 shadow-sm rounded-xl p-8 space-y-6">
-             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-                <Fingerprint className="w-4 h-4 text-primary" /> Verified IDs
-             </h3>
-             <div className="space-y-4">
-                {[
-                   { label: 'UMID', val: me?.umid_id },
-                   { label: 'Pag-IBIG', val: me?.pagibig_id },
-                   { label: 'PhilHealth', val: me?.philhealth_no },
-                   { label: 'PhilSys', val: me?.philsys_id },
-                   { label: 'TIN', val: me?.tin_no },
-                   { label: 'Agency No', val: me?.agency_employee_no }
-                ].filter(id => id.val).map(id => (
-                   <div key={id.label}>
-                      <p className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">{id.label}</p>
-                      <p className="text-xs font-black text-base-content tracking-wider">{id.val}</p>
-                   </div>
-                ))}
-                {!me?.umid_id && !me?.pagibig_id && <p className="text-[10px] font-bold opacity-20 uppercase">No ID records found</p>}
-             </div>
-          </div>
         </div>
 
       </div>
+
+      {/* EDIT MODAL DIALOGS */}
+      {activeModal && (
+        <div className="modal modal-open flex items-center justify-center bg-black/60 transition-all duration-300 z-[999] p-4">
+          <div className="bg-white rounded-3xl border border-base-200 max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 md:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center border-b border-base-100 pb-4">
+              <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">
+                {modalIndex !== null ? 'Edit' : 'Add'} {activeModal === 'personal' ? 'Profile' : activeModal.charAt(0).toUpperCase() + activeModal.slice(1)} Details
+              </h3>
+              <button 
+                onClick={() => {
+                  setActiveModal(null);
+                  setModalData(null);
+                  setModalIndex(null);
+                }} 
+                className="btn btn-ghost btn-sm rounded-full p-1 min-w-0"
+              >
+                <X className="w-5 h-5 text-base-content/50 hover:text-base-content" />
+              </button>
+            </div>
+
+            {/* Modal Body Forms */}
+            <div className="space-y-4 text-xs font-bold text-base-content/75">
+              
+              {/* Personal Form */}
+              {activeModal === 'personal' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">First Name</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.first_name || ''} 
+                      onChange={(e) => handleFieldChange('first_name', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Last Name</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.last_name || ''} 
+                      onChange={(e) => handleFieldChange('last_name', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Middle Name</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.middle_name || ''} 
+                      onChange={(e) => handleFieldChange('middle_name', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Extension Name</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.name_extension || ''} 
+                      onChange={(e) => handleFieldChange('name_extension', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                      placeholder="Jr. / Sr."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Date of Birth</label>
+                    <input 
+                      type="date" 
+                      value={modalData?.date_of_birth || ''} 
+                      onChange={(e) => handleFieldChange('date_of_birth', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Place of Birth</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.place_of_birth || ''} 
+                      onChange={(e) => handleFieldChange('place_of_birth', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Gender</label>
+                    <select 
+                      value={modalData?.sex || ''} 
+                      onChange={(e) => handleFieldChange('sex', e.target.value)}
+                      className="select select-bordered select-sm w-full font-bold rounded-xl text-xs h-10"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Civil Status</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.civil_status || ''} 
+                      onChange={(e) => handleFieldChange('civil_status', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                      placeholder="Single/Married"
+                    />
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Mobile No</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.mobile_no || ''} 
+                      onChange={(e) => handleFieldChange('mobile_no', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Residential Address</label>
+                    <textarea 
+                      value={modalData?.residential_address || ''} 
+                      onChange={(e) => handleFieldChange('residential_address', e.target.value)}
+                      className="textarea textarea-bordered textarea-sm w-full font-bold uppercase rounded-xl text-xs h-16 pt-2" 
+                    />
+                  </div>
+                  <div className="space-y-1.5 col-span-2">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Permanent Address</label>
+                    <textarea 
+                      value={modalData?.permanent_address || ''} 
+                      onChange={(e) => handleFieldChange('permanent_address', e.target.value)}
+                      className="textarea textarea-bordered textarea-sm w-full font-bold uppercase rounded-xl text-xs h-16 pt-2" 
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Education Form */}
+              {activeModal === 'education' && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Academic Level</label>
+                    <select 
+                      value={modalData?.level || ''} 
+                      onChange={(e) => handleFieldChange('level', e.target.value)}
+                      className="select select-bordered select-sm w-full font-bold rounded-xl text-xs h-10"
+                    >
+                      <option value="ELEMENTARY">ELEMENTARY</option>
+                      <option value="SECONDARY">SECONDARY</option>
+                      <option value="VOCATIONAL">VOCATIONAL / TRADE COURSE</option>
+                      <option value="BACCALAUREATE">BACCALAUREATE (COLLEGE)</option>
+                      <option value="GRADUATE_STUDIES">GRADUATE STUDIES</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">School / Institution Name</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.school_name || ''} 
+                      onChange={(e) => handleFieldChange('school_name', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Degree / Basic Course</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.degree_course || ''} 
+                      onChange={(e) => handleFieldChange('degree_course', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Period From</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.period_from || ''} 
+                        onChange={(e) => handleFieldChange('period_from', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                        placeholder="Year (e.g. 2012)"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Period To</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.period_to || ''} 
+                        onChange={(e) => handleFieldChange('period_to', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                        placeholder="Year / present"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Year Graduated</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.year_graduated || ''} 
+                        onChange={(e) => handleFieldChange('year_graduated', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Honors Received</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.honors_received || ''} 
+                        onChange={(e) => handleFieldChange('honors_received', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                        placeholder="e.g. Cum Laude"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Work Experience Form */}
+              {activeModal === 'work' && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Position Title</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.position_title || ''} 
+                      onChange={(e) => handleFieldChange('position_title', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Employer / Agency Name</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.agency || ''} 
+                      onChange={(e) => handleFieldChange('agency', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Period From</label>
+                      <input 
+                        type="date" 
+                        value={modalData?.date_from || ''} 
+                        onChange={(e) => handleFieldChange('date_from', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Period To</label>
+                      <input 
+                        type="date" 
+                        disabled={modalData?.is_present}
+                        value={modalData?.is_present ? '' : (modalData?.date_to || '')} 
+                        onChange={(e) => handleFieldChange('date_to', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="is_present"
+                      checked={modalData?.is_present || false} 
+                      onChange={(e) => {
+                        handleFieldChange('is_present', e.target.checked);
+                        if (e.target.checked) handleFieldChange('date_to', null);
+                      }}
+                      className="checkbox checkbox-xs" 
+                    />
+                    <label htmlFor="is_present" className="text-[10px] font-black uppercase text-base-content/75 cursor-pointer">Currently Working Here</label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Monthly Salary</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.monthly_salary || ''} 
+                        onChange={(e) => handleFieldChange('monthly_salary', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Appointment Status</label>
+                      <select 
+                        value={modalData?.status_of_appointment || ''} 
+                        onChange={(e) => handleFieldChange('status_of_appointment', e.target.value)}
+                        className="select select-bordered select-sm w-full font-bold rounded-xl text-xs h-10"
+                      >
+                        <option value="PERMANENT">PERMANENT</option>
+                        <option value="TEMPORARY">TEMPORARY</option>
+                        <option value="CONTRACTUAL">CONTRACTUAL</option>
+                        <option value="CASUAL">CASUAL</option>
+                        <option value="CO-TERMINUS">CO-TERMINUS</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Salary Grade (SG)</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.salary_grade || ''} 
+                        onChange={(e) => handleFieldChange('salary_grade', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                        placeholder="e.g. 11"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 pt-5">
+                      <input 
+                        type="checkbox" 
+                        id="is_gov_service"
+                        checked={modalData?.is_gov_service || false} 
+                        onChange={(e) => handleFieldChange('is_gov_service', e.target.checked)}
+                        className="checkbox checkbox-xs" 
+                      />
+                      <label htmlFor="is_gov_service" className="text-[10px] font-black uppercase text-base-content/75 cursor-pointer">Government Service</label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Eligibility Form */}
+              {activeModal === 'eligibility' && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Exam / Board Title</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.service || ''} 
+                      onChange={(e) => handleFieldChange('service', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Rating Obtained</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.rating || ''} 
+                        onChange={(e) => handleFieldChange('rating', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Exam Date</label>
+                      <input 
+                        type="date" 
+                        value={modalData?.date_of_exam || ''} 
+                        onChange={(e) => handleFieldChange('date_of_exam', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Place of Exam</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.place_of_exam || ''} 
+                      onChange={(e) => handleFieldChange('place_of_exam', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">License Number</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.license_no || ''} 
+                        onChange={(e) => handleFieldChange('license_no', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">License Date of Validity</label>
+                      <input 
+                        type="date" 
+                        value={modalData?.license_date || ''} 
+                        onChange={(e) => handleFieldChange('license_date', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Family Member Form */}
+              {activeModal === 'family' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Relationship</label>
+                      <select 
+                        value={modalData?.relationship || ''} 
+                        onChange={(e) => handleFieldChange('relationship', e.target.value)}
+                        className="select select-bordered select-sm w-full font-bold rounded-xl text-xs h-10"
+                      >
+                        <option value="SPOUSE">SPOUSE</option>
+                        <option value="FATHER">FATHER</option>
+                        <option value="MOTHER">MOTHER</option>
+                        <option value="CHILD">CHILD</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Extension (Jr./Sr.)</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.extension || ''} 
+                        onChange={(e) => handleFieldChange('extension', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                  </div>
+                  {modalData?.relationship === 'CHILD' ? (
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Full Name</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.full_name || ''} 
+                        onChange={(e) => handleFieldChange('full_name', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase text-base-content/40">Surname</label>
+                        <input 
+                          type="text" 
+                          value={modalData?.surname || ''} 
+                          onChange={(e) => handleFieldChange('surname', e.target.value)}
+                          className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase text-base-content/40">First Name</label>
+                        <input 
+                          type="text" 
+                          value={modalData?.first_name || ''} 
+                          onChange={(e) => handleFieldChange('first_name', e.target.value)}
+                          className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black uppercase text-base-content/40">Middle Name</label>
+                        <input 
+                          type="text" 
+                          value={modalData?.middle_name || ''} 
+                          onChange={(e) => handleFieldChange('middle_name', e.target.value)}
+                          className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Date of Birth</label>
+                      <input 
+                        type="date" 
+                        value={modalData?.date_of_birth || ''} 
+                        onChange={(e) => handleFieldChange('date_of_birth', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-base-content/40">Occupation</label>
+                      <input 
+                        type="text" 
+                        value={modalData?.occupation || ''} 
+                        onChange={(e) => handleFieldChange('occupation', e.target.value)}
+                        className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-base-content/40">Employer / Agency</label>
+                    <input 
+                      type="text" 
+                      value={modalData?.employer || ''} 
+                      onChange={(e) => handleFieldChange('employer', e.target.value)}
+                      className="input input-bordered input-sm w-full font-bold uppercase rounded-xl text-xs h-10" 
+                    />
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-base-100">
+              <button 
+                onClick={() => {
+                  setActiveModal(null);
+                  setModalData(null);
+                  setModalIndex(null);
+                }} 
+                className="btn btn-ghost rounded-xl font-black uppercase tracking-wider text-[10px] h-10"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveModal}
+                disabled={updateMutation.isPending}
+                className="btn bg-[#0038A8] hover:bg-[#002d86] text-white rounded-xl font-black uppercase tracking-wider text-[10px] px-6 h-10 shadow-md shadow-blue-900/10 flex items-center gap-2 border-none"
+              >
+                {updateMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+                  </>
+                ) : 'Save Details'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DOCUMENT / FILE PREVIEW MODAL */}
+      {previewFile && (
+        <div className="modal modal-open flex items-center justify-center bg-black/75 z-[9999] p-4 transition-all duration-300">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 space-y-6 shadow-2xl relative">
+            <div className="flex justify-between items-center border-b border-base-100 pb-3">
+              <div>
+                <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">Document Preview</h3>
+                <p className="text-[9.5px] font-bold text-base-content/40 mt-0.5">{previewFile.title} ({previewFile.fileName})</p>
+              </div>
+              <button 
+                onClick={() => setPreviewFile(null)} 
+                className="btn btn-ghost btn-sm rounded-full p-1 min-w-0"
+              >
+                <X className="w-5 h-5 text-base-content/50 hover:text-base-content" />
+              </button>
+            </div>
+
+            {/* Preview Frame */}
+            <div className="h-[60vh] bg-base-100 rounded-2xl border border-base-200 overflow-hidden flex items-center justify-center relative p-4">
+              {previewFile.data === "MOCK_PDF" ? (
+                <div className="text-center space-y-4 max-w-md">
+                  <div className="w-16 h-16 bg-red-100 border border-red-200 rounded-full flex items-center justify-center text-red-600 mx-auto shadow-inner">
+                    <FileText className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm uppercase tracking-tight text-base-content">Simulated PDF Document</h4>
+                    <p className="text-[10px] font-bold text-base-content/40 mt-1">This is a mockup placeholder preview representing the uploaded {previewFile.title} file package stored inside the Division recruitment archive.</p>
+                  </div>
+                  <div className="p-3.5 bg-base-50/50 rounded-xl text-[9px] font-black uppercase text-base-content/50 tracking-wider">
+                    File: {previewFile.fileName}
+                  </div>
+                </div>
+              ) : previewFile.data === "MOCK_CARD" ? (
+                <div className="w-full max-w-md bg-gradient-to-br from-[#0038A8] via-[#002878] to-[#001850] p-6 rounded-2xl border border-white/10 text-white shadow-xl space-y-6 relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-[radial-gradient(circle_at_top_right,#FCD116_10%,transparent_50%)] opacity-30"></div>
+                  
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-3">
+                      <img src="/Deped2.png" className="w-10 h-10 object-contain drop-shadow" alt="DepEd Logo" />
+                      <div>
+                        <h4 className="font-black text-[9px] uppercase tracking-wider leading-none">Republic of the Philippines</h4>
+                        <h5 className="font-extrabold text-[8px] uppercase tracking-widest text-[#FCD116] mt-0.5 leading-none">Department of Education</h5>
+                        <p className="text-[6.5px] opacity-60 uppercase tracking-tighter leading-none mt-0.5">Lucena City Division Office</p>
+                      </div>
+                    </div>
+                    <div className="px-2 py-0.5 bg-success text-white border border-success rounded text-[7px] font-black uppercase tracking-wider">
+                      Verified
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[8px] opacity-40 uppercase tracking-widest leading-none">Card Type</p>
+                    <p className="font-black text-xs uppercase tracking-tight text-[#FCD116]">{previewFile.title}</p>
+                  </div>
+
+                  <div className="flex justify-between items-end border-t border-white/10 pt-4">
+                    <div>
+                      <p className="text-[7.5px] opacity-45 uppercase tracking-widest">Cardholder Name</p>
+                      <p className="font-black text-xs uppercase mt-0.5">{me?.first_name} {me?.last_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[7.5px] opacity-45 uppercase tracking-widest">Document Number</p>
+                      <p className="font-black text-xs mt-0.5 tracking-widest text-[#FCD116]">{previewFile.number || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <img 
+                  src={previewFile.data} 
+                  alt={previewFile.title} 
+                  className="max-h-full max-w-full object-contain rounded-xl shadow-md border border-base-200" 
+                />
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-base-100 pt-4">
+              <a 
+                href={previewFile.data.startsWith('data:') ? previewFile.data : '#'} 
+                download={previewFile.fileName}
+                onClick={(e) => {
+                  if (!previewFile.data.startsWith('data:')) {
+                    e.preventDefault();
+                    alert("Simulated file downloaded package complete.");
+                  }
+                }}
+                className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-sm rounded-xl font-black uppercase tracking-wider text-[10px] px-5 h-10 border-none shadow-md shadow-blue-900/10 flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" /> Download File
+              </a>
+              <button 
+                onClick={() => setPreviewFile(null)} 
+                className="btn btn-ghost hover:bg-base-100 btn-sm rounded-xl font-black uppercase tracking-wider text-[10px] h-10 px-5"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

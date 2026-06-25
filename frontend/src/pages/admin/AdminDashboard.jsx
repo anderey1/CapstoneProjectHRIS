@@ -293,6 +293,23 @@ const Dashboard = () => {
                  <PieChartIcon className="w-4 h-4 text-accent" />
                  <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Leave Allocations</h3>
               </div>
+
+              {/* Leave Analytics Summary Banners */}
+              <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest block opacity-75">Most Used Leave Category</span>
+                  <span className="text-sm font-black text-base-content block mt-1 uppercase">
+                     {stats?.most_used_leave || 'None'}
+                  </span>
+                </div>
+                <div className="p-4 bg-secondary/5 rounded-xl border border-secondary/15">
+                  <span className="text-[9px] font-black text-secondary-content/75 uppercase tracking-widest block opacity-75">Active Approved Leaves</span>
+                  <span className="text-sm font-black text-base-content block mt-1 uppercase">
+                     {(formattedTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0) + 
+                       formattedNonTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0)) || 0} Employee(s)
+                  </span>
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 {/* Teaching Staff Leaves */}

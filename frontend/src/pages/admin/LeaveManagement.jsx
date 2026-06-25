@@ -4,6 +4,7 @@ import { Clock, CheckCircle2, XCircle, Clock as ClockIcon, ChevronRight, FileTex
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
+import { ROLES } from '../../utils/constants';
 
 const formatStatus = (status) => {
    if (status === 'pending_supervisor') return 'Pending Supervisor';
@@ -582,6 +583,10 @@ const LeaveManagement = () => {
                                     {selectedLeave.status === 'pending_supervisor' ? 'Recommend Approval' :
                                      selectedLeave.status === 'pending_hr' ? 'Verify & Recommend' : 'Approve for CSC'}
                                  </button>
+                              </div>
+                           ) : canReview ? (
+                              <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-60">
+                                 HR review only. Admin can confirm the final approval.
                               </div>
                            ) : (
                               <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">

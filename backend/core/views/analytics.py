@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.db.models import Count, Sum, F, Value
+from django.db.models import Count, Sum, F, Value, Case, When
 from django.db.models.functions import Coalesce
 from ..models import Employee, ProvidentLoan, Attendance, LeaveRequest, Payroll, PerformanceReview, Applicant
 from ..utils import generate_hr_summary

@@ -215,9 +215,10 @@ const Recruitment = () => {
           ))}
         </div>
       )}
-      
+      {/* Add Applicant Modal */}
       {showAddModal && <AddApplicantModal onClose={() => setShowAddModal(false)} />}
 
+      
       {/* Applicant Detail / Status Update Modal */}
       {selectedApplicant && (
          <div className="modal modal-open">

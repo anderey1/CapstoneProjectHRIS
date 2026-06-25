@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, UserPlus, Search, Filter, CheckCircle2, FileDown } from 'lucide-react';
 import api from '../../api/axios';
@@ -20,6 +20,11 @@ const Employees = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedArea, setSelectedArea] = useState('');
+  const [appliedRole, setAppliedRole] = useState('');
+  const [appliedArea, setAppliedArea] = useState('');
   const ROLE = 'HR'
 
   // 1. Data Fetching
@@ -117,17 +122,58 @@ const Employees = () => {
     }
   };
 
-  const filteredEmployees = (employees || []).filter(emp =>
-    `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const roleOptions = useMemo(() => {
+    const values = (employees || [])
+      .map(emp => emp.user_details?.role || emp.role || '')
+      .filter(Boolean);
+    return Array.from(new Set(values)).sort();
+  }, [employees]);
+
+  const areaOptions = useMemo(() => {
+    const values = (employees || [])
+      .map(emp => emp.department || '')
+      .filter(Boolean);
+    return Array.from(new Set(values)).sort();
+  }, [employees]);
+
+  const applyFilters = () => {
+    setAppliedRole(selectedRole);
+    setAppliedArea(selectedArea);
+    setShowFilters(false);
+  };
+
+  const resetFilters = () => {
+    setSelectedRole('');
+    setSelectedArea('');
+    setAppliedRole('');
+    setAppliedArea('');
+    setShowFilters(false);
+  };
+
+  const filteredEmployees = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return (employees || []).filter(emp => {
+      const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim().toLowerCase();
+      const department = (emp.department || '').toLowerCase();
+      const role = (emp.user_details?.role || emp.role || '').toUpperCase();
+      const area = (emp.department || '').toLowerCase();
+
+      const matchesSearch = !normalizedSearch ||
+        fullName.includes(normalizedSearch) ||
+        department.includes(normalizedSearch);
+      const matchesRole = !appliedRole || role === appliedRole.toUpperCase();
+      const matchesArea = !appliedArea || area === appliedArea.toLowerCase();
+
+      return matchesSearch && matchesRole && matchesArea;
+    });
+  }, [employees, searchTerm, appliedRole, appliedArea]);
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
       <span className="loading loading-spinner loading-lg text-primary"></span>
     </div>
   );
-  console.log(user)
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -181,13 +227,55 @@ const Employees = () => {
         </div>
 
         <div className="flex items-center gap-2 w-full lg:w-auto">
-          <button className="btn btn-ghost bg-base-50 border-base-200 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6">
-            <Filter className="w-3 h-3 mr-2 opacity-50" />
-            Filter
-          </button>
+          <div className="relative flex-1 lg:flex-none">
+            <button
+              onClick={() => setShowFilters(prev => !prev)}
+              className={`btn rounded-lg text-xs font-bold uppercase tracking-widest px-6 ${
+                appliedRole || appliedArea ? 'btn-primary' : 'btn-ghost bg-base-50 border-base-200'
+              }`}
+            >
+              <Filter className="w-3 h-3 mr-2 opacity-50" />
+              Filter
+            </button>
+
+            {showFilters && (
+              <div className="absolute right-0 top-full mt-2 z-20 w-80 rounded-xl border border-base-200 bg-white p-4 shadow-2xl space-y-3">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Role</label>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="select select-bordered w-full mt-1"
+                  >
+                    <option value="">All Roles</option>
+                    {roleOptions.map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Area</label>
+                  <select
+                    value={selectedArea}
+                    onChange={(e) => setSelectedArea(e.target.value)}
+                    className="select select-bordered w-full mt-1"
+                  >
+                    <option value="">All Areas</option>
+                    {areaOptions.map(area => (
+                      <option key={area} value={area}>{area}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button onClick={applyFilters} className="btn btn-primary btn-sm flex-1">Apply</button>
+                  <button onClick={resetFilters} className="btn btn-ghost btn-sm">Reset</button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
-            onClick={() => exportToCSV(employees, 'Staff_List')}
+            onClick={() => exportToCSV(filteredEmployees, 'Staff_List')}
             className="btn btn-ghost bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6"
           >
             <FileDown className="w-3 h-3 mr-2" />

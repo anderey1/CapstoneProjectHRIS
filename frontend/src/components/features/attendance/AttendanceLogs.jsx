@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ShieldCheck, Calendar, CheckSquare } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../api/axios';
-import { useAuth } from '../../../context/AuthContext';
-import { ROLES } from '../../../utils/constants';
+import { Search, Calendar } from 'lucide-react';
 
 /**
  * Attendance Logs List (Table & Card View)
@@ -20,33 +16,17 @@ const AttendanceLogs = ({
   flaggedOnly, 
   setFlaggedOnly 
 }) => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [approvalMsg, setApprovalMsg] = useState(null);
 
-  // Permission Check
-  const isHR = user?.role === ROLES.HR || user?.role === ROLES.ADMINISTRATIVE;
+  const getStatusLabel = (status) => {
+    if (status === 'late') return 'Late';
+    return 'Present';
+  };
 
-  const approveDtrMutation = useMutation({
-    mutationFn: (data) => api.post('attendance/approve_dtr/', data),
-    onSuccess: (res) => {
-      setApprovalMsg({ type: 'success', text: res.data.message });
-      queryClient.invalidateQueries(['attendance']);
-      setTimeout(() => setApprovalMsg(null), 3000);
-    },
-    onError: (err) => {
-      setApprovalMsg({ type: 'error', text: err.response?.data?.detail || 'Approval failed.' });
-      setTimeout(() => setApprovalMsg(null), 3000);
-    }
-  });
-
-  const handleApproveAll = (employeeId) => {
-    if (!employeeId) return;
-    approveDtrMutation.mutate({ 
-      employee_id: employeeId, 
-      month: selectedMonth 
-    });
+  const getStatusClass = (status) => {
+    return status === 'late'
+      ? 'bg-warning/10 text-warning border-warning/20'
+      : 'bg-success/10 text-success border-success/20';
   };
 
   return (
@@ -101,12 +81,6 @@ const AttendanceLogs = ({
         </div>
       </div>
 
-      {approvalMsg && (
-          <div className={`alert ${approvalMsg.type === 'error' ? 'alert-error' : 'alert-success'} rounded-xl shadow-lg animate-in slide-in-from-top-2`}>
-              <span className="text-[10px] font-black uppercase tracking-widest text-white">{approvalMsg.text}</span>
-          </div>
-      )}
-
       {/* Mobile Card View (< lg) */}
       <div className="lg:hidden space-y-4">
         {isLoading ? (
@@ -151,20 +125,9 @@ const AttendanceLogs = ({
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-base-100">
-                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${
-                    rec.is_dtr_approved ? 'bg-success/5 border-success/20 text-success' : 'bg-warning/5 border-warning/20 text-warning'
-                }`}>
-                    {rec.is_dtr_approved ? 'Approved' : 'Pending'}
+                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${getStatusClass(rec.status)}`}>
+                  {getStatusLabel(rec.status)}
                 </span>
-
-                {isHR && !rec.is_dtr_approved && (
-                   <button 
-                        onClick={() => handleApproveAll(rec.employee)}
-                        className="btn btn-ghost btn-xs text-primary font-black uppercase text-[8px] tracking-widest"
-                   >
-                        Approve Month
-                   </button>
-                )}
               </div>
             </div>
           ))
@@ -183,13 +146,11 @@ const AttendanceLogs = ({
                 <th className="text-center">AM In/Out</th>
                 <th className="text-center">PM In/Out</th>
                 <th className="text-center">OT In/Out</th>
-                <th className="text-center">Record Status</th>
-                <th className="text-right px-8">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-base-50">
               {isLoading ? (
-                <tr><td colSpan="7" className="text-center py-20"><span className="loading loading-spinner text-primary" /></td></tr>
+                <tr><td colSpan="4" className="text-center py-20"><span className="loading loading-spinner text-primary" /></td></tr>
               ) : records?.length > 0 ? (
                 records.map(rec => (
                   <tr key={rec.id} className={`hover:bg-base-50/50 transition-colors ${rec.is_geo_flagged ? 'bg-error/5' : ''}`}>
@@ -202,6 +163,9 @@ const AttendanceLogs = ({
                           <p className="font-black text-[11px] text-base-content uppercase tracking-tight">{rec.employee_name}</p>
                           <p className="text-[8px] font-black opacity-30 uppercase tracking-widest">{rec.department}</p>
                         </div>
+                        <span className={`ml-2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${getStatusClass(rec.status)}`}>
+                          {getStatusLabel(rec.status)}
+                        </span>
                       </div>
                     </td>
                     <td className="text-[10px] font-bold opacity-60 uppercase">{rec.date}</td>
@@ -223,33 +187,11 @@ const AttendanceLogs = ({
                             <span className="text-primary font-black text-[9px]">{rec.ot_out?.substring(0, 5) || '--:--'}</span>
                         </div>
                     </td>
-                    <td className="text-center">
-                        <div className="flex flex-col items-center gap-1">
-                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${
-                                rec.is_dtr_approved ? 'bg-success/5 border-success/20 text-success' : 'bg-warning/5 border-warning/20 text-warning'
-                            }`}>
-                                {rec.is_dtr_approved ? 'Approved' : 'Pending'}
-                            </span>
-                            {rec.is_geo_flagged && <span className="text-[7px] font-black text-error uppercase">Outside Zone</span>}
-                        </div>
-                    </td>
-                    <td className="text-right px-8">
-                       {isHR && !rec.is_dtr_approved && (
-                           <button 
-                                onClick={() => handleApproveAll(rec.employee)}
-                                className="btn btn-ghost btn-xs text-primary font-black uppercase text-[8px] tracking-[0.2em] hover:bg-primary/10"
-                                title="Approve Month"
-                           >
-                                <CheckSquare className="w-3 h-3 mr-1" /> Approve
-                           </button>
-                       )}
-                       {rec.is_dtr_approved && <ShieldCheck className="w-4 h-4 text-success opacity-40 inline" />}
-                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-40 opacity-30 italic font-black uppercase tracking-widest">No records found</td>
+                  <td colSpan="4" className="text-center py-40 opacity-30 italic font-black uppercase tracking-widest">No records found</td>
                 </tr>
               )}
             </tbody>

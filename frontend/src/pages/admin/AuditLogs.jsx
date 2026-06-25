@@ -67,7 +67,16 @@ const AuditLogs = () => {
                         <div className="w-8 h-8 rounded-lg bg-primary/5 text-primary flex items-center justify-center text-[10px] font-black border border-primary/5">
                           {log.user_name?.charAt(0) || 'S'}
                         </div>
-                        <span className="font-black text-xs uppercase tracking-tight text-base-content">{log.user_name || 'System'}</span>
+                        <div>
+                          <span className="font-black text-xs uppercase tracking-tight text-base-content block">
+                             {log.user_name || 'System'}
+                          </span>
+                          {log.user_role && (
+                             <span className="text-[9px] font-black uppercase tracking-wider text-primary block mt-0.5 opacity-60">
+                                {log.user_role}
+                             </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">

@@ -14,5 +14,9 @@ export const QUERY_KEYS = {
     LOAN_STATUS: 'loan_status_chart',
     DEPARTMENT: 'department_chart',
     ATTENDANCE_TRENDS: 'attendance_trends_chart',
+    PAYROLL: 'payroll_chart',
+    PERFORMANCE: 'performance_chart',
+    RECRUITMENT: 'recruitment_chart',
+    LEAVE_TYPES: 'leave_types_chart',
   },
 };

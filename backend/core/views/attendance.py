@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from datetime import datetime
+from datetime import datetime, timedelta
 from ..permissions import IsAdminOrHR, IsAccountant
 from ..models import Attendance, Employee, Role
 from ..serializers import AttendanceSerializer
@@ -77,7 +77,6 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         times = [t for t in [attendance.am_in, attendance.am_out, attendance.pm_in, attendance.pm_out, attendance.ot_in, attendance.ot_out] if t is not None]
         if times:
             latest_time = max(times)
-            from datetime import datetime, timedelta
             latest_dt = datetime.combine(today, latest_time)
             current_dt = datetime.combine(today, current_time)
             if current_dt - latest_dt < timedelta(minutes=2):

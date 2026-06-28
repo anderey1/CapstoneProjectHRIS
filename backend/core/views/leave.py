@@ -58,7 +58,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
         start_date = serializer.validated_data['start_date']
         end_date = serializer.validated_data['end_date']
         leave_type = serializer.validated_data['leave_type']
-        today = timezone.now().date()
+        today = timezone.localdate()
         
         # 1. Basic Validation
         if start_date > end_date:

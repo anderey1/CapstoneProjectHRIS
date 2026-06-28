@@ -127,9 +127,15 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-             <span className="text-[10px] font-bold opacity-40 uppercase">Want to join our team? </span>
-             <a href="/apply" className="text-[10px] font-black text-[#0038A8] uppercase hover:underline">Apply for a Position Here</a>
+          <div className="mt-6 text-center space-y-2">
+             <div>
+                <span className="text-[10px] font-bold opacity-40 uppercase">Want to join our team? </span>
+                <a href="/apply" className="text-[10px] font-black text-[#0038A8] uppercase hover:underline">Apply for a Position Here</a>
+             </div>
+             <div>
+                <span className="text-[10px] font-bold opacity-40 uppercase">Existing employee? </span>
+                <a href="/register-existing" className="text-[10px] font-black text-[#0038A8] uppercase hover:underline">Register Portal Account Here</a>
+             </div>
           </div>
 
           {/* System Info Footer */}

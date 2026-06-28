@@ -145,7 +145,7 @@ class LoanViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Only approved loans can be released."}, status=status.HTTP_400_BAD_REQUEST)
 
         loan.status = 'released'
-        loan.date_granted = timezone.now().date()
+        loan.date_granted = timezone.localdate()
         
         # Pull station code from employee school if blank
         if not loan.station_code and loan.employee.school:

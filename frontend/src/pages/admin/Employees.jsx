@@ -25,6 +25,7 @@ const Employees = () => {
   const [selectedArea, setSelectedArea] = useState('');
   const [appliedRole, setAppliedRole] = useState('');
   const [appliedArea, setAppliedArea] = useState('');
+  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'pending'
   const ROLE = 'HR'
 
   // 1. Data Fetching
@@ -34,6 +35,15 @@ const Employees = () => {
       const response = await api.get('employees/');
       return Array.isArray(response.data) ? response.data : response.data.results || [];
     },
+  });
+
+  const { data: pendingRegistrations } = useQuery({
+    queryKey: ['pendingRegistrations'],
+    queryFn: async () => {
+      const response = await api.get('employees/pending-registrations/');
+      return Array.isArray(response.data) ? response.data : response.data.results || [];
+    },
+    enabled: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role)
   });
 
   const { data: schools } = useQuery({
@@ -77,6 +87,31 @@ const Employees = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
       showToast('Employee removed.');
     },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id) => api.post(`employees/${id}/approve-registration/`),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
+      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
+      showToast(res.data.message || 'Registration approved.');
+    },
+    onError: (err) => {
+      console.error(err);
+      alert('Failed to approve registration.');
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id) => api.post(`employees/${id}/reject-registration/`),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
+      showToast(res.data.message || 'Registration request rejected.');
+    },
+    onError: (err) => {
+      console.error(err);
+      alert('Failed to reject registration.');
+    }
   });
 
   // 3. Handlers
@@ -213,92 +248,195 @@ const Employees = () => {
 
       </div>
 
-      {/* Filters Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-base-200 flex flex-col lg:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
-          <input
-            type="text"
-            placeholder="Search by name or department..."
-            className="input input-bordered w-full pl-12 bg-base-50/50 focus:bg-white border-base-200 focus:border-primary transition-all rounded-lg text-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full lg:w-auto">
-          <div className="relative flex-1 lg:flex-none">
-            <button
-              onClick={() => setShowFilters(prev => !prev)}
-              className={`btn rounded-lg text-xs font-bold uppercase tracking-widest px-6 ${
-                appliedRole || appliedArea ? 'btn-primary' : 'btn-ghost bg-base-50 border-base-200'
-              }`}
-            >
-              <Filter className="w-3 h-3 mr-2 opacity-50" />
-              Filter
-            </button>
-
-            {showFilters && (
-              <div className="absolute right-0 top-full mt-2 z-20 w-80 rounded-xl border border-base-200 bg-white p-4 shadow-2xl space-y-3">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Role</label>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    className="select select-bordered w-full mt-1"
-                  >
-                    <option value="">All Roles</option>
-                    {roleOptions.map(role => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Area</label>
-                  <select
-                    value={selectedArea}
-                    onChange={(e) => setSelectedArea(e.target.value)}
-                    className="select select-bordered w-full mt-1"
-                  >
-                    <option value="">All Areas</option>
-                    {areaOptions.map(area => (
-                      <option key={area} value={area}>{area}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <button onClick={applyFilters} className="btn btn-primary btn-sm flex-1">Apply</button>
-                  <button onClick={resetFilters} className="btn btn-ghost btn-sm">Reset</button>
-                </div>
-              </div>
-            )}
-          </div>
-
+      {/* Tabs Selection */}
+      {['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) && (
+        <div className="flex border-b border-base-200 gap-6">
           <button
-            onClick={() => exportToCSV(filteredEmployees, 'Staff_List')}
-            className="btn btn-ghost bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6"
+            type="button"
+            onClick={() => setActiveTab('active')}
+            className={`pb-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${activeTab === 'active' ? 'border-[#0038A8] text-[#0038A8]' : 'border-transparent text-base-content/40 hover:text-base-content/60'}`}
           >
-            <FileDown className="w-3 h-3 mr-2" />
-            Download List
+            Active Directory
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pending')}
+            className={`pb-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer relative ${activeTab === 'pending' ? 'border-[#0038A8] text-[#0038A8]' : 'border-transparent text-base-content/40 hover:text-base-content/60'}`}
+          >
+            Pending Approvals
+            {pendingRegistrations && pendingRegistrations.length > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 bg-error text-white text-[8px] font-black rounded-full inline-flex items-center justify-center min-w-[16px] h-4 animate-pulse">
+                {pendingRegistrations.length}
+              </span>
+            )}
           </button>
         </div>
-      </div>
+      )}
 
-      {/* Data Section */}
-      <div className="animate-in slide-in-from-bottom-4 duration-700">
-        <EmployeeTable
-          employees={filteredEmployees}
-          onEdit={(emp) => {
-            setSelectedEmployee(emp);
-            setActiveModal('form');
-          }}
-          onDelete={(id) => {
-            if (window.confirm('Remove this employee record?')) {
-              deleteMutation.mutate(id);
-            }
-          }}
-        />
-      </div>
+      {activeTab === 'active' ? (
+        <>
+          {/* Filters Bar */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-base-200 flex flex-col lg:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+              <input
+                type="text"
+                placeholder="Search by name or department..."
+                className="input input-bordered w-full pl-12 bg-base-50/50 focus:bg-white border-base-200 focus:border-primary transition-all rounded-lg text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full lg:w-auto">
+              <div className="relative flex-1 lg:flex-none">
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(prev => !prev)}
+                  className={`btn rounded-lg text-xs font-bold uppercase tracking-widest px-6 ${
+                    appliedRole || appliedArea ? 'btn-primary' : 'btn-ghost bg-base-50 border-base-200'
+                  }`}
+                >
+                  <Filter className="w-3 h-3 mr-2 opacity-50" />
+                  Filter
+                </button>
+
+                {showFilters && (
+                  <div className="absolute right-0 top-full mt-2 z-20 w-80 rounded-xl border border-base-200 bg-white p-4 shadow-2xl space-y-3">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Role</label>
+                      <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="select select-bordered w-full mt-1"
+                      >
+                        <option value="">All Roles</option>
+                        {roleOptions.map(role => (
+                          <option key={role} value={role}>{role}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Area</label>
+                      <select
+                        value={selectedArea}
+                        onChange={(e) => setSelectedArea(e.target.value)}
+                        className="select select-bordered w-full mt-1"
+                      >
+                        <option value="">All Areas</option>
+                        {areaOptions.map(area => (
+                          <option key={area} value={area}>{area}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button type="button" onClick={applyFilters} className="btn btn-primary btn-sm flex-1">Apply</button>
+                      <button type="button" onClick={resetFilters} className="btn btn-ghost btn-sm">Reset</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => exportToCSV(filteredEmployees, 'Staff_List')}
+                className="btn btn-ghost bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6"
+              >
+                <FileDown className="w-3 h-3 mr-2" />
+                Download List
+              </button>
+            </div>
+          </div>
+
+          {/* Data Section */}
+          <div className="animate-in slide-in-from-bottom-4 duration-700">
+            <EmployeeTable
+              employees={filteredEmployees}
+              onEdit={(emp) => {
+                setSelectedEmployee(emp);
+                setActiveModal('form');
+              }}
+              onDelete={(id) => {
+                if (window.confirm('Remove this employee record?')) {
+                  deleteMutation.mutate(id);
+                }
+              }}
+            />
+          </div>
+        </>
+      ) : (
+        /* Pending Registrations Approvals Table */
+        <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
+          <div className="overflow-x-auto">
+            <table className="table table-md w-full">
+              <thead>
+                <tr className="bg-base-50/50 border-b border-base-100">
+                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 pl-6">Employee</th>
+                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">Employee ID</th>
+                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">Credentials Requested</th>
+                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">Position / Dept</th>
+                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-right pr-6">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!pendingRegistrations || pendingRegistrations.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-12">
+                      <p className="text-xs font-bold text-base-content/30 uppercase tracking-widest">No pending registration requests found</p>
+                    </td>
+                  </tr>
+                ) : (
+                  pendingRegistrations.map((emp) => (
+                    <tr key={emp.id} className="hover:bg-base-50/30 transition-colors border-b border-base-100">
+                      <td className="pl-6">
+                        <div className="font-bold text-xs">{emp.first_name} {emp.last_name}</div>
+                        <div className="text-[10px] opacity-40 font-bold uppercase">{emp.email || 'No email'}</div>
+                      </td>
+                      <td className="font-bold text-xs text-[#0038A8]">{emp.agency_employee_no}</td>
+                      <td>
+                        <div className="text-xs font-bold bg-base-100 px-2 py-0.5 rounded-md inline-block">@{emp.user_details?.username}</div>
+                        <div className="text-[10px] opacity-50 font-medium mt-0.5">{emp.user_details?.email}</div>
+                      </td>
+                      <td>
+                        <div className="text-xs font-bold">{emp.position || 'Unassigned'}</div>
+                        <div className="text-[10px] opacity-40 font-bold uppercase">{emp.department || 'Operations'}</div>
+                      </td>
+                      <td className="text-right pr-6">
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Approve registration for ${emp.first_name} ${emp.last_name}?`)) {
+                                approveMutation.mutate(emp.id);
+                              }
+                            }}
+                            disabled={approveMutation.isPending}
+                            className="btn btn-success text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            {approveMutation.isPending ? "Approving..." : "Approve"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Reject and delete registration request for ${emp.first_name} ${emp.last_name}?`)) {
+                                rejectMutation.mutate(emp.id);
+                              }
+                            }}
+                            disabled={rejectMutation.isPending}
+                            className="btn btn-error text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Modal Overlay */}
       {activeModal === 'form' && (

@@ -229,7 +229,7 @@ def generate_daily_qr_token():
     from django.conf import settings
     import hashlib
     
-    today = timezone.now().date().isoformat()
+    today = timezone.localdate().isoformat()
     # Simple hash of date + secret key
     seed = f"{today}-{settings.SECRET_KEY}"
     return hashlib.md5(seed.encode()).hexdigest()[:12].upper()

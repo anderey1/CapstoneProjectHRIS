@@ -33,7 +33,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def get_daily_qr(self, request):
         try:
             token = generate_daily_qr_token()
-            return Response({"token": token, "date": timezone.now().date()})
+            return Response({"token": token, "date": timezone.localdate()})
         except Exception as e:
             print(f"ERROR generating QR: {e}")
             return Response({"detail": "Failed to generate QR code."}, status=400)
@@ -64,7 +64,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         is_in_zone, distance = True, 0.0
 
         # 3. Slot-Based Logic
-        now = timezone.now()
+        now = timezone.localtime(timezone.now())
         today = now.date()
         current_time = now.time()
         
@@ -72,6 +72,21 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             employee=employee, 
             date=today
         )
+
+        # Anti-spam logic: enforce a minimum 2-minute cooldown between logs
+        times = [t for t in [attendance.am_in, attendance.am_out, attendance.pm_in, attendance.pm_out, attendance.ot_in, attendance.ot_out] if t is not None]
+        if times:
+            latest_time = max(times)
+            from datetime import datetime, timedelta
+            latest_dt = datetime.combine(today, latest_time)
+            current_dt = datetime.combine(today, current_time)
+            if current_dt - latest_dt < timedelta(minutes=2):
+                diff = timedelta(minutes=2) - (current_dt - latest_dt)
+                remaining_sec = int(diff.total_seconds())
+                remaining_min = (remaining_sec // 60) + 1
+                return Response({
+                    "detail": f"Please wait {remaining_min} minute(s) before logging attendance again to prevent duplicate logs."
+                }, status=400)
 
         # Update status if it's currently 'present' and we detect a 'late' condition
         current_status = get_attendance_status(now)
@@ -85,11 +100,11 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         def t(time_str):
             return datetime.strptime(time_str, "%H:%M").time()
 
-        # Slot Windows (More inclusive for late shifts/OT)
+        # Slot Windows:
         
-        # AM IN: 5:00 - 11:59
+        # AM IN: 5:00 - 11:59 (AM IN only allowed before 11:00 AM)
         if t("05:00") <= current_time < t("12:00"):
-            if not attendance.am_in:
+            if not attendance.am_in and current_time < t("11:00"):
                 attendance.am_in = current_time
                 slot_mapped = "am_in"
                 message = "AM IN recorded."
@@ -100,7 +115,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
         # AM OUT / PM IN overlap: 12:00 - 13:00
         if not slot_mapped and t("12:00") <= current_time < t("13:00"):
-            if not attendance.am_out:
+            # If they checked in this morning, prioritize AM OUT. If they didn't, prioritize PM IN.
+            if attendance.am_in and not attendance.am_out:
                 attendance.am_out = current_time
                 slot_mapped = "am_out"
                 message = "AM OUT recorded."
@@ -108,10 +124,14 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 attendance.pm_in = current_time
                 slot_mapped = "pm_in"
                 message = "PM IN recorded."
+            elif not attendance.am_out:
+                attendance.am_out = current_time
+                slot_mapped = "am_out"
+                message = "AM OUT recorded."
 
-        # PM IN / PM OUT: 13:00 - 23:59
+        # PM IN / PM OUT: 13:00 - 23:59 (PM IN only allowed before 4:00 PM)
         if not slot_mapped and t("13:00") <= current_time <= t("23:59"):
-            if not attendance.pm_in:
+            if not attendance.pm_in and current_time < t("16:00"):
                 attendance.pm_in = current_time
                 slot_mapped = "pm_in"
                 message = "PM IN recorded."
@@ -121,6 +141,14 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 message = "PM OUT recorded."
             elif attendance.pm_out:
                 # If PM OUT is already filled, check for OT
+                # Only allow OT logging if the employee explicitly confirms it via is_ot=True
+                is_ot = request.data.get('is_ot', False)
+                if not is_ot:
+                    return Response({
+                        "detail": "Your regular hours for today are already complete (PM OUT recorded). To log overtime, please confirm.",
+                        "requires_ot_confirmation": True
+                    }, status=400)
+
                 if not attendance.ot_in:
                     attendance.ot_in = current_time
                     slot_mapped = "ot_in"

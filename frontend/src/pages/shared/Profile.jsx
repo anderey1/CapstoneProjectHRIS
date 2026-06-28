@@ -8,7 +8,7 @@ import {
   ShieldCheck, Loader2, X, CheckCircle2, 
   Signature, Plus, Pencil, Trash2, FileText, 
   Download, Upload, AlertCircle, AlertTriangle,
-  FileCheck, Shield, FileX, Sparkles, Building2, Check
+  FileCheck, Shield, FileX, Sparkles, Building2, Check, Key
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
@@ -82,6 +82,62 @@ const Profile = () => {
       return api.get(endpoint).then(res => res.data);
     }
   });
+
+  const { data: myProfile } = useQuery({
+    queryKey: ['me-profile-tab-check'],
+    queryFn: () => api.get('employees/me/').then(res => res.data),
+    enabled: !!id
+  });
+
+  const isOwnProfile = !id || (myProfile && String(myProfile.id) === String(id)) || (me && String(me.id) === String(id));
+  const visibleTabs = isOwnProfile 
+    ? [...TABS, { id: 'settings', label: 'Security & Settings', icon: Key }]
+    : TABS;
+
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwMessage, setPwMessage] = useState(null);
+  const [isChangingPw, setIsChangingPw] = useState(false);
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPwMessage(null);
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setPwMessage({ type: 'error', text: 'All password fields are required.' });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPwMessage({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPwMessage({ type: 'error', text: 'New password must be at least 8 characters long.' });
+      return;
+    }
+
+    setIsChangingPw(true);
+    try {
+      const response = await api.post('employees/change-password/', {
+        old_password: oldPassword,
+        new_password: newPassword
+      });
+      setPwMessage({ type: 'success', text: response.data.message || 'Password updated successfully!' });
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPwMessage({ 
+        type: 'error', 
+        text: err.response?.data?.error || err.response?.data?.detail || 'Failed to update password. Verify your old password.' 
+      });
+    } finally {
+      setIsChangingPw(false);
+    }
+  };
 
   // Check user role for admin features
   const userRole = localStorage.getItem('user_role') || me?.user_details?.role || 'TEACHING';
@@ -437,7 +493,7 @@ const Profile = () => {
   const uploadedDocsCount = REQUIRED_DOCS_LIST.filter(doc => simulatedDocs[doc.key]).length;
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       
       {/* Hidden File Inputs for Photo/Docs/IDs */}
       <input 
@@ -462,140 +518,85 @@ const Profile = () => {
         className="hidden"
       />
 
-      {/* Modern Cover / Profile Header */}
-      <div className="bg-white rounded-2xl shadow-md border border-base-200 overflow-hidden">
-        {/* DepEd Styled Banner with Radial Decor */}
-        <div className="h-44 bg-gradient-to-r from-[#0038A8] via-[#002878] to-[#FCD116]/20 relative">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(#ffffff_1.5px,transparent_1.5px)] [background-size:24px_24px]"></div>
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-black/30 backdrop-blur-md rounded-full text-[9px] text-white font-black uppercase tracking-widest border border-white/10">
-            <Sparkles className="w-3 h-3 text-[#FCD116]" /> DepEd Lucena City Division
-          </div>
-        </div>
+      {/* Simple Profile Header */}
+      <div className="bg-white p-6 rounded-lg border border-base-200 flex flex-col md:flex-row items-center gap-6">
         
-        {/* Metadata Details Row */}
-        <div className="px-6 md:px-8 pb-8 -mt-20 flex flex-col md:flex-row items-center md:items-end gap-6 relative z-10 text-center md:text-left">
-          {/* Circular Profile Photo with Hover Overlay */}
-          <div className="p-1.5 bg-white rounded-full shadow-xl border border-base-200 shrink-0">
-            <div 
-              onClick={() => photoInputRef.current?.click()}
-              className="w-32 h-32 md:w-36 md:h-36 bg-base-100 rounded-full flex items-center justify-center border border-base-200 overflow-hidden relative group cursor-pointer shadow-inner"
-            >
-              {profilePhoto ? (
-                <img src={profilePhoto} alt="Profile Photo" className="w-full h-full object-cover" />
-              ) : (
-                <UserCircle size={100} className="text-[#0038A8] opacity-20" />
-              )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity text-white text-[9px] font-black uppercase tracking-wider gap-1">
-                <Camera className="w-5 h-5 text-[#FCD116]" />
-                <span>Upload Photo</span>
-              </div>
-            </div>
+        {/* Simple Profile Photo */}
+        <div className="w-24 h-24 bg-base-100 rounded-full flex items-center justify-center border border-base-300 overflow-hidden shrink-0 relative">
+          {profilePhoto ? (
+            <img src={profilePhoto} alt="Profile Photo" className="w-full h-full object-cover" />
+          ) : (
+            <UserCircle size={80} className="text-base-content opacity-30" />
+          )}
+        </div>
+
+        <div className="flex-1 space-y-1 text-center md:text-left">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+            <h1 className="text-xl font-bold text-base-content">
+              {me?.first_name} {me?.last_name}
+            </h1>
+            <span className="px-2 py-0.5 bg-base-100 border text-base-content/75 rounded text-[9px] font-bold uppercase">
+              {me?.user_details?.role || 'STAFF'}
+            </span>
           </div>
           
-          <div className="flex-1 pb-2 space-y-2">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-base-content uppercase">
-                {me?.first_name} {me?.middle_name ? `${me.middle_name.charAt(0)}.` : ''} {me?.last_name} {me?.name_extension || ''}
-              </h1>
-              <div className="px-2.5 py-0.5 bg-[#0038A8]/10 text-[#0038A8] rounded-full text-[8.5px] font-black uppercase tracking-wider border border-[#0038A8]/10 flex items-center gap-1">
-                <Shield className="w-3 h-3 text-[#0038A8]" />
-                {me?.user_details?.role || 'STAFF'}
-              </div>
-              
-              {/* Application Status Badge */}
-              <div className={`px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider border flex items-center gap-1 ${
-                me?.date_hired 
-                  ? 'bg-success/10 text-success border-success/15' 
-                  : 'bg-info/10 text-info border-info/15'
-              }`}>
-                <CheckCircle2 className="w-3 h-3" />
-                {me?.date_hired ? 'Appointed / Hired' : 'Comparative Assessment'}
-              </div>
-            </div>
-            
-            <p className="text-xs font-black opacity-50 uppercase tracking-widest flex flex-wrap items-center justify-center md:justify-start gap-2">
-              <Briefcase className="w-4 h-4 text-[#0038A8]" /> {me?.position || 'Teacher I'} • {me?.department || 'Operations'}
-            </p>
-            
-            <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-xs font-semibold opacity-40">
-              <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {me?.email || me?.user_details?.email}</span>
-              {me?.mobile_no && <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> {me.mobile_no}</span>}
-              <span className="flex items-center gap-1.5"><Fingerprint className="w-3.5 h-3.5" /> APPLICANT ID: #{me?.id?.toString().padStart(6, '0')}</span>
-            </div>
+          <p className="text-xs text-base-content/60 font-semibold">
+            {me?.position || 'Teacher I'} • {me?.department || 'Operations'}
+          </p>
+          
+          <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-[11px] text-base-content/50">
+            <span>Email: {me?.email || me?.user_details?.email}</span>
+            {me?.mobile_no && <span>Mobile: {me.mobile_no}</span>}
+            <span>ID: #{me?.id}</span>
           </div>
+        </div>
 
-          <div className="flex flex-wrap gap-2 pt-2 md:pt-0 shrink-0">
-            <button 
-              onClick={() => {
-                setActiveModal('personal');
-                setModalData({ ...me });
-              }}
-              className="btn btn-outline hover:bg-[#0038A8] hover:text-white btn-sm rounded-lg font-black uppercase tracking-wider text-[10px] h-9 px-4 border-base-300 gap-1.5 transition-all"
-            >
-              <Pencil className="w-3.5 h-3.5" /> Edit Profile
-            </button>
-            <button 
-              onClick={() => photoInputRef.current?.click()}
-              className="btn btn-primary bg-[#0038A8] hover:bg-[#002d86] border-none text-white btn-sm rounded-lg font-black uppercase tracking-wider text-[10px] h-9 px-4 gap-1.5 transition-all shadow-md shadow-[#0038A8]/20"
-            >
-              <Camera className="w-3.5 h-3.5" /> Change Photo
-            </button>
-          </div>
+        <div className="flex gap-2 shrink-0">
+          <button 
+            onClick={() => {
+              setActiveModal('personal');
+              setModalData({ ...me });
+            }}
+            className="btn btn-outline btn-sm rounded-lg text-xs"
+          >
+            Edit Profile
+          </button>
         </div>
       </div>
 
       {/* Summary Statistics Panel */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 1. Profile Completion Card */}
-        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+        <div className="bg-white border border-base-200 rounded-lg p-4 flex items-center justify-between gap-4">
           <div>
             <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Profile Completion</span>
-            <span className="text-xl font-black text-[#0038A8] mt-1 block">{completion}% Completed</span>
-          </div>
-          <div className="radial-progress text-[#0038A8] shrink-0" style={{ "--value": completion, "--size": "2.8rem", "--thickness": "4px" }} role="progressbar" aria-valuenow={completion}>
-            <span className="text-[9px] font-black">{completion}%</span>
+            <span className="text-xl font-black text-base-content mt-1 block">{completion}% Completed</span>
           </div>
         </div>
 
         {/* 2. Submitted Applications Card */}
-        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+        <div className="bg-white border border-base-200 rounded-lg p-4 flex items-center justify-between gap-4">
           <div>
             <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Submitted Applications</span>
             <span className="text-xl font-black text-base-content mt-1 block">1 Active Form</span>
-            <span className="text-[8.5px] font-bold text-success uppercase block mt-0.5">Teacher I (Lucena Division)</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-inner">
-            <Building2 className="w-5 h-5 text-[#0038A8]" />
           </div>
         </div>
 
         {/* 3. Uploaded Documents Card */}
-        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+        <div className="bg-white border border-base-200 rounded-lg p-4 flex items-center justify-between gap-4">
           <div>
             <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Uploaded Documents</span>
             <span className="text-xl font-black text-base-content mt-1 block">{uploadedDocsCount} / {REQUIRED_DOCS_LIST.length} Files</span>
-            <span className="text-[8.5px] font-bold text-success uppercase block mt-0.5">
-              {REQUIRED_DOCS_LIST.filter(d => d.mandatory).filter(d => simulatedDocs[d.key]).length} of {REQUIRED_DOCS_LIST.filter(d => d.mandatory).length} Mandatory
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-inner">
-            <FileText className="w-5 h-5 text-[#0038A8]" />
           </div>
         </div>
 
         {/* 4. Eligibility Status Card */}
-        <div className="bg-white border border-base-200 shadow-sm rounded-xl p-4 flex items-center justify-between gap-4">
+        <div className="bg-white border border-base-200 rounded-lg p-4 flex items-center justify-between gap-4">
           <div>
             <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Eligibility Status</span>
             <span className="text-xl font-black text-base-content mt-1 block truncate max-w-[160px]">
               {me?.eligibilities?.length > 0 ? me.eligibilities[0].service : 'Not Specified'}
             </span>
-            <span className="text-[8.5px] font-bold text-success uppercase block mt-0.5">
-              {me?.eligibilities?.length > 0 ? `Rating: ${me.eligibilities[0].rating}%` : 'Register Civil Service or Board Exam'}
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-inner">
-            <Award className="w-5 h-5 text-[#0038A8]" />
           </div>
         </div>
       </div>
@@ -605,30 +606,28 @@ const Profile = () => {
         {/* Main Tabbed Layout Container */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* Responsive Navigation Tabs with smooth styling */}
-          <div className="bg-white rounded-2xl border border-base-200 p-2 flex flex-wrap gap-1 shadow-sm">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
+          {/* Simple Tab Navigation */}
+          <div className="bg-white rounded-lg border border-base-200 p-1 flex flex-wrap gap-1">
+            {visibleTabs.map((tab) => {
               const isSelected = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold ${
                     isSelected 
-                      ? 'bg-[#0038A8] text-white shadow-md shadow-blue-900/10 scale-95' 
-                      : 'text-base-content/60 hover:text-base-content hover:bg-base-100'
+                      ? 'bg-primary text-white font-bold' 
+                      : 'text-base-content/75 hover:bg-base-100'
                   }`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span>{tab.label}</span>
+                  {tab.label}
                 </button>
               );
             })}
           </div>
 
           {/* Tab Display Panel Container */}
-          <div className="bg-white border border-base-200 rounded-3xl p-6 md:p-8 shadow-sm transition-all duration-300">
+          <div className="bg-white border border-base-200 rounded-lg p-6">
             
             {/* 1. PERSONAL INFORMATION */}
             {activeTab === 'personal' && (
@@ -1293,6 +1292,80 @@ const Profile = () => {
               </div>
             )}
 
+            {/* 8. SECURITY & SETTINGS */}
+            {activeTab === 'settings' && (
+              <div className="space-y-6">
+                <div className="border-b border-base-100 pb-4">
+                  <h3 className="text-sm font-bold text-base-content uppercase tracking-wider">Security & Settings</h3>
+                  <p className="text-[10px] font-medium text-base-content/40 mt-0.5">Manage your account credentials and security settings</p>
+                </div>
+
+                <form onSubmit={handlePasswordChange} className="max-w-md space-y-4">
+                  {pwMessage && (
+                    <div className={`alert text-white rounded-lg font-bold text-xs uppercase ${
+                      pwMessage.type === 'success' ? 'alert-success' : 'alert-error'
+                    }`}>
+                      <span>{pwMessage.text}</span>
+                    </div>
+                  )}
+
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-[10px] font-bold uppercase opacity-65 tracking-wider">Current Password</span>
+                    </label>
+                    <input 
+                      type="password" 
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="input input-bordered rounded-lg w-full text-xs font-semibold"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-[10px] font-bold uppercase opacity-65 tracking-wider">New Password</span>
+                    </label>
+                    <input 
+                      type="password" 
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="input input-bordered rounded-lg w-full text-xs font-semibold"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text text-[10px] font-bold uppercase opacity-65 tracking-wider">Confirm New Password</span>
+                    </label>
+                    <input 
+                      type="password" 
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="input input-bordered rounded-lg w-full text-xs font-semibold"
+                      required
+                    />
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={isChangingPw}
+                    className="btn btn-primary btn-md rounded-lg text-xs w-full mt-6"
+                  >
+                    {isChangingPw ? (
+                      <span className="loading loading-spinner" />
+                    ) : (
+                      'Update Password'
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
+
           </div>
         </div>
 
@@ -1300,26 +1373,26 @@ const Profile = () => {
         <div className="space-y-6">
           
           {/* E-Signature Overlay (Preserving backend attachment path!) */}
-          <div className="bg-white border border-base-200 shadow-sm rounded-3xl p-6 space-y-4">
+          <div className="bg-white border border-base-200 rounded-lg p-6 space-y-4">
              <div className="flex items-center gap-2 pb-3 border-b border-base-100">
-                <Signature className="w-4 h-4 text-[#0038A8]" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-base-content/85">E-Signature Overlay</h3>
+                <Signature className="w-4 h-4 text-base-content" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-base-content">E-Signature</h3>
              </div>
              
              <div className="space-y-4">
-                <div className="h-28 w-full bg-base-50/50 rounded-2xl border border-dashed border-base-200 flex items-center justify-center p-2 relative group overflow-hidden shadow-inner">
+                <div className="h-28 w-full bg-base-100 rounded-lg border border-dashed border-base-300 flex items-center justify-center p-2 relative group overflow-hidden">
                   {me?.e_signature ? (
                     <img 
-                      src={me.e_signature} 
-                      alt="E-Signature" 
-                      className="max-h-full max-w-full object-contain"
+                       src={me.e_signature} 
+                       alt="E-Signature" 
+                       className="max-h-full max-w-full object-contain"
                     />
                   ) : (
-                    <p className="text-[8px] font-black opacity-25 uppercase tracking-widest text-center">No E-Signature Uploaded</p>
+                    <p className="text-[8px] font-bold opacity-30 uppercase tracking-widest text-center">No E-Signature Uploaded</p>
                   )}
                   {isUploadingSig && (
                     <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#0038A8]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     </div>
                   )}
                 </div>
@@ -1335,20 +1408,19 @@ const Profile = () => {
                   <button 
                     onClick={() => sigInputRef.current?.click()}
                     disabled={isUploadingSig}
-                    className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-sm rounded-xl font-black uppercase tracking-widest text-[9px] w-full shadow-md shadow-blue-900/10 h-10 transition-all"
+                    className="btn btn-primary btn-sm rounded-lg text-xs w-full"
                   >
                     {me?.e_signature ? 'Update Signature' : 'Upload Signature'}
                   </button>
-                  <p className="text-[7.5px] font-bold opacity-30 uppercase text-center">PNG / JPG file formatted signature image</p>
                 </div>
              </div>
           </div>
 
           {/* Work Location Geofence Map */}
-          <div className="bg-white border border-base-200 shadow-sm rounded-3xl overflow-hidden flex flex-col min-h-[380px] z-0">
+          <div className="bg-white border border-base-200 rounded-lg overflow-hidden flex flex-col min-h-[380px] z-0">
             <div className="p-6 border-b border-base-100 bg-white">
-               <span className="text-[9px] font-black text-base-content/40 uppercase tracking-wider block">Assigned Workstation</span>
-               <h3 className="text-xs font-black uppercase tracking-tight text-[#0038A8] mt-1">{workstation?.name || 'Lucena Division Office'}</h3>
+               <span className="text-[9px] font-bold text-base-content/40 uppercase tracking-wider block">Assigned Workstation</span>
+               <h3 className="text-xs font-bold uppercase tracking-tight text-base-content mt-1">{workstation?.name || 'Lucena Division Office'}</h3>
             </div>
             <div className="flex-1 min-h-[200px] z-0 relative">
                <MapContainer 
@@ -1365,9 +1437,9 @@ const Profile = () => {
                  <Marker position={[pos.lat, pos.lng]} />
                </MapContainer>
             </div>
-            <div className="p-4 bg-base-50/50 flex items-center gap-2 border-t border-base-200">
-               <MapPin className="text-[#0038A8] w-4 h-4 shrink-0" />
-               <span className="text-[8px] font-black uppercase opacity-45 tracking-wider leading-relaxed">
+            <div className="p-4 bg-base-100 flex items-center gap-2 border-t border-base-200">
+               <MapPin className="text-base-content w-4 h-4 shrink-0" />
+               <span className="text-[8px] font-bold uppercase opacity-45 tracking-wider leading-relaxed">
                  {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Geofenced Boundaries (100m)
                </span>
             </div>
@@ -1954,6 +2026,12 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
+              ) : (previewFile.data?.startsWith('data:application/pdf') || previewFile.fileName?.toLowerCase().endsWith('.pdf')) ? (
+                <iframe 
+                  src={previewFile.data} 
+                  title={previewFile.title}
+                  className="w-full h-full border-none rounded-xl"
+                />
               ) : (
                 <img 
                   src={previewFile.data} 

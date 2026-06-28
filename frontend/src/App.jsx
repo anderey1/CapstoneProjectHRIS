@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 // Pages
 import Login from './pages/Login';
 import Apply from './pages/Apply';
+import RegisterExisting from './pages/RegisterExisting';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import Employees from './pages/admin/Employees';
@@ -47,6 +48,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/apply" element={<Apply />} />
+        <Route path="/register-existing" element={<RegisterExisting />} />
 
         {/* Protected Layout Shell */}
         <Route 

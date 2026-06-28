@@ -5,6 +5,18 @@ import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 import { ROLES } from '../../utils/constants';
+// Helper to format HH:MM:SS string to 12-hour AM/PM format
+const formatTime = (timeStr, fallback = '---') => {
+  if (!timeStr) return fallback;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${hours}:${minutes.padStart(2, '0')} ${ampm}`;
+};
 
 /**
  * Official DTR (Daily Time Record) Page
@@ -176,32 +188,32 @@ const DTR = () => {
                     </td>
                     <td className="text-center py-4">
                       <span className="font-black text-[10px] text-success">
-                        {rec.am_in ? rec.am_in.substring(0, 5) : '---'}
+                        {formatTime(rec.am_in)}
                       </span>
                     </td>
                     <td className="text-center py-4 border-r border-base-100">
                       <span className="font-black text-[10px] text-error">
-                        {rec.am_out ? rec.am_out.substring(0, 5) : '---'}
+                        {formatTime(rec.am_out)}
                       </span>
                     </td>
                     <td className="text-center py-4">
                       <span className="font-black text-[10px] text-success">
-                        {rec.pm_in ? rec.pm_in.substring(0, 5) : '---'}
+                        {formatTime(rec.pm_in)}
                       </span>
                     </td>
                     <td className="text-center py-4 border-r border-base-100">
                       <span className="font-black text-[10px] text-error">
-                        {rec.pm_out ? rec.pm_out.substring(0, 5) : '---'}
+                        {formatTime(rec.pm_out)}
                       </span>
                     </td>
                     <td className="text-center py-4">
                       <span className="font-black text-[10px] text-primary">
-                        {rec.ot_in ? rec.ot_in.substring(0, 5) : '---'}
+                        {formatTime(rec.ot_in)}
                       </span>
                     </td>
                     <td className="text-center py-4">
                       <span className="font-black text-[10px] text-primary">
-                        {rec.ot_out ? rec.ot_out.substring(0, 5) : '---'}
+                        {formatTime(rec.ot_out)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">

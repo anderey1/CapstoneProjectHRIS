@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import PDSUploadForm from '../../components/features/employees/PDSUploadForm';
 
 const TABS = [
   { id: 'personal', label: 'Personal Information', icon: User },
@@ -73,6 +74,7 @@ const Profile = () => {
   const [activeModal, setActiveModal] = useState(null); // 'personal', 'education', 'work', 'eligibility', 'family'
   const [modalData, setModalData] = useState(null);
   const [modalIndex, setModalIndex] = useState(null);
+  const [showPDSModal, setShowPDSModal] = useState(false);
 
   // Fetch current user / employee details
   const { data: me, isLoading } = useQuery({
@@ -425,6 +427,77 @@ const Profile = () => {
 
   const completion = getProfileCompletion();
 
+  const formatDateForInput = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().split('T')[0];
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const handlePDSExtraction = (data) => {
+    const updatedFields = {};
+
+    if (data.first_name) updatedFields.first_name = data.first_name;
+    if (data.last_name) updatedFields.last_name = data.last_name;
+    if (data.middle_name) updatedFields.middle_name = data.middle_name;
+    if (data.name_extension) updatedFields.name_extension = data.name_extension;
+
+    if (data.date_of_birth) updatedFields.date_of_birth = formatDateForInput(data.date_of_birth);
+    if (data.place_of_birth) updatedFields.place_of_birth = data.place_of_birth;
+    if (data.sex) updatedFields.sex = data.sex;
+    if (data.civil_status) updatedFields.civil_status = data.civil_status;
+
+    if (data.umid_id) updatedFields.umid_id = data.umid_id;
+    if (data.pagibig_id) updatedFields.pagibig_id = data.pagibig_id;
+    if (data.philhealth_no) updatedFields.philhealth_no = data.philhealth_no;
+    if (data.philsys_id) updatedFields.philsys_id = data.philsys_id;
+    if (data.tin_no) updatedFields.tin_no = data.tin_no;
+    if (data.agency_employee_no) updatedFields.agency_employee_no = data.agency_employee_no;
+
+    if (data.mobile_no) updatedFields.mobile_no = data.mobile_no;
+    if (data.residential_address) updatedFields.residential_address = data.residential_address;
+    if (data.permanent_address) updatedFields.permanent_address = data.permanent_address;
+
+    if (data.family && Array.isArray(data.family)) {
+      updatedFields.family = data.family.map(m => ({
+        ...m,
+        date_of_birth: formatDateForInput(m.date_of_birth),
+        full_name: m.relationship === 'CHILD' ? (m.full_name || `${m.first_name} ${m.surname}`.trim()) : ''
+      }));
+    }
+
+    if (data.education && Array.isArray(data.education)) {
+      updatedFields.education = data.education.map(e => ({
+        ...e,
+        period_from: formatDateForInput(e.period_from),
+        period_to: e.period_to === 'present' ? 'present' : formatDateForInput(e.period_to)
+      }));
+    }
+
+    if (data.eligibilities && Array.isArray(data.eligibilities)) {
+      updatedFields.eligibilities = data.eligibilities.map(e => ({
+        ...e,
+        date_of_exam: formatDateForInput(e.date_of_exam),
+        validity_date: formatDateForInput(e.validity_date)
+      }));
+    }
+
+    if (data.work_experience && Array.isArray(data.work_experience)) {
+      updatedFields.work_experience = data.work_experience.map(w => ({
+        ...w,
+        date_from: formatDateForInput(w.date_from),
+        date_to: w.date_to === 'present' ? 'present' : formatDateForInput(w.date_to)
+      }));
+    }
+
+    updateMutation.mutate(updatedFields);
+    setShowPDSModal(false);
+  };
+
   // Save Modal Action
   const handleSaveModal = () => {
     if (!modalData) return;
@@ -548,10 +621,19 @@ const Profile = () => {
             <span>Email: {me?.email || me?.user_details?.email}</span>
             {me?.mobile_no && <span>Mobile: {me.mobile_no}</span>}
             <span>ID: #{me?.id}</span>
+            {me?.agency_employee_no && <span>Agency ID: {me.agency_employee_no}</span>}
           </div>
         </div>
 
         <div className="flex gap-2 shrink-0">
+          {isOwnProfile && (
+            <button 
+              onClick={() => setShowPDSModal(true)}
+              className="btn btn-primary btn-sm rounded-lg text-xs flex items-center gap-1.5"
+            >
+              <Upload className="w-3.5 h-3.5" /> Import PDS (PDF)
+            </button>
+          )}
           <button 
             onClick={() => {
               setActiveModal('personal');
@@ -682,6 +764,14 @@ const Profile = () => {
                   <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100 sm:col-span-2 text-xs">
                     <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Permanent Address</p>
                     <p className="font-bold text-base-content mt-1 uppercase leading-relaxed text-[11px]">{me?.permanent_address || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">System Employee ID</p>
+                    <p className="font-bold text-base-content mt-1 text-sm">#{me?.id ? String(me.id).padStart(4, '0') : 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-base-50/40 rounded-2xl border border-base-100">
+                    <p className="text-[9px] font-black uppercase text-base-content/40 tracking-wider">Agency Employee ID</p>
+                    <p className="font-bold text-[#0038A8] mt-1 uppercase text-sm">{me?.agency_employee_no || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -1448,6 +1538,37 @@ const Profile = () => {
         </div>
 
       </div>
+
+      {/* PDS IMPORT MODAL */}
+      {showPDSModal && (
+        <div className="modal modal-open flex items-center justify-center bg-black/60 transition-all duration-300 z-[999] p-4">
+          <div className="bg-white rounded-3xl border border-base-200 max-w-4xl w-full p-6 md:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center border-b border-base-100 pb-4">
+              <div>
+                <h3 className="text-sm font-black text-[#0038A8] uppercase tracking-wider">
+                  Import Profile Details from PDS (PDF)
+                </h3>
+                <p className="text-[10px] font-bold text-base-content/40 mt-0.5">
+                  Upload a filled Civil Service Form No. 212 (PDS) to automatically populate all sections of your profile
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowPDSModal(false)} 
+                className="btn btn-ghost btn-sm rounded-full p-1 min-w-0"
+              >
+                <X className="w-5 h-5 text-base-content/50 hover:text-base-content" />
+              </button>
+            </div>
+            
+            <div className="p-2 max-h-[70vh] overflow-y-auto">
+              <PDSUploadForm 
+                onExtractionComplete={handlePDSExtraction} 
+                onSuccess={() => setShowPDSModal(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* EDIT MODAL DIALOGS */}
       {activeModal && (

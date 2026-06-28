@@ -31,8 +31,13 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
             <div className="font-black text-sm text-base-content uppercase tracking-tight leading-tight group-hover/row:text-primary transition-colors">
               {emp.first_name} {emp.last_name}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
               <span className="text-[9px] font-black opacity-20 uppercase tracking-widest">#{emp.id.toString().padStart(4, '0')}</span>
+              {emp.agency_employee_no && (
+                <span className="text-[8px] font-black text-[#0038A8] uppercase bg-[#0038A8]/10 px-1.5 py-0.5 rounded">
+                  No: {emp.agency_employee_no}
+                </span>
+              )}
               <span className="text-[9px] font-black opacity-40 lowercase">{emp.user_details?.email || 'no-email'}</span>
             </div>
           </div>

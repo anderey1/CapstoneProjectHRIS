@@ -211,8 +211,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             employee = user.employee_profile
         
         if request.method == 'PATCH':
-            # Security: Whitelist fields for self-update
-            allowed_fields = ['face_descriptor', 'mobile_no', 'residential_address', 'permanent_address', 'e_signature']
+            # Security: Whitelist fields for self-update (allowing all personal / PDS details, but excluding employment details like position, salary, leave balance)
+            allowed_fields = [
+                'first_name', 'last_name', 'middle_name', 'name_extension',
+                'date_of_birth', 'place_of_birth', 'sex', 'civil_status',
+                'umid_id', 'pagibig_id', 'philhealth_no', 'philsys_id', 'tin_no', 'agency_employee_no',
+                'mobile_no', 'residential_address', 'permanent_address',
+                'face_descriptor', 'e_signature',
+                'family', 'education', 'eligibilities', 'work_experience'
+            ]
             update_data = {k: v for k, v in request.data.items() if k in allowed_fields}
             
             if not update_data:

@@ -33,7 +33,14 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
                   </div>
                   <div className="space-y-0.5">
                     <h3 className="font-black text-sm text-base-content uppercase tracking-tight leading-tight group-hover:text-primary transition-colors">{emp.first_name} {emp.last_name}</h3>
-                    <p className="text-[10px] font-black opacity-30 uppercase tracking-widest">#{emp.id.toString().padStart(4, '0')}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] font-black opacity-30 uppercase tracking-widest leading-none">#{emp.id.toString().padStart(4, '0')}</span>
+                      {emp.agency_employee_no && (
+                        <span className="text-[8px] font-black text-[#0038A8] uppercase bg-[#0038A8]/10 px-1.5 py-0.5 rounded leading-none">
+                          No: {emp.agency_employee_no}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 

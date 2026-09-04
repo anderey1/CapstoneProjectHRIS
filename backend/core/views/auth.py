@@ -7,8 +7,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
 
         # Add custom claims
+        token['user_id'] = user.id
         token['role'] = user.role
         token['username'] = user.username
+        if hasattr(user, 'employee_profile'):
+            token['employee_id'] = user.employee_profile.id
         return token
 
     def validate(self, attrs):
@@ -23,8 +26,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
                 pass
 
         data = super().validate(attrs)
+        data['id'] = self.user.id
         data['role'] = self.user.role
         data['username'] = self.user.username
+        if hasattr(self.user, 'employee_profile'):
+            data['employee_id'] = self.user.employee_profile.id
         return data
 
 class MyTokenObtainPairView(TokenObtainPairView):

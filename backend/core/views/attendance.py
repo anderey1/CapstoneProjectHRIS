@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import datetime
-from ..permissions import IsAdminOrHR, IsAccountant
+from ..permissions import IsAdminOrHR, IsAccountant, IsAdminOrHRorSuperintendent
 from ..models import Attendance, Employee, Role
 from ..serializers import AttendanceSerializer
 from ..utils import validate_attendance_geo, get_attendance_status, generate_daily_qr_token
@@ -33,7 +33,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def get_daily_qr(self, request):
         try:
             token = generate_daily_qr_token()
-            return Response({"token": token, "date": timezone.now().date()})
+            return Response({"token": token, "date": timezone.localdate()})
         except Exception as e:
             print(f"ERROR generating QR: {e}")
             return Response({"detail": "Failed to generate QR code."}, status=400)
@@ -64,7 +64,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         is_in_zone, distance = True, 0.0
 
         # 3. Slot-Based Logic
-        now = timezone.now()
+        now = timezone.localtime(timezone.now())
         today = now.date()
         current_time = now.time()
         
@@ -153,7 +153,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             "distance": round(distance, 2)
         })
 
-    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHR])
+    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
     def approve_dtr(self, request):
         """Approves all attendance records for an employee within a specific month."""
         employee_id = request.data.get('employee_id')

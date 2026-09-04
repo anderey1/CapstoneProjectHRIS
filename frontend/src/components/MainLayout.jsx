@@ -44,7 +44,7 @@ const MainLayout = () => {
         <MobileBottomNav toggleDrawer={toggleDrawer} />
 
         {/* Simple Mobile Footer Branding */}
-        <footer className="p-4 text-center text-[10px] opacity-30 uppercase tracking-[0.2em] lg:hidden mb-16">
+        <footer className="p-4 text-center text-xs text-slate-400 lg:hidden mb-16">
           DepEd Lucena HRIS © 2026
         </footer>
       </div>

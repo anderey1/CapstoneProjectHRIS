@@ -12,101 +12,101 @@ import { useAuth } from '../../../context/AuthContext';
 const EmployeeTable = ({ employees, onDelete, onEdit }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const canEdit = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
+  const canEdit = ['HR', 'SUPERINTENDENT'].includes(user?.role);
 
   return (
     <div className="space-y-6">
       
       {/* Mobile Card List (< lg) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 lg:hidden">
         {employees.length > 0 ? (
           employees.map((emp) => (
             <div 
               key={emp.id} 
               onClick={() => navigate(`/employees/${emp.id}`)}
-              className="bg-white p-6 rounded-xl shadow-sm border border-base-200 flex flex-col gap-4 group hover:border-primary/40 hover:shadow-md transition-all cursor-pointer"
+              className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3.5 hover:border-slate-300 hover:shadow-md transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/5 border border-primary/5 rounded-xl flex items-center justify-center text-primary font-black uppercase text-xs group-hover:bg-primary group-hover:text-white transition-colors">
-                    {emp.first_name[0]}{emp.last_name[0]}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8] font-bold text-xs shrink-0">
+                    {emp.first_name?.[0]}{emp.last_name?.[0]}
                   </div>
-                  <div className="space-y-0.5">
-                    <h3 className="font-black text-sm text-base-content uppercase tracking-tight leading-tight group-hover:text-primary transition-colors">{emp.first_name} {emp.last_name}</h3>
-                    <p className="text-[10px] font-black opacity-30 uppercase tracking-widest">#{emp.id.toString().padStart(4, '0')}</p>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm text-slate-900 leading-tight">{emp.first_name} {emp.last_name}</h3>
+                    <p className="text-xs text-slate-400 font-mono mt-0.5">#{emp.id.toString().padStart(4, '0')}</p>
                   </div>
                 </div>
                 
                 {canEdit && (
                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <button 
-                      className="btn btn-ghost btn-xs text-primary hover:bg-primary/10 font-black uppercase text-[10px] tracking-wider px-2"
+                      className="btn btn-ghost btn-xs h-7 text-slate-600 hover:text-[#0038A8] font-medium text-xs px-2"
                       onClick={() => onEdit(emp)}
                     >
-                      <Edit className="w-3.5 h-3.5 mr-1" /> Edit
+                      <Edit className="w-3.5 h-3.5 mr-1 text-slate-400" /> Edit
                     </button>
                     <button 
-                      className="btn btn-ghost btn-xs text-error hover:bg-error/10 font-black uppercase text-[10px] tracking-wider px-2"
+                      className="btn btn-ghost btn-xs h-7 text-red-600 hover:bg-red-50 font-medium text-xs px-2"
                       onClick={() => onDelete(emp.id)}
                     >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                      <Trash2 className="w-3.5 h-3.5 mr-1 text-red-400" /> Delete
                     </button>
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 bg-base-50 p-2.5 rounded-lg border border-base-100 overflow-hidden">
-                  <Briefcase className="w-3.5 h-3.5 opacity-30" />
-                  <span className="text-[10px] font-bold text-base-content/60 uppercase truncate">{emp.position} ({emp.department})</span>
+              <div className="flex flex-col gap-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="font-medium text-slate-800 truncate">{emp.position || 'Teacher I'} ({emp.department})</span>
                 </div>
-                <div className="flex items-center gap-2 bg-base-50 p-2.5 rounded-lg border border-base-100 overflow-hidden">
-                  <Building2 className="w-3.5 h-3.5 opacity-30" />
-                  <span className="text-[10px] font-bold text-base-content/60 uppercase truncate">{emp.school_details?.name || 'Division Office'}</span>
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="text-slate-500 truncate">{emp.school_details?.name || 'Division Office'}</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-base-100 pt-4 mt-2">
-                <div className="space-y-1">
-                   <span className="text-[9px] font-black uppercase opacity-20 tracking-widest">Balance</span>
-                   <p className="text-[11px] font-black text-primary uppercase">{Math.floor(emp.leave_balance)} Days</p>
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+                <div>
+                   <span className="text-slate-400 font-medium">Leave Credits</span>
+                   <p className="font-semibold text-slate-800 mt-0.5">{Math.floor(emp.leave_balance || 0)} days</p>
                 </div>
-                <div className="text-right space-y-1">
-                   <span className="text-[9px] font-black uppercase opacity-20 tracking-widest">Joined</span>
-                   <p className="text-[11px] font-black text-base-content/60">{emp.date_hired || '---'}</p>
+                <div className="text-right">
+                   <span className="text-slate-400 font-medium">Appointed</span>
+                   <p className="font-medium text-slate-700 mt-0.5">{emp.date_hired || '---'}</p>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="col-span-full py-20 bg-white rounded-xl border border-dashed border-base-300 flex flex-col items-center justify-center opacity-30">
-             <User className="w-8 h-8 mb-2" />
-             <p className="text-xs font-black uppercase tracking-widest">No staff found</p>
+          <div className="col-span-full py-16 bg-white rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
+             <User className="w-8 h-8 mb-2 stroke-1" />
+             <p className="text-xs font-medium">No personnel records found</p>
           </div>
         )}
       </div>
 
       {/* Desktop Table View (>= lg) */}
-      <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-        <table className="table table-sm w-full">
+      <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-base-50/50 border-b border-base-100 uppercase text-[10px] tracking-widest font-black opacity-50">
-              <th className="px-8 py-5 text-primary">Staff Member</th>
-              <th>Role & Area</th>
-              <th>Leave Credits</th>
-              <th>Joined Date</th>
-              <th className="px-8 text-right">Actions</th>
+            <tr className="bg-slate-50/90 border-b border-slate-200 text-xs font-semibold text-slate-600">
+              <th className="px-6 py-3.5">Staff Member</th>
+              <th className="px-6 py-3.5">Position & Station</th>
+              <th className="px-6 py-3.5">Leave Credits</th>
+              <th className="px-6 py-3.5">Date Appointed</th>
+              <th className="px-6 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-base-50">
+          <tbody className="divide-y divide-slate-100">
             {employees.length > 0 ? (
               employees.map((emp) => (
                 <EmployeeRow key={emp.id} emp={emp} onDelete={onDelete} onEdit={onEdit} />
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-20 opacity-30 italic font-black uppercase tracking-widest">
-                  No records found
+                <td colSpan="5" className="text-center py-16 text-xs text-slate-400 italic">
+                  No employee records match the current criteria
                 </td>
               </tr>
             )}

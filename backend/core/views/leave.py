@@ -58,23 +58,30 @@ class LeaveViewSet(viewsets.ModelViewSet):
         start_date = serializer.validated_data['start_date']
         end_date = serializer.validated_data['end_date']
         leave_type = serializer.validated_data['leave_type']
-        today = timezone.now().date()
+        today = timezone.localdate()
         
         # 1. Basic Validation
         if start_date > end_date:
             raise ValidationError("Start date cannot be after end date.")
-        if start_date < today:
-            raise ValidationError("Start date cannot be in the past.")
-        if end_date < today:
-            raise ValidationError("End date cannot be in the past.")
+
+        # Retrospective leaves (CSC Form 6: Sick, Calamity/Emergency, Rehabilitation)
+        RETROSPECTIVE_LEAVES = ['sick', 'emergency', 'rehabilitation']
+
+        if leave_type not in RETROSPECTIVE_LEAVES:
+            if start_date < today:
+                raise ValidationError("Advance filing required. Start date cannot be in the past.")
+            if end_date < today:
+                raise ValidationError("End date cannot be in the past.")
+        else:
+            # Retrospective leaves allowed up to 30 calendar days upon return
+            if (today - start_date).days > 30:
+                raise ValidationError("Sick or Emergency leave must be filed within 30 calendar days of occurrence.")
 
         # 2. Advance Filing Rules (CSC Form 6)
         if leave_type == 'vacation' and (start_date - today).days < 5:
             raise ValidationError("Vacation leave must be filed 5 days in advance.")
         
         if leave_type == 'special_privilege' and (start_date - today).days < 7:
-            # Note: Form says 1 week prior, except emergency. We'll stick to 7 days for now.
-            # In a real app, we might check an 'is_emergency' flag.
             pass 
 
         if leave_type == 'solo_parent' and (start_date - today).days < 5:
@@ -143,6 +150,10 @@ class LeaveViewSet(viewsets.ModelViewSet):
             op_technique = serializer.validated_data.get('women_special_operative_technique')
             if not med_cert or not histopath or not op_technique:
                 raise ValidationError("Medical Certificate/Clinical Summary, Histopathology Report, and Operative Technique are all required for special leave benefits for women.")
+
+        elif leave_type == 'sick':
+            if duration > 5 and not serializer.validated_data.get('supporting_document'):
+                raise ValidationError("A Medical Certificate (CS Form 41 / Physician Cert) is required for sick leave exceeding 5 days.")
 
         # Determine initial status based on role:
         # Teachers go to pending_supervisor first, Non-Teaching go straight to pending_hr.

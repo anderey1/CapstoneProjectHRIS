@@ -18,9 +18,10 @@ const DTR = () => {
   const [downloading, setDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Allow employees and HR/admin roles to export PDF records.
-  const canExport = [ROLES.TEACHING, ROLES.ADMINISTRATIVE, ROLES.NON_TEACHING, ROLES.HR, 'ADMIN', 'SUPERINTENDENT', 'ACCOUNTANT'].includes(user?.role);
-  const canSelectEmployee = ['ADMIN', 'HR', 'ADMINISTRATIVE', 'SUPERINTENDENT', 'ACCOUNTANT'].includes(user?.role);
+  // Allow all employees to export their own DTR PDF records.
+  const canExport = !!user?.role;
+  // Only HR and Superintendent can select and export other employees' DTRs.
+  const canSelectEmployee = ['HR', 'SUPERINTENDENT'].includes(user?.role);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth],

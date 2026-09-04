@@ -199,11 +199,11 @@ def validate_attendance_geo(employee_lat, employee_lng, school_lat, school_lng, 
 def get_attendance_status(check_in_time):
     """
     Determines if check-in is 'present' or 'late'.
-    Standard DepEd time is usually 8:00 AM.
+    Standard DepEd cut-off is 8:00 AM Philippine Standard Time.
     """
-    # Mocking standard time to 8:00 AM
-    standard_time = check_in_time.replace(hour=8, minute=0, second=0, microsecond=0)
-    if check_in_time > standard_time:
+    local_time = timezone.localtime(check_in_time)
+    cutoff_time = local_time.replace(hour=8, minute=0, second=0, microsecond=0)
+    if local_time > cutoff_time:
         return 'late'
     return 'present'
 
@@ -229,7 +229,7 @@ def generate_daily_qr_token():
     from django.conf import settings
     import hashlib
     
-    today = timezone.now().date().isoformat()
+    today = timezone.localdate().isoformat()
     # Simple hash of date + secret key
     seed = f"{today}-{settings.SECRET_KEY}"
     return hashlib.md5(seed.encode()).hexdigest()[:12].upper()

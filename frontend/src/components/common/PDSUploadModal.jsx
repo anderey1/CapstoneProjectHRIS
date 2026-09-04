@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import axios from '../../../api/axios';
+import axios from '../../api/axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '../../../api/queryKeys';
+import { QUERY_KEYS } from '../../api/queryKeys';
 import {
     AlertCircle, CheckCircle2, Loader2, Upload,
     UserPlus, RefreshCw, FileSearch, Eye, ShieldCheck
 } from 'lucide-react';
 
-const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
+const PDSUploadModal = ({ onExtractionComplete, onSuccess }) => {
     const queryClient = useQueryClient();
     const [file, setFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -51,21 +51,12 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
 
     const extractMutation = useMutation({
         mutationFn: async (file) => {
-            console.log("Starting PDS extraction for file:", file.name);
             const formData = new FormData();
             formData.append('file', file);
-            try {
-                const response = await axios.post('/pds/extract/', formData);
-                console.log("Extraction Success Response:", response.data);
-                return response.data;
-            } catch (error) {
-                console.error("Extraction API Error Object:", error);
-                console.error("Server Error Response Data:", error.response?.data);
-                throw error;
-            }
+            const response = await axios.post('/pds/extract/', formData);
+            return response.data;
         },
         onSuccess: (data) => {
-            // Apply cleaning to extracted data
             const cleaned = {};
             let hasData = false;
             Object.keys(data.extracted_data).forEach(key => {
@@ -75,11 +66,8 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
             });
 
             if (!hasData) {
-                // If everything is empty, don't show the data verification screen yet
-                // Instead, let the error handling or a local state show the warning
                 setExtractedData(null);
                 setConfidence(0);
-                // We can use a custom error state or just alert
                 setErrorMsg("The AI extracted no data. Please check the document's content or clarity.");
             } else {
                 setExtractedData(cleaned);
@@ -123,6 +111,7 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
 
         const applicantData = {
             first_name: extractedData.first_name || '',
+            middle_name: extractedData.middle_name || extractedData.middlename || '',
             last_name: extractedData.last_name || '',
             email: extractedData.email || '',
             phone: extractedData.mobile_no || extractedData.telephone_no || '',
@@ -203,7 +192,6 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
 
                         <div className="bg-white border border-base-200 rounded-2xl p-6 shadow-sm overflow-hidden flex-1">
                             <div className="max-h-[400px] overflow-y-auto pr-4 custom-scrollbar space-y-5">
-                                {/* Nested Sections Summary */}
                                 <div className="grid grid-cols-2 gap-4 bg-base-50 p-4 rounded-xl border border-base-200 text-left mb-4">
                                     <div className="text-xs">
                                         <span className="block text-[8px] font-black opacity-40 uppercase">Family Background</span>
@@ -297,4 +285,4 @@ const PDSUploadForm = ({ onExtractionComplete, onSuccess }) => {
     );
 };
 
-export default PDSUploadForm;
+export default PDSUploadModal;

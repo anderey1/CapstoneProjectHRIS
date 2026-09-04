@@ -19,12 +19,10 @@ import MyLeaves from './pages/employee/MyLeaves';
 import Payroll from './pages/admin/Payroll';
 import MyPayroll from './pages/employee/MyPayroll';
 import AttendanceManagement from './pages/admin/AttendanceManagement';
-import LocationTracking from './pages/admin/LocationTracking';
 import Attendance from './pages/shared/Attendance';
 import DTR from './pages/shared/DTR';
 import Profile from './pages/shared/Profile';
 import AuditLogs from './pages/admin/AuditLogs';
-import SchoolManagement from './pages/admin/SchoolManagement';
 
 /**
  * App Component
@@ -35,11 +33,15 @@ import SchoolManagement from './pages/admin/SchoolManagement';
 function App() {
   const { user } = useAuth();
 
-  const isAdminOrHR = user && ['HR', 'ADMINISTRATIVE'].includes(user.role);
-  const isManagement = user && ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
-  const canManageLeaves = user && ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
-  const canManageAttendance = user && ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
+  const isManagement = user && ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'].includes(user.role);
+  const canAccessEmployees = user && ['HR', 'SUPERINTENDENT', 'ACCOUNTANT'].includes(user.role);
+  const canManageLoans = user && ['ACCOUNTANT', 'SUPERINTENDENT', 'HR'].includes(user.role);
+  const canManageLeaves = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
+  const canManageAttendance = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
   const canManagePerformance = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
+  const canManageRecruitment = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
+  const canManagePayroll = user && ['ACCOUNTANT', 'SUPERINTENDENT', 'HR'].includes(user.role);
+  const canViewAuditLogs = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -60,17 +62,17 @@ function App() {
           {/* Child Routes injected into MainLayout's <Outlet /> */}
           <Route index element={isManagement ? <AdminDashboard /> : <EmployeeDashboard />} />
           
-          {/* Employees - Management only */}
+          {/* Employees - Management (HR, Superintendent, Accountant) */}
           <Route 
             path="employees" 
-            element={isManagement ? <Employees /> : <Navigate to="/" replace />} 
+            element={canAccessEmployees ? <Employees /> : <Navigate to="/" replace />} 
           />
           
           {/* Loans - Dedicated Pages */}
           <Route path="my-loans" element={<MyLoans />} />
           <Route 
             path="loan-management" 
-            element={isManagement ? <LoanManagement /> : <Navigate to="/" replace />} 
+            element={canManageLoans ? <LoanManagement /> : <Navigate to="/" replace />} 
           />
 
           {/* Leaves - Dedicated Pages */}
@@ -87,11 +89,6 @@ function App() {
             element={canManageAttendance ? <AttendanceManagement /> : <Navigate to="/" replace />} 
           />
           
-          <Route
-            path="location-tracking"
-            element={<Navigate to="/" replace />}
-          />
-          
           <Route path="dtr" element={<DTR />} />
           <Route path="profile" element={<Profile />} />
           <Route path="employees/:id" element={<Profile />} />
@@ -100,7 +97,7 @@ function App() {
           <Route path="my-payslips" element={<MyPayroll />} />
           <Route 
             path="payroll-management" 
-            element={isManagement ? <Payroll /> : <Navigate to="/" replace />} 
+            element={canManagePayroll ? <Payroll /> : <Navigate to="/" replace />} 
           />
 
           {/* IPCRF (Performance) - Dedicated Pages */}
@@ -113,19 +110,13 @@ function App() {
           {/* Recruitment - HR or Superintendent */}
           <Route
             path="recruitment"
-            element={(isAdminOrHR || user?.role === 'SUPERINTENDENT') ? <Recruitment /> : <Navigate to="/" replace />}
+            element={canManageRecruitment ? <Recruitment /> : <Navigate to="/" replace />}
           />
 
-          {/* Schools/Geofencing - Disabled */}
-          <Route
-            path="schools"
-            element={<Navigate to="/" replace />}
-          />
-
-          {/* Audit Logs - Admin/HR only */}
+          {/* Audit Logs - HR or Superintendent */}
           <Route
             path="audit-logs"
-            element={isAdminOrHR ? <AuditLogs /> : <Navigate to="/" replace />}
+            element={canViewAuditLogs ? <AuditLogs /> : <Navigate to="/" replace />}
           />
         </Route>
 

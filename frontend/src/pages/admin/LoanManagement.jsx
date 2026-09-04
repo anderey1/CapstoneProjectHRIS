@@ -377,7 +377,7 @@ const LoanManagement = () => {
               {(selectedLoan.status === 'released' || selectedLoan.status === 'paid') ? (
                 <SubsidiaryLedger 
                   loan={selectedLoan} 
-                  userCanPost={user?.role === 'ACCOUNTANT' || user?.role === 'ADMINISTRATIVE' || user?.is_superuser} 
+                  userCanPost={user?.role === 'ACCOUNTANT' || user?.is_superuser} 
                 />
               ) : (
                 <>

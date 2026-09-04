@@ -46,12 +46,12 @@ const SidebarContent = ({ closeDrawer }) => {
     {
       title: 'Admin Operations',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees List', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Job Applicants', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'DTR Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Approvals', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees List', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT'] },
+        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Job Applicants', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'DTR Approvals', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'] },
+        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Approvals', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'] },
         { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ['HR', 'SUPERINTENDENT'] },
       ]
     },
@@ -59,29 +59,29 @@ const SidebarContent = ({ closeDrawer }) => {
       title: 'Settings',
       links: [
         { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'Account Profile', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ['HR', 'SUPERINTENDENT'] },
       ]
     }
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#0038A8] text-white w-80 border-r border-blue-900/20">
+    <aside className="flex flex-col h-full bg-[#0A225C] text-white w-72 border-r border-slate-800/40 shadow-xl">
       
       {/* Brand Section */}
-      <div className="p-8">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/20 overflow-hidden p-1">
-            <img src="/Deped2.png" alt="Seal" className="w-full h-full object-contain" />
+      <div className="p-6 border-b border-white/10">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-md overflow-hidden p-1 shrink-0">
+            <img src="/Deped2.png" alt="DepEd Seal" className="w-full h-full object-contain" />
           </div>
-          <div>
-            <h2 className="font-black text-xl tracking-tight leading-none text-white uppercase italic">DEPED HRIS</h2>
-            <p className="text-[9px] font-black text-[#FCD116] uppercase tracking-[0.2em] mt-1">Lucena Division</p>
+          <div className="min-w-0">
+            <h2 className="font-bold text-base tracking-tight leading-none text-white">DepEd HRIS</h2>
+            <p className="text-[11px] font-medium text-amber-300/90 tracking-wide mt-1 truncate">SDO Lucena City</p>
           </div>
         </div>
       </div>
 
       {/* Menu Area */}
-      <nav className="flex-1 overflow-y-auto px-6 pb-6 space-y-8">
+      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {menuGroups.map((group, idx) => {
           const visibleLinks = group.links.filter(link => 
             !link.roles || (user && link.roles.includes(user.role))
@@ -90,30 +90,29 @@ const SidebarContent = ({ closeDrawer }) => {
           if (visibleLinks.length === 0) return null;
 
           return (
-            <div key={idx} className="space-y-3">
-              <h3 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#FCD116] opacity-70">
+            <div key={idx} className="space-y-1">
+              <h3 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-blue-200/60 mb-2">
                 {group.title}
               </h3>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {visibleLinks.map((link) => (
                   <NavLink
                     key={link.to}
                     to={link.to}
                     onClick={closeDrawer}
                     className={({ isActive }) => `
-                      flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group
+                      flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors
                       ${isActive 
-                        ? 'bg-white/10 text-[#FCD116] border-l-4 border-[#FCD116] pl-3' 
-                        : 'text-white/70 hover:bg-white/5 hover:text-white'}
+                        ? 'bg-white/15 text-white font-semibold border-l-4 border-amber-400 pl-2.5 shadow-sm' 
+                        : 'text-blue-100/75 hover:bg-white/8 hover:text-white font-medium'}
                     `}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="transition-transform duration-200 group-hover:scale-110">
+                      <span className="shrink-0 opacity-80 group-hover:opacity-100">
                         {link.icon}
                       </span>
-                      <span className="text-sm font-bold tracking-tight">{link.label}</span>
+                      <span className="truncate">{link.label}</span>
                     </div>
-                    <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                   </NavLink>
                 ))}
               </div>
@@ -123,16 +122,16 @@ const SidebarContent = ({ closeDrawer }) => {
       </nav>
 
       {/* Footer */}
-      <div className="p-6 border-t border-white/10 bg-black/10">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 mb-4 shadow-inner">
-          <div className="avatar placeholder">
-            <div className="bg-[#FCD116] text-[#0038A8] rounded-lg w-10 h-10 font-black text-xs uppercase flex items-center justify-center">
+      <div className="p-4 border-t border-white/10 bg-black/15">
+        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-white/5 border border-white/10 mb-3">
+          <div className="avatar placeholder shrink-0">
+            <div className="bg-amber-400 text-slate-900 rounded-lg w-9 h-9 font-bold text-xs uppercase flex items-center justify-center shadow-sm">
               {user?.username?.[0] || 'U'}
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-black truncate text-white uppercase tracking-tight">{user?.username || 'Guest'}</p>
-            <p className="text-[10px] font-bold text-[#FCD116] uppercase tracking-tighter opacity-80">{user?.role || 'Guest'}</p>
+            <p className="text-xs font-semibold truncate text-white">{user?.username || 'Guest'}</p>
+            <p className="text-[10px] font-medium text-amber-300/80 uppercase tracking-wide truncate">{user?.role?.replace('_', ' ') || 'Staff'}</p>
           </div>
         </div>
         
@@ -141,13 +140,13 @@ const SidebarContent = ({ closeDrawer }) => {
             closeDrawer();
             logout();
           }}
-          className="btn btn-ghost btn-block justify-start gap-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl text-xs font-bold uppercase tracking-widest"
+          className="btn btn-ghost btn-sm btn-block justify-start gap-2.5 text-red-300 hover:bg-red-500/15 hover:text-red-200 rounded-lg text-xs font-medium"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
         </button>
       </div>
-    </div>
+    </aside>
   );
 };
 

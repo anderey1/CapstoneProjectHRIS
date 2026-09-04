@@ -12,6 +12,7 @@ from ..serializers import PayrollSerializer
 from ..permissions import IsAdminOrHR, IsAccountant, IsSuperintendent
 from ..utils import parse_cutoff_dates
 from ..utils.pdf_generator import generate_general_payroll_pdf, generate_disbursement_voucher_pdf
+from ..services.payroll import PayrollCalculator
 
 class PayrollViewSet(viewsets.ModelViewSet):
     queryset = Payroll.objects.all().order_by('-date_generated')
@@ -33,7 +34,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAccountant])
     def generate(self, request):
-        """Generates a payroll record for a specific employee."""
+        """Generates a payroll record for a specific employee using PayrollCalculator."""
         employee_id = request.data.get('employee_id')
         if not employee_id:
             return Response({"detail": "employee_id is required."}, status=400)
@@ -62,79 +63,10 @@ class PayrollViewSet(viewsets.ModelViewSet):
                     "detail": f"Cannot generate payroll. {unapproved_count} attendance records in this cutoff are not yet approved by HR."
                 }, status=400)
 
-        # 2. Calculate Days Worked from Attendance
-        days_worked = Decimal('11.0') # Default for semi-monthly if no attendance data found
-        
-        if start_date and end_date:
-            # Count distinct days present/late in the range
-            present_days = Attendance.objects.filter(
-                employee=employee,
-                date__range=(start_date, end_date),
-                status__in=['present', 'late']
-            ).values('date').distinct().count()
-            
-            # If we found attendance records, use that count. 
-            # Otherwise, assume full attendance (standard for many gov roles unless flagged)
-            if present_days > 0:
-                days_worked = Decimal(str(present_days))
-
-        # Get employee's basic monthly salary to calculate dynamic deductions
-        monthly_salary = employee.salary
-        
-        # Calculate semi-monthly basic salary based on attendance
-        # Formula: (Monthly Salary / 22 standard working days) * days_worked
-        daily_rate = monthly_salary / Decimal('22.0')
-        calculated_salary = (daily_rate * days_worked).quantize(Decimal('0.01'))
-
-        # 1. SSS Deduction: 4.5% of monthly salary, split per cutoff (capped at 675.00 per cutoff)
-        sss_deduction = (monthly_salary * Decimal('0.045')) / Decimal('2.0')
-        if sss_deduction > Decimal('675.00'):
-            sss_deduction = Decimal('675.00')
-        elif sss_deduction < Decimal('0.00'):
-            sss_deduction = Decimal('0.00')
-
-        # 2. PhilHealth Deduction: 2.5% of monthly salary, split per cutoff (capped at 500.00 per cutoff)
-        philhealth_deduction = (monthly_salary * Decimal('0.025')) / Decimal('2.0')
-        if philhealth_deduction > Decimal('500.00'):
-            philhealth_deduction = Decimal('500.00')
-        elif philhealth_deduction < Decimal('0.00'):
-            philhealth_deduction = Decimal('0.00')
-
-        # 3. Pag-IBIG Deduction: 100.00 flat deduction per semi-monthly cutoff
-        pagibig_deduction = Decimal('100.00')
-        # If monthly salary is extremely small, ensure Pag-IBIG does not exceed 2% of the basic monthly salary
-        if monthly_salary < Decimal('5000.00'):
-            pagibig_deduction = (monthly_salary * Decimal('0.02')) / Decimal('2.0')
-
-        # 4. Withholding Tax: If basic monthly salary is above 20,833.33 (approx. 250k/year, tax-exempt under TRAIN Law)
-        # Apply 15% on the excess amount, divided by 2 for semi-monthly.
-        if monthly_salary > Decimal('20833.33'):
-            monthly_tax = (monthly_salary - Decimal('20833.33')) * Decimal('0.15')
-            tax_deduction = monthly_tax / Decimal('2.0')
-        else:
-            tax_deduction = Decimal('0.00')
-
-        # Compile deductions (rounded to 2 decimal places for currency accuracy)
-        DEDUCTIONS = {
-            'sss': sss_deduction.quantize(Decimal('0.01')),
-            'philhealth': philhealth_deduction.quantize(Decimal('0.01')),
-            'pagibig': pagibig_deduction.quantize(Decimal('0.01')),
-            'tax': tax_deduction.quantize(Decimal('0.01'))
-        }
-
-        # Fetch active released provident loan to deduct payment
-        active_loan = ProvidentLoan.objects.filter(employee=employee, status='released').first()
-        loan_deduction = Decimal('0.00')
-        
-        if active_loan:
-            standard_deduction = (active_loan.monthly_payment / Decimal('2.0')).quantize(Decimal('0.01'))
-            remaining = active_loan.current_balance
-            
-            # Cap the deduction at the actual remaining balance
-            loan_deduction = min(standard_deduction, remaining)
+        # 2. Compute via PayrollCalculator service
+        calc = PayrollCalculator.compute(employee, cutoff, start_date, end_date)
 
         # Check if payroll record already exists for the employee for this cutoff.
-        # If it exists, update it to reflect the new generation; otherwise, create a new record.
         existing_payroll = Payroll.objects.filter(employee=employee, cutoff_period=cutoff).first()
 
         if existing_payroll:
@@ -143,22 +75,14 @@ class PayrollViewSet(viewsets.ModelViewSet):
                 return Response({"detail": f"Cannot re-generate payroll in {existing_payroll.status} status."}, status=400)
             
             payroll = existing_payroll
-            payroll.days_worked = days_worked
-            payroll.basic_salary = calculated_salary
-            payroll.loans = loan_deduction
-            payroll.sss = DEDUCTIONS['sss']
-            payroll.philhealth = DEDUCTIONS['philhealth']
-            payroll.pagibig = DEDUCTIONS['pagibig']
-            payroll.tax = DEDUCTIONS['tax']
+            for field, val in calc.items():
+                setattr(payroll, field, val)
             payroll.save()
         else:
             payroll = Payroll.objects.create(
                 employee=employee,
                 cutoff_period=cutoff,
-                days_worked=days_worked,
-                basic_salary=calculated_salary,
-                loans=loan_deduction,
-                **DEDUCTIONS
+                **calc
             )
 
         serializer = self.get_serializer(payroll)
@@ -242,62 +166,8 @@ class PayrollViewSet(viewsets.ModelViewSet):
                         })
                         continue
                 
-                # 3. Calculate Days Worked
-                days_worked = Decimal('11.0')
-                if start_date and end_date:
-                    present_days = Attendance.objects.filter(
-                        employee=employee,
-                        date__range=(start_date, end_date),
-                        status__in=['present', 'late']
-                    ).values('date').distinct().count()
-                    if present_days > 0:
-                        days_worked = Decimal(str(present_days))
-                
-                # Calculations
-                monthly_salary = employee.salary
-                daily_rate = monthly_salary / Decimal('22.0')
-                calculated_salary = (daily_rate * days_worked).quantize(Decimal('0.01'))
-                
-                # SSS
-                sss_deduction = (monthly_salary * Decimal('0.045')) / Decimal('2.0')
-                if sss_deduction > Decimal('675.00'):
-                    sss_deduction = Decimal('675.00')
-                elif sss_deduction < Decimal('0.00'):
-                    sss_deduction = Decimal('0.00')
-                    
-                # PhilHealth
-                philhealth_deduction = (monthly_salary * Decimal('0.025')) / Decimal('2.0')
-                if philhealth_deduction > Decimal('500.00'):
-                    philhealth_deduction = Decimal('500.00')
-                elif philhealth_deduction < Decimal('0.00'):
-                    philhealth_deduction = Decimal('0.00')
-                    
-                # Pag-IBIG
-                pagibig_deduction = Decimal('100.00')
-                if monthly_salary < Decimal('5000.00'):
-                    pagibig_deduction = (monthly_salary * Decimal('0.02')) / Decimal('2.0')
-                    
-                # Tax
-                if monthly_salary > Decimal('20833.33'):
-                    monthly_tax = (monthly_salary - Decimal('20833.33')) * Decimal('0.15')
-                    tax_deduction = monthly_tax / Decimal('2.0')
-                else:
-                    tax_deduction = Decimal('0.00')
-                    
-                DEDUCTIONS = {
-                    'sss': sss_deduction.quantize(Decimal('0.01')),
-                    'philhealth': philhealth_deduction.quantize(Decimal('0.01')),
-                    'pagibig': pagibig_deduction.quantize(Decimal('0.01')),
-                    'tax': tax_deduction.quantize(Decimal('0.01'))
-                }
-                
-                # Fetch active provident loan
-                active_loan = ProvidentLoan.objects.filter(employee=employee, status='released').first()
-                loan_deduction = Decimal('0.00')
-                if active_loan:
-                    standard_deduction = (active_loan.monthly_payment / Decimal('2.0')).quantize(Decimal('0.01'))
-                    remaining = active_loan.current_balance
-                    loan_deduction = min(standard_deduction, remaining)
+                # 3. Compute via PayrollCalculator service
+                calc = PayrollCalculator.compute(employee, cutoff, start_date, end_date)
                     
                 existing_payroll = Payroll.objects.filter(employee=employee, cutoff_period=cutoff).first()
                 
@@ -309,23 +179,15 @@ class PayrollViewSet(viewsets.ModelViewSet):
                         })
                         continue
                     
-                    existing_payroll.days_worked = days_worked
-                    existing_payroll.basic_salary = calculated_salary
-                    existing_payroll.loans = loan_deduction
-                    existing_payroll.sss = DEDUCTIONS['sss']
-                    existing_payroll.philhealth = DEDUCTIONS['philhealth']
-                    existing_payroll.pagibig = DEDUCTIONS['pagibig']
-                    existing_payroll.tax = DEDUCTIONS['tax']
+                    for field, val in calc.items():
+                        setattr(existing_payroll, field, val)
                     existing_payroll.save()
                     updated_count += 1
                 else:
                     Payroll.objects.create(
                         employee=employee,
                         cutoff_period=cutoff,
-                        days_worked=days_worked,
-                        basic_salary=calculated_salary,
-                        loans=loan_deduction,
-                        **DEDUCTIONS
+                        **calc
                     )
                     generated_count += 1
                     

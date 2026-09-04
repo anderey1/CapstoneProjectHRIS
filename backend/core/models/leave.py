@@ -36,7 +36,7 @@ class LeaveRequest(models.Model):
     ]
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')
-    leave_type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    leave_type = models.CharField(max_length=50, choices=TYPE_CHOICES, db_index=True)
     other_type_details = models.CharField(max_length=255, null=True, blank=True)
     
     # 6.B Details of Leave
@@ -68,7 +68,7 @@ class LeaveRequest(models.Model):
     
     # Application Info
     date_applied = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='pending_supervisor')
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='pending_supervisor', db_index=True)
     rejection_stage = models.CharField(max_length=25, choices=STATUS_CHOICES, null=True, blank=True, help_text="The stage at which the request was rejected")
     
     # Documentary Requirements

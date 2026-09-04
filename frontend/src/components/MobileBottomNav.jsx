@@ -4,49 +4,56 @@ import { LayoutDashboard, CalendarCheck, Clock, UserCircle, Menu } from 'lucide-
 
 const MobileBottomNav = ({ toggleDrawer }) => {
   const navItems = [
-    { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Home' },
-    { to: '/attendance', icon: <CalendarCheck className="w-5 h-5" />, label: 'Log' },
-    { to: '/my-leaves', icon: <Clock className="w-5 h-5" />, label: 'Leave' },
-    { to: '/profile', icon: <UserCircle className="w-5 h-5" />, label: 'Me' },
+    { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
+    { to: '/attendance', icon: <CalendarCheck className="w-5 h-5" />, label: 'Attendance' },
+    { to: '/my-leaves', icon: <Clock className="w-5 h-5" />, label: 'Leaves' },
+    { to: '/profile', icon: <UserCircle className="w-5 h-5" />, label: 'Profile' },
   ];
 
   return (
-    <div className="lg:hidden fixed bottom-4 left-4 right-4 z-[100]">
-      <div className="bg-base-100/80 backdrop-blur-lg border border-base-300 rounded-xl shadow-2xl px-2 py-2 flex items-center justify-around">
-
+    <nav 
+      aria-label="Mobile Bottom Navigation"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 shadow-[0_-2px_6px_rgba(0,0,0,0.04)]"
+      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+    >
+      <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map((item) => (
           <NavLink 
             key={item.to} 
             to={item.to}
             className={({ isActive }) => `
-              relative flex flex-col items-center justify-center py-2 px-1 flex-1 transition-all duration-300 rounded-xl
-              ${isActive ? 'text-primary scale-110' : 'text-base-content/40 hover:text-base-content/60'}
+              flex flex-col items-center justify-center py-1 px-2 flex-1 transition-colors min-h-[44px]
+              ${isActive ? 'text-[#0038A8]' : 'text-slate-500 hover:text-slate-800'}
             `}
           >
             {({ isActive }) => (
               <>
-                <div className={`${isActive ? 'opacity-100' : 'opacity-100'}`}>
+                <div className={`transition-transform duration-150 ${isActive ? 'scale-105' : ''}`}>
                   {item.icon}
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-tighter mt-1">{item.label}</span>
+                <span className={`text-[11px] mt-0.5 leading-none ${isActive ? 'font-semibold text-[#0038A8]' : 'font-normal'}`}>
+                  {item.label}
+                </span>
                 {isActive && (
-                  <div className="absolute -top-1 w-1 h-1 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(79,70,229,0.8)]"></div>
+                  <span className="w-1 h-1 bg-[#0038A8] rounded-full mt-1"></span>
                 )}
               </>
             )}
           </NavLink>
         ))}
         
-        {/* Menu Trigger */}
+        {/* Drawer Menu Trigger */}
         <button 
           onClick={toggleDrawer}
-          className="flex flex-col items-center justify-center py-2 px-1 flex-1 text-base-content/40 transition-all active:scale-95"
+          type="button"
+          aria-label="Open sidebar menu"
+          className="flex flex-col items-center justify-center py-1 px-2 flex-1 text-slate-500 hover:text-slate-800 transition-colors min-h-[44px]"
         >
           <Menu className="w-5 h-5" />
-          <span className="text-[9px] font-black uppercase tracking-tighter mt-1">More</span>
+          <span className="text-[11px] font-normal mt-0.5 leading-none">Menu</span>
         </button>
       </div>
-    </div>
+    </nav>
   );
 };
 

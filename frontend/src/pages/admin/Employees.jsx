@@ -190,37 +190,36 @@ const Employees = () => {
 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-1">
+        <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8]">
               <Users className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Staff List</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Personnel Directory</h1>
           </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Staff Management Portal</p>
+          <p className="text-xs text-slate-500 mt-1">Official registry of teaching, non-teaching, and administrative personnel</p>
         </div>
 
-
-        {['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) ? (
+        {['HR', 'SUPERINTENDENT'].includes(user?.role) ? (
           <button
             onClick={() => setActiveModal('form')}
-            className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-6"
+            className="btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-semibold px-4 h-9 min-h-0 shadow-sm"
           >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Add Staff Member
+            <UserPlus className="w-4 h-4 mr-1.5" />
+            Add Employee
           </button>
         ) : null}
 
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-base-200 flex flex-col lg:flex-row gap-4 items-center">
+      <div className="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex flex-col lg:flex-row gap-3 items-center">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by name or department..."
-            className="input input-bordered w-full pl-12 bg-base-50/50 focus:bg-white border-base-200 focus:border-primary transition-all rounded-lg text-sm"
+            placeholder="Search by personnel name or department..."
+            className="input input-sm w-full pl-10 bg-slate-50 focus:bg-white border-slate-200 focus:border-[#0038A8] rounded-lg text-xs text-slate-800 transition-colors h-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -230,22 +229,24 @@ const Employees = () => {
           <div className="relative flex-1 lg:flex-none">
             <button
               onClick={() => setShowFilters(prev => !prev)}
-              className={`btn rounded-lg text-xs font-bold uppercase tracking-widest px-6 ${
-                appliedRole || appliedArea ? 'btn-primary' : 'btn-ghost bg-base-50 border-base-200'
+              className={`btn btn-sm h-9 min-h-0 rounded-lg text-xs font-medium px-4 border ${
+                appliedRole || appliedArea 
+                  ? 'bg-blue-50 text-[#0038A8] border-blue-200' 
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <Filter className="w-3 h-3 mr-2 opacity-50" />
-              Filter
+              <Filter className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+              Filters {(appliedRole || appliedArea) ? '(Active)' : ''}
             </button>
 
             {showFilters && (
-              <div className="absolute right-0 top-full mt-2 z-20 w-80 rounded-xl border border-base-200 bg-white p-4 shadow-2xl space-y-3">
+              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-xl space-y-3.5">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Role</label>
+                  <label className="text-xs font-medium text-slate-600 block mb-1">Personnel Role</label>
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    className="select select-bordered w-full mt-1"
+                    className="select select-bordered select-sm w-full text-xs"
                   >
                     <option value="">All Roles</option>
                     {roleOptions.map(role => (
@@ -254,21 +255,21 @@ const Employees = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Area</label>
+                  <label className="text-xs font-medium text-slate-600 block mb-1">Station / District</label>
                   <select
                     value={selectedArea}
                     onChange={(e) => setSelectedArea(e.target.value)}
-                    className="select select-bordered w-full mt-1"
+                    className="select select-bordered select-sm w-full text-xs"
                   >
-                    <option value="">All Areas</option>
+                    <option value="">All Stations</option>
                     {areaOptions.map(area => (
                       <option key={area} value={area}>{area}</option>
                     ))}
                   </select>
                 </div>
-                <div className="flex gap-2 pt-1">
-                  <button onClick={applyFilters} className="btn btn-primary btn-sm flex-1">Apply</button>
-                  <button onClick={resetFilters} className="btn btn-ghost btn-sm">Reset</button>
+                <div className="flex gap-2 pt-1 border-t border-slate-100">
+                  <button onClick={applyFilters} className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-sm flex-1 text-xs rounded-lg">Apply</button>
+                  <button onClick={resetFilters} className="btn btn-ghost btn-sm text-xs rounded-lg text-slate-600">Reset</button>
                 </div>
               </div>
             )}
@@ -276,10 +277,10 @@ const Employees = () => {
 
           <button
             onClick={() => exportToCSV(filteredEmployees, 'Staff_List')}
-            className="btn btn-ghost bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6"
+            className="btn btn-sm h-9 min-h-0 bg-white text-slate-700 border-slate-200 hover:bg-slate-50 flex-1 lg:flex-none rounded-lg text-xs font-medium px-4"
           >
-            <FileDown className="w-3 h-3 mr-2" />
-            Download List
+            <FileDown className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+            Export CSV
           </button>
         </div>
       </div>

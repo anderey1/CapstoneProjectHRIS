@@ -51,13 +51,14 @@ class Applicant(models.Model):
     position_applied = models.CharField(max_length=100, choices=ALL_POSITIONS)
     school_division = models.CharField(max_length=100, default='Lucena City')
     
-    # DepEd Assessment Scores (Registry of Qualified Applicants - RQA)
-    # Typical DepEd Order 007 points (adjusted to 10 each for simplicity/standard)
-    education_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)])
-    training_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)])
-    experience_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)])
-    interview_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)])
-    exam_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)])
+    # DepEd Order 7, s. 2023 Assessment Scores (Registry of Qualified Applicants - RQA)
+    # Total: 100 points maximum, 50 points RQA qualifying threshold
+    education_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)], help_text="Education (Max 10 pts)")
+    training_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)], help_text="Training (Max 10 pts)")
+    experience_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)], help_text="Experience (Max 10 pts)")
+    demo_teaching_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(35.0)], help_text="Classroom Observation / Demonstration Teaching (Max 35 pts)")
+    exam_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(25.0)], help_text="Teacher Reflection Form / Examination (Max 25 pts)")
+    interview_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, validators=[MaxValueValidator(10.0)], help_text="Behavioral Events Interview (Max 10 pts)")
     total_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
 
     # Status Tracking
@@ -75,19 +76,20 @@ class Applicant(models.Model):
     @property
     def is_rqa_eligible(self):
         """
-        DepEd Rule: Minimum 50 points total to be included in the 
+        DepEd DO 7, s. 2023: Minimum 50 points total to be included in the 
         Registry of Qualified Applicants (RQA).
         """
         return self.total_score >= 50.00
 
     def save(self, *args, **kwargs):
-        # Auto-compute total score
+        # Auto-compute total score (Max 100 points)
         self.total_score = (
             self.education_score + 
             self.training_score + 
             self.experience_score + 
-            self.interview_score + 
-            self.exam_score
+            self.demo_teaching_score +
+            self.exam_score +
+            self.interview_score
         )
         super().save(*args, **kwargs)
 

@@ -6,7 +6,7 @@ import api from '../../../api/axios';
 import { ROLES } from '../../../utils/constants';
 import PersonalFields from './PersonalFields';
 import EmploymentFields from './EmploymentFields';
-import PDSUploadForm from '../recruitment/PDSUploadForm';
+import PDSUploadForm from '../../common/PDSUploadModal';
 import { FamilyFields, EducationFields, EligibilityFields, WorkHistoryFields } from './PDSDetailFields';
 
 const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, initialData }) => {

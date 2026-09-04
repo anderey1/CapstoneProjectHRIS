@@ -51,8 +51,9 @@ const Recruitment = () => {
     education_score: 0,
     training_score: 0,
     experience_score: 0,
-    interview_score: 0,
-    exam_score: 0
+    demo_teaching_score: 0,
+    exam_score: 0,
+    interview_score: 0
   });
 
   // 1. Data Fetching
@@ -323,8 +324,9 @@ const Recruitment = () => {
                                       education_score: selectedApplicant.education_score,
                                       training_score: selectedApplicant.training_score,
                                       experience_score: selectedApplicant.experience_score,
-                                      interview_score: selectedApplicant.interview_score,
-                                      exam_score: selectedApplicant.exam_score
+                                      demo_teaching_score: selectedApplicant.demo_teaching_score || 0,
+                                      exam_score: selectedApplicant.exam_score,
+                                      interview_score: selectedApplicant.interview_score
                                     });
                                     setIsEditingScores(true);
                                   }}
@@ -356,8 +358,9 @@ const Recruitment = () => {
                                  { key: 'education_score', label: 'Education', max: 10 },
                                  { key: 'training_score', label: 'Training', max: 10 },
                                  { key: 'experience_score', label: 'Experience', max: 10 },
-                                 { key: 'interview_score', label: 'Interview', max: 10 },
-                                 { key: 'exam_score', label: 'Exam', max: 10 }
+                                 { key: 'demo_teaching_score', label: 'Demo Teaching', max: 35 },
+                                 { key: 'exam_score', label: 'TRF / Exam', max: 25 },
+                                 { key: 'interview_score', label: 'Interview', max: 10 }
                               ].map(s => (
                                  <div key={s.key} className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-center group">
                                     <div className="flex items-center justify-center gap-1 mb-1">

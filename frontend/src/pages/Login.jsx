@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, User, Lock, Eye, EyeOff, AlertCircle, ShieldCheck } from 'lucide-react';
 
@@ -8,6 +9,7 @@ import { LogIn, User, Lock, Eye, EyeOff, AlertCircle, ShieldCheck } from 'lucide
  * Optimized for clarity, simplicity, and professional enterprise branding.
  */
 const Login = () => {
+  const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +26,7 @@ const Login = () => {
 
     try {
       await login(username, password);
-      window.location.href = '/';
+      navigate('/', { replace: true });
     } catch (err) {
       console.error(err);
       setError('Authentication failed. Please verify your credentials.');

@@ -8,6 +8,19 @@ import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 
+// Helper to format HH:MM:SS string to 12-hour AM/PM format
+const formatTime = (timeStr, fallback = '--:--') => {
+  if (!timeStr) return fallback;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${hours}:${minutes.padStart(2, '0')} ${ampm}`;
+};
+
 /**
  * Attendance Recording - Core HRIS Implementation
  * Simple Clock In / Out flow without Biometric or Geo-blocking (removed for pre-oral defense)
@@ -18,6 +31,7 @@ const Attendance = () => {
   const [currentPos, setCurrentPos] = useState({ lat: 13.9408, lng: 121.6210 });
   const [geoStatus, setGeoStatus] = useState('locating');
   const [message, setMessage] = useState(null);
+  const [showOtConfirm, setShowOtConfirm] = useState(false);
 
   // 1. Fetch User Profile
   const { data: me } = useQuery({
@@ -72,11 +86,15 @@ const Attendance = () => {
       setTimeout(() => setMessage(null), 5000);
     },
     onError: (err) => {
-      setMessage({ 
-        type: 'error', 
-        text: err.response?.data?.detail || 'Attendance check-in failed.' 
-      });
-      setTimeout(() => setMessage(null), 5000);
+      if (err.response?.data?.requires_ot_confirmation) {
+        setShowOtConfirm(true);
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: err.response?.data?.detail || 'Attendance check-in failed.' 
+        });
+        setTimeout(() => setMessage(null), 5000);
+      }
     }
   });
 
@@ -157,6 +175,39 @@ const Attendance = () => {
         </div>
       )}
 
+      {showOtConfirm && (
+        <div className="alert alert-warning rounded-xl text-white font-bold shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in slide-in-from-top-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            <span>Your regular workday is already completed. Do you want to log Overtime (OT)?</span>
+          </div>
+          <div className="flex gap-2 w-full md:w-auto justify-end">
+            <button 
+              onClick={() => {
+                setShowOtConfirm(false);
+              }}
+              className="btn btn-sm btn-ghost text-white font-bold"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={() => {
+                setShowOtConfirm(false);
+                checkInMutation.mutate({
+                  qr_token: qrData?.token || 'legacy_face_only',
+                  lat: currentPos.lat,
+                  lng: currentPos.lng,
+                  is_ot: true
+                });
+              }}
+              className="btn btn-sm btn-active bg-white text-warning font-black uppercase border-none rounded-lg"
+            >
+              Yes, Log OT
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 4. Recent History Table */}
       <div className="bg-white border border-base-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="p-5 border-b border-base-100 flex items-center gap-2 bg-base-50/50">
@@ -183,20 +234,20 @@ const Attendance = () => {
                     <td className="font-bold text-xs px-6">{rec.date}</td>
                     <td className="text-center">
                       <div className="flex flex-col">
-                        <span className="text-success font-black text-[10px] tracking-tight">{rec.am_in?.substring(0, 5) || '--:--'}</span>
-                        <span className="text-error font-black text-[10px] tracking-tight">{rec.am_out?.substring(0, 5) || '--:--'}</span>
+                        <span className="text-success font-black text-[10px] tracking-tight">{formatTime(rec.am_in)}</span>
+                        <span className="text-error font-black text-[10px] tracking-tight">{formatTime(rec.am_out)}</span>
                       </div>
                     </td>
                     <td className="text-center">
                       <div className="flex flex-col">
-                        <span className="text-success font-black text-[10px] tracking-tight">{rec.pm_in?.substring(0, 5) || '--:--'}</span>
-                        <span className="text-error font-black text-[10px] tracking-tight">{rec.pm_out?.substring(0, 5) || '--:--'}</span>
+                        <span className="text-success font-black text-[10px] tracking-tight">{formatTime(rec.pm_in)}</span>
+                        <span className="text-error font-black text-[10px] tracking-tight">{formatTime(rec.pm_out)}</span>
                       </div>
                     </td>
                     <td className="text-center">
                       <div className="flex flex-col">
-                        <span className="text-primary font-black text-[10px] tracking-tight">{rec.ot_in?.substring(0, 5) || '--:--'}</span>
-                        <span className="text-primary font-black text-[10px] tracking-tight">{rec.ot_out?.substring(0, 5) || '--:--'}</span>
+                        <span className="text-primary font-black text-[10px] tracking-tight">{formatTime(rec.ot_in)}</span>
+                        <span className="text-primary font-black text-[10px] tracking-tight">{formatTime(rec.ot_out)}</span>
                       </div>
                     </td>
                     <td>

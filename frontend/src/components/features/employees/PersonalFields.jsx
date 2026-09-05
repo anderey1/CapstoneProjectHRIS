@@ -174,44 +174,42 @@ const PersonalFields = ({ isEdit, register, errors, watch }) => {
       {/* 6. Account Details */}
       {!isEdit && (
         <div className="space-y-4">
-          <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60 border-b border-base-100 pb-2">Account Details</h4>
+          <div className="flex justify-between items-center border-b border-base-100 pb-2">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/60">Account Details</h4>
+            <span className="text-[8px] bg-primary/10 text-primary font-black uppercase tracking-widest px-2 py-0.5 rounded">Optional</span>
+          </div>
+          <p className="text-[9px] font-bold text-base-content/40 uppercase leading-relaxed mb-2">
+            Leave Username & Password blank to let the employee register their own portal account later.
+          </p>
+          
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Username</label>
             <input 
-              {...register("username", { required: !isEdit ? "Username is required" : false })}
+              {...register("username")}
               type="text" 
-              placeholder="e.g. jdoe2026" 
-              className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.username ? 'border-error' : ''}`} 
+              placeholder="e.g. jdoe2026 (Optional)" 
+              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
             />
-            {errors.username && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.username.message}</span>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Email</label>
               <input 
-                {...register("email", { 
-                  required: !isEdit ? "Email is required" : false,
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Invalid email address"
-                  }
-                })}
+                {...register("email")}
                 type="email" 
-                placeholder="email@deped.gov.ph" 
-                className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.email ? 'border-error' : ''}`} 
+                placeholder="email@deped.gov.ph (Optional)" 
+                className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
               />
-              {errors.email && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.email.message}</span>}
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Password</label>
               <input 
-                {...register("password", { required: !isEdit ? "Password is required" : false })}
+                {...register("password")}
                 type="password" 
-                placeholder="••••••••" 
-                className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.password ? 'border-error' : ''}`} 
+                placeholder="•••••••• (Optional)" 
+                className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
               />
-              {errors.password && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.password.message}</span>}
             </div>
           </div>
         </div>

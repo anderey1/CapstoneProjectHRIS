@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
 import { Search, Calendar } from 'lucide-react';
 
+// Helper to format HH:MM:SS string to 12-hour AM/PM format
+const formatTime = (timeStr, fallback = '--:--') => {
+  if (!timeStr) return fallback;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${hours}:${minutes.padStart(2, '0')} ${ampm}`;
+};
+
 /**
  * Attendance Logs List (Table & Card View)
  * 
@@ -104,22 +117,22 @@ const AttendanceLogs = ({
                 <div className="bg-base-50 p-2 rounded-lg border border-base-100">
                   <p className="text-[7px] font-black uppercase opacity-40 mb-1">Morning</p>
                   <div className="flex flex-col">
-                    <span className="text-success font-black text-[9px]">{rec.am_in?.substring(0, 5) || '--:--'}</span>
-                    <span className="text-error font-black text-[9px]">{rec.am_out?.substring(0, 5) || '--:--'}</span>
+                    <span className="text-success font-black text-[9px]">{formatTime(rec.am_in)}</span>
+                    <span className="text-error font-black text-[9px]">{formatTime(rec.am_out)}</span>
                   </div>
                 </div>
                 <div className="bg-base-50 p-2 rounded-lg border border-base-100">
                   <p className="text-[7px] font-black uppercase opacity-40 mb-1">Afternoon</p>
                   <div className="flex flex-col">
-                    <span className="text-success font-black text-[9px]">{rec.pm_in?.substring(0, 5) || '--:--'}</span>
-                    <span className="text-error font-black text-[9px]">{rec.pm_out?.substring(0, 5) || '--:--'}</span>
+                    <span className="text-success font-black text-[9px]">{formatTime(rec.pm_in)}</span>
+                    <span className="text-error font-black text-[9px]">{formatTime(rec.pm_out)}</span>
                   </div>
                 </div>
                 <div className="bg-base-50 p-2 rounded-lg border border-base-100">
                   <p className="text-[7px] font-black uppercase opacity-40 mb-1">Overtime</p>
                   <div className="flex flex-col">
-                    <span className="text-primary font-black text-[9px]">{rec.ot_in?.substring(0, 5) || '--:--'}</span>
-                    <span className="text-primary font-black text-[9px]">{rec.ot_out?.substring(0, 5) || '--:--'}</span>
+                    <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_in)}</span>
+                    <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_out)}</span>
                   </div>
                 </div>
               </div>
@@ -171,20 +184,20 @@ const AttendanceLogs = ({
                     <td className="text-[10px] font-bold opacity-60 uppercase">{rec.date}</td>
                     <td className="text-center">
                         <div className="flex flex-col gap-0.5">
-                            <span className="text-success font-black text-[9px]">{rec.am_in?.substring(0, 5) || '--:--'}</span>
-                            <span className="text-error font-black text-[9px]">{rec.am_out?.substring(0, 5) || '--:--'}</span>
+                            <span className="text-success font-black text-[9px]">{formatTime(rec.am_in)}</span>
+                            <span className="text-error font-black text-[9px]">{formatTime(rec.am_out)}</span>
                         </div>
                     </td>
                     <td className="text-center">
                         <div className="flex flex-col gap-0.5">
-                            <span className="text-success font-black text-[9px]">{rec.pm_in?.substring(0, 5) || '--:--'}</span>
-                            <span className="text-error font-black text-[9px]">{rec.pm_out?.substring(0, 5) || '--:--'}</span>
+                            <span className="text-success font-black text-[9px]">{formatTime(rec.pm_in)}</span>
+                            <span className="text-error font-black text-[9px]">{formatTime(rec.pm_out)}</span>
                         </div>
                     </td>
                     <td className="text-center">
                         <div className="flex flex-col gap-0.5">
-                            <span className="text-primary font-black text-[9px]">{rec.ot_in?.substring(0, 5) || '--:--'}</span>
-                            <span className="text-primary font-black text-[9px]">{rec.ot_out?.substring(0, 5) || '--:--'}</span>
+                            <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_in)}</span>
+                            <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_out)}</span>
                         </div>
                     </td>
                   </tr>

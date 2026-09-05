@@ -33,6 +33,11 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
             </div>
             <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
               <span className="font-mono text-[11px] text-slate-400">#{emp.id.toString().padStart(4, '0')}</span>
+              {emp.agency_employee_no && (
+                <span className="text-[10px] font-medium text-[#0038A8] bg-blue-50 px-1.5 py-0.2 rounded border border-blue-100">
+                  No: {emp.agency_employee_no}
+                </span>
+              )}
               <span>•</span>
               <span className="truncate">{emp.user_details?.email || 'No email'}</span>
             </div>

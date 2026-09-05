@@ -109,7 +109,7 @@ class ApplicantViewSet(viewsets.ModelViewSet):
                     'permanent_address': pds_data.get('permanent_address') if pds_data else '',
                     'position': applicant.position_applied,
                     'department': 'Operations',
-                    'date_hired': timezone.now().date(),
+                    'date_hired': timezone.localdate(),
                 }
                 
                 employee = Employee.objects.create_with_user(

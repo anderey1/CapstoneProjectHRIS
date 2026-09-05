@@ -75,7 +75,43 @@ export function useEmployees() {
     },
   });
 
-  // 6. Unified Save Handler (Handles FormData vs JSON building)
+  // 6. Pending Registrations Query
+  const { data: rawPending = [], isLoading: isPendingLoading } = useQuery({
+    queryKey: ['pendingRegistrations'],
+    queryFn: async () => {
+      const response = await api.get('employees/pending-registrations/');
+      return Array.isArray(response.data) ? response.data : response.data.results || [];
+    },
+  });
+
+  const pendingRegistrations = Array.isArray(rawPending) ? rawPending : rawPending?.results || [];
+
+  // 7. Approve Registration Mutation
+  const approveMutation = useMutation({
+    mutationFn: (id) => api.post(`employees/${id}/approve-registration/`),
+    onSuccess: (res) => {
+      invalidateEmployees();
+      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
+      toast.success(res.data?.message || 'Registration approved.');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.error || err.response?.data?.detail || 'Failed to approve registration.');
+    }
+  });
+
+  // 8. Reject Registration Mutation
+  const rejectMutation = useMutation({
+    mutationFn: (id) => api.post(`employees/${id}/reject-registration/`),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
+      toast.info(res.data?.message || 'Registration request rejected.');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.error || err.response?.data?.detail || 'Failed to reject registration.');
+    }
+  });
+
+  // 9. Unified Save Handler (Handles FormData vs JSON building)
   const saveEmployee = async (formData, employeeId = null) => {
     const payload = buildEmployeePayload(formData);
     if (employeeId) {
@@ -87,7 +123,9 @@ export function useEmployees() {
   return {
     employees,
     schools,
+    pendingRegistrations,
     isLoading: isEmployeesLoading || isSchoolsLoading,
+    isPendingLoading,
     isError,
     error,
     addEmployee: addMutation.mutateAsync,
@@ -96,6 +134,10 @@ export function useEmployees() {
     isUpdating: updateMutation.isPending,
     deleteEmployee: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
+    approveRegistration: approveMutation.mutateAsync,
+    isApproving: approveMutation.isPending,
+    rejectRegistration: rejectMutation.mutateAsync,
+    isRejecting: rejectMutation.isPending,
     isSaving: addMutation.isPending || updateMutation.isPending,
     saveEmployee,
   };

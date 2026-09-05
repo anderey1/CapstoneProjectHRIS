@@ -12,6 +12,10 @@
   --color-secondary-content: #1e293b;
   --color-accent: oklch(57.7% 0.245 27.325);
   --color-accent-content: #ffffff;
+  --color-deped-navy: #0a225c;
+  --color-deped-blue: #0038a8;
+  --color-deped-yellow: #fdb913;
+  --color-deped-red: #ce1126;
 }
 
 :root {

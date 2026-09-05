@@ -1,106 +1,42 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusCircle, CheckCircle2, AlertCircle, Coins } from 'lucide-react';
-import api from '../../api/axios';
-import { QUERY_KEYS } from '../../api/queryKeys';
+import { PlusCircle, AlertCircle, Coins } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import LoanStats from '../../components/features/loans/LoanStats';
-import LoanCard from '../../components/features/loans/LoanCard';
-import ApplyLoanModal from '../../components/features/loans/ApplyLoanModal';
+import { 
+  LoanStats, 
+  LoanCard, 
+  ApplyLoanModal, 
+  useLoans 
+} from '../../features/loans';
 
 /**
  * My Loans (Employee View)
+ * Clean feature-hook driven view with zero data-fetching boilerplate.
  */
 const MyLoans = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [activeModal, setActiveModal] = useState(null);
   const [selectedLoan, setSelectedLoan] = useState(null);
 
-  // 1. Data Fetching
-  const { data: loans, isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.LOANS, user?.id],
-    queryFn: async () => {
-      const response = await api.get('loans/');
-      return response.data;
-    },
-  });
+  const {
+    loans,
+    isLoading,
+    applyLoan,
+    isApplying,
+    resubmitLoan,
+    isResubmitting,
+  } = useLoans();
 
-  // 2. Mutations
-  const applyMutation = useMutation({
-    mutationFn: async ({ formData, files }) => {
-      // 1. Create the loan
-      const res = await api.post('loans/', formData);
-      const loanId = res.data.id;
-
-      // 2. Upload files if any
-      for (const { doc_type, file } of files) {
-        const fd = new FormData();
-        fd.append('doc_type', doc_type);
-        fd.append('file', file);
-        await api.post(`loans/${loanId}/upload_document/`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+  const handleApplySubmit = async (formData, files) => {
+    try {
+      if (selectedLoan) {
+        await resubmitLoan({ id: selectedLoan.id, formData, files });
+      } else {
+        await applyLoan({ formData, files });
       }
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
       setActiveModal(null);
       setSelectedLoan(null);
-      alert('Application sent successfully!');
-    },
-    onError: (err) => {
-      const errorData = err.response?.data;
-      let msg = 'Application failed. Please ensure all data is correct and files are valid.';
-      if (errorData) {
-        if (typeof errorData === 'string') msg = errorData;
-        else if (Array.isArray(errorData)) msg = errorData[0];
-        else if (errorData.detail) msg = errorData.detail;
-      }
-      alert(msg);
-    }
-  });
-
-  const resubmitMutation = useMutation({
-    mutationFn: async ({ id, formData, files }) => {
-      // 1. Resubmit the loan data
-      const res = await api.post(`loans/${id}/resubmit/`, formData);
-      
-      // 2. Upload new files if any
-      for (const { doc_type, file } of files) {
-        const fd = new FormData();
-        fd.append('doc_type', doc_type);
-        fd.append('file', file);
-        await api.post(`loans/${id}/upload_document/`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-      }
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
-      setActiveModal(null);
-      setSelectedLoan(null);
-      alert('Application resubmitted successfully!');
-    },
-    onError: (err) => {
-      const errorData = err.response?.data;
-      let msg = 'Resubmission failed. Please check your data and try again.';
-      if (errorData) {
-        if (typeof errorData === 'string') msg = errorData;
-        else if (Array.isArray(errorData)) msg = errorData[0];
-        else if (errorData.detail) msg = errorData.detail;
-      }
-      alert(msg);
-    }
-  });
-
-  const handleApplySubmit = (formData, files) => {
-    if (selectedLoan) {
-      resubmitMutation.mutate({ id: selectedLoan.id, formData, files });
-    } else {
-      applyMutation.mutate({ formData, files });
+    } catch {
+      // Error handled by hook's toast
     }
   };
 
@@ -108,8 +44,6 @@ const MyLoans = () => {
     setSelectedLoan(loan);
     setActiveModal('apply');
   };
-
-  const loanList = Array.isArray(loans) ? loans : (loans?.results || []);
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
@@ -119,7 +53,6 @@ const MyLoans = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
@@ -143,13 +76,13 @@ const MyLoans = () => {
 
       {/* Summary Stats */}
       <div className="animate-in fade-in duration-700">
-        <LoanStats loans={loanList} />
+        <LoanStats loans={loans} />
       </div>
 
       {/* Grid Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {loanList.length > 0 ? (
-          loanList.map((loan) => (
+        {loans.length > 0 ? (
+          loans.map((loan) => (
             <LoanCard 
               key={loan.id} 
               loan={loan} 
@@ -169,7 +102,7 @@ const MyLoans = () => {
         isOpen={activeModal === 'apply'} 
         onClose={() => { setActiveModal(null); setSelectedLoan(null); }} 
         onSubmit={handleApplySubmit} 
-        isPending={applyMutation.isPending || resubmitMutation.isPending} 
+        isPending={isApplying || isResubmitting} 
         user={user}
         initialData={selectedLoan}
       />

@@ -1,22 +1,33 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, CalendarRange } from 'lucide-react';
-import api from '../../api/axios';
-import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-
-// Modular Subcomponents
-import LeaveBalanceCards from './leaves/LeaveBalanceCards';
-import LeaveHistorySection from './leaves/LeaveHistorySection';
-import SupervisorApprovalQueue from './leaves/SupervisorApprovalQueue';
-import LeaveApplicationModal from './leaves/LeaveApplicationModal';
+import { 
+  useLeaves, 
+  LeaveBalanceCards, 
+  LeaveHistorySection, 
+  SupervisorApprovalQueue, 
+  LeaveApplicationModal 
+} from '../../features/leaves';
 
 /**
  * MyLeaves (Employee View) - CSC Form No. 6 Compliant Orchestrator
+ * Clean feature-hook driven view with zero data-fetching boilerplate.
  */
 const MyLeaves = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const {
+    employee,
+    myLeaves,
+    teamLeaves,
+    isLoading,
+    applyLeave,
+    isApplying,
+    approveLeave,
+    isApproving,
+    rejectLeave,
+    isRejecting,
+    calculateWorkingDays,
+  } = useLeaves();
 
   // Modal & Form States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,98 +37,23 @@ const MyLeaves = () => {
   const [isWithinPhilippines, setIsWithinPhilippines] = useState(true);
 
   // Tab State for Supervisors / Managers
-  const [activeMainTab, setActiveMainTab] = useState('mine'); // 'mine', 'approvals'
-
-  const calculateWorkingDays = (start, end) => {
-    if (!start || !end) return 0;
-    const sDate = new Date(start);
-    const eDate = new Date(end);
-    if (sDate > eDate) return 0;
-    let count = 0;
-    let current = new Date(sDate);
-    while (current <= eDate) {
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) { // Mon-Fri
-        count++;
-      }
-      current.setDate(current.getDate() + 1);
-    }
-    return count;
-  };
+  const [activeMainTab, setActiveMainTab] = useState('mine');
 
   const durationDays = calculateWorkingDays(startDate, endDate);
 
-  // 1. Data Fetching
-  const { data: employee } = useQuery({
-    queryKey: ['me'],
-    queryFn: async () => {
-      const res = await api.get('employees/me/');
-      return res.data;
-    }
-  });
-
-  const { data: leaves = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.LEAVES],
-    queryFn: async () => {
-      const res = await api.get('leaves/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    }
-  });
-
-  // 2. Mutations
-  const applyMutation = useMutation({
-    mutationFn: (formData) => api.post('leaves/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
-      queryClient.invalidateQueries({ queryKey: ['me'] }); 
-      setIsModalOpen(false);
-      alert('Leave application submitted successfully!');
-    },
-    onError: (err) => {
-      const errorData = err.response?.data;
-      let msg = 'Application failed. Please check requirements.';
-      if (errorData) {
-        if (typeof errorData === 'string') msg = errorData;
-        else if (errorData.detail) msg = errorData.detail;
-        else if (typeof errorData === 'object') {
-          msg = Object.entries(errorData)
-            .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors[0] : errors}`)
-            .join('\n');
-        }
-      }
-      alert(msg);
-    }
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: (id) => api.post(`leaves/${id}/approve/`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
-      queryClient.invalidateQueries({ queryKey: ['me'] });
-    },
-    onError: (err) => alert(err.response?.data?.detail || "Approval failed.")
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: ({ id, reason }) => api.post(`leaves/${id}/reject/`, { disapproval_reason: reason }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
-      queryClient.invalidateQueries({ queryKey: ['me'] });
-    },
-    onError: (err) => alert(err.response?.data?.detail || "Rejection failed.")
-  });
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    applyMutation.mutate(formData);
+    try {
+      await applyLeave(formData);
+      setIsModalOpen(false);
+    } catch {
+      // Error handled by hook's toast
+    }
   };
 
-  const isSupervisorOrManager = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor;
-  const myLeaves = leaves.filter(l => l.employee === employee?.id);
-  const teamLeaves = leaves.filter(l => l.employee !== employee?.id);
+  const isSupervisorOrManager = 
+    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor;
 
   if (isLoading) {
     return (
@@ -199,10 +135,10 @@ const MyLeaves = () => {
       {activeMainTab === 'approvals' && (
         <SupervisorApprovalQueue 
           teamLeaves={teamLeaves}
-          onApprove={(id) => approveMutation.mutate(id)}
-          onReject={({ id, reason }) => rejectMutation.mutate({ id, reason })}
-          isApprovePending={approveMutation.isPending}
-          isRejectPending={rejectMutation.isPending}
+          onApprove={(id) => approveLeave(id)}
+          onReject={({ id, reason }) => rejectLeave({ id, reason })}
+          isApprovePending={isApproving}
+          isRejectPending={isRejecting}
         />
       )}
 
@@ -211,7 +147,7 @@ const MyLeaves = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
-        isSubmitting={applyMutation.isPending}
+        isSubmitting={isApplying}
         leaveType={leaveType}
         setLeaveType={setLeaveType}
         startDate={startDate}

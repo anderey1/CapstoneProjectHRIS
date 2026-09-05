@@ -65,7 +65,7 @@ const SidebarContent = ({ closeDrawer }) => {
   ];
 
   return (
-    <aside className="flex flex-col h-full bg-[#0A225C] text-white w-72 border-r border-slate-800/40 shadow-xl">
+    <aside className="flex flex-col h-full bg-deped-navy text-white w-72 border-r border-slate-800/40 shadow-xl">
       
       {/* Brand Section */}
       <div className="p-6 border-b border-white/10">

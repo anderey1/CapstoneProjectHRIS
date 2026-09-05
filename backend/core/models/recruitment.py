@@ -83,13 +83,14 @@ class Applicant(models.Model):
 
     def save(self, *args, **kwargs):
         # Auto-compute total score (Max 100 points)
+        from decimal import Decimal
         self.total_score = (
-            self.education_score + 
-            self.training_score + 
-            self.experience_score + 
-            self.demo_teaching_score +
-            self.exam_score +
-            self.interview_score
+            Decimal(str(self.education_score or 0)) + 
+            Decimal(str(self.training_score or 0)) + 
+            Decimal(str(self.experience_score or 0)) + 
+            Decimal(str(self.demo_teaching_score or 0)) +
+            Decimal(str(self.exam_score or 0)) +
+            Decimal(str(self.interview_score or 0))
         )
         super().save(*args, **kwargs)
 

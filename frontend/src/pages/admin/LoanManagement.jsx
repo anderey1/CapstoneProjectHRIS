@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Coins, Clock, CheckCircle2, XCircle, ChevronRight, Tag,
-  Users, FileText, AlertCircle, Eye, MessageSquare,
+  Users, AlertCircle, Eye, MessageSquare,
   TrendingUp, Circle, FileCheck, Calendar
 } from 'lucide-react';
-import api from '../../api/axios';
-import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-import { ROLES } from '../../utils/constants';
-import SubsidiaryLedger from '../../components/features/loans/SubsidiaryLedger';
+import { useLoans, SubsidiaryLedger } from '../../features/loans';
 
 const PURPOSE_LABELS = {
   general: 'General',
@@ -42,97 +38,31 @@ const getFileUrl = (path) => {
  */
 const LoanManagement = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [approveRemarks, setApproveRemarks] = useState('');
-  const [successMsg, setSuccessMsg] = useState(null);
 
-  // Data Fetching
-  const { data: loans = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.LOANS],
-    queryFn: async () => {
-      const res = await api.get('loans/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
-  });
-
-  // Checklist for selected loan
-  const { data: checklist } = useQuery({
-    queryKey: [QUERY_KEYS.LOANS, selectedLoan?.id, 'checklist'],
-    queryFn: async () => {
-      const res = await api.get(`loans/${selectedLoan.id}/checklist/`);
-      return res.data;
-    },
-    enabled: !!selectedLoan,
-  });
-
-  // Documents for selected loan
-  const { data: documents = [] } = useQuery({
-    queryKey: [QUERY_KEYS.LOANS, selectedLoan?.id, 'documents'],
-    queryFn: async () => {
-      const res = await api.get(`loans/${selectedLoan.id}/documents/`);
-      return res.data;
-    },
-    enabled: !!selectedLoan,
-  });
-
-  // Mutations
-  const verifyMutation = useMutation({
-    mutationFn: (id) => api.post(`loans/${id}/verify/`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
-      setSelectedLoan(null);
-      showToast('Loan documents verified successfully!');
-    },
-    onError: (err) => showToast(err.response?.data?.detail || 'Verification failed.', 'error'),
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: ({ id, remarks }) => api.post(`loans/${id}/approve/`, { remarks }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
-      setSelectedLoan(null);
-      setApproveRemarks('');
-      showToast('Loan approved successfully!');
-    },
-    onError: (err) => showToast(err.response?.data?.detail || 'Approval failed.', 'error'),
-  });
-
-  const disburseMutation = useMutation({
-    mutationFn: (id) => api.post(`loans/${id}/release-funds/`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
-      setSelectedLoan(null);
-      showToast('Loan funds released successfully!');
-    },
-    onError: (err) => showToast(err.response?.data?.detail || 'Disbursement failed.', 'error'),
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: ({ id, remarks }) => api.post(`loans/${id}/reject/`, { remarks }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LOANS] });
-      setSelectedLoan(null);
-      setRejectRemarks('');
-      showToast('Loan rejected.');
-    },
-    onError: (err) => showToast(err.response?.data?.detail || 'Rejection failed.', 'error'),
-  });
-
-  const showToast = (msg, type = 'success') => {
-    setSuccessMsg({ text: msg, type });
-    setTimeout(() => setSuccessMsg(null), 3000);
-  };
-
-  // Filtering
-  const pendingLoans = loans.filter(l => l.status === 'pending');
-  const verifiedLoans = loans.filter(l => l.status === 'verified');
-  const approvedLoans = loans.filter(l => l.status === 'approved');
-  const releasedLoans = loans.filter(l => l.status === 'released');
-  const rejectedLoans = loans.filter(l => l.status === 'rejected');
-  const paidLoans = loans.filter(l => l.status === 'paid');
+  const {
+    checklist,
+    documents,
+    isLoading,
+    pendingLoans,
+    verifiedLoans,
+    approvedLoans,
+    releasedLoans,
+    rejectedLoans,
+    paidLoans,
+    totalReleasedValue,
+    verifyLoan,
+    isVerifying,
+    approveLoan,
+    isApproving,
+    disburseLoan,
+    isDisbursing,
+    rejectLoan,
+    isRejecting,
+  } = useLoans(selectedLoan?.id);
 
   const filteredLoans = activeTab === 'pending' ? pendingLoans
     : activeTab === 'verified' ? verifiedLoans
@@ -140,8 +70,6 @@ const LoanManagement = () => {
     : activeTab === 'released' ? [...releasedLoans, ...paidLoans]
     : activeTab === 'rejected' ? rejectedLoans
     : paidLoans;
-
-  const totalReleasedValue = [...releasedLoans, ...paidLoans].reduce((acc, l) => acc + parseFloat(l.loan_amount || 0), 0);
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center">
@@ -151,16 +79,6 @@ const LoanManagement = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
-
-      {/* Toast */}
-      {successMsg && (
-        <div className="toast toast-top toast-end z-[100] mt-16">
-          <div className={`alert ${successMsg.type === 'error' ? 'alert-error' : 'bg-primary'} text-white shadow-xl border-none rounded-lg flex items-center gap-3 py-3 px-6`}>
-            {successMsg.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
-            <span className="font-bold text-xs uppercase tracking-widest">{successMsg.text}</span>
-          </div>
-        </div>
-      )}
 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -494,11 +412,18 @@ const LoanManagement = () => {
                               Verify that all required documents are uploaded and valid before endorsing to the Superintendent.
                             </p>
                             <button
-                              onClick={() => verifyMutation.mutate(selectedLoan.id)}
-                              disabled={verifyMutation.isPending}
+                              onClick={async () => {
+                                try {
+                                  await verifyLoan(selectedLoan.id);
+                                  setSelectedLoan(null);
+                                } catch {
+                                  // Handled by hook
+                                }
+                              }}
+                              disabled={isVerifying}
                               className="btn btn-primary btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
                             >
-                              {verifyMutation.isPending ? 'Verifying...' : 'Verify & Endorse Loan Documents'}
+                              {isVerifying ? 'Verifying...' : 'Verify & Endorse Loan Documents'}
                             </button>
                           </div>
 
@@ -512,11 +437,19 @@ const LoanManagement = () => {
                               className="textarea textarea-sm w-full bg-white border-error/20 focus:border-error rounded-lg text-xs font-bold"
                             />
                             <button
-                              onClick={() => rejectMutation.mutate({ id: selectedLoan.id, remarks: rejectRemarks })}
-                              disabled={rejectMutation.isPending || !rejectRemarks.trim()}
+                              onClick={async () => {
+                                try {
+                                  await rejectLoan({ id: selectedLoan.id, remarks: rejectRemarks });
+                                  setSelectedLoan(null);
+                                  setRejectRemarks('');
+                                } catch {
+                                  // Handled by hook
+                                }
+                              }}
+                              disabled={isRejecting || !rejectRemarks.trim()}
                               className="btn btn-outline border-error/30 text-error hover:bg-error hover:border-error btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
                             >
-                              {rejectMutation.isPending ? 'Processing...' : 'Reject Application'}
+                              {isRejecting ? 'Processing...' : 'Reject Application'}
                             </button>
                           </div>
                         </>
@@ -544,11 +477,19 @@ const LoanManagement = () => {
                               className="textarea textarea-sm w-full bg-white border-success/20 focus:border-success rounded-lg text-xs font-bold"
                             />
                             <button
-                              onClick={() => approveMutation.mutate({ id: selectedLoan.id, remarks: approveRemarks })}
-                              disabled={approveMutation.isPending}
+                              onClick={async () => {
+                                try {
+                                  await approveLoan({ id: selectedLoan.id, remarks: approveRemarks });
+                                  setSelectedLoan(null);
+                                  setApproveRemarks('');
+                                } catch {
+                                  // Handled by hook
+                                }
+                              }}
+                              disabled={isApproving}
                               className="btn btn-success btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-success/20"
                             >
-                              {approveMutation.isPending ? 'Processing...' : 'Approve Application'}
+                              {isApproving ? 'Processing...' : 'Approve Application'}
                             </button>
                           </div>
 
@@ -562,11 +503,19 @@ const LoanManagement = () => {
                               className="textarea textarea-sm w-full bg-white border-error/20 focus:border-error rounded-lg text-xs font-bold"
                             />
                             <button
-                              onClick={() => rejectMutation.mutate({ id: selectedLoan.id, remarks: rejectRemarks })}
-                              disabled={rejectMutation.isPending || !rejectRemarks.trim()}
+                              onClick={async () => {
+                                try {
+                                  await rejectLoan({ id: selectedLoan.id, remarks: rejectRemarks });
+                                  setSelectedLoan(null);
+                                  setRejectRemarks('');
+                                } catch {
+                                  // Handled by hook
+                                }
+                              }}
+                              disabled={isRejecting || !rejectRemarks.trim()}
                               className="btn btn-outline border-error/30 text-error hover:bg-error hover:border-error btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
                             >
-                              {rejectMutation.isPending ? 'Processing...' : 'Reject Application'}
+                              {isRejecting ? 'Processing...' : 'Reject Application'}
                             </button>
                           </div>
                         </>
@@ -588,11 +537,18 @@ const LoanManagement = () => {
                             Verify fund availability before releasing.
                           </p>
                           <button
-                            onClick={() => disburseMutation.mutate(selectedLoan.id)}
-                            disabled={disburseMutation.isPending}
+                            onClick={async () => {
+                              try {
+                                await disburseLoan(selectedLoan.id);
+                                setSelectedLoan(null);
+                              } catch {
+                                // Handled by hook
+                              }
+                            }}
+                            disabled={isDisbursing}
                             className="btn btn-primary btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
                           >
-                            {disburseMutation.isPending ? 'Processing...' : 'Release Funds (Payout)'}
+                            {isDisbursing ? 'Processing...' : 'Release Funds (Payout)'}
                           </button>
                         </div>
                       ) : (

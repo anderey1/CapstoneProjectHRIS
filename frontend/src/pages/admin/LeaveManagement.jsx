@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, CheckCircle2, XCircle, Clock as ClockIcon, ChevronRight, FileText, CalendarRange, MapPin, Activity, GraduationCap, DollarSign } from 'lucide-react';
-import api from '../../api/axios';
-import { QUERY_KEYS } from '../../api/queryKeys';
+import { 
+   Clock, CheckCircle2, XCircle, Clock as ClockIcon, 
+   ChevronRight, CalendarRange, MapPin, Activity, 
+   GraduationCap, DollarSign 
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { ROLES } from '../../utils/constants';
+import { 
+   useLeaves, 
+   DocumentAttachmentCard, 
+   CSC_DOCUMENT_SPECS 
+} from '../../features/leaves';
 
 const formatStatus = (status) => {
    if (status === 'pending_supervisor') return 'Pending Supervisor';
@@ -20,41 +25,20 @@ const formatStatus = (status) => {
  */
 const LeaveManagement = () => {
    const { user } = useAuth();
-   const queryClient = useQueryClient();
    const [activeTab, setActiveTab] = useState('pending');
    const [selectedLeave, setSelectedLeave] = useState(null);
    const [rejectionReason, setRejectionReason] = useState('');
 
    const canManage = user?.role === 'HR';
 
-   // 1. Data Fetching
-   const { data: leaves = [], isLoading } = useQuery({
-      queryKey: [QUERY_KEYS.LEAVES],
-      queryFn: async () => {
-         const res = await api.get('leaves/');
-         return Array.isArray(res.data) ? res.data : res.data.results || [];
-      }
-   });
-
-   // 2. Mutations
-   const approveMutation = useMutation({
-      mutationFn: (id) => api.post(`leaves/${id}/approve/`),
-      onSuccess: () => {
-         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
-         setSelectedLeave(null);
-      },
-      onError: (err) => alert(err.response?.data?.detail || "Approval failed.")
-   });
-
-   const rejectMutation = useMutation({
-      mutationFn: ({ id, reason }) => api.post(`leaves/${id}/reject/`, { disapproval_reason: reason }),
-      onSuccess: () => {
-         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
-         setSelectedLeave(null);
-         setRejectionReason('');
-      },
-      onError: (err) => alert(err.response?.data?.detail || "Rejection failed.")
-   });
+   const { 
+      leaves, 
+      isLoading, 
+      approveLeave, 
+      isApproving, 
+      rejectLeave, 
+      isRejecting 
+   } = useLeaves();
 
    const filteredLeaves = leaves.filter(l => {
       if (activeTab === 'pending') return ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status);
@@ -311,247 +295,19 @@ const LeaveManagement = () => {
                            </div>
                         </div>
 
-                        {selectedLeave.supporting_document && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Supporting Attachment</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">CSC Form 6 Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.supporting_document} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.travel_authority_document && (
-                           <div className="group relative p-4 bg-secondary/5 border border-secondary/20 rounded-xl flex items-center justify-between transition-all hover:bg-secondary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-secondary shadow-sm border border-secondary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Travel Authority</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Required for Travel Abroad / 30+ Days</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.travel_authority_document} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-secondary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.clearance_document && (
-                           <div className="group relative p-4 bg-accent/5 border border-accent/20 rounded-xl flex items-center justify-between transition-all hover:bg-accent/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-accent shadow-sm border border-accent/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-accent uppercase tracking-widest">Clearance Document</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Required for Travel Abroad / 30+ Days</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.clearance_document} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-accent rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.maternity_notice_allocation && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Notice of Allocation (CS Form 6a)</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Maternity Leave Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.maternity_notice_allocation} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.paternity_marriage_contract && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Marriage Contract</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Paternity Leave Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.paternity_marriage_contract} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.vawc_medical_cert && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Medical Certificate</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">VAWC Leave Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.vawc_medical_cert} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.rehab_letter_request && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Letter Request</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Rehabilitation Privilege Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.rehab_letter_request} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.rehab_police_report && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Police Report</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Rehabilitation Privilege Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.rehab_police_report} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.rehab_concurrence && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Written Concurrence of Govt Physician</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Rehabilitation Privilege Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.rehab_concurrence} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.women_special_histopath && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Histopathology Report</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Women Special Benefit Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.women_special_histopath} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
-
-                        {selectedLeave.women_special_operative_technique && (
-                           <div className="group relative p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all hover:bg-primary/10">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                                    <FileText className="w-5 h-5" />
-                                 </div>
-                                 <div>
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Operative Technique</p>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase">Women Special Benefit Requirement</p>
-                                 </div>
-                              </div>
-                              <a 
-                                 href={selectedLeave.women_special_operative_technique} 
-                                 target="_blank" 
-                                 rel="noreferrer" 
-                                 className="btn btn-sm btn-primary rounded-lg font-black text-[9px] uppercase tracking-widest px-6"
-                              >
-                                 Open Document
-                              </a>
-                           </div>
-                        )}
+                        {CSC_DOCUMENT_SPECS.map(({ key, title, subtitle, color }) => {
+                           const fileUrl = selectedLeave[key];
+                           if (!fileUrl) return null;
+                           return (
+                              <DocumentAttachmentCard
+                                 key={key}
+                                 title={title}
+                                 subtitle={subtitle}
+                                 fileUrl={fileUrl}
+                                 color={color}
+                              />
+                           );
+                        })}
                      </div>
 
                      {['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(selectedLeave.status) && (
@@ -569,22 +325,39 @@ const LeaveManagement = () => {
                            {selectedLeave.can_approve ? (
                               <div className="grid grid-cols-2 gap-4">
                                  <button
-                                    onClick={() => rejectMutation.mutate({ id: selectedLeave.id, reason: rejectionReason })}
-                                    disabled={rejectMutation.isPending}
+                                    onClick={async () => {
+                                       try {
+                                          await rejectLeave({ id: selectedLeave.id, reason: rejectionReason });
+                                          setSelectedLeave(null);
+                                          setRejectionReason('');
+                                       } catch {
+                                          // Handled by hook
+                                       }
+                                    }}
+                                    disabled={isRejecting}
                                     className="btn btn-outline border-base-300 text-error hover:bg-error/5 hover:border-error/20 rounded-lg font-black text-[11px] uppercase tracking-widest h-12"
                                  >
-                                    Reject Application
+                                    {isRejecting ? 'Rejecting...' : 'Reject Application'}
                                  </button>
                                  <button
-                                    onClick={() => approveMutation.mutate(selectedLeave.id)}
-                                    disabled={approveMutation.isPending}
+                                    onClick={async () => {
+                                       try {
+                                          await approveLeave(selectedLeave.id);
+                                          setSelectedLeave(null);
+                                       } catch {
+                                          // Handled by hook
+                                       }
+                                    }}
+                                    disabled={isApproving}
                                     className="btn btn-primary rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
                                  >
-                                    {selectedLeave.status === 'pending_supervisor' ? 'Recommend Approval' :
-                                     selectedLeave.status === 'pending_hr' ? 'Verify & Recommend' : 'Approve for CSC'}
+                                    {isApproving ? 'Approving...' : (
+                                       selectedLeave.status === 'pending_supervisor' ? 'Recommend Approval' :
+                                       selectedLeave.status === 'pending_hr' ? 'Verify & Recommend' : 'Approve for CSC'
+                                    )}
                                  </button>
                               </div>
-                           ) : canReview ? (
+                           ) : canManage ? (
                               <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-60">
                                  HR review only. Admin can confirm the final approval.
                               </div>

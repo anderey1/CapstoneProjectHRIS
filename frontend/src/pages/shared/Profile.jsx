@@ -3,18 +3,28 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
-import { TABS, REQUIRED_DOCS_LIST, GOVERNMENT_IDS_LIST } from './profile/constants';
-import ProfileHeader from './profile/ProfileHeader';
-import PersonalInfoTab from './profile/PersonalInfoTab';
-import FamilyBackgroundTab from './profile/FamilyBackgroundTab';
-import EducationalBackgroundTab from './profile/EducationalBackgroundTab';
-import CivilServiceEligibilityTab from './profile/CivilServiceEligibilityTab';
-import WorkExperienceTab from './profile/WorkExperienceTab';
-import VerifiedIDsTab from './profile/VerifiedIDsTab';
-import DocumentChecklistTab from './profile/DocumentChecklistTab';
-import ProfileSidebar from './profile/ProfileSidebar';
-import PDSDetailModal from './profile/PDSDetailModal';
-import DocumentPreviewModal from './profile/DocumentPreviewModal';
+import { 
+  TABS, 
+  REQUIRED_DOCS_LIST, 
+  GOVERNMENT_IDS_LIST,
+  ProfileHeader,
+  PersonalInfoTab,
+  FamilyBackgroundTab,
+  EducationalBackgroundTab,
+  CivilServiceEligibilityTab,
+  WorkExperienceTab,
+  VerifiedIDsTab,
+  DocumentChecklistTab,
+  ProfileSidebar,
+  PDSDetailModal,
+  DocumentPreviewModal,
+  loadProfilePhoto,
+  saveProfilePhoto,
+  loadProfileDocs,
+  saveProfileDocs,
+  loadProfileIDs,
+  saveProfileIDs,
+} from '../../features/profile';
 
 const Profile = () => {
   const { id } = useParams();
@@ -70,46 +80,14 @@ const Profile = () => {
   const canVerifyDocs = !isOwnProfile && isHrOrSuperintendent;
   const canChangePhoto = isOwnProfile || isHrOrSuperintendent;
 
-  // Load localStorage mocks on component mount / profile data load
+  // Load localStorage mocks on component mount / profile data load via adapter
   useEffect(() => {
     if (me?.id) {
-      const storedPhoto = localStorage.getItem(`hris_profile_photo_${me.id}`);
+      const storedPhoto = loadProfilePhoto(me.id);
       if (storedPhoto) setProfilePhoto(storedPhoto);
 
-      const storedDocs = localStorage.getItem(`hris_profile_docs_${me.id}`);
-      if (storedDocs) {
-        setSimulatedDocs(JSON.parse(storedDocs));
-      } else {
-        const initial = {};
-        if (me.pds_file) {
-          initial['pds_file'] = {
-            fileName: 'Accomplished_PDS.pdf',
-            uploadDate: new Date().toLocaleDateString(),
-            verified: true,
-            fileData: me.pds_file
-          };
-        }
-        setSimulatedDocs(initial);
-      }
-
-      const storedIDs = localStorage.getItem(`hris_profile_ids_${me.id}`);
-      if (storedIDs) {
-        setSimulatedIDs(JSON.parse(storedIDs));
-      } else {
-        const initialIDs = {};
-        GOVERNMENT_IDS_LIST.forEach(item => {
-          if (me[item.id]) {
-            initialIDs[item.id] = {
-              number: me[item.id],
-              uploadDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-              verified: true,
-              fileName: `${item.id}_card.png`,
-              fileData: null
-            };
-          }
-        });
-        setSimulatedIDs(initialIDs);
-      }
+      setSimulatedDocs(loadProfileDocs(me));
+      setSimulatedIDs(loadProfileIDs(me, GOVERNMENT_IDS_LIST));
     }
   }, [me]);
 
@@ -167,7 +145,7 @@ const Profile = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result;
-        localStorage.setItem(`hris_profile_photo_${me?.id || 'default'}`, base64String);
+        saveProfilePhoto(me?.id, base64String);
         setProfilePhoto(base64String);
       };
       reader.readAsDataURL(file);
@@ -196,7 +174,7 @@ const Profile = () => {
           }
         };
         setSimulatedDocs(updated);
-        localStorage.setItem(`hris_profile_docs_${me.id}`, JSON.stringify(updated));
+        saveProfileDocs(me.id, updated);
         setActiveDocUpload(null);
       };
       reader.readAsDataURL(file);
@@ -209,7 +187,7 @@ const Profile = () => {
       const updated = { ...simulatedDocs };
       delete updated[docKey];
       setSimulatedDocs(updated);
-      localStorage.setItem(`hris_profile_docs_${me.id}`, JSON.stringify(updated));
+      saveProfileDocs(me.id, updated);
     }
   };
 
@@ -224,7 +202,7 @@ const Profile = () => {
         }
       };
       setSimulatedDocs(updated);
-      localStorage.setItem(`hris_profile_docs_${me.id}`, JSON.stringify(updated));
+      saveProfileDocs(me.id, updated);
     }
   };
 
@@ -255,7 +233,7 @@ const Profile = () => {
             }
           };
           setSimulatedIDs(updated);
-          localStorage.setItem(`hris_profile_ids_${me.id}`, JSON.stringify(updated));
+          saveProfileIDs(me.id, updated);
           updateMutation.mutate({ [activeIDUpload]: idNumber });
         }
         setActiveIDUpload(null);
@@ -270,7 +248,7 @@ const Profile = () => {
       const updated = { ...simulatedIDs };
       delete updated[idKey];
       setSimulatedIDs(updated);
-      localStorage.setItem(`hris_profile_ids_${me.id}`, JSON.stringify(updated));
+      saveProfileIDs(me.id, updated);
       updateMutation.mutate({ [idKey]: '' });
     }
   };
@@ -286,7 +264,7 @@ const Profile = () => {
         }
       };
       setSimulatedIDs(updated);
-      localStorage.setItem(`hris_profile_ids_${me.id}`, JSON.stringify(updated));
+      saveProfileIDs(me.id, updated);
     }
   };
 

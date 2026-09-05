@@ -24,24 +24,19 @@ import DTR from './pages/shared/DTR';
 import Profile from './pages/shared/Profile';
 import AuditLogs from './pages/admin/AuditLogs';
 
+// Role Groups
+const MANAGEMENT_ROLES = ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'];
+const HR_SUPERINTENDENT = ['HR', 'SUPERINTENDENT'];
+
 /**
  * App Component
  * 
  * Handles the main routing configuration for the HRIS.
- * Mobile-first architecture using MainLayout shell for protected routes.
+ * Clean, declarative role-gated route architecture using ProtectedRoute layout routes.
  */
 function App() {
   const { user } = useAuth();
-
-  const isManagement = user && ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'].includes(user.role);
-  const canAccessEmployees = user && ['HR', 'SUPERINTENDENT', 'ACCOUNTANT'].includes(user.role);
-  const canManageLoans = user && ['ACCOUNTANT', 'SUPERINTENDENT', 'HR'].includes(user.role);
-  const canManageLeaves = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
-  const canManageAttendance = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
-  const canManagePerformance = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
-  const canManageRecruitment = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
-  const canManagePayroll = user && ['ACCOUNTANT', 'SUPERINTENDENT', 'HR'].includes(user.role);
-  const canViewAuditLogs = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
+  const isManagement = user && MANAGEMENT_ROLES.includes(user.role);
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -51,73 +46,35 @@ function App() {
         <Route path="/apply" element={<Apply />} />
 
         {/* Protected Layout Shell */}
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          {/* Child Routes injected into MainLayout's <Outlet /> */}
+        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+          {/* Dashboard Home */}
           <Route index element={isManagement ? <AdminDashboard /> : <EmployeeDashboard />} />
-          
-          {/* Employees - Management (HR, Superintendent, Accountant) */}
-          <Route 
-            path="employees" 
-            element={canAccessEmployees ? <Employees /> : <Navigate to="/" replace />} 
-          />
-          
-          {/* Loans - Dedicated Pages */}
-          <Route path="my-loans" element={<MyLoans />} />
-          <Route 
-            path="loan-management" 
-            element={canManageLoans ? <LoanManagement /> : <Navigate to="/" replace />} 
-          />
 
-          {/* Leaves - Dedicated Pages */}
-          <Route path="my-leaves" element={<MyLeaves />} />
-          <Route 
-            path="leave-management" 
-            element={canManageLeaves ? <LeaveManagement /> : <Navigate to="/" replace />} 
-          />
-          
-          {/* Attendance - Dedicated Pages */}
+          {/* Shared / Self-Service Routes */}
           <Route path="attendance" element={<Attendance />} />
-          <Route 
-            path="attendance-management" 
-            element={canManageAttendance ? <AttendanceManagement /> : <Navigate to="/" replace />} 
-          />
-          
           <Route path="dtr" element={<DTR />} />
           <Route path="profile" element={<Profile />} />
           <Route path="employees/:id" element={<Profile />} />
-
-          {/* Payroll - Dedicated Pages */}
+          <Route path="my-loans" element={<MyLoans />} />
+          <Route path="my-leaves" element={<MyLeaves />} />
           <Route path="my-payslips" element={<MyPayroll />} />
-          <Route 
-            path="payroll-management" 
-            element={canManagePayroll ? <Payroll /> : <Navigate to="/" replace />} 
-          />
-
-          {/* IPCRF (Performance) - Dedicated Pages */}
           <Route path="my-performance" element={<MyIPCRF />} />
-          <Route 
-            path="performance-management" 
-            element={canManagePerformance ? <IPCRFManagement /> : <Navigate to="/" replace />} 
-          />
 
-          {/* Recruitment - HR or Superintendent */}
-          <Route
-            path="recruitment"
-            element={canManageRecruitment ? <Recruitment /> : <Navigate to="/" replace />}
-          />
+          {/* Management Tier (HR, Accountant, Superintendent) */}
+          <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>
+            <Route path="employees" element={<Employees />} />
+            <Route path="loan-management" element={<LoanManagement />} />
+            <Route path="payroll-management" element={<Payroll />} />
+          </Route>
 
-          {/* Audit Logs - HR or Superintendent */}
-          <Route
-            path="audit-logs"
-            element={canViewAuditLogs ? <AuditLogs /> : <Navigate to="/" replace />}
-          />
+          {/* HR & Superintendent Tier */}
+          <Route element={<ProtectedRoute roles={HR_SUPERINTENDENT} />}>
+            <Route path="leave-management" element={<LeaveManagement />} />
+            <Route path="attendance-management" element={<AttendanceManagement />} />
+            <Route path="performance-management" element={<IPCRFManagement />} />
+            <Route path="recruitment" element={<Recruitment />} />
+            <Route path="audit-logs" element={<AuditLogs />} />
+          </Route>
         </Route>
 
         {/* Catch-all - Redirect to Dashboard */}

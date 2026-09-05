@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-import AccountantDashboard from '../../components/features/dashboard/AccountantDashboard';
-import SuperintendentDashboard from '../../components/features/dashboard/SuperintendentDashboard';
+import { AccountantDashboard, SuperintendentDashboard } from '../../features/dashboard';
 import {
   Users, Wallet, CalendarCheck, AlertCircle, Loader2, BarChart3, TrendingUp, PieChart as PieChartIcon, ShieldCheck
 } from 'lucide-react';
@@ -13,13 +12,12 @@ import {
   PieChart, Pie, Cell, AreaChart, Area, CartesianGrid
 } from 'recharts';
 
-
 const COLORS = [
-  'oklch(48.8% 0.243 264.376)', // Primary
-  'oklch(90.5% 0.182 98.111)', // Secondary
-  'oklch(57.7% 0.245 27.325)', // Accent
-  'oklch(85% 0.2 90)',          // Variant for yellow
-  'oklch(70% 0.15 250)'         // Variant for blue
+  '#0038A8', // DepEd Blue (Primary)
+  '#FDB913', // DepEd Yellow (Secondary)
+  '#CE1126', // DepEd Red (Accent)
+  '#2563EB', // Blue variant
+  '#10B981', // Emerald variant
 ];
 
 const LEAVE_TYPE_LABELS = {

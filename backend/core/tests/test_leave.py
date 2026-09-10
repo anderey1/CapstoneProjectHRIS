@@ -12,11 +12,10 @@ class TestLeaveRules:
         """CSC Form 6 allows sick leave to be filed retrospectively up to 30 days."""
         factory = APIRequestFactory()
         today = timezone.localdate()
-        # File 3-day sick leave 5 days in past (e.g. 5 days ago to 3 days ago)
-        # Ensure dates fall on weekdays
-        # Simple: Monday 5 days ago
-        start_date = today - timedelta(days=5)
-        end_date = today - timedelta(days=4)
+        # Ensure dates are past weekdays within 30 days regardless of test execution day
+        days_back = today.weekday() + 7  # Monday of the previous week
+        start_date = today - timedelta(days=days_back)
+        end_date = start_date + timedelta(days=1)  # Tuesday of the previous week
         
         request = factory.post('/api/leaves/', {
             'leave_type': 'sick',
@@ -137,3 +136,24 @@ class TestLeaveRules:
 
         assert leave.status == 'approved'
         assert teacher_employee.sick_leave_balance == initial_sick - 2
+
+    def test_special_leave_does_not_deduct_vacation_balance(self, teacher_employee, superintendent_user):
+        """Special statutory leaves (e.g. paternity, solo parent) do not consume vacation credits."""
+        initial_vl = teacher_employee.vacation_leave_balance
+        today = timezone.localdate()
+        leave = LeaveRequest.objects.create(
+            employee=teacher_employee,
+            leave_type='paternity',
+            start_date=today + timedelta(days=7),
+            end_date=today + timedelta(days=13),
+            working_days_applied=5,
+            status='pending_superintendent'
+        )
+        factory = APIRequestFactory()
+        req = factory.post(f'/api/leaves/{leave.id}/approve/')
+        force_authenticate(req, user=superintendent_user)
+        resp = LeaveViewSet.as_view({'post': 'approve'})(req, pk=leave.id)
+        assert resp.status_code == 200
+        assert resp.data['days_deducted'] == 0
+        teacher_employee.refresh_from_db()
+        assert teacher_employee.vacation_leave_balance == initial_vl

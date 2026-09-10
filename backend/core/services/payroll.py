@@ -22,16 +22,35 @@ class PayrollCalculator:
 
         monthly_salary = employee.salary
 
-        # 1. Days Worked from Attendance
-        days_worked = Decimal('11.0') # Standard semi-monthly working days
+        # 1. Days Worked from Attendance & Approved Paid Leave
+        days_worked = Decimal('11.0')  # Default when cutoff dates are not provided
         if start_date and end_date:
-            present_days = Attendance.objects.filter(
+            present_dates = set(Attendance.objects.filter(
                 employee=employee,
                 date__range=(start_date, end_date),
                 status__in=['present', 'late']
-            ).values('date').distinct().count()
-            if present_days > 0:
-                days_worked = Decimal(str(present_days))
+            ).values_list('date', flat=True))
+
+            # Credit approved paid leave days falling on weekdays within the cutoff
+            from ..models import LeaveRequest
+            from datetime import timedelta
+            approved_leaves = LeaveRequest.objects.filter(
+                employee=employee,
+                status='approved',
+                start_date__lte=end_date,
+                end_date__gte=start_date
+            )
+            leave_dates = set()
+            for lv in approved_leaves:
+                curr = max(lv.start_date, start_date)
+                limit = min(lv.end_date, end_date)
+                while curr <= limit:
+                    if curr.weekday() < 5:  # Mon-Fri
+                        leave_dates.add(curr)
+                    curr += timedelta(days=1)
+
+            total_credited_dates = present_dates.union(leave_dates)
+            days_worked = Decimal(str(len(total_credited_dates)))
 
         # 2. Basic Salary earned based on attendance
         daily_rate = monthly_salary / cls.WORKING_DAYS
@@ -60,11 +79,11 @@ class PayrollCalculator:
 
         # Active Released Provident Loan Deduction
         loan_ded = Decimal('0.00')
-        active_loan = ProvidentLoan.objects.filter(employee=employee, status='released').first()
-        if active_loan:
+        active_loans = ProvidentLoan.objects.filter(employee=employee, status='released')
+        for active_loan in active_loans:
             standard_payment = (active_loan.monthly_payment / Decimal('2.0')).quantize(Decimal('0.01'))
             remaining_balance = active_loan.current_balance
-            loan_ded = min(standard_payment, remaining_balance)
+            loan_ded += min(standard_payment, remaining_balance)
 
         pera = cls.PERA_SEMI_MONTHLY
         gross_salary = calculated_basic + pera

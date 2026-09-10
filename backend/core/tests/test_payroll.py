@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
 from datetime import date
-from core.models import Attendance, ProvidentLoan, Payroll
+from core.models import Attendance, ProvidentLoan, Payroll, LeaveRequest
 from core.services.payroll import PayrollCalculator
 
 @pytest.mark.django_db
@@ -108,3 +108,54 @@ class TestPayrollCalculator:
         expected_daily = teacher_employee.salary / Decimal("22.0")
         expected_basic = (expected_daily * Decimal("3.0")).quantize(Decimal("0.01"))
         assert result['basic_salary'] == expected_basic
+
+    def test_zero_attendance_results_in_zero_days_worked(self, teacher_employee):
+        """When cutoff dates are given but employee has 0 attendance records, days_worked is 0."""
+        start = date(2026, 5, 1)
+        end = date(2026, 5, 5)
+
+        result = PayrollCalculator.compute(
+            employee=teacher_employee,
+            cutoff_period="May 1-15, 2026",
+            start_date=start,
+            end_date=end
+        )
+        assert result['days_worked'] == Decimal("0.0")
+        assert result['basic_salary'] == Decimal("0.00")
+
+    def test_approved_leave_credited_in_payroll(self, teacher_employee):
+        """Approved paid leaves within cutoff are credited as days worked."""
+        # May 4 (Mon) to May 8 (Fri), 2026: 5 weekdays
+        start = date(2026, 5, 4)
+        end = date(2026, 5, 8)
+
+        # 2 present attendance days (May 4 and May 5)
+        for day in [4, 5]:
+            Attendance.objects.create(
+                employee=teacher_employee,
+                date=date(2026, 5, day),
+                status='present'
+            )
+
+        # 2 approved leave days (May 6 and May 7)
+        LeaveRequest.objects.create(
+            employee=teacher_employee,
+            leave_type='sick',
+            start_date=date(2026, 5, 6),
+            end_date=date(2026, 5, 7),
+            working_days_applied=2,
+            status='approved'
+        )
+
+        result = PayrollCalculator.compute(
+            employee=teacher_employee,
+            cutoff_period="May 1-15, 2026",
+            start_date=start,
+            end_date=end
+        )
+        # 2 present + 2 leave = 4 days worked
+        assert result['days_worked'] == Decimal("4.0")
+        expected_daily = teacher_employee.salary / Decimal("22.0")
+        expected_basic = (expected_daily * Decimal("4.0")).quantize(Decimal("0.01"))
+        assert result['basic_salary'] == expected_basic
+

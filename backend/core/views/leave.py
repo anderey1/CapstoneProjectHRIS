@@ -98,16 +98,23 @@ class LeaveViewSet(viewsets.ModelViewSet):
         if overlapping:
             raise ValidationError("An overlapping leave request already exists.")
 
-        # 4. Balance Check (Initial)
-        duration = calculate_working_days(start_date, end_date)
-        if duration == 0:
-             raise ValidationError("Leave duration cannot be 0 working days.")
-             
+        # 4. Duration and Balance Check
+        # Calendar-day statutory leaves vs working-day leaves
+        CALENDAR_DAY_LEAVES = ['maternity', 'adoption']
+        if leave_type in CALENDAR_DAY_LEAVES:
+            duration = (end_date - start_date).days + 1
+        else:
+            duration = calculate_working_days(start_date, end_date)
+            if duration == 0:
+                raise ValidationError("Leave duration cannot be 0 working days.")
+
+        # Balance check: Only leaves that consume leave credits (Vacation, Forced, Sick)
+        # CSC MC No. 41, s. 1998 / Omnibus Rules on Leave
         if leave_type == 'sick':
             total_balance = employee.sick_leave_balance + employee.vacation_leave_balance
             if total_balance < duration:
                 raise ValidationError(f"Insufficient leave balance (Total: {total_balance}).")
-        else:
+        elif leave_type in ['vacation', 'forced']:
             if employee.vacation_leave_balance < duration:
                 raise ValidationError(f"Insufficient vacation leave balance ({employee.vacation_leave_balance}).")
 
@@ -202,6 +209,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
             
         elif old_status == 'pending_superintendent':
             # Final approval - Deduction logic
+            days_deducted = 0
             if leave.leave_type == 'sick':
                 total_balance = employee.sick_leave_balance + employee.vacation_leave_balance
                 if total_balance < duration:
@@ -212,19 +220,25 @@ class LeaveViewSet(viewsets.ModelViewSet):
                     remaining = duration - employee.sick_leave_balance
                     employee.sick_leave_balance = 0
                     employee.vacation_leave_balance -= remaining
-            else:
+                days_deducted = duration
+                employee.save()
+            elif leave.leave_type in ['vacation', 'forced']:
                 if employee.vacation_leave_balance < duration:
                     return Response({"detail": f"Insufficient vacation balance. Employee only has {employee.vacation_leave_balance} days left."}, status=400)
                 employee.vacation_leave_balance -= duration
-                
-            employee.save()
+                days_deducted = duration
+                employee.save()
+            else:
+                # Statutory special leaves (e.g., maternity, paternity, solo parent, VAWC)
+                # are granted with pay without consuming vacation or sick leave credits.
+                days_deducted = 0
             
             leave.status = 'approved'
             leave.approved_days_with_pay = duration
             leave.save()
             
             AuditLog.objects.create(user=request.user, action=f"Approved {leave.leave_type} leave for {leave.employee} ({duration} days)")
-            return Response({"message": "Leave request approved", "days_deducted": duration, "status": leave.status})
+            return Response({"message": "Leave request approved", "days_deducted": days_deducted, "status": leave.status})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def reject(self, request, pk=None):

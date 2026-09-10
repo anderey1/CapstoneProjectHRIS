@@ -101,16 +101,20 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
         # Slot Windows:
         
-        # AM IN: 5:00 - 11:59 (AM IN only allowed before 11:00 AM)
+        # AM IN: 5:00 - 11:59 (AM IN allowed before 11:00 AM)
         if t("05:00") <= current_time < t("12:00"):
             if not attendance.am_in and current_time < t("11:00"):
                 attendance.am_in = current_time
                 slot_mapped = "am_in"
                 message = "AM IN recorded."
-            elif current_time >= t("10:00") and not attendance.am_out:
+            elif attendance.am_in and not attendance.am_out and current_time >= t("10:00"):
                 attendance.am_out = current_time
                 slot_mapped = "am_out"
                 message = "AM OUT recorded."
+            elif not attendance.am_in and current_time >= t("11:00"):
+                return Response({
+                    "detail": "Morning check-in closed after 11:00 AM. Please check in at 12:00 PM for the afternoon (PM) session."
+                }, status=400)
 
         # AM OUT / PM IN overlap: 12:00 - 13:00
         if not slot_mapped and t("12:00") <= current_time < t("13:00"):

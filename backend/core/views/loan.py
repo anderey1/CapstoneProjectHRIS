@@ -46,8 +46,8 @@ class LoanViewSet(viewsets.ModelViewSet):
                 raise ValidationError({"detail": "You must have an employee profile."})
 
         # 2. Validation — no duplicate active loans
-        if ProvidentLoan.objects.filter(employee=employee, status__in=['pending', 'approved']).exists():
-            raise ValidationError({"detail": "A pending or active loan already exists."})
+        if ProvidentLoan.objects.filter(employee=employee, status__in=['pending', 'verified', 'approved', 'released']).exists():
+            raise ValidationError({"detail": "A pending, approved, or active loan already exists."})
 
         if serializer.validated_data.get('loan_amount', 0) <= 0:
             raise ValidationError({"detail": "Loan amount must be greater than zero."})

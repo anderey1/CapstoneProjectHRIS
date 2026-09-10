@@ -115,14 +115,16 @@ class PayrollViewSet(viewsets.ModelViewSet):
 
             # Record Loan Repayment if deduction was part of this payroll
             if payroll.loans > 0:
-                # Important: We only deduct from 'released' loans (funds already disbursed)
-                active_loan = ProvidentLoan.objects.filter(employee=payroll.employee, status='released').first()
-                if active_loan:
-                    LoanPayment.objects.create(loan=active_loan, amount_paid=payroll.loans)
-                    AuditLog.objects.create(
-                        user=request.user, 
-                        action=f"Released payroll loan deduction: {payroll.employee} (₱{payroll.loans})"
-                    )
+                active_loans = ProvidentLoan.objects.filter(employee=payroll.employee, status='released')
+                for active_loan in active_loans:
+                    standard_payment = (active_loan.monthly_payment / Decimal('2.0')).quantize(Decimal('0.01'))
+                    ded_amount = min(standard_payment, active_loan.current_balance)
+                    if ded_amount > 0:
+                        LoanPayment.objects.create(loan=active_loan, amount_paid=ded_amount)
+                        AuditLog.objects.create(
+                            user=request.user, 
+                            action=f"Released payroll loan deduction: {payroll.employee} (₱{ded_amount})"
+                        )
             
             AuditLog.objects.create(user=request.user, action=f"Released payroll: {payroll.employee} ({payroll.cutoff_period})")
             

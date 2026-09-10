@@ -107,7 +107,7 @@ const LoanManagement = () => {
 
         <div className="bg-white p-5 rounded-xl border border-base-200 shadow-sm flex items-center gap-4 group hover:border-info/20 transition-all">
           <div className="w-10 h-10 bg-info/5 text-info border border-info/5 rounded-lg flex items-center justify-center">
-            <Clock className="w-5 h-5 animate-pulse" />
+            <Clock className="w-5 h-5" />
           </div>
           <div>
             <p className="text-[9px] font-black uppercase opacity-30 tracking-[0.2em] mb-0.5">To Approve</p>
@@ -258,7 +258,7 @@ const LoanManagement = () => {
       {/* ===== REVIEW MODAL ===== */}
       {selectedLoan && (
         <div className="modal modal-open">
-          <div className="modal-box rounded-xl max-w-2xl p-0 overflow-hidden shadow-2xl border border-base-300 bg-white max-h-[90vh] flex flex-col">
+          <div className="modal-box rounded-lg max-w-2xl p-0 overflow-hidden shadow-lg border border-slate-200 bg-white max-h-[90vh] flex flex-col">
 
             {/* Modal Header */}
             <div className="bg-primary p-8 text-white relative shrink-0">

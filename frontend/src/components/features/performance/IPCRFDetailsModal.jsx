@@ -14,7 +14,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box rounded-xl max-w-2xl p-0 overflow-hidden border border-base-200 shadow-2xl bg-white animate-in zoom-in-95 duration-300">
+      <div className="modal-box rounded-lg max-w-2xl p-0 overflow-hidden border border-slate-200 shadow-lg bg-white">
         
         {/* Header */}
         <div className="bg-primary p-10 text-white text-center relative">

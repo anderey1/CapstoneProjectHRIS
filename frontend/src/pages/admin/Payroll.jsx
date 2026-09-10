@@ -102,13 +102,13 @@ const Payroll = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 rotate-3 hover:rotate-0 transition-transform duration-300">
+            <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
               <Wallet className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Release Salaries & Payslips</h1>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
+                <span className="w-2 h-2 bg-emerald-600 rounded-full"></span>
                 <p className="text-[10px] font-black opacity-45 uppercase tracking-widest">Lucena School Division</p>
               </div>
             </div>

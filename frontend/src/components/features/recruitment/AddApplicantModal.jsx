@@ -48,7 +48,7 @@ const AddApplicantModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-300">
-      <div className="bg-white rounded-xl w-full max-w-xl shadow-2xl border border-base-200 overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="bg-white rounded-lg w-full max-w-xl shadow-lg border border-slate-200 overflow-hidden">
         
         {/* Header */}
         <div className="bg-base-50/50 border-b border-base-100 p-8 flex items-center justify-between">

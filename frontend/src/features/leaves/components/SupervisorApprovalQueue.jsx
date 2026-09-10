@@ -62,7 +62,7 @@ const SupervisorApprovalQueue = ({
                         {formatStatus(leave.status)}
                      </div>
                      {isActionRequired && (
-                        <span className="text-[8px] font-black text-primary uppercase tracking-widest bg-primary/10 px-1 py-0.5 rounded animate-pulse">
+                        <span className="text-[8px] font-black text-amber-700 uppercase tracking-widest bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
                            Action Required
                         </span>
                      )}
@@ -188,7 +188,7 @@ const SupervisorApprovalQueue = ({
       {/* Decision Modal */}
       {selectedApproval && (
          <div className="modal modal-open">
-            <div className="modal-box rounded-xl max-w-4xl p-0 overflow-hidden shadow-2xl border border-base-300 bg-white h-[90vh] flex flex-col">
+            <div className="modal-box rounded-lg max-w-4xl p-0 overflow-hidden shadow-lg border border-slate-200 bg-white h-[90vh] flex flex-col">
                <div className="bg-base-50/50 border-b border-base-200 p-6 flex items-center justify-between shrink-0">
                  <div>
                     <h3 className="font-black text-lg text-base-content uppercase tracking-tight">{selectedApproval.employee_name}</h3>

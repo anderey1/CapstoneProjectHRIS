@@ -60,13 +60,13 @@ const MyPayroll = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 rotate-3 hover:rotate-0 transition-transform duration-300">
+            <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
               <FileCheck className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">My Payslips / Salaries</h1>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
+                <span className="w-2 h-2 bg-emerald-600 rounded-full"></span>
                 <p className="text-[10px] font-black opacity-45 uppercase tracking-widest">Personal Salary Records</p>
               </div>
             </div>
@@ -84,7 +84,7 @@ const MyPayroll = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT: History List Table */}
-          <div className="lg:col-span-7 bg-white rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+          <div className="lg:col-span-7 bg-white rounded-xl border border-base-200 shadow-sm overflow-hidden">
              <div className="p-6 border-b border-base-100 bg-base-50/10">
                 <h3 className="text-sm font-black uppercase tracking-wider text-base-content">Salary Release History</h3>
                 <p className="text-[10px] font-bold opacity-30 mt-0.5 uppercase tracking-wide">Select a period to view details</p>
@@ -153,14 +153,10 @@ const MyPayroll = () => {
           {/* RIGHT: Redesigned Interactive Payslip Viewer Card */}
           <div className="lg:col-span-5">
              {selectedPayroll ? (
-                <div id="printable-payslip" className="bg-white shadow-xl border border-base-200 rounded-3xl overflow-hidden sticky top-8 animate-in fade-in zoom-in-95 duration-300">
+                <div id="printable-payslip" className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden sticky top-8">
                    
                    {/* Payslip Header Card */}
-                   <div className="bg-gradient-to-br from-blue-900 to-blue-950 p-6 text-white relative overflow-hidden">
-                      <div className="absolute right-0 bottom-0 opacity-[0.03] pointer-events-none scale-150 rotate-12">
-                        <Wallet className="w-40 h-40" />
-                      </div>
-                      
+                   <div className="bg-[#0038A8] p-6 text-white relative overflow-hidden">
                       <div className="flex justify-between items-start">
                          <div className="space-y-1">
                             <p className="text-[9px] font-black uppercase text-amber-400 tracking-[0.2em]">DEPED LUCENA CITY DIVISION</p>
@@ -273,7 +269,7 @@ const MyPayroll = () => {
                    </div>
                 </div>
              ) : (
-                <div className="h-[380px] flex flex-col items-center justify-center p-8 bg-white rounded-3xl border border-dashed border-base-300 opacity-40 text-center">
+                <div className="h-[380px] flex flex-col items-center justify-center p-8 bg-white rounded-xl border border-dashed border-base-300 opacity-40 text-center">
                    <FileText className="w-12 h-12 mb-4 opacity-25" />
                    <p className="text-xs font-black uppercase tracking-widest leading-relaxed">Select a pay period to view detailed payslip breakdowns</p>
                 </div>
@@ -281,7 +277,7 @@ const MyPayroll = () => {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-dashed border-base-300 opacity-40 text-center">
+        <div className="flex flex-col items-center justify-center py-32 bg-white rounded-xl border border-dashed border-base-300 opacity-40 text-center">
           <AlertCircle className="w-12 h-12 mb-3" />
           <p className="text-base font-black uppercase tracking-widest">No payslip records available yet</p>
         </div>

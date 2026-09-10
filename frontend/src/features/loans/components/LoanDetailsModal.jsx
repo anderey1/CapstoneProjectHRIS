@@ -64,7 +64,7 @@ const LoanDetailsModal = ({ loan, onClose }) => {
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box rounded-xl p-0 overflow-hidden border border-base-200 max-w-2xl w-[95vw] shadow-2xl bg-white animate-in zoom-in-95 duration-300 max-h-[85vh] flex flex-col">
+      <div className="modal-box rounded-lg p-0 overflow-hidden border border-slate-200 max-w-2xl w-[95vw] shadow-lg bg-white max-h-[85vh] flex flex-col">
 
         {/* Header */}
         <div className="bg-primary p-10 text-white relative">

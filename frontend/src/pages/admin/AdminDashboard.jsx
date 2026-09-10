@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { AccountantDashboard, SuperintendentDashboard } from '../../features/dashboard';
 import {
   Users, Wallet, CalendarCheck, AlertCircle, BarChart3, TrendingUp,
-  PieChart as PieChartIcon, ShieldCheck, School, Sparkles, CheckCircle2,
+  PieChart as PieChartIcon, ShieldCheck, School, CheckCircle2,
   Clock, ArrowUpRight, ChevronRight, FileText
 } from 'lucide-react';
 import {
@@ -154,7 +154,7 @@ const AdminDashboard = () => {
   })) || [];
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 space-y-8">
       
       {/* Dashboard Top Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-base-200 pb-5">
@@ -174,10 +174,10 @@ const AdminDashboard = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="badge badge-primary font-bold py-3 px-3.5 text-xs gap-1.5 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Defense Demo Ready
+          <span className="badge badge-outline font-semibold py-2.5 px-3 text-xs text-slate-700 bg-slate-50 border-slate-200 gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Division Operations Active
           </span>
-          <span className="badge badge-outline font-semibold py-3 px-3 text-xs text-slate-600">
+          <span className="badge badge-outline font-semibold py-2.5 px-3 text-xs text-slate-600">
             5 Active Stations
           </span>
         </div>
@@ -382,9 +382,9 @@ const AdminDashboard = () => {
               </div>
 
               {/* Contextual Executive Insight for Workforce Distribution */}
-              <div className="mt-5 p-4 bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-slate-50 rounded-xl border border-blue-100 flex items-start gap-3">
-                <div className="p-1.5 bg-blue-600 text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5" />
+              <div className="mt-5 p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
+                <div className="p-1.5 bg-[#0038A8] text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
+                  <TrendingUp className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
@@ -473,9 +473,9 @@ const AdminDashboard = () => {
               </div>
 
               {/* Contextual Micro-Insight for Staff Mix */}
-              <div className="mt-4 p-3 bg-amber-50/70 rounded-xl border border-amber-100 text-xs text-slate-700">
+              <div className="mt-4 p-3 bg-amber-50/70 rounded-xl border border-amber-200 text-xs text-slate-700">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 mb-1">
-                  <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
+                  <Users className="w-3 h-3 text-amber-600 shrink-0" />
                   <span>Deployment Ratio Insight</span>
                 </div>
                 <p className="text-[11px] text-slate-600 leading-snug">
@@ -544,8 +544,8 @@ const AdminDashboard = () => {
               </div>
 
               {/* Contextual Executive Insight for Leaves */}
-              <div className="mt-5 p-3.5 bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50 rounded-xl border border-emerald-100 flex items-start gap-3">
-                <div className="p-1.5 bg-emerald-600 text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
+              <div className="mt-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
+                <div className="p-1.5 bg-emerald-700 text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
                   <CalendarCheck className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -620,8 +620,8 @@ const AdminDashboard = () => {
               </div>
 
               {/* Contextual Executive Insight for Provident Fund */}
-              <div className="mt-5 p-3.5 bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-slate-50 rounded-xl border border-purple-100 flex items-start gap-3">
-                <div className="p-1.5 bg-purple-600 text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
+              <div className="mt-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
+                <div className="p-1.5 bg-[#0038A8] text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
                   <Wallet className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -677,9 +677,9 @@ const AdminDashboard = () => {
               </div>
 
               {/* Contextual Executive Insight for Recruitment */}
-              <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start gap-3">
-                <div className="p-1.5 bg-blue-600 text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5" />
+              <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3">
+                <div className="p-1.5 bg-[#0038A8] text-white rounded-lg shrink-0 mt-0.5 shadow-sm">
+                  <BarChart3 className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">

@@ -26,10 +26,7 @@ const PayrollActionPanel = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       {/* Bulk Action / Stepper Detail Card */}
-      <div className="lg:col-span-8 bg-gradient-to-br from-blue-900 to-blue-950 text-white rounded-3xl p-8 space-y-6 shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 bottom-0 opacity-[0.03] pointer-events-none scale-150 rotate-12">
-          <Wallet className="w-80 h-80" />
-        </div>
+      <div className="lg:col-span-8 bg-[#0038A8] text-white rounded-xl p-8 space-y-6 shadow-sm relative overflow-hidden">
 
         <div className="space-y-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
@@ -171,7 +168,7 @@ const PayrollActionPanel = ({
       {/* Generate / Action Form (Only visible to Accountant, during unprepared/draft cutoff status) */}
       <div className="lg:col-span-4 space-y-6">
         {canGenerate && (cutoffStatus === 'unprepared' || cutoffStatus === 'draft') ? (
-          <div className="bg-white rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-base-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-base-100 bg-base-50/50">
                <h3 className="text-xs font-black uppercase tracking-wider text-blue-700">Calculate for Single Staff</h3>
                <p className="text-[9px] font-semibold opacity-40 uppercase tracking-wide mt-0.5">Calculate draft salary for a single employee</p>
@@ -193,7 +190,7 @@ const PayrollActionPanel = ({
 
               <button
                 type="button"
-                className={`btn btn-primary w-full rounded-xl h-12 uppercase font-black text-[10px] tracking-wider shadow-md shadow-blue-500/10 hover:shadow-lg transition-all ${generateLoading ? 'loading' : ''}`}
+                className={`btn btn-primary w-full rounded-xl h-12 uppercase font-black text-[10px] tracking-wider shadow-sm transition-all ${generateLoading ? 'loading' : ''}`}
                 onClick={handleGenerate}
                 disabled={generateLoading || !selectedEmployee}
               >
@@ -203,7 +200,7 @@ const PayrollActionPanel = ({
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-6 border border-base-200 shadow-sm space-y-4 text-center">
+          <div className="bg-white rounded-xl p-6 border border-base-200 shadow-sm space-y-4 text-center">
             <div className="w-12 h-12 bg-base-100 rounded-full flex items-center justify-center mx-auto text-base-content/40">
               <HelpCircle className="w-6 h-6" />
             </div>

@@ -38,12 +38,10 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f0f4f8] relative overflow-hidden">
       
-      {/* Background Decor */}
+      {/* Institutional Top Border */}
       <div className="absolute top-0 left-0 w-full h-2 bg-[#0038A8]"></div>
-      <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[#0038A8]/5 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[#FCD116]/5 rounded-full blur-3xl"></div>
 
-      <div className="card w-full max-w-md bg-white shadow-2xl border border-base-300 rounded-2xl overflow-hidden z-10 mx-4">
+      <div className="card w-full max-w-md bg-white shadow-lg border border-slate-200 rounded-xl overflow-hidden z-10 mx-4">
         <div className="card-body p-8 sm:p-10">
           
           {/* Brand Header */}

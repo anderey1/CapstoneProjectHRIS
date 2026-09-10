@@ -14,7 +14,7 @@ const PayrollBreakdownTable = ({
   releaseLoading
 }) => {
   return (
-    <div className="bg-white rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-base-200 shadow-sm overflow-hidden">
       {/* Table Controls */}
       <div className="p-6 border-b border-base-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-base-50/20">
         <div>

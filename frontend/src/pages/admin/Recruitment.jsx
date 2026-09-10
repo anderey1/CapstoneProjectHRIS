@@ -223,10 +223,10 @@ const Recruitment = () => {
       {/* Applicant Detail / Status Update Modal */}
       {selectedApplicant && (
          <div className="modal modal-open">
-            <div className="modal-box rounded-xl max-w-4xl p-0 overflow-hidden shadow-2xl border border-base-300 bg-white h-[85vh] flex flex-col">     
+            <div className="modal-box rounded-lg max-w-4xl p-0 overflow-hidden shadow-lg border border-slate-200 bg-white h-[85vh] flex flex-col">     
                <div className="bg-base-50/50 border-b border-base-200 p-8 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-4">
-                     <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-black uppercase shadow-lg shadow-primary/20">
+                     <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-black uppercase shadow-sm">
                         {selectedApplicant.first_name[0]}{selectedApplicant.last_name[0]}
                      </div>
                      <div>

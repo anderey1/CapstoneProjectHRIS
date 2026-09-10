@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, Plus, Pencil, Trash2, Sparkles } from 'lucide-react';
+import { GraduationCap, Plus, Pencil, Trash2, Award } from 'lucide-react';
 
 const EducationalBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) => {
   return (
@@ -64,7 +64,7 @@ const EducationalBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true 
                   {e.year_graduated && <span>Graduated: <strong className="text-slate-700 font-medium">{e.year_graduated}</strong></span>}
                   {e.honors_received && (
                     <span className="text-emerald-700 font-medium text-xs px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded-full flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> {e.honors_received}
+                      <Award className="w-3 h-3 text-emerald-600" /> {e.honors_received}
                     </span>
                   )}
                 </div>

@@ -145,10 +145,8 @@ const Apply = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f0f4f8] relative overflow-hidden py-12 px-6">
       <div className="absolute top-0 left-0 w-full h-2 bg-[#0038A8]"></div>
-      <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[#0038A8]/5 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[#FCD116]/5 rounded-full blur-3xl"></div>
 
-      <div className="w-full max-w-2xl bg-white shadow-2xl border border-base-300 rounded-2xl overflow-hidden z-10 my-6 animate-in slide-in-from-bottom-8 duration-700">
+      <div className="w-full max-w-2xl bg-white shadow-lg border border-slate-200 rounded-xl overflow-hidden z-10 my-6">
         <div className="p-8 sm:p-10 border-b border-base-100 bg-base-50/30 flex flex-col items-center text-center">
           <div className="flex items-center gap-4 mb-6">
             <img src="/Deped2.png" alt="DepEd Seal" className="w-14 h-14 drop-shadow-sm" />

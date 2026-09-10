@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { 
-  User, Wallet, CalendarCheck, Clock, Award, ChevronRight, ArrowRight, Sparkles, MapPin, BarChart3, TrendingUp
+  User, Wallet, CalendarCheck, Clock, Award, ChevronRight, ArrowRight, ShieldCheck, MapPin, BarChart3, TrendingUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -55,8 +55,8 @@ const EmployeeDashboard = () => {
   })).reverse() || [];
 
   const leaveData = [
-    { name: 'Vacation', remaining: me?.vacation_leave_balance || 0, color: 'oklch(48.8% 0.243 264.376)' },
-    { name: 'Sick', remaining: me?.sick_leave_balance || 0, color: 'oklch(57.7% 0.245 27.325)' }
+    { name: 'Vacation', remaining: me?.vacation_leave_balance || 0, color: '#0038A8' },
+    { name: 'Sick', remaining: me?.sick_leave_balance || 0, color: '#B45309' }
   ];
 
   if (meLoading) return (
@@ -66,17 +66,14 @@ const EmployeeDashboard = () => {
   );
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 space-y-8">
       
       {/* Welcome Banner */}
       <div className="bg-white rounded-2xl shadow-sm border border-base-200 overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-8 opacity-5">
-           <Sparkles size={200} />
-        </div>
         <div className="p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div className="space-y-6 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/5 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/10">
-              <Sparkles className="w-3 h-3 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-[#0038A8] rounded-md text-[10px] font-bold uppercase tracking-wider border border-blue-100">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#0038A8]" />
               Service Status: Active
             </div>
             <div className="space-y-1">
@@ -88,11 +85,11 @@ const EmployeeDashboard = () => {
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-6">
-               <Link to="/attendance" className="btn btn-primary rounded-xl shadow-xl shadow-primary/20 px-10 h-14 font-black uppercase tracking-widest text-[11px] group">
-                  <Clock className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+               <Link to="/attendance" className="btn btn-primary rounded-lg shadow-sm px-8 h-12 font-black uppercase tracking-widest text-[11px]">
+                  <Clock className="w-4 h-4" />
                   Clock In/Out
                </Link>
-               <Link to="/leave" className="btn btn-ghost bg-base-100 border-base-200 rounded-xl px-10 h-14 font-black uppercase tracking-widest text-[11px] hover:bg-base-200">
+               <Link to="/leave" className="btn btn-ghost bg-base-100 border-base-200 rounded-lg px-8 h-12 font-black uppercase tracking-widest text-[11px] hover:bg-base-200">
                   Request Leave
                </Link>
             </div>
@@ -138,8 +135,8 @@ const EmployeeDashboard = () => {
                   <AreaChart data={formattedPay} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorSalary" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="oklch(var(--p))" stopOpacity={0.15}/>
-                        <stop offset="95%" stopColor="oklch(var(--p))" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#0038A8" stopOpacity={0.15}/>
+                        <stop offset="95%" stopColor="#0038A8" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.05} />
@@ -147,18 +144,18 @@ const EmployeeDashboard = () => {
                     <YAxis tick={{ fontSize: 10, fontWeight: 900 }} axisLine={false} tickLine={false} tickFormatter={(val) => `₱${(val/1000).toFixed(1)}k`} />
                     <Tooltip 
                       cursor={false}
-                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }}
+                      contentStyle={{ borderRadius: '0.5rem', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }}
                       formatter={(val) => [`₱${val.toLocaleString()}`, 'Net Pay']}
                     />
                     <Area 
                       type="monotone" 
                       dataKey="amount" 
-                      stroke="oklch(var(--p))" 
-                      strokeWidth={4} 
+                      stroke="#0038A8" 
+                      strokeWidth={3} 
                       fillOpacity={1} 
                       fill="url(#colorSalary)" 
-                      activeDot={{ r: 6, strokeWidth: 0, fill: 'oklch(var(--p))' }}
-                      animationDuration={2000} 
+                      activeDot={{ r: 5, strokeWidth: 0, fill: '#0038A8' }}
+                      animationDuration={1000} 
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -170,7 +167,7 @@ const EmployeeDashboard = () => {
               )}
            </div>
            <div className="mt-8 p-4 bg-base-50 rounded-xl border border-base-100 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+              <div className="w-2 h-2 rounded-full bg-[#0038A8]"></div>
               <p className="text-[10px] font-bold opacity-50 uppercase tracking-widest">
                  Your net salary trend reflects regular semi-monthly disbursements and statutory deductions.
               </p>

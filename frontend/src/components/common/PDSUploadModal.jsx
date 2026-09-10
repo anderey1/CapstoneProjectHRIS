@@ -125,8 +125,8 @@ const PDSUploadModal = ({ onExtractionComplete, onSuccess }) => {
         <div className="flex flex-col gap-6">
             {!extractedData ? (
                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-primary/20 rounded-2xl p-12 bg-primary/5 transition-all hover:bg-primary/10">
-                    <div className="w-20 h-20 bg-white rounded-full shadow-xl flex items-center justify-center text-primary mb-6 animate-bounce-slow">
-                        <FileSearch className="w-10 h-10" />
+                    <div className="w-16 h-16 bg-white rounded-full shadow-sm border border-slate-200 flex items-center justify-center text-primary mb-4">
+                        <FileSearch className="w-8 h-8" />
                     </div>
                     <h3 className="text-lg font-black uppercase tracking-widest text-base-content mb-2">Intelligent PDS Reader</h3>
                     <p className="text-xs font-bold text-base-content/40 mb-8 text-center max-w-[300px] leading-relaxed">

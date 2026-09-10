@@ -131,7 +131,7 @@ const Attendance = () => {
         <div className="p-6 md:p-8 flex flex-col items-center text-center space-y-6">
           
           <div className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center bg-primary/10 text-primary border-2 border-primary/5">
-            <Clock className="w-8 h-8 md:w-10 md:h-10 animate-pulse" />
+            <Clock className="w-8 h-8 md:w-10 md:h-10" />
           </div>
 
           <div>
@@ -146,7 +146,7 @@ const Attendance = () => {
           <button 
             onClick={handleClockIn}
             disabled={checkInMutation.isPending}
-            className="btn btn-primary btn-md md:btn-lg w-full max-w-xs rounded-xl shadow-lg font-black uppercase text-xs tracking-widest text-white border-none"
+            className="btn btn-primary btn-md md:btn-lg w-full max-w-xs rounded-lg shadow-sm font-black uppercase text-xs tracking-widest text-white border-none"
           >
             {checkInMutation.isPending ? (
               <span className="loading loading-spinner" />

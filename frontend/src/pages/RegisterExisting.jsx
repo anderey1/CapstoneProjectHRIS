@@ -123,23 +123,21 @@ const RegisterExisting = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f0f4f8] relative overflow-hidden p-6">
         <div className="absolute top-0 left-0 w-full h-2 bg-[#0038A8]"></div>
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[#0038A8]/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[#FCD116]/5 rounded-full blur-3xl"></div>
         
-        <div className="card w-full max-w-lg bg-white shadow-2xl border border-base-300 rounded-2xl overflow-hidden z-10 text-center p-8 sm:p-12 animate-in zoom-in-95 duration-500">
-          <div className="w-20 h-20 bg-success/15 text-success rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-success/10">
-            <CheckCircle2 className="w-10 h-10" />
+        <div className="card w-full max-w-lg bg-white shadow-lg border border-slate-200 rounded-xl overflow-hidden z-10 text-center p-8 sm:p-12">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-200">
+            <CheckCircle2 className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-black text-[#0038A8] uppercase tracking-tight mb-2">Registration Request Received!</h1>
           <p className="text-xs font-bold text-base-content/40 uppercase tracking-widest mb-6">DepEd Lucena City Division</p>
           
-          <div className="bg-success/5 border border-success/15 rounded-xl p-4 text-xs font-medium text-success/80 mb-8 leading-relaxed max-w-sm mx-auto">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-medium text-slate-700 mb-8 leading-relaxed max-w-sm mx-auto">
             Your user account registration request has been successfully submitted to HR for validation. You will be able to log in once they approve your account.
           </div>
 
           <a 
             href="/login" 
-            className="btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest px-8 h-12"
+            className="btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none shadow-sm rounded-lg text-xs font-black uppercase tracking-widest px-8 h-12"
           >
             Go to Login
           </a>
@@ -153,10 +151,8 @@ const RegisterExisting = () => {
       
       {/* Top Banner Accent */}
       <div className="absolute top-0 left-0 w-full h-2 bg-[#0038A8]"></div>
-      <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[#0038A8]/5 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[#FCD116]/5 rounded-full blur-3xl"></div>
 
-      <div className="w-full max-w-xl bg-white shadow-2xl border border-base-300 rounded-2xl overflow-hidden z-10 my-6 animate-in slide-in-from-bottom-8 duration-700">
+      <div className="w-full max-w-xl bg-white shadow-lg border border-slate-200 rounded-xl overflow-hidden z-10 my-6">
         
         {/* Header Block */}
         <div className="p-8 border-b border-base-100 bg-base-50/30 flex flex-col items-center text-center">

@@ -30,10 +30,8 @@ const PayrollWorkflowStepper = ({ selectedCutoff, cutoffStatus, totalGross, tota
         </div>
       </div>
       
-      {/* Stepper Visuals */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         
-        {/* Step 1: Accountant Preparation */}
         <div className={`p-4 rounded-2xl border transition-all duration-300 ${
           cutoffStatus !== 'unprepared' 
             ? 'bg-blue-50 border-blue-200 text-blue-900' 
@@ -50,7 +48,6 @@ const PayrollWorkflowStepper = ({ selectedCutoff, cutoffStatus, totalGross, tota
           </div>
         </div>
 
-        {/* Step 2: Superintendent Approval */}
         <div className={`p-4 rounded-2xl border transition-all duration-300 ${
           cutoffStatus === 'approved' || cutoffStatus === 'released'
             ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
@@ -75,7 +72,6 @@ const PayrollWorkflowStepper = ({ selectedCutoff, cutoffStatus, totalGross, tota
           </div>
         </div>
 
-        {/* Step 3: Disbursement Voucher */}
         <div className={`p-4 rounded-2xl border transition-all duration-300 ${
           cutoffStatus === 'released'
             ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
@@ -100,7 +96,6 @@ const PayrollWorkflowStepper = ({ selectedCutoff, cutoffStatus, totalGross, tota
           </div>
         </div>
 
-        {/* Step 4: Released / Credited */}
         <div className={`p-4 rounded-2xl border transition-all duration-300 ${
           cutoffStatus === 'released'
             ? 'bg-emerald-100 border-emerald-300 text-emerald-950'

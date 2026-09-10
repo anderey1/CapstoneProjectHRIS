@@ -17,6 +17,7 @@ This directory contains standalone, detailed technical specifications for each t
 | **REV-07** | [`REV-07-MYLEAVES-FRONTEND-MODULARIZATION.md`](./REV-07-MYLEAVES-FRONTEND-MODULARIZATION.md) | `MyLeaves.jsx` Component Decomposition (1,295 lines) | ✅ Completed |
 | **REV-08** | [`REV-08-DATABASE-INDEXING-AND-PERFORMANCE.md`](./REV-08-DATABASE-INDEXING-AND-PERFORMANCE.md) | DB Query Indexing & Atomic `F()` Leave Accrual | ✅ Completed |
 | **REV-09** | [`REV-09-AUTOMATED-TESTING-SUITE.md`](./REV-09-AUTOMATED-TESTING-SUITE.md) | Pytest Backend Test Suites | ✅ Completed |
+| **REV-10** | [`REV-10-ANTISLOP-UI-DESIGN-SYSTEM.md`](./REV-10-ANTISLOP-UI-DESIGN-SYSTEM.md) | Anti-AI-Slop Design System Harmonization | ✅ Completed |
 
 ---
 

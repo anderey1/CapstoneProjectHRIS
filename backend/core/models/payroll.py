@@ -2,9 +2,6 @@ from django.db import models
 from .employee import Employee
 from decimal import Decimal
 
-# -------------------------
-# PAYROLL
-# -------------------------
 class Payroll(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft'),

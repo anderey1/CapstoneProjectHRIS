@@ -13,8 +13,8 @@ const ProfileHeader = ({
   onChangePhoto, 
   simulatedDocs, 
   completion,
-  canEditProfile = true,
-  canChangePhoto = true
+  canEditProfile = false,
+  canChangePhoto = false
 }) => {
   const uploadedDocsCount = Object.keys(simulatedDocs || {}).length;
   const mandatoryDocsCount = REQUIRED_DOCS_LIST.filter(d => d.mandatory).length;

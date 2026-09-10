@@ -1,9 +1,6 @@
 from django.db import models
 from django.core.validators import MaxValueValidator
 
-# -------------------------
-# DEPED POSITIONS
-# -------------------------
 TEACHING_POSITIONS = [
     ('Teacher I', 'Teacher I'),
     ('Teacher II', 'Teacher II'),
@@ -25,9 +22,6 @@ NON_TEACHING_POSITIONS = [
 
 ALL_POSITIONS = TEACHING_POSITIONS + NON_TEACHING_POSITIONS
 
-# -------------------------
-# RECRUITMENT APPLICANT
-# -------------------------
 class Applicant(models.Model):
     STATUS_CHOICES = [
         ('applied', 'Applied / Submitted'),

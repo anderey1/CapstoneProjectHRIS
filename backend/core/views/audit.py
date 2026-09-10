@@ -1,14 +1,16 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from ..models import AuditLog
+from ..models import AuditLog, Role
 from ..serializers import AuditLogSerializer
-from ..permissions import IsAdminOrHRorSuperintendent
+from ..permissions import IsAdminOnly
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.all().order_by('-timestamp')
     serializer_class = AuditLogSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrHRorSuperintendent]
+    permission_classes = [IsAuthenticated, IsAdminOnly]
 
     def get_queryset(self):
-        # Admins, HR and Superintendent can see all audit logs
-        return AuditLog.objects.all().order_by('-timestamp')
+        user = self.request.user
+        if user.is_superuser or user.role == Role.ADMINISTRATIVE:
+            return AuditLog.objects.all().order_by('-timestamp')
+        return AuditLog.objects.none()

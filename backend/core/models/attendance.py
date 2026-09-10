@@ -3,9 +3,6 @@ from django.db import models
 from django.utils import timezone
 from .employee import Employee
 
-# -------------------------
-# ATTENDANCE
-# -------------------------
 class Attendance(models.Model):
     STATUS_CHOICES = [
         ('present', 'Present'),

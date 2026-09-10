@@ -97,6 +97,14 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
   const totalRepayable = amount + totalInterest;
   const monthlyPayment = totalRepayable / term;
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const handleFormSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData, files);
@@ -104,20 +112,24 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box rounded-xl p-0 overflow-hidden border border-base-200 max-w-2xl w-[95vw] shadow-2xl bg-white animate-in zoom-in-95 duration-300 max-h-[85vh] flex flex-col">
+      <div className="modal-box rounded-lg p-0 overflow-hidden border border-slate-200 max-w-2xl w-[95vw] shadow-lg bg-white max-h-[85vh] flex flex-col">
         
         {/* Header */}
-        <div className="border-b border-base-100 p-6 flex items-center justify-between bg-white shrink-0">
+        <div className="bg-slate-50 border-b border-slate-200 p-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-             <div className="w-8 h-8 bg-secondary/10 rounded-lg flex items-center justify-center text-secondary">
-                <Wallet className="w-4 h-4" />
+             <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-[#0038A8]">
+                <Wallet className="w-5 h-5" />
              </div>
              <div>
-                <h2 className="text-sm font-black uppercase tracking-widest text-base-content">Apply for Loan</h2>
-                <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.2em] mt-0.5">Personnel Welfare Program</p>
+                <h2 className="text-sm font-bold text-slate-900">Apply for Provident Loan</h2>
+                <p className="text-xs text-slate-500">Personnel Welfare Program</p>
              </div>
           </div>
-          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100">
+          <button 
+            onClick={onClose} 
+            className="btn btn-ghost btn-sm btn-circle text-slate-500 hover:text-slate-800"
+            aria-label="Close dialog"
+          >
              <X className="w-4 h-4" />
           </button>
         </div>
@@ -284,9 +296,15 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 pt-6 border-t border-base-100">
-            <button type="button" className="btn btn-ghost flex-1 text-[10px] font-black uppercase tracking-widest opacity-40" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-secondary flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md shadow-secondary/20" disabled={isPending}>
+          <div className="flex gap-3 pt-6 border-t border-slate-200">
+            <button type="button" className="btn btn-ghost flex-1 rounded-md text-xs font-semibold text-slate-600" onClick={onClose}>
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="btn btn-primary bg-[#0038A8] text-white hover:bg-[#002b80] flex-1 rounded-md text-xs font-semibold" 
+              disabled={isPending}
+            >
               {isPending ? 'Submitting...' : (initialData ? 'Resubmit Application' : 'Apply Now')}
             </button>
           </div>

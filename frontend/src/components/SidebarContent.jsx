@@ -18,9 +18,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-/**
- * Sidebar Component with Simple Labels
- */
 const SidebarContent = ({ closeDrawer }) => {
   const { user, logout } = useAuth();
   const role = user?.role;
@@ -46,20 +43,20 @@ const SidebarContent = ({ closeDrawer }) => {
     {
       title: 'Admin Operations',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees List', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT'] },
-        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Job Applicants', roles: ['HR', 'SUPERINTENDENT'] },
-        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'DTR Approvals', roles: ['HR', 'SUPERINTENDENT'] },
-        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals', roles: ['HR', 'SUPERINTENDENT'] },
-        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'] },
-        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Approvals', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'] },
-        { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees List', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'ADMINISTRATIVE'] },
+        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Job Applicants', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'DTR Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Approvals', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
       ]
     },
     {
       title: 'Settings',
       links: [
         { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'Account Profile', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ['ADMINISTRATIVE'] },
       ]
     }
   ];
@@ -75,7 +72,7 @@ const SidebarContent = ({ closeDrawer }) => {
           </div>
           <div className="min-w-0">
             <h2 className="font-bold text-base tracking-tight leading-none text-white">DepEd HRIS</h2>
-            <p className="text-[11px] font-medium text-amber-300/90 tracking-wide mt-1 truncate">SDO Lucena City</p>
+            <p className="text-xs font-medium text-amber-300 tracking-wide mt-1 truncate">SDO Lucena City</p>
           </div>
         </div>
       </div>
@@ -91,24 +88,24 @@ const SidebarContent = ({ closeDrawer }) => {
 
           return (
             <div key={idx} className="space-y-1">
-              <h3 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-blue-200/60 mb-2">
+              <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
                 {group.title}
               </h3>
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 {visibleLinks.map((link) => (
                   <NavLink
                     key={link.to}
                     to={link.to}
                     onClick={closeDrawer}
                     className={({ isActive }) => `
-                      flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors
+                      flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors min-h-[44px]
                       ${isActive 
-                        ? 'bg-white/15 text-white font-semibold border-l-4 border-amber-400 pl-2.5 shadow-sm' 
-                        : 'text-blue-100/75 hover:bg-white/8 hover:text-white font-medium'}
+                        ? 'bg-white/15 text-white font-semibold ring-1 ring-white/25 shadow-sm' 
+                        : 'text-slate-200 hover:bg-white/10 hover:text-white font-medium'}
                     `}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="shrink-0 opacity-80 group-hover:opacity-100">
+                      <span className="shrink-0">
                         {link.icon}
                       </span>
                       <span className="truncate">{link.label}</span>

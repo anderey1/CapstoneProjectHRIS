@@ -7,9 +7,6 @@ from decimal import Decimal
 import os
 
 
-# -------------------------
-# PROVIDENT LOAN
-# -------------------------
 class ProvidentLoan(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -41,7 +38,6 @@ class ProvidentLoan(models.Model):
     date_granted = models.DateField(blank=True, null=True)
     date_applied = models.DateField(auto_now_add=True)
 
-    # --- Loan Application Fields ---
     purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='general')
     letter_request = models.TextField(blank=True, help_text="Formal letter stating the purpose of the loan.")
 
@@ -109,9 +105,6 @@ class ProvidentLoan(models.Model):
         return self.total_amount - Decimal(str(payments_sum))
 
 
-# -------------------------
-# LOAN DOCUMENT
-# -------------------------
 def validate_loan_doc_file(value):
     """Validate file size and extension for loan documents."""
     max_size_mb = getattr(settings, 'LOAN_DOC_MAX_SIZE_MB', 10)
@@ -141,7 +134,7 @@ class LoanDocument(models.Model):
         ('service_record', 'Updated Service Record'),
         ('contract', 'Contract of Service'),
         ('comaker_payslip', 'Co-Maker Payslip'),
-        ('medical_abstract', 'Medical Abstract/Certificate'),
+        ('medical_abstract', 'Medical Abstract / Certificate'),
         ('calamity_cert', 'Calamity Certificate'),
     ]
 
@@ -154,12 +147,9 @@ class LoanDocument(models.Model):
         ordering = ['doc_type', '-uploaded_at']
 
     def __str__(self):
-        return f"{self.get_doc_type_display()} — {self.loan}"
+        return f"{self.get_doc_type_display()}: {self.loan}"
 
 
-# -------------------------
-# LOAN PAYMENT
-# -------------------------
 class LoanPayment(models.Model):
     loan = models.ForeignKey(ProvidentLoan, on_delete=models.CASCADE)
     sequence = models.IntegerField(default=1)

@@ -1,9 +1,6 @@
 from django.db import models
 from .employee import Employee
 
-# -------------------------
-# LEAVE REQUEST
-# -------------------------
 class LeaveRequest(models.Model):
     STATUS_CHOICES = [
         ('pending_supervisor', 'Pending Immediate Supervisor / Principal'),

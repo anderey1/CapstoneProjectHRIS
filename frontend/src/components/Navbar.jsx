@@ -3,9 +3,6 @@ import { Menu, User, LogOut, ChevronDown, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
-/**
- * Enterprise Navbar (DepEd Standard)
- */
 const Navbar = ({ toggleDrawer }) => {
   const { user, logout } = useAuth();
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -71,8 +68,8 @@ const Navbar = ({ toggleDrawer }) => {
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
           </div>
 
-          <ul tabIndex={0} className="dropdown-content z-[40] mt-3 p-2 shadow-2xl menu menu-sm bg-base-100 rounded-xl w-52 border border-base-200">
-            <li className="menu-title px-4 py-2 opacity-40 uppercase text-[9px] font-black tracking-widest border-b border-base-100 mb-1">
+          <ul tabIndex={0} className="dropdown-content z-[40] mt-3 p-2 shadow-md menu menu-sm bg-white rounded-lg w-52 border border-slate-200">
+            <li className="menu-title px-4 py-2 uppercase text-xs font-semibold tracking-wider text-slate-500 border-b border-slate-100 mb-1">
               My Account
             </li>
             <li>

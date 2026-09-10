@@ -82,6 +82,13 @@ const Employees = () => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     return (employees || []).filter((emp) => {
+      // Exclude currently logged-in user from the employee directory
+      const isCurrentUser = 
+        (user?.employee_id && String(emp.id) === String(user.employee_id)) ||
+        (user?.id && String(emp.user_details?.id) === String(user.id)) ||
+        (user?.username && emp.user_details?.username === user.username);
+      if (isCurrentUser) return false;
+
       const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim().toLowerCase();
       const department = (emp.department || '').toLowerCase();
       const role = (emp.user_details?.role || emp.role || '').toUpperCase();
@@ -96,7 +103,7 @@ const Employees = () => {
 
       return matchesSearch && matchesRole && matchesArea;
     });
-  }, [employees, searchTerm, appliedRole, appliedArea]);
+  }, [employees, searchTerm, appliedRole, appliedArea, user]);
 
   if (isLoading) {
     return (
@@ -110,7 +117,6 @@ const Employees = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-3">

@@ -95,8 +95,8 @@ const LoanCard = ({ loan, user, onApprove, onReject, onResubmit, isProcessing })
           </div>
         )}
 
-        {/* Admin/HR Actions */}
-        {['HR'].includes(user?.role) && loan.status === 'pending' && (
+        {/* Admin/HR Actions - only active when review handlers are provided */}
+        {Boolean(onApprove && onReject) && loan.status === 'pending' && (
           <div className="mt-6 pt-6 border-t border-base-50 space-y-3">
             {showRejectInput ? (
               <div className="space-y-2">

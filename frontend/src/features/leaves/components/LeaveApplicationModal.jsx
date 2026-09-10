@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { XCircle, CalendarRange, Upload, CheckCircle2 } from 'lucide-react';
 
 /**
@@ -20,6 +20,15 @@ const LeaveApplicationModal = ({
   setIsWithinPhilippines,
   durationDays
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const today = new Date();
@@ -37,24 +46,25 @@ const LeaveApplicationModal = ({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box rounded-2xl p-0 overflow-hidden border border-base-100 max-w-4xl shadow-2xl bg-white h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="modal-box rounded-lg p-0 overflow-hidden border border-slate-200 max-w-4xl shadow-lg bg-white h-[90vh] flex flex-col">
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-base-200 p-6 flex items-center justify-between shrink-0">
+        <div className="bg-slate-50 border-b border-slate-200 p-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-[#0038A8]">
               <CalendarRange className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-base text-base-content uppercase tracking-tight">Application for Leave</h3>
-              <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mt-0.5">CSC Form No. 6 (Revised 2020)</p>
+              <h3 className="font-bold text-base text-slate-900">Application for Leave</h3>
+              <p className="text-xs font-medium text-slate-500">CSC Form No. 6 (Revised 2020)</p>
             </div>
           </div>
           <button 
             type="button"
-            className="btn btn-ghost btn-sm btn-circle hover:bg-error/10 hover:text-error transition-colors" 
+            className="btn btn-ghost btn-sm btn-circle text-slate-500 hover:text-slate-800" 
             onClick={onClose}
+            aria-label="Close dialog"
           >
-            <XCircle className="w-5 h-5 opacity-60" />
+            <XCircle className="w-5 h-5" />
           </button>
         </div>
 
@@ -309,14 +319,14 @@ const LeaveApplicationModal = ({
           </div>
 
           {/* Submit Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-base-200">
-            <button type="button" onClick={onClose} className="btn btn-ghost rounded-lg text-xs font-bold uppercase tracking-widest">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+            <button type="button" onClick={onClose} className="btn btn-ghost rounded-md text-xs font-semibold">
               Cancel
             </button>
             <button 
               type="submit" 
               disabled={isSubmitting} 
-              className="btn btn-primary rounded-lg text-xs font-black uppercase tracking-widest px-8 shadow-lg shadow-primary/20"
+              className="btn btn-primary bg-[#0038A8] text-white hover:bg-[#002b80] rounded-md text-xs font-semibold px-6"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Application'}
             </button>

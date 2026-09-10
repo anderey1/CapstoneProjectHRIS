@@ -21,5 +21,6 @@ export const QUERY_KEYS = {
     PERFORMANCE: 'performance_chart',
     RECRUITMENT: 'recruitment_chart',
     LEAVE_TYPES: 'leave_types_chart',
+    SCHOOLS: 'schools_chart',
   },
 };

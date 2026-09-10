@@ -217,7 +217,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'date_of_birth', 'place_of_birth', 'sex', 'civil_status',
                 'umid_id', 'pagibig_id', 'philhealth_no', 'philsys_id', 'tin_no', 'agency_employee_no',
                 'mobile_no', 'residential_address', 'permanent_address',
-                'face_descriptor', 'e_signature',
+                'e_signature',
                 'family', 'education', 'eligibilities', 'work_experience'
             ]
             update_data = {k: v for k, v in request.data.items() if k in allowed_fields}

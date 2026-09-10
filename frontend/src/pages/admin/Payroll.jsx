@@ -122,14 +122,12 @@ const Payroll = () => {
         </div>
       </div>
 
-      {/* STEP 1: Cutoff Selection Row */}
       <PayrollCutoffSelector
         selectedCutoff={selectedCutoff}
         onSelectCutoff={(period) => setSelectedCutoff(period)}
         allPayrolls={allPayrolls}
       />
 
-      {/* STEP 2: Cutoff Header Stepper Card */}
       <PayrollWorkflowStepper
         selectedCutoff={selectedCutoff}
         cutoffStatus={cutoffStatus}
@@ -138,7 +136,6 @@ const Payroll = () => {
         totalNet={totalNet}
       />
 
-      {/* STEP 3: Contextual Action Panel & Generation Panel */}
       <PayrollActionPanel
         cutoffStatus={cutoffStatus}
         canGenerate={canGenerate}
@@ -159,7 +156,6 @@ const Payroll = () => {
         generateLoading={isGenerating}
       />
 
-      {/* STEP 4: Staff Breakdown Table */}
       <PayrollBreakdownTable
         selectedCutoff={selectedCutoff}
         searchTerm={searchTerm}

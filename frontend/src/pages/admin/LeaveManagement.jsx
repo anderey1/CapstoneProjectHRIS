@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
    Clock, CheckCircle2, XCircle, Clock as ClockIcon, 
    ChevronRight, CalendarRange, MapPin, Activity, 
-   GraduationCap, DollarSign 
+   GraduationCap, DollarSign, FileText 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { 

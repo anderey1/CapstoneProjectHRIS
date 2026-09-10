@@ -32,6 +32,9 @@ class IsEmployee(BaseRolePermission):
             return obj.user == request.user
         return False
 
+class IsAdminOnly(BaseRolePermission):
+    allowed_roles = [Role.ADMINISTRATIVE]
+
 class IsAdminOrHR(BaseRolePermission):
     allowed_roles = [Role.HR]
 
@@ -40,7 +43,7 @@ class IsAdminOrHRorSuperintendent(BaseRolePermission):
 
 class IsManagement(BaseRolePermission):
     """Matches frontend isManagement check."""
-    allowed_roles = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT]
+    allowed_roles = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
 
 class IsEmployeeOrAdminOrHR(BaseRolePermission):
     allowed_roles = [Role.TEACHING, Role.HR, Role.NON_TEACHING, Role.ADMINISTRATIVE]

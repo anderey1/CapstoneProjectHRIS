@@ -2,8 +2,8 @@ import os
 from decimal import Decimal
 from datetime import date, datetime, timedelta
 from django.core.management.base import BaseCommand
-from django.core.management import call_command
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from core.models import (
     School, SalaryGrade, Employee, LeaveRequest, 
@@ -20,7 +20,7 @@ class Command(BaseCommand):
     help = "Seeds comprehensive demo data for Lucena City Division HRIS presentation"
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS("--- Starting DepEd Lucena City HRIS Demo Seeder ---"))
+        self.stdout.write(self.style.SUCCESS("--- Starting DepEd Lucena City HRIS Defense Demo Seeder ---"))
 
         # 1. Salary Grades
         self.stdout.write("Seeding Salary Grades...")
@@ -46,14 +46,14 @@ class Command(BaseCommand):
             )
             sg_map[grade] = sg
 
-        # 2. Schools in Division of Lucena City
-        self.stdout.write("Seeding Schools & Division Offices...")
+        # 2. Target Schools
+        self.stdout.write("Seeding Target Schools (South 1, West 1, North 1, East 1, LCNHS)...")
         schools_data = [
-            {"name": "Lucena City National High School", "latitude": Decimal("13.936700"), "longitude": Decimal("121.615000"), "radius": 150},
-            {"name": "Gulang-Gulang Elementary School", "latitude": Decimal("13.945000"), "longitude": Decimal("121.620000"), "radius": 100},
-            {"name": "Lucena West I Elementary School", "latitude": Decimal("13.931000"), "longitude": Decimal("121.608000"), "radius": 100},
-            {"name": "Lucena East I Elementary School", "latitude": Decimal("13.938000"), "longitude": Decimal("121.625000"), "radius": 100},
-            {"name": "Dalahican National High School", "latitude": Decimal("13.912000"), "longitude": Decimal("121.638000"), "radius": 120},
+            {"name": "South 1", "latitude": Decimal("13.921000"), "longitude": Decimal("121.611000"), "radius": 150},
+            {"name": "West 1", "latitude": Decimal("13.931000"), "longitude": Decimal("121.608000"), "radius": 150},
+            {"name": "North 1", "latitude": Decimal("13.952000"), "longitude": Decimal("121.621000"), "radius": 150},
+            {"name": "East 1", "latitude": Decimal("13.938000"), "longitude": Decimal("121.625000"), "radius": 150},
+            {"name": "LCNHS", "latitude": Decimal("13.936700"), "longitude": Decimal("121.615000"), "radius": 150},
             {"name": "Division Office - Lucena City", "latitude": Decimal("13.937200"), "longitude": Decimal("121.617800"), "radius": 200},
         ]
         school_objs = {}
@@ -64,15 +64,13 @@ class Command(BaseCommand):
             )
             school_objs[s["name"]] = sch
 
-        # 3. Create Key Demo Users
-        self.stdout.write("Seeding Users & Employee Profiles...")
+        # 3. Create Users & Employee Profiles
+        self.stdout.write("Seeding Users & Employee Profiles across all roles & schools...")
         users_specs = [
+            # Executives / Division Admin
             {
-                "username": "admin",
-                "email": "admin@deped.gov.ph",
-                "role": Role.ADMINISTRATIVE,
-                "is_staff": True,
-                "is_superuser": True,
+                "username": "admin", "email": "admin@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "is_staff": True, "is_superuser": True,
                 "emp": {
                     "first_name": "System", "last_name": "Administrator",
                     "position": "Information Technology Officer I", "department": "ICT Section",
@@ -81,10 +79,7 @@ class Command(BaseCommand):
                 }
             },
             {
-                "username": "hr_lucena",
-                "email": "hr.lucena@deped.gov.ph",
-                "role": Role.HR,
-                "is_staff": True,
+                "username": "hr_lucena", "email": "hr.lucena@deped.gov.ph", "role": Role.HR, "is_staff": True,
                 "emp": {
                     "first_name": "Helen", "last_name": "Ramos", "middle_name": "Santos",
                     "position": "Administrative Officer V (HRMO)", "department": "Personnel / HR Section",
@@ -95,10 +90,7 @@ class Command(BaseCommand):
                 }
             },
             {
-                "username": "superintendent",
-                "email": "sds.lucena@deped.gov.ph",
-                "role": Role.SUPERINTENDENT,
-                "is_staff": True,
+                "username": "superintendent", "email": "sds.lucena@deped.gov.ph", "role": Role.SUPERINTENDENT, "is_staff": True,
                 "emp": {
                     "first_name": "Dr. Susan", "last_name": "Perez", "middle_name": "Alvarez",
                     "position": "Schools Division Superintendent", "department": "Office of the SDS",
@@ -109,10 +101,7 @@ class Command(BaseCommand):
                 }
             },
             {
-                "username": "accountant",
-                "email": "finance.lucena@deped.gov.ph",
-                "role": Role.ACCOUNTANT,
-                "is_staff": True,
+                "username": "accountant", "email": "finance.lucena@deped.gov.ph", "role": Role.ACCOUNTANT, "is_staff": True,
                 "emp": {
                     "first_name": "Arthur", "last_name": "Valenzuela", "middle_name": "Dizon",
                     "position": "Accountant III", "department": "Accounting Section",
@@ -122,178 +111,219 @@ class Command(BaseCommand):
                     "tin_no": "345-678-901-000", "philhealth_no": "34-567890123-4", "pagibig_id": "3456-7890-1234"
                 }
             },
+
+            # School Principals / Supervisors (for approving school teacher leaves)
             {
-                "username": "principal_santos",
-                "email": "eduardo.santos@deped.gov.ph",
-                "role": Role.TEACHING,
-                "is_staff": False,
+                "username": "principal_lcnhs", "email": "principal.lcnhs@deped.gov.ph", "role": Role.ADMINISTRATIVE,
                 "emp": {
                     "first_name": "Eduardo", "last_name": "Santos", "middle_name": "Luna",
-                    "position": "Principal II", "department": "School Administration",
-                    "school": school_objs["Lucena City National High School"],
+                    "position": "School Principal II", "department": "School Administration",
+                    "school": school_objs["LCNHS"],
                     "agency_employee_no": "2024-LCNHS-001", "salary": sg_map[20].amount, "salary_grade": sg_map[20],
-                    "mobile_no": "09171234564", "civil_status": "Married", "sex": "Male",
-                    "tin_no": "456-789-012-000", "philhealth_no": "45-678901234-5", "pagibig_id": "4567-8901-2345"
+                    "mobile_no": "09171234564", "civil_status": "Married", "sex": "Male"
                 }
             },
             {
-                "username": "marites.cruz",
-                "email": "marites.cruz@deped.gov.ph",
-                "role": Role.TEACHING,
-                "is_staff": False,
+                "username": "principal_west1", "email": "principal.west1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "emp": {
+                    "first_name": "Teresa", "last_name": "Mendoza", "middle_name": "Bautista",
+                    "position": "School Principal I", "department": "School Administration",
+                    "school": school_objs["West 1"],
+                    "agency_employee_no": "2024-WEST1-001", "salary": sg_map[19].amount, "salary_grade": sg_map[19],
+                    "mobile_no": "09171234570", "civil_status": "Married", "sex": "Female"
+                }
+            },
+            {
+                "username": "principal_east1", "email": "principal.east1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "emp": {
+                    "first_name": "Danilo", "last_name": "Reyes", "middle_name": "Cruz",
+                    "position": "School Principal I", "department": "School Administration",
+                    "school": school_objs["East 1"],
+                    "agency_employee_no": "2024-EAST1-001", "salary": sg_map[19].amount, "salary_grade": sg_map[19],
+                    "mobile_no": "09171234571", "civil_status": "Married", "sex": "Male"
+                }
+            },
+            {
+                "username": "principal_north1", "email": "principal.north1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "emp": {
+                    "first_name": "Lourdes", "last_name": "Garcia", "middle_name": "Aquino",
+                    "position": "School Principal I", "department": "School Administration",
+                    "school": school_objs["North 1"],
+                    "agency_employee_no": "2024-NORTH1-001", "salary": sg_map[19].amount, "salary_grade": sg_map[19],
+                    "mobile_no": "09171234572", "civil_status": "Married", "sex": "Female"
+                }
+            },
+            {
+                "username": "principal_south1", "email": "principal.south1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "emp": {
+                    "first_name": "Rogelio", "last_name": "Bautista", "middle_name": "Navarro",
+                    "position": "School Principal I", "department": "School Administration",
+                    "school": school_objs["South 1"],
+                    "agency_employee_no": "2024-SOUTH1-001", "salary": sg_map[19].amount, "salary_grade": sg_map[19],
+                    "mobile_no": "09171234573", "civil_status": "Married", "sex": "Male"
+                }
+            },
+
+            # Teachers across Schools
+            {
+                "username": "maria.santos", "email": "maria.santos@deped.gov.ph", "role": Role.TEACHING,
+                "emp": {
+                    "first_name": "Maria", "last_name": "Santos", "middle_name": "Tolentino",
+                    "position": "Teacher I", "department": "Junior High School - English",
+                    "school": school_objs["LCNHS"],
+                    "agency_employee_no": "2024-LCNHS-002", "salary": sg_map[11].amount, "salary_grade": sg_map[11],
+                    "vacation_leave_balance": Decimal("15.000"), "sick_leave_balance": Decimal("15.000"),
+                    "mobile_no": "09171234574", "civil_status": "Single", "sex": "Female"
+                }
+            },
+            {
+                "username": "marites.cruz", "email": "marites.cruz@deped.gov.ph", "role": Role.TEACHING,
                 "emp": {
                     "first_name": "Marites", "last_name": "Cruz", "middle_name": "Tolentino",
                     "position": "Teacher III", "department": "Senior High School - STEM",
-                    "school": school_objs["Lucena City National High School"],
-                    "agency_employee_no": "2024-LCNHS-002", "salary": sg_map[13].amount, "salary_grade": sg_map[13],
-                    "mobile_no": "09171234565", "civil_status": "Married", "sex": "Female",
+                    "school": school_objs["LCNHS"],
+                    "agency_employee_no": "2024-LCNHS-003", "salary": sg_map[13].amount, "salary_grade": sg_map[13],
                     "vacation_leave_balance": Decimal("14.500"), "sick_leave_balance": Decimal("15.000"),
-                    "tin_no": "567-890-123-000", "philhealth_no": "56-789012345-6", "pagibig_id": "5678-9012-3456"
+                    "mobile_no": "09171234565", "civil_status": "Married", "sex": "Female"
                 }
             },
             {
-                "username": "juandelacruz",
-                "email": "juan.delacruz@deped.gov.ph",
-                "role": Role.TEACHING,
-                "is_staff": False,
+                "username": "juandelacruz", "email": "juan.delacruz@deped.gov.ph", "role": Role.TEACHING,
                 "emp": {
                     "first_name": "Juan", "last_name": "Dela Cruz", "middle_name": "Bautista",
-                    "position": "Teacher I", "department": "Junior High School - English",
-                    "school": school_objs["Lucena City National High School"],
-                    "agency_employee_no": "2024-LCNHS-003", "salary": sg_map[11].amount, "salary_grade": sg_map[11],
-                    "mobile_no": "09171234566", "civil_status": "Single", "sex": "Male",
+                    "position": "Teacher II", "department": "Elementary Education - Math",
+                    "school": school_objs["West 1"],
+                    "agency_employee_no": "2024-WEST1-002", "salary": sg_map[12].amount, "salary_grade": sg_map[12],
                     "vacation_leave_balance": Decimal("12.000"), "sick_leave_balance": Decimal("11.500"),
-                    "tin_no": "678-901-234-000", "philhealth_no": "67-890123456-7", "pagibig_id": "6789-0123-4567"
+                    "mobile_no": "09171234566", "civil_status": "Single", "sex": "Male"
                 }
             },
             {
-                "username": "clarissa.reyes",
-                "email": "clarissa.reyes@deped.gov.ph",
-                "role": Role.TEACHING,
-                "is_staff": False,
+                "username": "clarissa.reyes", "email": "clarissa.reyes@deped.gov.ph", "role": Role.TEACHING,
                 "emp": {
                     "first_name": "Clarissa", "last_name": "Reyes", "middle_name": "Mendoza",
                     "position": "Master Teacher I", "department": "Science Department",
-                    "school": school_objs["Gulang-Gulang Elementary School"],
-                    "agency_employee_no": "2024-GGES-001", "salary": sg_map[18].amount, "salary_grade": sg_map[18],
-                    "mobile_no": "09171234567", "civil_status": "Married", "sex": "Female",
+                    "school": school_objs["East 1"],
+                    "agency_employee_no": "2024-EAST1-002", "salary": sg_map[18].amount, "salary_grade": sg_map[18],
                     "vacation_leave_balance": Decimal("18.000"), "sick_leave_balance": Decimal("16.000"),
-                    "tin_no": "789-012-345-000", "philhealth_no": "78-901234567-8", "pagibig_id": "7890-1234-5678"
+                    "mobile_no": "09171234567", "civil_status": "Married", "sex": "Female"
                 }
             },
             {
-                "username": "roberto.navarro",
-                "email": "roberto.navarro@deped.gov.ph",
-                "role": Role.NON_TEACHING,
-                "is_staff": False,
+                "username": "angelo.aquino", "email": "angelo.aquino@deped.gov.ph", "role": Role.TEACHING,
+                "emp": {
+                    "first_name": "Angelo", "last_name": "Aquino", "middle_name": "Fernandez",
+                    "position": "Teacher I", "department": "Social Studies Department",
+                    "school": school_objs["North 1"],
+                    "agency_employee_no": "2024-NORTH1-002", "salary": sg_map[11].amount, "salary_grade": sg_map[11],
+                    "vacation_leave_balance": Decimal("15.000"), "sick_leave_balance": Decimal("14.000"),
+                    "mobile_no": "09171234575", "civil_status": "Single", "sex": "Male"
+                }
+            },
+            {
+                "username": "patricia.lim", "email": "patricia.lim@deped.gov.ph", "role": Role.TEACHING,
+                "emp": {
+                    "first_name": "Patricia", "last_name": "Lim", "middle_name": "Valdez",
+                    "position": "Teacher II", "department": "Primary Grade Department",
+                    "school": school_objs["South 1"],
+                    "agency_employee_no": "2024-SOUTH1-002", "salary": sg_map[12].amount, "salary_grade": sg_map[12],
+                    "vacation_leave_balance": Decimal("13.000"), "sick_leave_balance": Decimal("14.500"),
+                    "mobile_no": "09171234576", "civil_status": "Married", "sex": "Female"
+                }
+            },
+
+            # Non-Teaching Staff
+            {
+                "username": "roberto.navarro", "email": "roberto.navarro@deped.gov.ph", "role": Role.NON_TEACHING,
                 "emp": {
                     "first_name": "Roberto", "last_name": "Navarro", "middle_name": "Castillo",
-                    "position": "Administrative Officer II", "department": "Supply & Property Section",
+                    "position": "Administrative Officer II (Supply)", "department": "Supply & Property Section",
                     "school": school_objs["Division Office - Lucena City"],
                     "agency_employee_no": "2024-SDO-004", "salary": sg_map[12].amount, "salary_grade": sg_map[12],
-                    "mobile_no": "09171234568", "civil_status": "Married", "sex": "Male",
                     "vacation_leave_balance": Decimal("10.000"), "sick_leave_balance": Decimal("12.000"),
-                    "tin_no": "890-123-456-000", "philhealth_no": "89-012345678-9", "pagibig_id": "8901-2345-6789"
+                    "mobile_no": "09171234568", "civil_status": "Married", "sex": "Male"
                 }
             },
             {
-                "username": "elena.torres",
-                "email": "elena.torres@deped.gov.ph",
-                "role": Role.ADMINISTRATIVE,
-                "is_staff": False,
+                "username": "elena.torres", "email": "elena.torres@deped.gov.ph", "role": Role.ADMINISTRATIVE,
                 "emp": {
                     "first_name": "Elena", "last_name": "Torres", "middle_name": "Villanueva",
                     "position": "Administrative Assistant II", "department": "Cashier & Disbursement",
                     "school": school_objs["Division Office - Lucena City"],
                     "agency_employee_no": "2024-SDO-005", "salary": Decimal("20402.00"),
-                    "mobile_no": "09171234569", "civil_status": "Single", "sex": "Female",
                     "vacation_leave_balance": Decimal("15.000"), "sick_leave_balance": Decimal("14.000"),
-                    "tin_no": "901-234-567-000", "philhealth_no": "90-123456789-0", "pagibig_id": "9012-3456-7890"
+                    "mobile_no": "09171234569", "civil_status": "Single", "sex": "Female"
+                }
+            },
+            {
+                "username": "ricardo.dalisay", "email": "ricardo.dalisay@deped.gov.ph", "role": Role.NON_TEACHING,
+                "emp": {
+                    "first_name": "Ricardo", "last_name": "Dalisay", "middle_name": "Moreno",
+                    "position": "School Registrar I", "department": "Registrar Section",
+                    "school": school_objs["LCNHS"],
+                    "agency_employee_no": "2024-LCNHS-004", "salary": sg_map[11].amount, "salary_grade": sg_map[11],
+                    "vacation_leave_balance": Decimal("15.000"), "sick_leave_balance": Decimal("15.000"),
+                    "mobile_no": "09171234577", "civil_status": "Single", "sex": "Male"
+                }
+            },
+            {
+                "username": "grace.villanueva", "email": "grace.villanueva@deped.gov.ph", "role": Role.NON_TEACHING,
+                "emp": {
+                    "first_name": "Grace", "last_name": "Villanueva", "middle_name": "Pascual",
+                    "position": "Administrative Aide VI", "department": "General Services",
+                    "school": school_objs["West 1"],
+                    "agency_employee_no": "2024-WEST1-003", "salary": Decimal("17553.00"),
+                    "vacation_leave_balance": Decimal("15.000"), "sick_leave_balance": Decimal("15.000"),
+                    "mobile_no": "09171234578", "civil_status": "Single", "sex": "Female"
                 }
             },
         ]
 
+        hashed_password = make_password(DEFAULT_PASSWORD)
         emp_objs = {}
         for item in users_specs:
-            user_obj, created = User.objects.update_or_create(
+            user_obj, _ = User.objects.update_or_create(
                 username=item["username"],
                 defaults={
                     "email": item["email"],
                     "role": item["role"],
                     "is_staff": item.get("is_staff", False),
                     "is_superuser": item.get("is_superuser", False),
+                    "password": hashed_password,
                 }
             )
-            user_obj.set_password(DEFAULT_PASSWORD)
-            user_obj.save()
+            if user_obj.password != hashed_password:
+                user_obj.password = hashed_password
+                user_obj.save(update_fields=["password"])
 
             emp_data = item["emp"]
-            emp, _ = Employee.objects.update_or_create(
+            emp_obj, _ = Employee.objects.update_or_create(
                 user=user_obj,
                 defaults=emp_data
             )
-            emp_objs[item["username"]] = emp
+            emp_objs[item["username"]] = emp_obj
 
-        # Assign Principal as supervisor for school staff
-        principal = emp_objs.get("principal_santos")
-        if principal:
-            if "marites.cruz" in emp_objs:
-                emp_objs["marites.cruz"].supervisor = principal
-                emp_objs["marites.cruz"].save()
-            if "juandelacruz" in emp_objs:
-                emp_objs["juandelacruz"].supervisor = principal
-                emp_objs["juandelacruz"].save()
+        # Link Supervisors to Teachers
+        emp_objs["maria.santos"].supervisor = emp_objs["principal_lcnhs"]
+        emp_objs["maria.santos"].save()
+        emp_objs["marites.cruz"].supervisor = emp_objs["principal_lcnhs"]
+        emp_objs["marites.cruz"].save()
+        emp_objs["juandelacruz"].supervisor = emp_objs["principal_west1"]
+        emp_objs["juandelacruz"].save()
+        emp_objs["clarissa.reyes"].supervisor = emp_objs["principal_east1"]
+        emp_objs["clarissa.reyes"].save()
+        emp_objs["angelo.aquino"].supervisor = emp_objs["principal_north1"]
+        emp_objs["angelo.aquino"].save()
+        emp_objs["patricia.lim"].supervisor = emp_objs["principal_south1"]
+        emp_objs["patricia.lim"].save()
 
-        # 4. PDS Details for Marites Cruz (Civil Service Form 212)
-        self.stdout.write("Seeding PDS Personal Data Sheet Details...")
-        marites = emp_objs["marites.cruz"]
-        FamilyMember.objects.filter(employee=marites).delete()
-        FamilyMember.objects.create(
-            employee=marites, relationship='SPOUSE', first_name='Renato', surname='Cruz',
-            occupation='Mechanical Engineer', employer='Meralco Lucena'
-        )
-        FamilyMember.objects.create(
-            employee=marites, relationship='CHILD', full_name='Angelo Cruz',
-            date_of_birth=date(2015, 8, 22)
-        )
-        Education.objects.filter(employee=marites).delete()
-        Education.objects.create(
-            employee=marites, level='COLLEGE', school_name='Manuel S. Enverga University Foundation',
-            degree_course='Bachelor of Secondary Education - Major in Mathematics',
-            period_from='2010', period_to='2014', year_graduated='2014', honors_received='Cum Laude'
-        )
-        Education.objects.create(
-            employee=marites, level='GRADUATE', school_name='Southern Luzon State University',
-            degree_course='Master of Arts in Education (Educational Management)',
-            period_from='2017', period_to='2020', year_graduated='2020'
-        )
-        Eligibility.objects.filter(employee=marites).delete()
-        Eligibility.objects.create(
-            employee=marites, service='Licensure Examination for Teachers (LET)',
-            rating='87.40', date_of_exam=date(2014, 9, 28), place_of_exam='Lucena City',
-            license_number='LET-1049281'
-        )
-
-        from core.models.pds_details import WorkExperience
-        WorkExperience.objects.filter(employee=marites).delete()
-        WorkExperience.objects.create(
-            employee=marites,
-            date_from=date(2018, 6, 1),
-            is_present=True,
-            position_title='Teacher III',
-            agency='Department of Education - Division of Lucena City',
-            monthly_salary=Decimal('33575.00'),
-            salary_grade='13',
-            status_of_appointment='Permanent',
-            is_gov_service=True
-        )
-
-        # 5. Leave Requests (CSC Form No. 6)
-        self.stdout.write("Seeding CSC Form No. 6 Leave Requests across all stages...")
+        # 4. Leave Requests (CSC Form No. 6 across all stages)
+        self.stdout.write("Seeding Leave Requests across all workflow stages...")
         LeaveRequest.objects.all().delete()
         leaves_data = [
+            # 1. Pending Supervisor (For Principal to recommend)
             {
-                "employee": emp_objs["marites.cruz"],
+                "employee": emp_objs["maria.santos"],
                 "leave_type": "vacation",
                 "start_date": date(2026, 6, 8),
                 "end_date": date(2026, 6, 10),
@@ -303,6 +333,18 @@ class Command(BaseCommand):
                 "location_details": "Family gathering in Tagaytay City",
                 "commutation": "not_requested",
             },
+            {
+                "employee": emp_objs["angelo.aquino"],
+                "leave_type": "special_privilege",
+                "start_date": date(2026, 6, 15),
+                "end_date": date(2026, 6, 16),
+                "working_days_applied": Decimal("2.0"),
+                "status": "pending_supervisor",
+                "is_within_philippines": True,
+                "location_details": "Personal milestone / family event",
+                "commutation": "not_requested",
+            },
+            # 2. Pending HR Officer (For HR to endorse)
             {
                 "employee": emp_objs["juandelacruz"],
                 "leave_type": "sick",
@@ -314,8 +356,9 @@ class Command(BaseCommand):
                 "illness_details": "Acute viral gastroenteritis",
                 "commutation": "not_requested",
             },
+            # 3. Pending Superintendent (For SDS final approval)
             {
-                "employee": emp_objs["roberto.navarro"],
+                "employee": emp_objs["marites.cruz"],
                 "leave_type": "vacation",
                 "start_date": date(2026, 7, 1),
                 "end_date": date(2026, 7, 10),
@@ -325,6 +368,7 @@ class Command(BaseCommand):
                 "location_details": "Tokyo, Japan (Personal vacation)",
                 "commutation": "requested",
             },
+            # 4. Approved Leaves
             {
                 "employee": emp_objs["clarissa.reyes"],
                 "leave_type": "forced",
@@ -336,25 +380,36 @@ class Command(BaseCommand):
                 "commutation": "not_requested",
             },
             {
-                "employee": emp_objs["elena.torres"],
+                "employee": emp_objs["patricia.lim"],
+                "leave_type": "solo_parent",
+                "start_date": date(2026, 5, 11),
+                "end_date": date(2026, 5, 15),
+                "working_days_applied": Decimal("5.0"),
+                "status": "approved",
+                "approved_days_with_pay": Decimal("5.0"),
+                "commutation": "not_requested",
+            },
+            # 5. Rejected Leave
+            {
+                "employee": emp_objs["roberto.navarro"],
                 "leave_type": "special_privilege",
                 "start_date": date(2026, 3, 16),
                 "end_date": date(2026, 3, 17),
                 "working_days_applied": Decimal("2.0"),
                 "status": "rejected",
-                "disapproval_reason": "Overlapping with scheduled quarterly division inventory audit.",
+                "disapproval_reason": "Overlapping with scheduled quarterly division property physical inventory audit.",
                 "rejection_stage": "pending_hr",
             },
         ]
         for l in leaves_data:
             LeaveRequest.objects.create(**l)
 
-        # 6. Provident Fund Loans & Amortization
-        self.stdout.write("Seeding Provident Fund Loans and Ledger...")
+        # 5. Provident Fund Loans
+        self.stdout.write("Seeding Provident Fund Loans across all stages...")
         ProvidentLoan.objects.all().delete()
         LoanPayment.objects.all().delete()
 
-        # Loan 1: Pending Accountant Verification
+        # 1. Pending Accountant Verification
         ProvidentLoan.objects.create(
             employee=emp_objs["juandelacruz"],
             loan_amount=Decimal("30000.00"),
@@ -363,10 +418,10 @@ class Command(BaseCommand):
             status="pending",
             purpose="emergency",
             letter_request="Urgent loan application for home electrical repair caused by recent rainstorm.",
-            co_maker=emp_objs["principal_santos"],
+            co_maker=emp_objs["principal_west1"],
         )
 
-        # Loan 2: Verified by Accountant, Pending Superintendent Approval
+        # 2. Verified by Accountant, Pending Superintendent Approval
         ProvidentLoan.objects.create(
             employee=emp_objs["roberto.navarro"],
             loan_amount=Decimal("50000.00"),
@@ -375,13 +430,13 @@ class Command(BaseCommand):
             status="verified",
             purpose="medical",
             letter_request="Provident loan for hospitalization expenses of dependent spouse.",
-            co_maker=emp_objs["principal_santos"],
+            co_maker=emp_objs["principal_lcnhs"],
             remarks="Verified complete documentation: payslips and medical certificate in order.",
             reviewed_by=User.objects.get(username="accountant"),
             reviewed_at=timezone.now() - timedelta(days=2),
         )
 
-        # Loan 3: Approved by Superintendent, Pending Disbursement (Payout)
+        # 3. Approved by Superintendent, Pending Fund Release
         ProvidentLoan.objects.create(
             employee=emp_objs["clarissa.reyes"],
             loan_amount=Decimal("80000.00"),
@@ -390,13 +445,13 @@ class Command(BaseCommand):
             status="approved",
             purpose="educational",
             letter_request="Provident loan for doctoral dissertation tuition and research requirements.",
-            co_maker=emp_objs["principal_santos"],
-            remarks="Approved by Superintendent. Endorsed for fund availability and payout.",
+            co_maker=emp_objs["principal_east1"],
+            remarks="Approved by Superintendent. Endorsed for fund availability and release.",
             reviewed_by=User.objects.get(username="superintendent"),
             reviewed_at=timezone.now() - timedelta(days=1),
         )
 
-        # Loan 4: Active Released Loan with Subsidiary Ledger Payments
+        # 4. Active Released Loan with Payment History
         active_loan = ProvidentLoan.objects.create(
             employee=emp_objs["marites.cruz"],
             loan_amount=Decimal("60000.00"),
@@ -405,11 +460,10 @@ class Command(BaseCommand):
             status="released",
             purpose="general",
             letter_request="Provident fund personal loan application.",
-            co_maker=emp_objs["principal_santos"],
+            co_maker=emp_objs["principal_lcnhs"],
             date_granted=date(2026, 2, 1),
             remarks="Approved and disbursed via LandBank ATM payroll credit.",
         )
-        # Add 3 posted monthly ledger entries
         monthly_ded = active_loan.monthly_payment
         for seq in range(1, 4):
             LoanPayment.objects.create(
@@ -418,7 +472,21 @@ class Command(BaseCommand):
                 posted_by=User.objects.get(username="accountant")
             )
 
-        # 7. Attendance & Form 48 DTR (May 2026)
+        # 5. Paid Loan
+        paid_loan = ProvidentLoan.objects.create(
+            employee=emp_objs["patricia.lim"],
+            loan_amount=Decimal("20000.00"),
+            interest_rate=Decimal("6.00"),
+            term_months=12,
+            status="paid",
+            purpose="calamity",
+            letter_request="Emergency loan for minor repairs.",
+            co_maker=emp_objs["principal_south1"],
+            date_granted=date(2025, 1, 15),
+            remarks="Loan fully settled.",
+        )
+
+        # 6. Attendance & DTR Records (May 2026)
         self.stdout.write("Seeding Form 48 Daily Time Records (DTR)...")
         Attendance.objects.all().delete()
         target_dates = [
@@ -431,7 +499,7 @@ class Command(BaseCommand):
             (date(2026, 5, 12), "07:52", "12:03", "12:54", "17:04", "present", False),
             (date(2026, 5, 13), "08:10", "12:00", "12:50", "17:01", "late", False),
         ]
-        sample_employees = [emp_objs["marites.cruz"], emp_objs["juandelacruz"], emp_objs["roberto.navarro"]]
+        sample_employees = [emp_objs["marites.cruz"], emp_objs["juandelacruz"], emp_objs["maria.santos"], emp_objs["angelo.aquino"]]
         for emp in sample_employees:
             for d, a_in, a_out, p_in, p_out, st, approved in target_dates:
                 Attendance.objects.create(
@@ -447,7 +515,7 @@ class Command(BaseCommand):
                     dtr_approved_at=timezone.now() if approved else None,
                 )
 
-        # 8. Payroll Cutoffs
+        # 7. Payroll Cutoffs
         self.stdout.write("Seeding Payroll records for May 1-15, 2026...")
         Payroll.objects.all().delete()
         payroll_staff = [
@@ -456,6 +524,7 @@ class Command(BaseCommand):
             (emp_objs["clarissa.reyes"], Decimal("11.0"), Decimal("25300.50"), Decimal("2277.05"), Decimal("632.51"), Decimal("100.00"), Decimal("3100.00"), Decimal("0.00"), "draft"),
             (emp_objs["roberto.navarro"], Decimal("10.5"), Decimal("14746.77"), Decimal("1390.41"), Decimal("386.23"), Decimal("100.00"), Decimal("850.00"), Decimal("0.00"), "approved"),
             (emp_objs["elena.torres"], Decimal("11.0"), Decimal("10201.00"), Decimal("918.09"), Decimal("255.03"), Decimal("100.00"), Decimal("0.00"), Decimal("0.00"), "released"),
+            (emp_objs["maria.santos"], Decimal("11.0"), Decimal("14256.00"), Decimal("1283.04"), Decimal("356.40"), Decimal("100.00"), Decimal("650.00"), Decimal("0.00"), "draft"),
         ]
         for emp, days, basic, gsis, phil, pagibig, tax, loans, st in payroll_staff:
             Payroll.objects.create(
@@ -463,7 +532,7 @@ class Command(BaseCommand):
                 cutoff_period="May 1-15, 2026",
                 days_worked=days,
                 basic_salary=basic,
-                gross_salary=basic + Decimal("1000.00"), # plus PERA
+                gross_salary=basic + Decimal("1000.00"),
                 gsis=gsis,
                 sss=gsis,
                 philhealth=phil,
@@ -475,7 +544,7 @@ class Command(BaseCommand):
                 date_released=timezone.now() if st == "released" else None
             )
 
-        # 9. Recruitment Applicants (DepEd Order 7, s. 2023)
+        # 8. Recruitment Applicants (DO 7, s. 2023)
         self.stdout.write("Seeding Recruitment Registry of Qualified Applicants (RQA)...")
         Applicant.objects.all().delete()
         applicants_data = [
@@ -515,13 +584,14 @@ class Command(BaseCommand):
         for app in applicants_data:
             Applicant.objects.create(**app)
 
-        # 10. Performance Reviews (IPCRF)
+        # 9. Performance Reviews (IPCRF)
         self.stdout.write("Seeding IPCRF Performance Reviews...")
         PerformanceReview.objects.all().delete()
         reviews = [
             (emp_objs["marites.cruz"], "SY 2024-2025 (Annual)", 5, 5, 5, True, "Outstanding classroom delivery with 100% participation in school learning action cell sessions."),
             (emp_objs["juandelacruz"], "SY 2024-2025 (Annual)", 4, 4, 4, False, "Very satisfactory performance; recommended to participate in regional pedagogy workshops."),
             (emp_objs["clarissa.reyes"], "SY 2024-2025 (Annual)", 5, 5, 5, True, "Exemplary instructional leadership and demonstration teaching coach for district science competition."),
+            (emp_objs["maria.santos"], "SY 2024-2025 (Annual)", 4, 5, 4, True, "Demonstrated high competence in blended learning strategies."),
         ]
         for emp, period, p, q, b, promo, summary in reviews:
             PerformanceReview.objects.create(
@@ -531,11 +601,15 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("\n[SUCCESS] Successfully seeded all sample demo data!"))
         self.stdout.write(self.style.SUCCESS("All users are initialized with password: 'password123'"))
-        self.stdout.write("Key demo accounts ready:")
-        self.stdout.write("  • HR Officer:         username: hr_lucena       password: password123")
-        self.stdout.write("  • Superintendent:     username: superintendent  password: password123")
-        self.stdout.write("  • Division Accountant:username: accountant      password: password123")
-        self.stdout.write("  • School Principal:   username: principal_santos password: password123")
-        self.stdout.write("  • Teacher III:        username: marites.cruz    password: password123")
-        self.stdout.write("  • Teacher I:          username: juandelacruz    password: password123")
-        self.stdout.write("  • Admin Superuser:    username: admin           password: password123\n")
+        self.stdout.write("Key demo accounts for defense presentation:")
+        self.stdout.write("  • Admin (Full Access):   username: admin             password: password123")
+        self.stdout.write("  • HR Officer:            username: hr_lucena         password: password123")
+        self.stdout.write("  • Superintendent:        username: superintendent    password: password123")
+        self.stdout.write("  • Division Accountant:   username: accountant        password: password123")
+        self.stdout.write("  • LCNHS Principal:       username: principal_lcnhs   password: password123")
+        self.stdout.write("  • West 1 Principal:      username: principal_west1   password: password123")
+        self.stdout.write("  • East 1 Principal:      username: principal_east1   password: password123")
+        self.stdout.write("  • North 1 Principal:     username: principal_north1  password: password123")
+        self.stdout.write("  • South 1 Principal:     username: principal_south1  password: password123")
+        self.stdout.write("  • LCNHS Teacher I:       username: maria.santos      password: password123")
+        self.stdout.write("  • West 1 Teacher II:     username: juandelacruz      password: password123\n")

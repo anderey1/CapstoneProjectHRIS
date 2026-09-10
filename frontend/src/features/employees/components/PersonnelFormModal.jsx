@@ -216,17 +216,26 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     setShowPDSImport(false);
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <div className="modal modal-open">
-      <div className="modal-box rounded-xl p-0 overflow-hidden border border-base-200 max-w-2xl shadow-2xl bg-white flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
+      <div className="modal-box rounded-lg p-0 overflow-hidden border border-slate-200 max-w-2xl shadow-lg bg-white flex flex-col max-h-[90vh]">
         
         {/* Page Header */}
-        <div className="bg-base-50/50 border-b border-base-100 p-8 flex items-center justify-between">
+        <div className="bg-slate-50 border-b border-slate-200 p-5 flex items-center justify-between">
           <div>
-            <h3 className="font-black text-xl text-base-content uppercase tracking-tight">
-              {isEdit ? 'Update Record' : 'New Employee Record'}
+            <h3 className="font-bold text-lg text-slate-900">
+              {isEdit ? 'Update Employee Record' : 'New Employee Record'}
             </h3>
-            <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mt-1">
+            <p className="text-xs text-slate-500 mt-0.5">
               {isEdit 
                 ? `Editing record for ${initialData.first_name}` 
                 : 'Register a new staff member'}
@@ -237,16 +246,17 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
               <button 
                 type="button"
                 onClick={() => setShowPDSImport(true)}
-                className="btn btn-outline btn-primary btn-xs rounded-md text-[9px] font-black uppercase tracking-widest px-3"
+                className="btn btn-outline btn-sm rounded-md text-xs font-semibold px-3"
               >
-                <FileText className="w-3 h-3 mr-1" />
-                Import Personal Data Sheet (PDS)
+                <FileText className="w-3.5 h-3.5 mr-1" />
+                Import PDS
               </button>
             )}
             <button 
               type="button"
-              className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100" 
+              className="btn btn-ghost btn-sm btn-circle text-slate-500 hover:text-slate-800" 
               onClick={onClose}
+              aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
             </button>

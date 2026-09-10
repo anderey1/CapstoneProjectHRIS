@@ -84,19 +84,24 @@ const Profile = () => {
     enabled: !!id
   });
 
-  const isOwnProfile = !id || (myProfile && String(myProfile.id) === String(id)) || (me && String(me.id) === String(id));
+  const isOwnProfile = !id || 
+    (Boolean(user?.employee_id) && String(user.employee_id) === String(id)) || 
+    (Boolean(myProfile?.id) && String(myProfile.id) === String(id));
+
   const visibleTabs = isOwnProfile 
     ? [...TABS, { id: 'settings', label: 'Security & Settings', icon: Key }]
     : TABS;
 
-  // Check user role and permissions
-  const currentUserRole = user?.role || localStorage.getItem('user_role') || me?.user_details?.role || 'TEACHING';
+  // Check user role and permissions strictly from authenticated session
+  const currentUserRole = user?.role || localStorage.getItem('user_role') || 'TEACHING';
   const isHrOrSuperintendent = currentUserRole === 'HR' || currentUserRole === 'SUPERINTENDENT';
-  const isAdmin = isHrOrSuperintendent;
-  const canEditProfile = isOwnProfile || isHrOrSuperintendent;
-  const canChangePhoto = isOwnProfile || isHrOrSuperintendent;
-  const canVerifyDocs = isHrOrSuperintendent;
+  const isAdmin = isHrOrSuperintendent || currentUserRole === 'ADMINISTRATIVE';
+
+  // Personal PDS editing, photo changes, and digital signature upload are STRICTLY limited to the account owner
+  const canEditProfile = isOwnProfile;
+  const canChangePhoto = isOwnProfile;
   const canUploadSignature = isOwnProfile;
+  const canVerifyDocs = isHrOrSuperintendent || currentUserRole === 'ADMINISTRATIVE';
 
   // Initialize photo and simulated storage
   useEffect(() => {

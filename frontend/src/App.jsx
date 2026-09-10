@@ -26,8 +26,9 @@ import Profile from './pages/shared/Profile';
 import AuditLogs from './pages/admin/AuditLogs';
 
 // Role Groups
-const MANAGEMENT_ROLES = ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'];
-const HR_SUPERINTENDENT = ['HR', 'SUPERINTENDENT'];
+const MANAGEMENT_ROLES = ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'];
+const HR_SUPERINTENDENT_ADMIN = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'];
+const ADMIN_ONLY = ['ADMINISTRATIVE'];
 
 /**
  * App Component
@@ -62,19 +63,23 @@ function App() {
           <Route path="my-payslips" element={<MyPayroll />} />
           <Route path="my-performance" element={<MyIPCRF />} />
 
-          {/* Management Tier (HR, Accountant, Superintendent) */}
+          {/* Management Tier (HR, Accountant, Superintendent, Admin) */}
           <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>
             <Route path="employees" element={<Employees />} />
             <Route path="loan-management" element={<LoanManagement />} />
             <Route path="payroll-management" element={<Payroll />} />
           </Route>
 
-          {/* HR & Superintendent Tier */}
-          <Route element={<ProtectedRoute roles={HR_SUPERINTENDENT} />}>
+          {/* HR, Superintendent & Admin Operations Tier */}
+          <Route element={<ProtectedRoute roles={HR_SUPERINTENDENT_ADMIN} />}>
             <Route path="leave-management" element={<LeaveManagement />} />
             <Route path="attendance-management" element={<AttendanceManagement />} />
             <Route path="performance-management" element={<IPCRFManagement />} />
             <Route path="recruitment" element={<Recruitment />} />
+          </Route>
+
+          {/* Exclusive Admin Audit Logs Tier */}
+          <Route element={<ProtectedRoute roles={ADMIN_ONLY} />}>
             <Route path="audit-logs" element={<AuditLogs />} />
           </Route>
         </Route>

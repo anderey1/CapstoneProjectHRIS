@@ -2,9 +2,6 @@
 from django.db import models    
 from .employee import User
 
-# -------------------------
-# AUDIT LOG
-# -------------------------
 class AuditLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     action = models.TextField()

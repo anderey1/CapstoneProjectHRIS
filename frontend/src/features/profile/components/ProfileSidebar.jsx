@@ -7,7 +7,7 @@ const ProfileSidebar = ({
   sigInputRef, 
   onSigUpload, 
   isUploadingSig, 
-  canUploadSignature = true,
+  canUploadSignature = false,
   workstation, 
   pos 
 }) => {

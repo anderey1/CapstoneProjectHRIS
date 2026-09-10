@@ -2,10 +2,6 @@
 from django.db import models
 # pyrefly: ignore [missing-import]
 from django.contrib.auth.models import AbstractUser
-
-# -------------------------
-# ROLES
-# -------------------------
 class Role(models.TextChoices):
     # Core System Roles
     HR = 'HR', 'HR Staff'
@@ -18,9 +14,6 @@ class Role(models.TextChoices):
     ADMINISTRATIVE = 'ADMINISTRATIVE', 'Administrative Staff'
 
 
-# -------------------------
-# USER MODEL
-# -------------------------
 class User(AbstractUser):
     role = models.CharField(
         max_length=20,
@@ -33,9 +26,6 @@ class User(AbstractUser):
         return f"{self.username} ({self.role})"
 
 
-# -------------------------
-# SCHOOL / OFFICE LOCATION
-# -------------------------
 class School(models.Model):
     name = models.CharField(max_length=100)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
@@ -46,9 +36,6 @@ class School(models.Model):
         return self.name
 
 
-# -------------------------
-# MANAGERS
-# -------------------------
 class EmployeeManager(models.Manager):
     def create_with_user(self, user_data, employee_data):
         """
@@ -70,9 +57,6 @@ class EmployeeManager(models.Manager):
             employee = self.create(user=user, **employee_data)
             return employee
 
-# -------------------------
-# SALARY GRADE
-# -------------------------
 class SalaryGrade(models.Model):
     """
     Standardized Salary Grade based on SSL (Salary Standardization Law).
@@ -89,9 +73,6 @@ class SalaryGrade(models.Model):
         return f"SG {self.grade}{label_str} (₱{self.amount:,.2f})"
 
 
-# -------------------------
-# EMPLOYEE
-# -------------------------
 class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile', null=True, blank=True)
     objects = EmployeeManager()
@@ -143,9 +124,6 @@ class Employee(models.Model):
     # Bank Information (Mock Disbursement)
     bank_name = models.CharField(max_length=100, default="Land Bank of the Philippines")
     account_number = models.CharField(max_length=20, null=True, blank=True)
-
-    # Biometric Data (JSON string of 128-float array)
-    face_descriptor = models.TextField(null=True, blank=True)
 
     # Leave Balances (Standard CSC)
     vacation_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)

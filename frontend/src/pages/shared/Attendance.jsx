@@ -100,7 +100,7 @@ const Attendance = () => {
 
   const handleClockIn = () => {
     checkInMutation.mutate({
-      qr_token: qrData?.token || 'legacy_face_only',
+      qr_token: qrData?.token || 'standard_web_log',
       lat: currentPos.lat,
       lng: currentPos.lng
     });
@@ -194,7 +194,7 @@ const Attendance = () => {
               onClick={() => {
                 setShowOtConfirm(false);
                 checkInMutation.mutate({
-                  qr_token: qrData?.token || 'legacy_face_only',
+                  qr_token: qrData?.token || 'standard_web_log',
                   lat: currentPos.lat,
                   lng: currentPos.lng,
                   is_ot: true

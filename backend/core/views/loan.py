@@ -57,10 +57,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             user=user,
             action=f"Loan Applied for {employee}: ₱{instance.loan_amount} ({instance.get_purpose_display()})"
         )
-
-    # ---------------------------
-    # APPROVE / REJECT
-    # ---------------------------
     @action(detail=True, methods=['post'], permission_classes=[IsAccountant])
     def verify(self, request, pk=None):
         """Accountant action to verify documents and mark as ready for superintendent."""
@@ -193,10 +189,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             "payment": LoanPaymentSerializer(payment).data,
             "loan": serializer.data
         }, status=status.HTTP_201_CREATED)
-
-    # ---------------------------
-    # DOCUMENT UPLOAD
-    # ---------------------------
     @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     def upload_document(self, request, pk=None):
         """Upload a required document for a loan application."""
@@ -238,10 +230,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             action=f"Uploaded {doc_type} for Loan #{loan.id} ({loan.employee})"
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    # ---------------------------
-    # DOCUMENTS LIST
-    # ---------------------------
     @action(detail=True, methods=['get'])
     def documents(self, request, pk=None):
         """List all uploaded documents for a loan."""
@@ -249,10 +237,6 @@ class LoanViewSet(viewsets.ModelViewSet):
         docs = LoanDocument.objects.filter(loan=loan)
         serializer = LoanDocumentSerializer(docs, many=True, context={'request': request})
         return Response(serializer.data)
-
-    # ---------------------------
-    # DOCUMENT CHECKLIST
-    # ---------------------------
     @action(detail=True, methods=['get'])
     def checklist(self, request, pk=None):
         """Return which required documents have been submitted vs. missing."""
@@ -296,10 +280,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             'all_required_submitted': all_required_submitted,
             'checklist': checklist,
         })
-
-    # ---------------------------
-    # AMORTIZATION SCHEDULE
-    # ---------------------------
     @action(detail=True, methods=['get'])
     def amortization(self, request, pk=None):
         loan = self.get_object()
@@ -314,10 +294,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             "monthly_amortization": loan.monthly_payment,
             "schedule": schedule
         })
-
-    # ---------------------------
-    # MARK AS PAID
-    # ---------------------------
     @action(detail=True, methods=['post'], permission_classes=[IsHR])
     def pay(self, request, pk=None):
         loan = self.get_object()

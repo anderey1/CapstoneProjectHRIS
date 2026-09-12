@@ -1,3 +1,5 @@
+import secrets
+import string
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -52,6 +54,7 @@ class ApplicantViewSet(viewsets.ModelViewSet):
         
         employee_created = False
         username_created = ""
+        temp_password = ""
         if new_status == 'hired':
             if not Employee.objects.filter(email=applicant.email).exists():
                 from django.contrib.auth import get_user_model
@@ -112,11 +115,14 @@ class ApplicantViewSet(viewsets.ModelViewSet):
                     'date_hired': timezone.localdate(),
                 }
                 
+                alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+                temp_password = ''.join(secrets.choice(alphabet) for _ in range(14))
+
                 employee = Employee.objects.create_with_user(
                     user_data={
                         'username': username,
                         'email': applicant.email,
-                        'password': 'WelcomeDepEd2026!',
+                        'password': temp_password,
                         'role': role
                     },
                     employee_data=emp_data
@@ -203,7 +209,7 @@ class ApplicantViewSet(viewsets.ModelViewSet):
                 new_status_display, 
                 notes, 
                 username=username_created, 
-                temp_password='WelcomeDepEd2026!'
+                temp_password=temp_password
             )
         else:
             email_sent = send_applicant_notification(applicant, new_status_display, notes)
@@ -218,7 +224,7 @@ class ApplicantViewSet(viewsets.ModelViewSet):
 
         msg = f"Status updated to {new_status_display}."
         if employee_created:
-            msg += f" An Employee profile has been automatically created (Username: {username_created}, Password: WelcomeDepEd2026!)."
+            msg += f" An Employee profile has been automatically created (Username: {username_created}, Password: {temp_password})."
         if email_sent:
             msg += " Applicant has been notified via email."
         else:

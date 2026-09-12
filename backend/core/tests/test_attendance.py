@@ -3,7 +3,13 @@ from datetime import datetime, date, time
 import zoneinfo
 from django.utils import timezone
 from core.models import Attendance
-from core.utils import get_attendance_status, calculate_working_days, generate_daily_qr_token
+from core.utils import (
+    get_attendance_status,
+    calculate_working_days,
+    generate_daily_qr_token,
+    resolve_attendance_slot,
+    AttendanceSlotError,
+)
 
 class TestAttendanceTimekeeping:
     def test_status_present_before_cutoff(self):
@@ -85,3 +91,73 @@ def test_unauthorized_employee_cannot_export_other_dtr(client, teaching_user, ot
     client.force_authenticate(user=teaching_user)
     response = client.get(f'/api/attendance/dtr_pdf/?employee_id={other_employee.id}&month=2026-03')
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_management_user_can_export_other_dtr(client, hr_user, other_employee):
+    """Management user (e.g. HR) can download any employee's Form 48 DTR PDF."""
+    client.force_authenticate(user=hr_user)
+    response = client.get(f'/api/attendance/dtr_pdf/?employee_id={other_employee.id}&month=2026-03')
+    assert response.status_code == 200
+    assert response['Content-Type'] == 'application/pdf'
+
+
+@pytest.mark.django_db
+class TestResolveAttendanceSlot:
+    def test_am_in_recorded_before_cutoff(self, teacher_employee):
+        att = Attendance.objects.create(employee=teacher_employee, date=timezone.localdate())
+        slot, msg = resolve_attendance_slot(att, time(7, 45))
+        assert slot == "am_in"
+        assert att.am_in == time(7, 45)
+        assert "AM IN recorded" in msg
+
+    def test_am_in_closed_after_eleven(self, teacher_employee):
+        att = Attendance.objects.create(employee=teacher_employee, date=timezone.localdate())
+        with pytest.raises(AttendanceSlotError) as exc_info:
+            resolve_attendance_slot(att, time(11, 15))
+        assert "Morning check-in closed" in exc_info.value.detail
+        assert exc_info.value.requires_ot_confirmation is False
+
+    def test_am_out_recorded_at_noon(self, teacher_employee):
+        att = Attendance.objects.create(
+            employee=teacher_employee,
+            date=timezone.localdate(),
+            am_in=time(7, 50)
+        )
+        slot, msg = resolve_attendance_slot(att, time(12, 1))
+        assert slot == "am_out"
+        assert att.am_out == time(12, 1)
+
+    def test_pm_in_recorded_after_noon_without_morning(self, teacher_employee):
+        att = Attendance.objects.create(employee=teacher_employee, date=timezone.localdate())
+        slot, msg = resolve_attendance_slot(att, time(12, 30))
+        assert slot == "pm_in"
+        assert att.pm_in == time(12, 30)
+
+    def test_ot_confirmation_prompt_when_day_complete(self, teacher_employee):
+        att = Attendance.objects.create(
+            employee=teacher_employee,
+            date=timezone.localdate(),
+            am_in=time(7, 50),
+            am_out=time(12, 0),
+            pm_in=time(13, 0),
+            pm_out=time(17, 0)
+        )
+        with pytest.raises(AttendanceSlotError) as exc_info:
+            resolve_attendance_slot(att, time(17, 30), is_ot=False)
+        assert exc_info.value.requires_ot_confirmation is True
+
+    def test_ot_in_recorded_when_confirmed(self, teacher_employee):
+        att = Attendance.objects.create(
+            employee=teacher_employee,
+            date=timezone.localdate(),
+            am_in=time(7, 50),
+            am_out=time(12, 0),
+            pm_in=time(13, 0),
+            pm_out=time(17, 0)
+        )
+        slot, msg = resolve_attendance_slot(att, time(17, 30), is_ot=True)
+        assert slot == "ot_in"
+        assert att.ot_in == time(17, 30)
+
+

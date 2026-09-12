@@ -100,35 +100,30 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         if User.objects.filter(email=email).exists():
             return Response({"error": "Email is already registered."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create user and employee directly
-        from django.db import transaction
+        # Create user and employee via canonical manager
         try:
-            with transaction.atomic():
-                user_role = Role.TEACHING if staff_role.upper() == 'TEACHING' else Role.NON_TEACHING
+            user_role = Role.TEACHING if staff_role.upper() == 'TEACHING' else Role.NON_TEACHING
+            employee = Employee.objects.create_with_user(
+                user_data={
+                    'username': username,
+                    'email': email,
+                    'password': password,
+                    'role': user_role,
+                    'is_active': False,
+                },
+                employee_data={
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'department': department,
+                    'position': position,
+                    'email': email,
+                }
+            )
 
-                user = User.objects.create_user(
-                    username=username,
-                    email=email,
-                    password=password,
-                    role=user_role,
-                    first_name=first_name,
-                    last_name=last_name,
-                    is_active=False # Pending HR Approval
-                )
-
-                employee = Employee.objects.create(
-                    user=user,
-                    first_name=first_name,
-                    last_name=last_name,
-                    department=department,
-                    position=position,
-                    email=email
-                )
-
-                AuditLog.objects.create(
-                    user=user,
-                    action=f"Registered pending user account '{username}' for new employee '{first_name} {last_name}'"
-                )
+            AuditLog.objects.create(
+                user=employee.user,
+                action=f"Registered pending user account '{username}' for new employee '{first_name} {last_name}'"
+            )
 
             return Response({"message": "Registration submitted successfully! Please wait for HR approval before logging in."}, status=status.HTTP_201_CREATED)
         except Exception as e:

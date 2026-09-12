@@ -8,7 +8,13 @@ from datetime import datetime, timedelta
 from ..permissions import IsAdminOrHR, IsAccountant, IsAdminOrHRorSuperintendent
 from ..models import Attendance, Employee, Role
 from ..serializers import AttendanceSerializer
-from ..utils import validate_attendance_geo, get_attendance_status, generate_daily_qr_token
+from ..utils import (
+    validate_attendance_geo,
+    get_attendance_status,
+    generate_daily_qr_token,
+    resolve_attendance_slot,
+    AttendanceSlotError,
+)
 from ..utils.pdf_generator import generate_form_48
 from django.http import HttpResponse
 
@@ -92,77 +98,17 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         if attendance.status == 'present' and current_status == 'late':
             attendance.status = 'late'
 
-        slot_mapped = None
-        message = ""
-
-        # Helper to convert string to time object
-        def t(time_str):
-            return datetime.strptime(time_str, "%H:%M").time()
-
-        # Slot Windows:
-        
-        # AM IN: 5:00 - 11:59 (AM IN allowed before 11:00 AM)
-        if t("05:00") <= current_time < t("12:00"):
-            if not attendance.am_in and current_time < t("11:00"):
-                attendance.am_in = current_time
-                slot_mapped = "am_in"
-                message = "AM IN recorded."
-            elif attendance.am_in and not attendance.am_out and current_time >= t("10:00"):
-                attendance.am_out = current_time
-                slot_mapped = "am_out"
-                message = "AM OUT recorded."
-            elif not attendance.am_in and current_time >= t("11:00"):
-                return Response({
-                    "detail": "Morning check-in closed after 11:00 AM. Please check in at 12:00 PM for the afternoon (PM) session."
-                }, status=400)
-
-        # AM OUT / PM IN overlap: 12:00 - 13:00
-        if not slot_mapped and t("12:00") <= current_time < t("13:00"):
-            # If they checked in this morning, prioritize AM OUT. If they didn't, prioritize PM IN.
-            if attendance.am_in and not attendance.am_out:
-                attendance.am_out = current_time
-                slot_mapped = "am_out"
-                message = "AM OUT recorded."
-            elif not attendance.pm_in:
-                attendance.pm_in = current_time
-                slot_mapped = "pm_in"
-                message = "PM IN recorded."
-            elif not attendance.am_out:
-                attendance.am_out = current_time
-                slot_mapped = "am_out"
-                message = "AM OUT recorded."
-
-        # PM IN / PM OUT: 13:00 - 23:59 (PM IN only allowed before 4:00 PM)
-        if not slot_mapped and t("13:00") <= current_time <= t("23:59"):
-            if not attendance.pm_in and current_time < t("16:00"):
-                attendance.pm_in = current_time
-                slot_mapped = "pm_in"
-                message = "PM IN recorded."
-            elif current_time >= t("15:00") and not attendance.pm_out:
-                attendance.pm_out = current_time
-                slot_mapped = "pm_out"
-                message = "PM OUT recorded."
-            elif attendance.pm_out:
-                # If PM OUT is already filled, check for OT
-                # Only allow OT logging if the employee explicitly confirms it via is_ot=True
-                is_ot = request.data.get('is_ot', False)
-                if not is_ot:
-                    return Response({
-                        "detail": "Your regular hours for today are already complete (PM OUT recorded). To log overtime, please confirm.",
-                        "requires_ot_confirmation": True
-                    }, status=400)
-
-                if not attendance.ot_in:
-                    attendance.ot_in = current_time
-                    slot_mapped = "ot_in"
-                    message = "OT IN recorded."
-                elif not attendance.ot_out:
-                    attendance.ot_out = current_time
-                    slot_mapped = "ot_out"
-                    message = "OT OUT recorded."
-
-        if not slot_mapped:
-            return Response({"detail": f"No valid slot available for this time ({current_time.strftime('%H:%M')}) or attendance already completed."}, status=400)
+        try:
+            slot_mapped, message = resolve_attendance_slot(
+                attendance=attendance,
+                current_time=current_time,
+                is_ot=request.data.get('is_ot', False)
+            )
+        except AttendanceSlotError as e:
+            err_payload = {"detail": e.detail}
+            if e.requires_ot_confirmation:
+                err_payload["requires_ot_confirmation"] = True
+            return Response(err_payload, status=400)
 
         # Update Geo data
         attendance.latitude = lat
@@ -232,10 +178,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         # Allow HR/admin to export for a selected employee when provided;
         # otherwise fall back to the logged-in user's own profile.
         if employee_id:
-            is_privileged = (
-                user.is_superuser or 
-                user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
-            )
+            is_privileged = user.is_management
             target_employee = get_object_or_404(Employee, id=employee_id)
             is_own_profile = hasattr(user, 'employee_profile') and target_employee.id == user.employee_profile.id
             is_supervisor = hasattr(user, 'employee_profile') and target_employee.supervisor_id == user.employee_profile.id

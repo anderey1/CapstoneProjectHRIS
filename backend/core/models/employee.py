@@ -59,7 +59,8 @@ class EmployeeManager(models.Manager):
                 password=user_data['password'],
                 role=user_data.get('role', Role.TEACHING),
                 first_name=employee_data.get('first_name', ''),
-                last_name=employee_data.get('last_name', '')
+                last_name=employee_data.get('last_name', ''),
+                is_active=user_data.get('is_active', True)
             )
             employee = self.create(user=user, **employee_data)
             return employee
@@ -143,6 +144,45 @@ class Employee(models.Model):
     @property
     def leave_balance(self):
         return self.vacation_leave_balance + self.sick_leave_balance
+
+    def deduct_leave(self, leave_type: str, days):
+        """
+        Deducts leave credits according to standard CSC rules:
+        - sick leave: consumes sick balance first; remaining spills to vacation balance.
+        - vacation / forced leave: consumes vacation balance only.
+        - statutory special leaves: granted with pay, 0 balance deducted.
+        Returns the number of days deducted.
+        """
+        from decimal import Decimal
+        from django.core.exceptions import ValidationError
+        
+        duration = Decimal(str(days))
+        days_deducted = Decimal('0.0')
+
+        if leave_type == 'sick':
+            total_balance = self.sick_leave_balance + self.vacation_leave_balance
+            if total_balance < duration:
+                raise ValidationError("Insufficient leave balance.")
+            if self.sick_leave_balance >= duration:
+                self.sick_leave_balance -= duration
+            else:
+                remaining = duration - self.sick_leave_balance
+                self.sick_leave_balance = Decimal('0.0')
+                self.vacation_leave_balance -= remaining
+            days_deducted = duration
+            self.save(update_fields=['sick_leave_balance', 'vacation_leave_balance'])
+
+        elif leave_type in ['vacation', 'forced']:
+            if self.vacation_leave_balance < duration:
+                raise ValidationError(f"Insufficient vacation balance. Employee only has {self.vacation_leave_balance} days left.")
+            self.vacation_leave_balance -= duration
+            days_deducted = duration
+            self.save(update_fields=['vacation_leave_balance'])
+
+        else:
+            days_deducted = Decimal('0.0')
+
+        return days_deducted
 
     def save(self, *args, **kwargs):
         # 1. If position is provided, try to auto-match the Salary Grade

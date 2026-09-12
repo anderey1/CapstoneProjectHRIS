@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from rest_framework.test import APIRequestFactory, force_authenticate, APIClient
 from rest_framework.exceptions import ValidationError
+from decimal import Decimal
 from core.models import LeaveRequest
 from core.views.leave import LeaveViewSet
 
@@ -201,4 +202,39 @@ def test_leave_approval_balance_deduction_is_atomic(client, superintendent_user,
     employee.refresh_from_db()
     # In an atomic transaction, the deducted balance must roll back
     assert employee.vacation_leave_balance == initial_vacation
+
+
+@pytest.mark.django_db
+class TestEmployeeDeductLeave:
+    def test_deduct_vacation_leave_success(self, teacher_employee):
+        teacher_employee.vacation_leave_balance = Decimal('15.0')
+        teacher_employee.save()
+        deducted = teacher_employee.deduct_leave('vacation', Decimal('3.0'))
+        assert deducted == Decimal('3.0')
+        assert teacher_employee.vacation_leave_balance == Decimal('12.0')
+
+    def test_deduct_vacation_insufficient_raises(self, teacher_employee):
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        teacher_employee.vacation_leave_balance = Decimal('2.0')
+        teacher_employee.save()
+        with pytest.raises(DjangoValidationError):
+            teacher_employee.deduct_leave('vacation', Decimal('5.0'))
+
+    def test_deduct_sick_with_vacation_overflow(self, teacher_employee):
+        teacher_employee.sick_leave_balance = Decimal('2.0')
+        teacher_employee.vacation_leave_balance = Decimal('10.0')
+        teacher_employee.save()
+        deducted = teacher_employee.deduct_leave('sick', Decimal('5.0'))
+        assert deducted == Decimal('5.0')
+        assert teacher_employee.sick_leave_balance == Decimal('0.0')
+        assert teacher_employee.vacation_leave_balance == Decimal('7.0')
+
+    def test_deduct_special_statutory_leaves_zero_deduction(self, teacher_employee):
+        teacher_employee.vacation_leave_balance = Decimal('15.0')
+        teacher_employee.sick_leave_balance = Decimal('15.0')
+        teacher_employee.save()
+        deducted = teacher_employee.deduct_leave('maternity', Decimal('105.0'))
+        assert deducted == Decimal('0.0')
+        assert teacher_employee.vacation_leave_balance == Decimal('15.0')
+        assert teacher_employee.sick_leave_balance == Decimal('15.0')
 

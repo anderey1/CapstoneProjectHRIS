@@ -232,7 +232,17 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         # Allow HR/admin to export for a selected employee when provided;
         # otherwise fall back to the logged-in user's own profile.
         if employee_id:
-            employee = get_object_or_404(Employee, id=employee_id)
+            is_privileged = (
+                user.is_superuser or 
+                user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
+            )
+            target_employee = get_object_or_404(Employee, id=employee_id)
+            is_own_profile = hasattr(user, 'employee_profile') and target_employee.id == user.employee_profile.id
+            is_supervisor = hasattr(user, 'employee_profile') and target_employee.supervisor_id == user.employee_profile.id
+
+            if not (is_privileged or is_own_profile or is_supervisor):
+                return Response({"detail": "You do not have permission to view this employee's DTR."}, status=403)
+            employee = target_employee
         else:
             employee = getattr(user, 'employee_profile', None)
             if not employee:

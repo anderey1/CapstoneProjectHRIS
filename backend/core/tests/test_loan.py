@@ -77,3 +77,37 @@ class TestLoanRules:
 
         assert response.status_code == 201
         assert response.data['status'] == 'pending'
+
+
+@pytest.fixture
+def client():
+    from rest_framework.test import APIClient
+    return APIClient()
+
+
+@pytest.fixture
+def teaching_user(teacher_employee):
+    return teacher_employee.user
+
+
+@pytest.fixture
+def other_rejected_loan(non_teaching_employee):
+    return ProvidentLoan.objects.create(
+        employee=non_teaching_employee,
+        loan_amount=Decimal("30000.00"),
+        interest_rate=Decimal("6.0"),
+        term_months=12,
+        purpose='medical',
+        status='rejected',
+        remarks='Incomplete documents'
+    )
+
+
+@pytest.mark.django_db
+def test_cannot_resubmit_other_employees_rejected_loan(client, teaching_user, other_rejected_loan):
+    """An authenticated user cannot tamper with or resubmit a loan belonging to someone else."""
+    client.force_authenticate(user=teaching_user)
+    response = client.post(f'/api/loans/{other_rejected_loan.id}/resubmit/', {
+        'loan_amount': '50000.00'
+    })
+    assert response.status_code == 403

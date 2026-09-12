@@ -55,7 +55,6 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return Employee.objects.none()
-
         supervisor_subquery = Employee.objects.filter(supervisor=OuterRef('pk'))
         base_qs = Employee.objects.select_related(
             'user', 'school', 'salary_grade'
@@ -63,7 +62,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             annotated_is_supervisor=Exists(supervisor_subquery)
         )
 
-        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
+        if user.is_management:
             return base_qs.all()
         return base_qs.filter(user=user)
 

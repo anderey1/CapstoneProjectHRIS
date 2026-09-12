@@ -38,7 +38,7 @@ class LoanViewSet(viewsets.ModelViewSet):
             'reviewed_by'
         ).order_by('-date_applied')
 
-        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
+        if user.is_management:
             return base_qs.all()
         return base_qs.filter(employee__user=user)
 

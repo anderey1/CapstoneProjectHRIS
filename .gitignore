@@ -10,3 +10,28 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Implementation plans & advisor artifacts
+plans/
+advisor-plans/
+
+# Scratch & local notes
+d.txt
+
+# Test artifacts & caches
+.pytest_cache/
+playwright-report/
+test-results/
+frontend/playwright-report/
+frontend/test-results/
+
+# Local databases & uploads
+*.sqlite3
+backend/db.sqlite3
+backend/media/
+media/
+
+# AI agent & IDE artifacts
+.gemini/
+.vscode/
+.idea/

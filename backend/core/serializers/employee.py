@@ -30,6 +30,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
     is_supervisor = serializers.SerializerMethodField()
 
     def get_is_supervisor(self, obj):
+        if hasattr(obj, 'annotated_is_supervisor'):
+            return obj.annotated_is_supervisor
         return Employee.objects.filter(supervisor=obj).exists()
     
     # Nested PDS Data

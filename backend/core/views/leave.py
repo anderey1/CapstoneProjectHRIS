@@ -18,35 +18,41 @@ class LeaveViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         from django.db.models import Q
         user = self.request.user
+        base_qs = LeaveRequest.objects.select_related(
+            'employee',
+            'employee__user',
+            'employee__school'
+        ).order_by('-date_applied')
+
         if user.is_superuser:
-            return LeaveRequest.objects.all().order_by('-date_applied')
+            return base_qs.all()
             
         role = user.role
         employee_profile = getattr(user, 'employee_profile', None)
         
         if role == Role.HR:
             # HR sees all leaves to validate and manage the queue
-            return LeaveRequest.objects.all().order_by('-date_applied')
+            return base_qs.all()
             
         elif role == Role.SUPERINTENDENT:
             # Superintendent only sees leaves forwarded to them, or already approved,
             # or rejected at the Superintendent stage.
-            return LeaveRequest.objects.filter(
+            return base_qs.filter(
                 Q(status='pending_superintendent') |
                 Q(status='approved') |
                 Q(status='rejected', rejection_stage='pending_superintendent')
-            ).order_by('-date_applied')
+            )
             
         # For other roles (TEACHING, NON_TEACHING, ADMINISTRATIVE, ACCOUNTANT):
         # They can see their own leaves.
         # If they are a supervisor (Principal/Head Teacher), they can also see leaves of their subordinates.
         if employee_profile:
-            return LeaveRequest.objects.filter(
+            return base_qs.filter(
                 Q(employee__user=user) | 
                 Q(employee__supervisor=employee_profile)
-            ).distinct().order_by('-date_applied')
+            ).distinct()
             
-        return LeaveRequest.objects.filter(employee__user=user).order_by('-date_applied')
+        return base_qs.filter(employee__user=user)
 
     def perform_create(self, serializer):
         user = self.request.user

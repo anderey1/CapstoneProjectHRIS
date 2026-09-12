@@ -6,6 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.db import transaction
+from decimal import Decimal, InvalidOperation
 from ..models import Employee, ProvidentLoan, LoanDocument, LoanPayment, Role, AuditLog
 from ..serializers import LoanSerializer, LoanDocumentSerializer, LoanPaymentSerializer
 from ..permissions import IsAdminOrHR, IsHR, IsSuperintendent, IsAccountant
@@ -174,19 +176,25 @@ class LoanViewSet(viewsets.ModelViewSet):
             return Response({"detail": "amount_paid is required."}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            from decimal import Decimal
             amount_paid = Decimal(str(amount_paid))
-        except ValueError:
+        except (InvalidOperation, TypeError, ValueError):
             return Response({"detail": "Invalid amount format."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if amount_paid <= 0:
+        if not amount_paid.is_finite() or amount_paid <= 0:
             return Response({"detail": "Amount paid must be greater than zero."}, status=status.HTTP_400_BAD_REQUEST)
 
-        payment = LoanPayment.objects.create(
-            loan=loan,
-            amount_paid=amount_paid,
-            posted_by=request.user
-        )
+        with transaction.atomic():
+            loan = ProvidentLoan.objects.select_for_update().get(pk=loan.pk)
+            if loan.status not in ['released', 'paid']:
+                return Response({"detail": "Payments can only be posted for released/active loans."}, status=status.HTTP_400_BAD_REQUEST)
+            if amount_paid > max(loan.current_balance, Decimal('0.00')):
+                return Response({"detail": "Amount paid cannot exceed the loan's current balance."}, status=status.HTTP_400_BAD_REQUEST)
+
+            payment = LoanPayment.objects.create(
+                loan=loan,
+                amount_paid=amount_paid,
+                posted_by=request.user
+            )
 
         AuditLog.objects.create(
             user=request.user,

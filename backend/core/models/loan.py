@@ -1,5 +1,5 @@
 # pyrefly: ignore [missing-import]
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from .employee import Employee
@@ -159,6 +159,48 @@ class LoanPayment(models.Model):
     payment_date = models.DateField(auto_now_add=True)
     remaining_balance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     posted_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)
+
+    @classmethod
+    @transaction.atomic
+    def allocate_payroll_deduction(cls, employee, amount, posted_by=None):
+        """Allocate one semi-monthly payroll deduction across active loans."""
+        from decimal import Decimal
+
+        remaining_amount = Decimal(str(amount)).quantize(Decimal('0.01'))
+        if remaining_amount <= 0:
+            return []
+
+        payments = []
+        active_loans = ProvidentLoan.objects.select_for_update().filter(
+            employee=employee,
+            status='released',
+        ).order_by('id')
+
+        for loan in active_loans:
+            if remaining_amount <= 0:
+                break
+
+            current_balance = max(loan.current_balance, Decimal('0.00'))
+            standard_payment = (
+                loan.monthly_payment / Decimal('2.0')
+            ).quantize(Decimal('0.01'))
+            payment_amount = min(
+                remaining_amount,
+                standard_payment,
+                current_balance,
+            )
+            if payment_amount <= 0:
+                continue
+
+            payment = cls.objects.create(
+                loan=loan,
+                amount_paid=payment_amount,
+                posted_by=posted_by,
+            )
+            payments.append(payment)
+            remaining_amount -= payment_amount
+
+        return payments
 
     def save(self, *args, **kwargs):
         if not self.id: # Only for new payments

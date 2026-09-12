@@ -193,7 +193,7 @@ const Apply = () => {
               <button
                 type="submit"
                 disabled={!isMandatoryComplete || isLoading}
-                className={`btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest px-8 h-12 w-full sm:w-auto order-1 sm:order-2 ${(!isMandatoryComplete || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`btn bg-[#0038A8] hover:bg-[#002d86] active:scale-[0.97] transition-[transform,background-color,box-shadow] duration-150 text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest px-8 h-12 w-full sm:w-auto order-1 sm:order-2 ${(!isMandatoryComplete || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? "Submitting Application..." : !isMandatoryComplete ? "Incomplete Documents" : (
                   <>

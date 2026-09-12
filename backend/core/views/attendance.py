@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from ..permissions import IsAdminOrHR, IsAccountant, IsAdminOrHRorSuperintendent
 from ..models import Attendance, Employee, Role
 from ..serializers import AttendanceSerializer
@@ -46,18 +47,40 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated])
     def scan(self, request):
-        """Processes a QR scan for DTR slot mapping with Geo-validation."""
+        """Processes a QR scan, flagging accepted scans outside the school geofence."""
         user = request.user
         if not hasattr(user, 'employee_profile'):
             return Response({"detail": "User account is not registered as an employee."}, status=400)
         
         employee = user.employee_profile
         token = request.data.get('qr_token')
-        lat = request.data.get('lat')
-        lng = request.data.get('lng')
+        raw_lat = request.data.get('lat')
+        raw_lng = request.data.get('lng')
 
-        if lat is None or lng is None:
+        if raw_lat is None or raw_lng is None:
             return Response({"detail": "GPS coordinates are required."}, status=400)
+
+        try:
+            if isinstance(raw_lat, bool) or isinstance(raw_lng, bool):
+                raise InvalidOperation
+            lat = Decimal(str(raw_lat))
+            lng = Decimal(str(raw_lng))
+        except (InvalidOperation, TypeError, ValueError):
+            return Response(
+                {"detail": "GPS coordinates must be numeric and within valid ranges."},
+                status=400,
+            )
+
+        if (
+            not lat.is_finite()
+            or not lng.is_finite()
+            or not Decimal("-90") <= lat <= Decimal("90")
+            or not Decimal("-180") <= lng <= Decimal("180")
+        ):
+            return Response(
+                {"detail": "GPS coordinates must be numeric and within valid ranges."},
+                status=400,
+            )
 
         # 1. Validate QR Token
         if token != generate_daily_qr_token():
@@ -66,8 +89,14 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         if not employee.school:
             return Response({"detail": "Profile has no assigned school workstation."}, status=400)
 
-        # 2. Geo-Validation (Bypassed for Core HRIS)
-        is_in_zone, distance = True, 0.0
+        # 2. Geo-validation accepts out-of-zone scans but flags them for review.
+        is_in_zone, distance = validate_attendance_geo(
+            lat,
+            lng,
+            employee.school.latitude,
+            employee.school.longitude,
+            radius=employee.school.radius_meters,
+        )
 
         # 3. Slot-Based Logic
         now = timezone.localtime(timezone.now())
@@ -214,5 +243,3 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         return response
-
-

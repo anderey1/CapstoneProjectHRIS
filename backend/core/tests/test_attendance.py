@@ -1,5 +1,6 @@
 import pytest
 from datetime import datetime, date, time
+from decimal import Decimal
 import zoneinfo
 from django.utils import timezone
 from core.models import Attendance
@@ -9,6 +10,7 @@ from core.utils import (
     generate_daily_qr_token,
     resolve_attendance_slot,
     AttendanceSlotError,
+    validate_attendance_geo,
 )
 
 class TestAttendanceTimekeeping:
@@ -103,6 +105,103 @@ def test_management_user_can_export_other_dtr(client, hr_user, other_employee):
 
 
 @pytest.mark.django_db
+class TestAttendanceScanGeo:
+    @staticmethod
+    def freeze_scan_time(monkeypatch):
+        fixed_now = datetime(
+            2026, 5, 4, 7, 45, tzinfo=zoneinfo.ZoneInfo("Asia/Manila")
+        )
+        monkeypatch.setattr(timezone, "now", lambda: fixed_now)
+
+    def test_scan_inside_school_geofence_persists_coordinates(self, client, teacher_employee, monkeypatch):
+        self.freeze_scan_time(monkeypatch)
+        client.force_authenticate(user=teacher_employee.user)
+        school = teacher_employee.school
+
+        response = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": str(school.latitude),
+            "lng": str(school.longitude),
+        }, format='json')
+
+        assert response.status_code == 200
+        assert response.data["is_geo_flagged"] is False
+        assert response.data["distance"] == 0
+        attendance = Attendance.objects.get(employee=teacher_employee)
+        assert attendance.latitude == school.latitude
+        assert attendance.longitude == school.longitude
+
+    def test_scan_outside_school_geofence_is_flagged_and_persists_distance(
+        self, client, teacher_employee, monkeypatch
+    ):
+        self.freeze_scan_time(monkeypatch)
+        client.force_authenticate(user=teacher_employee.user)
+        school = teacher_employee.school
+        lat = school.latitude + Decimal("0.01")
+        lng = school.longitude
+        expected_in_zone, expected_distance = validate_attendance_geo(
+            lat, lng, school.latitude, school.longitude, school.radius_meters
+        )
+
+        response = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": str(lat),
+            "lng": str(lng),
+        }, format='json')
+
+        assert response.status_code == 200
+        assert expected_in_zone is False
+        assert response.data["is_geo_flagged"] is True
+        assert response.data["distance"] == round(expected_distance, 2)
+        attendance = Attendance.objects.get(employee=teacher_employee)
+        assert attendance.latitude == lat
+        assert attendance.longitude == lng
+        assert attendance.is_geo_flagged is True
+
+    def test_scan_without_school_is_rejected_without_attendance_record(
+        self, client, teacher_employee, monkeypatch
+    ):
+        self.freeze_scan_time(monkeypatch)
+        teacher_employee.school = None
+        teacher_employee.save(update_fields=["school"])
+        client.force_authenticate(user=teacher_employee.user)
+
+        response = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": "13.937200",
+            "lng": "121.617200",
+        }, format='json')
+
+        assert response.status_code == 400
+        assert "no assigned school" in response.data["detail"].lower()
+        assert not Attendance.objects.filter(employee=teacher_employee).exists()
+
+    @pytest.mark.parametrize(
+        ("lat", "lng"),
+        [
+            ("not-a-number", "121.617200"),
+            ("91", "121.617200"),
+            ("13.937200", "181"),
+        ],
+    )
+    def test_scan_with_invalid_coordinates_is_rejected_without_attendance_record(
+        self, client, teacher_employee, monkeypatch, lat, lng
+    ):
+        self.freeze_scan_time(monkeypatch)
+        client.force_authenticate(user=teacher_employee.user)
+
+        response = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": lat,
+            "lng": lng,
+        }, format='json')
+
+        assert response.status_code == 400
+        assert "numeric" in response.data["detail"]
+        assert not Attendance.objects.filter(employee=teacher_employee).exists()
+
+
+@pytest.mark.django_db
 class TestResolveAttendanceSlot:
     def test_am_in_recorded_before_cutoff(self, teacher_employee):
         att = Attendance.objects.create(employee=teacher_employee, date=timezone.localdate())
@@ -159,5 +258,3 @@ class TestResolveAttendanceSlot:
         slot, msg = resolve_attendance_slot(att, time(17, 30), is_ot=True)
         assert slot == "ot_in"
         assert att.ot_in == time(17, 30)
-
-

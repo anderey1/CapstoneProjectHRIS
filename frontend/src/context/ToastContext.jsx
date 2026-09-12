@@ -9,9 +9,18 @@ const ToastContext = createContext(null);
  */
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const [exitingToastIds, setExitingToastIds] = useState(() => new Set());
 
   const removeToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    setExitingToastIds((prev) => new Set(prev).add(id));
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+      setExitingToastIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 160);
   }, []);
 
   const addToast = useCallback((message, type = 'info', duration = 3500) => {
@@ -68,7 +77,8 @@ export const ToastProvider = ({ children }) => {
           {toasts.map((t) => (
             <div
               key={t.id}
-              className={`alert ${getToastClass(t.type)} shadow-xl border-none rounded-xl flex items-center justify-between gap-3 py-3 px-4 min-w-[280px] max-w-md pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-200`}
+              data-exiting={exitingToastIds.has(t.id)}
+              className={`toast-item alert ${getToastClass(t.type)} shadow-xl border-none rounded-xl flex items-center justify-between gap-3 py-3 px-4 min-w-[280px] max-w-md pointer-events-auto`}
             >
               <div className="flex items-center gap-2.5">
                 {getToastIcon(t.type)}

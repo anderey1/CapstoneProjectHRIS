@@ -6,8 +6,7 @@ from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db import transaction
-from decimal import Decimal
-from ..models import Employee, ProvidentLoan, LoanPayment, Payroll, Role, AuditLog, Attendance
+from ..models import Employee, LoanPayment, Payroll, Role, AuditLog, Attendance
 from ..serializers import PayrollSerializer
 from ..permissions import IsAdminOrHR, IsAccountant, IsSuperintendent
 from ..utils import parse_cutoff_dates
@@ -115,22 +114,26 @@ class PayrollViewSet(viewsets.ModelViewSet):
             return Response({"detail": f"Cannot release payroll in {payroll.status} status. It must be approved first."}, status=400)
             
         with transaction.atomic():
+            payroll = Payroll.objects.select_for_update().get(pk=payroll.pk)
+            if payroll.status != 'approved':
+                return Response({"detail": f"Cannot release payroll in {payroll.status} status. It must be approved first."}, status=400)
+
             payroll.status = 'released'
             payroll.date_released = timezone.now()
             payroll.save()
 
             # Record Loan Repayment if deduction was part of this payroll
             if payroll.loans > 0:
-                active_loans = ProvidentLoan.objects.filter(employee=payroll.employee, status='released')
-                for active_loan in active_loans:
-                    standard_payment = (active_loan.monthly_payment / Decimal('2.0')).quantize(Decimal('0.01'))
-                    ded_amount = min(standard_payment, active_loan.current_balance)
-                    if ded_amount > 0:
-                        LoanPayment.objects.create(loan=active_loan, amount_paid=ded_amount)
-                        AuditLog.objects.create(
-                            user=request.user, 
-                            action=f"Released payroll loan deduction: {payroll.employee} (₱{ded_amount})"
-                        )
+                payments = LoanPayment.allocate_payroll_deduction(
+                    payroll.employee,
+                    payroll.loans,
+                    posted_by=request.user,
+                )
+                for payment in payments:
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action=f"Released payroll loan deduction: {payroll.employee} (₱{payment.amount_paid})"
+                    )
             
             AuditLog.objects.create(user=request.user, action=f"Released payroll: {payroll.employee} ({payroll.cutoff_period})")
             
@@ -240,12 +243,20 @@ class PayrollViewSet(viewsets.ModelViewSet):
         if not cutoff:
             return Response({"detail": "cutoff_period is required."}, status=400)
         
-        approved_payrolls = Payroll.objects.filter(cutoff_period=cutoff, status='approved')
-        if not approved_payrolls.exists():
+        if not Payroll.objects.filter(cutoff_period=cutoff, status='approved').exists():
             return Response({"detail": f"No approved payroll records found for cutoff: {cutoff}."}, status=400)
         
-        count = approved_payrolls.count()
         with transaction.atomic():
+            approved_payrolls = list(
+                Payroll.objects.select_for_update().filter(
+                    cutoff_period=cutoff,
+                    status='approved',
+                )
+            )
+            if not approved_payrolls:
+                return Response({"detail": f"No approved payroll records found for cutoff: {cutoff}."}, status=400)
+
+            count = len(approved_payrolls)
             for payroll in approved_payrolls:
                 payroll.status = 'released'
                 payroll.date_released = timezone.now()
@@ -253,12 +264,15 @@ class PayrollViewSet(viewsets.ModelViewSet):
                 
                 # Record Loan Repayment if deduction was part of this payroll
                 if payroll.loans > 0:
-                    active_loan = ProvidentLoan.objects.filter(employee=payroll.employee, status='released').first()
-                    if active_loan:
-                        LoanPayment.objects.create(loan=active_loan, amount_paid=payroll.loans)
+                    payments = LoanPayment.allocate_payroll_deduction(
+                        payroll.employee,
+                        payroll.loans,
+                        posted_by=request.user,
+                    )
+                    for payment in payments:
                         AuditLog.objects.create(
-                            user=request.user, 
-                            action=f"Released payroll loan deduction: {payroll.employee} (₱{payroll.loans})"
+                            user=request.user,
+                            action=f"Released payroll loan deduction: {payroll.employee} (₱{payment.amount_paid})"
                         )
                         
             AuditLog.objects.create(

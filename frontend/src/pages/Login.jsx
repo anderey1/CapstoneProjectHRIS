@@ -82,7 +82,7 @@ const Login = () => {
                   name="username"
                   type="text"
                   placeholder="Enter your username"
-                  className="input input-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]/20 transition-all rounded-xl text-sm font-medium"
+                  className="input input-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]/20 transition-[border-color,background-color,box-shadow] duration-[160ms] rounded-xl text-sm font-medium"
                   required
                   disabled={isLoading}
                 />
@@ -102,7 +102,7 @@ const Login = () => {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="input input-bordered w-full pl-11 pr-11 bg-base-50 focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]/20 transition-all rounded-xl text-sm font-medium"
+                  className="input input-bordered w-full pl-11 pr-11 bg-base-50 focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]/20 transition-[border-color,background-color,box-shadow] duration-[160ms] rounded-xl text-sm font-medium"
                   required
                   disabled={isLoading}
                 />
@@ -119,7 +119,7 @@ const Login = () => {
 
             <button 
               type="submit" 
-              className={`btn w-full bg-[#0038A8] hover:bg-[#002d86] text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest mt-4 h-12 ${isLoading ? 'loading' : ''}`}
+              className={`btn w-full bg-[#0038A8] hover:bg-[#002d86] active:scale-[0.97] transition-[transform,background-color,box-shadow] duration-150 text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest mt-4 h-12 ${isLoading ? 'loading' : ''}`}
               disabled={isLoading}
             >
               {!isLoading && <ShieldCheck className="w-4 h-4 mr-2" />}

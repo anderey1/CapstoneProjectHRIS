@@ -46,7 +46,7 @@ const ProfileHeader = ({
             {canChangePhoto && (
               <button 
                 onClick={onChangePhoto}
-                className="absolute -bottom-2 -right-2 btn btn-circle btn-xs bg-[#0038A8] text-white hover:bg-[#002d86] border-2 border-white shadow transition-all"
+                className="absolute -bottom-2 -right-2 btn btn-circle btn-xs bg-[#0038A8] text-white hover:bg-[#002d86] active:scale-[0.97] border-2 border-white shadow transition-[transform,background-color,box-shadow] duration-150"
                 title="Change Profile Photo"
               >
                 <Camera className="w-3.5 h-3.5" />

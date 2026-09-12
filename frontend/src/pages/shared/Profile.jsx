@@ -393,7 +393,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
+    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-[180ms]">
       {/* Hidden File Inputs */}
       <input 
         type="file" 
@@ -603,7 +603,7 @@ const Profile = () => {
             )}
 
             {activeTab === 'settings' && isOwnProfile && (
-              <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="space-y-6 animate-in fade-in duration-[180ms]">
                 <div className="border-b border-slate-200 pb-4">
                   <h3 className="text-base font-bold text-slate-900">Security & Account Settings</h3>
                   <p className="text-xs text-slate-500 mt-1">Manage your portal password and login security credentials.</p>

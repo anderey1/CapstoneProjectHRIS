@@ -1,7 +1,8 @@
 ﻿import pytest
 from decimal import Decimal
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory, force_authenticate
-from core.models import ProvidentLoan
+from core.models import ProvidentLoan, LoanPayment, Role
 from core.views.loan import LoanViewSet
 
 @pytest.mark.django_db
@@ -77,6 +78,33 @@ class TestLoanRules:
 
         assert response.status_code == 201
         assert response.data['status'] == 'pending'
+
+    def test_manual_payment_rejects_amount_above_current_balance(self, teacher_employee):
+        loan = ProvidentLoan.objects.create(
+            employee=teacher_employee,
+            loan_amount=Decimal("1000.00"),
+            interest_rate=Decimal("0.00"),
+            term_months=1,
+            status="released",
+        )
+        accountant = get_user_model().objects.create_user(
+            username="loan_accountant",
+            password="test-password",
+            role=Role.ACCOUNTANT,
+        )
+        factory = APIRequestFactory()
+        request = factory.post(
+            f"/api/loans/{loan.id}/post-payment/",
+            {"amount_paid": "1000.01"},
+            format="json",
+        )
+        force_authenticate(request, user=accountant)
+
+        response = LoanViewSet.as_view({"post": "post_payment"})(request, pk=loan.id)
+
+        assert response.status_code == 400
+        assert "cannot exceed" in str(response.data).lower()
+        assert not LoanPayment.objects.filter(loan=loan).exists()
 
 
 @pytest.fixture

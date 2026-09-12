@@ -11,8 +11,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import secrets
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,13 +26,37 @@ load_dotenv(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-f-ysfwq+7f+l68ti1(_jtxad=1&7_1niq7+2_x@e2+4)u1@=o(')
+def _env_bool(name, default=False):
+    return os.environ.get(name, str(default)).strip().lower() in ('true', '1', 'yes', 'on')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+def _env_list(name):
+    return [value.strip() for value in os.environ.get(name, '').split(',') if value.strip()]
+
+
+DEBUG = _env_bool('DEBUG', False)
+
+configured_environment = os.environ.get('DJANGO_ENV', '').strip().lower()
+if configured_environment:
+    DJANGO_ENV = configured_environment
+else:
+    # Preserve the existing local default while requiring DEBUG=False for
+    # production when DJANGO_ENV is not explicitly configured.
+    DJANGO_ENV = 'development' if DEBUG else 'production'
+
+if DJANGO_ENV not in ('development', 'production'):
+    raise ImproperlyConfigured("DJANGO_ENV must be 'development' or 'production'.")
+
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
+if not SECRET_KEY:
+    if DJANGO_ENV == 'development':
+        SECRET_KEY = secrets.token_urlsafe(50)
+    else:
+        raise ImproperlyConfigured(
+            'SECRET_KEY must be set when DJANGO_ENV is production.'
+        )
+
+ALLOWED_HOSTS = _env_list('ALLOWED_HOSTS')
 
 
 # Application definition
@@ -58,15 +84,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False').lower() in ('true', '1', 'yes')
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.environ.get(
-        'CORS_ALLOWED_ORIGINS',
-        'http://localhost:5173,http://127.0.0.1:5173'
-    ).split(',')
-    if origin.strip()
-]
+CORS_ALLOW_ALL_ORIGINS = _env_bool('CORS_ALLOW_ALL_ORIGINS', False)
+CORS_ALLOWED_ORIGINS = _env_list('CORS_ALLOWED_ORIGINS')
+
+SECURE_SSL_REDIRECT = _env_bool('SECURE_SSL_REDIRECT', not DEBUG)
+SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', not DEBUG)
+CSRF_COOKIE_SECURE = _env_bool('CSRF_COOKIE_SECURE', not DEBUG)
+SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0' if DEBUG else '31536000'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', not DEBUG)
+SECURE_HSTS_PRELOAD = _env_bool('SECURE_HSTS_PRELOAD', not DEBUG)
+SECURE_CONTENT_TYPE_NOSNIFF = _env_bool('SECURE_CONTENT_TYPE_NOSNIFF', True)
+SECURE_REFERRER_POLICY = os.environ.get('SECURE_REFERRER_POLICY', 'same-origin')
 
 ROOT_URLCONF = 'config.urls'
 
@@ -144,6 +172,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Loan document upload limits
 LOAN_DOC_MAX_SIZE_MB = 10
 LOAN_DOC_ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
+# PDS extraction accepts only bounded PDF uploads.
+PDS_UPLOAD_MAX_SIZE_MB = 10
+PDS_ALLOWED_EXTENSIONS = ['.pdf']
+PDS_ALLOWED_CONTENT_TYPES = ['application/pdf']
 
 
 from datetime import timedelta

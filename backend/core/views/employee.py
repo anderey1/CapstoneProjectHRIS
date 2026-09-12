@@ -54,7 +54,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return Employee.objects.none()
-        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
+        if user.is_management:
             return Employee.objects.all()
         return Employee.objects.filter(user=user)
 

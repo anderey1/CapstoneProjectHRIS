@@ -14,12 +14,19 @@ class Role(models.TextChoices):
     ADMINISTRATIVE = 'ADMINISTRATIVE', 'Administrative Staff'
 
 
+MANAGEMENT_ROLES = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
+
+
 class User(AbstractUser):
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
         default=Role.TEACHING
     )
+
+    @property
+    def is_management(self):
+        return self.is_superuser or self.role in MANAGEMENT_ROLES
 
 
     def __str__(self):

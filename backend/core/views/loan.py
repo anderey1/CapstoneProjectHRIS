@@ -121,7 +121,9 @@ class LoanViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def resubmit(self, request, pk=None):
         """Allows employee to update and resubmit a rejected loan."""
-        loan = self.get_object()
+        loan = get_object_or_404(ProvidentLoan, pk=pk)
+        if loan.employee.user != request.user and not request.user.is_superuser:
+            return Response({"detail": "You can only resubmit your own rejected loans."}, status=status.HTTP_403_FORBIDDEN)
         if loan.status != 'rejected':
             return Response({"detail": "Only rejected loans can be resubmitted."}, status=status.HTTP_400_BAD_REQUEST)
         

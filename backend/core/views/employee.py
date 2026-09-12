@@ -124,7 +124,12 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
             return Response({"message": "Registration submitted successfully! Please wait for HR approval before logging in."}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({"error": f"An error occurred during registration: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import logging
+            logging.getLogger(__name__).error(f"Registration error: {e}", exc_info=True)
+            return Response(
+                {"error": "An unexpected error occurred during registration. Please check your inputs or contact HR."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['GET'], permission_classes=[IsAdminOrHRorSuperintendent], url_path='pending-registrations')
     def list_pending_registrations(self, request):

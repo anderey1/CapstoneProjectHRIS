@@ -61,3 +61,27 @@ class TestAttendanceModel:
         assert record.am_in == time(7, 50)
         assert record.status == 'present'
         assert record.is_dtr_approved is False
+
+
+@pytest.fixture
+def client():
+    from rest_framework.test import APIClient
+    return APIClient()
+
+
+@pytest.fixture
+def teaching_user(teacher_employee):
+    return teacher_employee.user
+
+
+@pytest.fixture
+def other_employee(non_teaching_employee):
+    return non_teaching_employee
+
+
+@pytest.mark.django_db
+def test_unauthorized_employee_cannot_export_other_dtr(client, teaching_user, other_employee):
+    """Regular teaching staff cannot download another employee's Form 48 DTR PDF."""
+    client.force_authenticate(user=teaching_user)
+    response = client.get(f'/api/attendance/dtr_pdf/?employee_id={other_employee.id}&month=2026-03')
+    assert response.status_code == 403

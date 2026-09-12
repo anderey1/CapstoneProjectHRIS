@@ -21,9 +21,15 @@ class PayrollViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        base_qs = Payroll.objects.select_related(
+            'employee',
+            'employee__user',
+            'employee__school'
+        ).order_by('-date_generated')
+
         if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
-            return Payroll.objects.all().order_by('-date_generated')
-        return Payroll.objects.filter(employee__user=user).order_by('-date_generated')
+            return base_qs.all()
+        return base_qs.filter(employee__user=user)
 
     def perform_destroy(self, instance):
         AuditLog.objects.create(

@@ -30,9 +30,17 @@ class LoanViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        base_qs = ProvidentLoan.objects.select_related(
+            'employee',
+            'employee__user',
+            'co_maker',
+            'co_maker__user',
+            'reviewed_by'
+        ).order_by('-date_applied')
+
         if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
-            return ProvidentLoan.objects.all().order_by('-date_applied')
-        return ProvidentLoan.objects.filter(employee__user=user).order_by('-date_applied')
+            return base_qs.all()
+        return base_qs.filter(employee__user=user)
 
     def perform_create(self, serializer):
         user = self.request.user

@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from django.db.models import Exists, OuterRef
 from ..models import Employee, School, Role, AuditLog, SalaryGrade
 from ..serializers import EmployeeSerializer, SchoolSerializer, SalaryGradeSerializer
 from ..permissions import IsAdminOrHR, IsSuperintendent, IsAdminOrHRorSuperintendent
@@ -54,9 +55,17 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return Employee.objects.none()
+
+        supervisor_subquery = Employee.objects.filter(supervisor=OuterRef('pk'))
+        base_qs = Employee.objects.select_related(
+            'user', 'school', 'salary_grade'
+        ).annotate(
+            annotated_is_supervisor=Exists(supervisor_subquery)
+        )
+
         if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
-            return Employee.objects.all()
-        return Employee.objects.filter(user=user)
+            return base_qs.all()
+        return base_qs.filter(user=user)
 
     def perform_create(self, serializer):
         instance = serializer.save()

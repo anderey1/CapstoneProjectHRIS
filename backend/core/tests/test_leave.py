@@ -1,7 +1,7 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
-from rest_framework.test import APIRequestFactory, force_authenticate
+from rest_framework.test import APIRequestFactory, force_authenticate, APIClient
 from rest_framework.exceptions import ValidationError
 from core.models import LeaveRequest
 from core.views.leave import LeaveViewSet
@@ -157,3 +157,48 @@ class TestLeaveRules:
         assert resp.data['days_deducted'] == 0
         teacher_employee.refresh_from_db()
         assert teacher_employee.vacation_leave_balance == initial_vl
+
+@pytest.fixture
+def client():
+    return APIClient()
+
+
+@pytest.fixture
+def pending_superintendent_leave(teacher_employee):
+    today = timezone.localdate()
+    return LeaveRequest.objects.create(
+        employee=teacher_employee,
+        leave_type='vacation',
+        start_date=today + timedelta(days=7),
+        end_date=today + timedelta(days=9),
+        working_days_applied=3,
+        status='pending_superintendent'
+    )
+
+
+@pytest.mark.django_db
+def test_leave_approval_balance_deduction_is_atomic(client, superintendent_user, pending_superintendent_leave, monkeypatch):
+    """Ensure balance is NOT deducted if an exception occurs while updating the leave request."""
+    employee = pending_superintendent_leave.employee
+    initial_vacation = employee.vacation_leave_balance
+    
+    # Simulate unexpected DB failure on leave.save
+    from core.models import LeaveRequest
+    original_save = LeaveRequest.save
+    def fail_on_save(self, *args, **kwargs):
+        if self.id == pending_superintendent_leave.id and self.status == 'approved':
+            raise RuntimeError("Simulated mid-transaction failure")
+        return original_save(self, *args, **kwargs)
+    
+    monkeypatch.setattr(LeaveRequest, 'save', fail_on_save)
+    
+    client.force_authenticate(user=superintendent_user)
+    try:
+        client.post(f'/api/leaves/{pending_superintendent_leave.id}/approve/')
+    except RuntimeError:
+        pass
+        
+    employee.refresh_from_db()
+    # In an atomic transaction, the deducted balance must roll back
+    assert employee.vacation_leave_balance == initial_vacation
+

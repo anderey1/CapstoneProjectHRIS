@@ -3,6 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from django.db import transaction
+from decimal import Decimal
 from django.utils import timezone
 from datetime import datetime
 from ..models import LeaveRequest, Role, AuditLog, Employee
@@ -208,37 +210,39 @@ class LeaveViewSet(viewsets.ModelViewSet):
             return Response({"message": "Leave request recommended and sent to Superintendent", "status": leave.status})
             
         elif old_status == 'pending_superintendent':
-            # Final approval - Deduction logic
-            days_deducted = 0
-            if leave.leave_type == 'sick':
-                total_balance = employee.sick_leave_balance + employee.vacation_leave_balance
-                if total_balance < duration:
-                    return Response({"detail": "Insufficient leave balance."}, status=400)
-                if employee.sick_leave_balance >= duration:
-                    employee.sick_leave_balance -= duration
-                else:
-                    remaining = duration - employee.sick_leave_balance
-                    employee.sick_leave_balance = 0
-                    employee.vacation_leave_balance -= remaining
-                days_deducted = duration
-                employee.save()
-            elif leave.leave_type in ['vacation', 'forced']:
-                if employee.vacation_leave_balance < duration:
-                    return Response({"detail": f"Insufficient vacation balance. Employee only has {employee.vacation_leave_balance} days left."}, status=400)
-                employee.vacation_leave_balance -= duration
-                days_deducted = duration
-                employee.save()
-            else:
-                # Statutory special leaves (e.g., maternity, paternity, solo parent, VAWC)
-                # are granted with pay without consuming vacation or sick leave credits.
+            with transaction.atomic():
+                employee = Employee.objects.select_for_update().get(id=leave.employee_id)
+                # Final approval - Deduction logic
                 days_deducted = 0
-            
-            leave.status = 'approved'
-            leave.approved_days_with_pay = duration
-            leave.save()
-            
-            AuditLog.objects.create(user=request.user, action=f"Approved {leave.leave_type} leave for {leave.employee} ({duration} days)")
-            return Response({"message": "Leave request approved", "days_deducted": days_deducted, "status": leave.status})
+                if leave.leave_type == 'sick':
+                    total_balance = employee.sick_leave_balance + employee.vacation_leave_balance
+                    if total_balance < duration:
+                        return Response({"detail": "Insufficient leave balance."}, status=400)
+                    if employee.sick_leave_balance >= duration:
+                        employee.sick_leave_balance -= duration
+                    else:
+                        remaining = duration - employee.sick_leave_balance
+                        employee.sick_leave_balance = 0
+                        employee.vacation_leave_balance -= remaining
+                    days_deducted = duration
+                    employee.save()
+                elif leave.leave_type in ['vacation', 'forced']:
+                    if employee.vacation_leave_balance < duration:
+                        return Response({"detail": f"Insufficient vacation balance. Employee only has {employee.vacation_leave_balance} days left."}, status=400)
+                    employee.vacation_leave_balance -= duration
+                    days_deducted = duration
+                    employee.save()
+                else:
+                    # Statutory special leaves (e.g., maternity, paternity, solo parent, VAWC)
+                    # are granted with pay without consuming vacation or sick leave credits.
+                    days_deducted = 0
+                
+                leave.status = 'approved'
+                leave.approved_days_with_pay = duration
+                leave.save()
+                
+                AuditLog.objects.create(user=request.user, action=f"Approved {leave.leave_type} leave for {leave.employee} ({duration} days)")
+                return Response({"message": "Leave request approved", "days_deducted": days_deducted, "status": leave.status})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def reject(self, request, pk=None):

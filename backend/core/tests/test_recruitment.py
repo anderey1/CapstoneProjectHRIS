@@ -2,6 +2,28 @@ import pytest
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from core.models import Applicant
+from rest_framework.test import APIClient
+
+@pytest.fixture
+def client():
+    return APIClient()
+
+@pytest.fixture
+def applicant(db):
+    return Applicant.objects.create(
+        first_name="Clara",
+        last_name="Reyes",
+        email="clara@example.com",
+        phone="09123456789",
+        position_applied="Teacher I",
+        education_score=Decimal("8.50"),
+        training_score=Decimal("9.00"),
+        experience_score=Decimal("7.50"),
+        demo_teaching_score=Decimal("30.00"),
+        exam_score=Decimal("20.00"),
+        interview_score=Decimal("8.00")
+    )
+
 
 @pytest.mark.django_db
 class TestRecruitmentRubric:
@@ -74,3 +96,13 @@ class TestRecruitmentRubric:
         )
         with pytest.raises(ValidationError):
             applicant.full_clean()
+
+    def test_hired_applicant_gets_randomized_secure_password(self, client, superintendent_user, applicant):
+        """Verify hired applicant does NOT receive predictable static password."""
+        client.force_authenticate(user=superintendent_user)
+        response = client.post(f'/api/applicants/{applicant.id}/change-status/', {
+            'status': 'hired',
+            'notes': 'Hired with test verification'
+        })
+        assert response.status_code == 200
+        assert "WelcomeDepEd2026!" not in response.data.get("message", "")

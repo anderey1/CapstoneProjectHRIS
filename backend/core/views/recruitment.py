@@ -1,5 +1,6 @@
 import secrets
 import string
+from django.db import transaction
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -56,8 +57,9 @@ class ApplicantViewSet(viewsets.ModelViewSet):
         username_created = ""
         temp_password = ""
         if new_status == 'hired':
-            if not Employee.objects.filter(email=applicant.email).exists():
-                from django.contrib.auth import get_user_model
+            with transaction.atomic():
+                if not Employee.objects.filter(email=applicant.email).exists():
+                    from django.contrib.auth import get_user_model
                 from django.utils import timezone
                 from ..models.recruitment import TEACHING_POSITIONS
                 from ..utils import extract_pds_data
@@ -198,6 +200,42 @@ class ApplicantViewSet(viewsets.ModelViewSet):
                                 is_gov_service=item.get('is_gov_service', True)
                             )
                 
+                # Copy applicant documents to persistent EmployeeDocument table
+                from ..models import EmployeeDocument
+                if applicant.pds_file:
+                    EmployeeDocument.objects.get_or_create(
+                        employee=employee,
+                        document_type='pds_file',
+                        defaults={
+                            'file': applicant.pds_file,
+                            'file_name': 'Accomplished_PDS.pdf',
+                            'verified': True,
+                            'verified_by': request.user
+                        }
+                    )
+                if applicant.resume:
+                    EmployeeDocument.objects.get_or_create(
+                        employee=employee,
+                        document_type='employment_documents',
+                        defaults={
+                            'file': applicant.resume,
+                            'file_name': 'Resume_CV.pdf',
+                            'verified': True,
+                            'verified_by': request.user
+                        }
+                    )
+                for app_doc in applicant.documents.all():
+                    EmployeeDocument.objects.get_or_create(
+                        employee=employee,
+                        document_type=app_doc.document_type,
+                        defaults={
+                            'file': app_doc.file,
+                            'file_name': app_doc.filename or app_doc.document_type,
+                            'verified': True,
+                            'verified_by': request.user
+                        }
+                    )
+
                 employee_created = True
                 username_created = username
 

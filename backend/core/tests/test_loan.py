@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory, force_authenticate
@@ -139,3 +139,42 @@ def test_cannot_resubmit_other_employees_rejected_loan(client, teaching_user, ot
         'loan_amount': '50000.00'
     })
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_superintendent_and_admin_can_approve_loan(client, teacher_employee):
+    """Both Superintendent and Admin can approve loans (both verified and pending)."""
+    User = get_user_model()
+    superintendent = User.objects.create_user(username="supt", password="pwd", role=Role.SUPERINTENDENT)
+    admin_user = User.objects.create_user(username="admin_staff", password="pwd", role=Role.ADMINISTRATIVE)
+
+    # Loan 1: Verified loan approved by Superintendent
+    loan1 = ProvidentLoan.objects.create(
+        employee=teacher_employee,
+        loan_amount=Decimal("15000.00"),
+        interest_rate=Decimal("5.0"),
+        term_months=12,
+        status='verified'
+    )
+    client.force_authenticate(user=superintendent)
+    res1 = client.post(f'/api/loans/{loan1.id}/approve/', {'remarks': 'Approved by SDS'}, format='json')
+    assert res1.status_code == 200
+    loan1.refresh_from_db()
+    assert loan1.status == 'approved'
+    assert loan1.reviewed_by == superintendent
+
+    # Loan 2: Pending loan approved directly by Admin
+    loan2 = ProvidentLoan.objects.create(
+        employee=teacher_employee,
+        loan_amount=Decimal("20000.00"),
+        interest_rate=Decimal("5.0"),
+        term_months=12,
+        status='pending'
+    )
+    client.force_authenticate(user=admin_user)
+    res2 = client.post(f'/api/loans/{loan2.id}/approve/', {'remarks': 'Approved by Admin'}, format='json')
+    assert res2.status_code == 200
+    loan2.refresh_from_db()
+    assert loan2.status == 'approved'
+    assert loan2.reviewed_by == admin_user
+

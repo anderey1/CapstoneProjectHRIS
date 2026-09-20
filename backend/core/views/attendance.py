@@ -2,12 +2,13 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from ..permissions import IsAdminOrHR, IsAccountant, IsAdminOrHRorSuperintendent
-from ..models import Attendance, Employee, Role
+from ..models import Attendance, Employee, Role, AuditLog
 from ..serializers import AttendanceSerializer
 from ..utils import (
     validate_attendance_geo,
@@ -103,49 +104,50 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         today = now.date()
         current_time = now.time()
         
-        attendance, created = Attendance.objects.get_or_create(
-            employee=employee, 
-            date=today
-        )
-
-        # Anti-spam logic: enforce a minimum 2-minute cooldown between logs
-        times = [t for t in [attendance.am_in, attendance.am_out, attendance.pm_in, attendance.pm_out, attendance.ot_in, attendance.ot_out] if t is not None]
-        if times:
-            latest_time = max(times)
-            latest_dt = datetime.combine(today, latest_time)
-            current_dt = datetime.combine(today, current_time)
-            if current_dt - latest_dt < timedelta(minutes=2):
-                diff = timedelta(minutes=2) - (current_dt - latest_dt)
-                remaining_sec = int(diff.total_seconds())
-                remaining_min = (remaining_sec // 60) + 1
-                return Response({
-                    "detail": f"Please wait {remaining_min} minute(s) before logging attendance again to prevent duplicate logs."
-                }, status=400)
-
-        # Update status if it's currently 'present' and we detect a 'late' condition
-        current_status = get_attendance_status(now)
-        if attendance.status == 'present' and current_status == 'late':
-            attendance.status = 'late'
-
-        try:
-            slot_mapped, message = resolve_attendance_slot(
-                attendance=attendance,
-                current_time=current_time,
-                is_ot=request.data.get('is_ot', False)
+        with transaction.atomic():
+            attendance, created = Attendance.objects.select_for_update().get_or_create(
+                employee=employee, 
+                date=today
             )
-        except AttendanceSlotError as e:
-            err_payload = {"detail": e.detail}
-            if e.requires_ot_confirmation:
-                err_payload["requires_ot_confirmation"] = True
-            return Response(err_payload, status=400)
 
-        # Update Geo data
-        attendance.latitude = lat
-        attendance.longitude = lng
-        if not is_in_zone:
-            attendance.is_geo_flagged = True
-        
-        attendance.save()
+            # Anti-spam logic: enforce a minimum 2-minute cooldown between logs
+            times = [t for t in [attendance.am_in, attendance.am_out, attendance.pm_in, attendance.pm_out, attendance.ot_in, attendance.ot_out] if t is not None]
+            if times:
+                latest_time = max(times)
+                latest_dt = datetime.combine(today, latest_time)
+                current_dt = datetime.combine(today, current_time)
+                if current_dt - latest_dt < timedelta(minutes=2):
+                    diff = timedelta(minutes=2) - (current_dt - latest_dt)
+                    remaining_sec = int(diff.total_seconds())
+                    remaining_min = (remaining_sec // 60) + 1
+                    return Response({
+                        "detail": f"Please wait {remaining_min} minute(s) before logging attendance again to prevent duplicate logs."
+                    }, status=400)
+
+            # Update status if it's currently 'present' and we detect a 'late' condition
+            current_status = get_attendance_status(now)
+            if attendance.status == 'present' and current_status == 'late':
+                attendance.status = 'late'
+
+            try:
+                slot_mapped, message = resolve_attendance_slot(
+                    attendance=attendance,
+                    current_time=current_time,
+                    is_ot=request.data.get('is_ot', False)
+                )
+            except AttendanceSlotError as e:
+                err_payload = {"detail": e.detail}
+                if e.requires_ot_confirmation:
+                    err_payload["requires_ot_confirmation"] = True
+                return Response(err_payload, status=400)
+
+            # Update Geo data
+            attendance.latitude = lat
+            attendance.longitude = lng
+            if not is_in_zone:
+                attendance.is_geo_flagged = True
+            
+            attendance.save()
 
         if not is_in_zone:
             message += f" (Note: Outside zone - {round(distance, 1)}m away)"
@@ -186,6 +188,11 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             is_dtr_approved=True,
             dtr_approved_by=request.user,
             dtr_approved_at=timezone.now()
+        )
+
+        AuditLog.objects.create(
+            user=request.user,
+            action=f"Approved DTR for employee #{employee_id} for period {month} ({count} records)"
         )
         
         return Response({

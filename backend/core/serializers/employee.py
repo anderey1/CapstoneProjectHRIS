@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from ..models import Employee, School, Role, SalaryGrade
+from ..models import Employee, School, Role, SalaryGrade, EmployeeDocument
 from .pds_details import (
     FamilyMemberSerializer, EducationSerializer, 
     EligibilitySerializer, WorkExperienceSerializer
@@ -52,6 +52,18 @@ class EmployeeSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     
+    supervisor = serializers.PrimaryKeyRelatedField(
+        queryset=Employee.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    supervisor_name = serializers.SerializerMethodField()
+
+    def get_supervisor_name(self, obj):
+        if obj.supervisor:
+            return f"{obj.supervisor.first_name} {obj.supervisor.last_name}".strip()
+        return None
+
     # Write-only fields for user creation
     username = serializers.CharField(write_only=True, required=False, allow_blank=True)
     email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
@@ -65,7 +77,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'date_of_birth', 'place_of_birth', 'sex', 'civil_status',
             'umid_id', 'pagibig_id', 'philhealth_no', 'philsys_id', 'tin_no', 'agency_employee_no',
             'mobile_no', 'residential_address', 'permanent_address',
-            'position', 'department', 'school', 'school_details', 
+            'position', 'department', 'school', 'school_details', 'supervisor', 'supervisor_name',
             'salary_grade', 'salary_grade_details', 'salary', 'date_hired', 
             'leave_balance', 'vacation_leave_balance', 'sick_leave_balance',
             'e_signature',
@@ -217,3 +229,31 @@ class EmployeeSerializer(serializers.ModelSerializer):
             Eligibility.objects.create(employee=employee, **clean_item(item))
         for item in work_data:
             WorkExperience.objects.create(employee=employee, **clean_item(item))
+
+
+class EmployeeDocumentSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    verified_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmployeeDocument
+        fields = [
+            'id', 'employee', 'document_type', 'file', 'file_name',
+            'uploaded_at', 'verified', 'verified_by', 'verified_by_name',
+            'verified_at', 'file_url'
+        ]
+        read_only_fields = ['id', 'uploaded_at', 'verified_by', 'verified_at', 'file_url']
+
+    def get_file_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
+
+    def get_verified_by_name(self, obj):
+        if obj.verified_by:
+            name = f"{obj.verified_by.first_name} {obj.verified_by.last_name}".strip()
+            return name or obj.verified_by.username
+        return None

@@ -10,7 +10,7 @@ from django.db import transaction
 from decimal import Decimal, InvalidOperation
 from ..models import Employee, ProvidentLoan, LoanDocument, LoanPayment, Role, AuditLog
 from ..serializers import LoanSerializer, LoanDocumentSerializer, LoanPaymentSerializer
-from ..permissions import IsAdminOrHR, IsHR, IsSuperintendent, IsAccountant
+from ..permissions import IsAdminOrHR, IsHR, IsSuperintendent, IsAccountant, IsSuperintendentOrAdmin
 
 # Required documents for every loan application
 BASE_REQUIRED_DOCS = ['laf', 'letter_request', 'auth_deduct', 'payslip', 'deped_id', 'comaker_payslip']
@@ -67,9 +67,9 @@ class LoanViewSet(viewsets.ModelViewSet):
             user=user,
             action=f"Loan Applied for {employee}: ₱{instance.loan_amount} ({instance.get_purpose_display()})"
         )
-    @action(detail=True, methods=['post'], permission_classes=[IsAccountant])
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsSuperintendentOrAdmin])
     def verify(self, request, pk=None):
-        """Accountant action to verify documents and mark as ready for superintendent."""
+        """Accountant/Admin/Superintendent action to verify documents and mark as ready for approval."""
         loan = self.get_object()
         if loan.status != 'pending':
             return Response({"detail": "Only pending loans can be verified."}, status=status.HTTP_400_BAD_REQUEST)
@@ -81,14 +81,14 @@ class LoanViewSet(viewsets.ModelViewSet):
             user=request.user, 
             action=f"Verified loan documents for Loan #{loan.id} ({loan.employee})"
         )
-        return Response({"message": "Loan documents verified. Sent to superintendent for approval.", "status": "verified"})
+        return Response({"message": "Loan documents verified. Sent for executive approval.", "status": "verified"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendentOrAdmin])
     def approve(self, request, pk=None):
-        """Superintendent action to approve a verified loan."""
+        """Superintendent or Admin action to approve a loan."""
         loan = self.get_object()
-        if loan.status != 'verified':
-            return Response({"detail": "Only verified loans can be approved by the superintendent."}, status=status.HTTP_400_BAD_REQUEST)
+        if loan.status not in ['pending', 'verified']:
+            return Response({"detail": "Only pending or verified loans can be approved."}, status=status.HTTP_400_BAD_REQUEST)
 
         loan.status = 'approved'
         loan.remarks = request.data.get('remarks', '')
@@ -99,17 +99,11 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Approved Loan: {loan.employee}")
         return Response({"message": "Loan approved.", "status": "approved"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent | IsAccountant])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendentOrAdmin | IsAccountant])
     def reject(self, request, pk=None):
-        """Rejects a loan. Accountant can reject pending loans, Superintendent can reject verified ones."""
+        """Rejects a loan. Accountant, Superintendent, or Admin can reject pending or verified loans."""
         loan = self.get_object()
-        user_role = request.user.role
-
-        if loan.status == 'pending' and user_role != Role.ACCOUNTANT and not request.user.is_superuser:
-            return Response({"detail": "Only accountants can reject loans during verification."}, status=status.HTTP_403_FORBIDDEN)
-        elif loan.status == 'verified' and user_role != Role.SUPERINTENDENT and not request.user.is_superuser:
-            return Response({"detail": "Only superintendents can reject loans during approval."}, status=status.HTTP_403_FORBIDDEN)
-        elif loan.status not in ['pending', 'verified']:
+        if loan.status not in ['pending', 'verified']:
             return Response({"detail": "Only pending or verified loans can be rejected."}, status=status.HTTP_400_BAD_REQUEST)
 
         remarks = request.data.get('remarks', '')
@@ -149,17 +143,19 @@ class LoanViewSet(viewsets.ModelViewSet):
     def release_funds(self, request, pk=None):
         """Accountant action to release money after superintendent approval."""
         loan = self.get_object()
-        if loan.status != 'approved':
-            return Response({"detail": "Only approved loans can be released."}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            loan = ProvidentLoan.objects.select_for_update().get(pk=loan.pk)
+            if loan.status != 'approved':
+                return Response({"detail": "Only approved loans can be released."}, status=status.HTTP_400_BAD_REQUEST)
 
-        loan.status = 'released'
-        loan.date_granted = timezone.localdate()
-        
-        # Pull station code from employee school if blank
-        if not loan.station_code and loan.employee.school:
-            loan.station_code = loan.employee.school.name
+            loan.status = 'released'
+            loan.date_granted = timezone.localdate()
+            
+            # Pull station code from employee school if blank
+            if not loan.station_code and loan.employee.school:
+                loan.station_code = loan.employee.school.name
 
-        loan.save()
+            loan.save()
 
         AuditLog.objects.create(user=request.user, action=f"Released Funds for Loan #{loan.id} ({loan.employee})")
         return Response({"message": "Loan funds released successfully.", "status": "released"})

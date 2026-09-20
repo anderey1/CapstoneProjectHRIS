@@ -18,6 +18,11 @@ class PayrollViewSet(viewsets.ModelViewSet):
     serializer_class = PayrollSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [(IsAccountant | IsSuperintendent)()]
+        return super().get_permissions()
+
     def get_queryset(self):
         user = self.request.user
         base_qs = Payroll.objects.select_related(

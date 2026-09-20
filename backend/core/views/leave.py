@@ -217,6 +217,10 @@ class LeaveViewSet(viewsets.ModelViewSet):
             
         elif old_status == 'pending_superintendent':
             with transaction.atomic():
+                leave = LeaveRequest.objects.select_for_update().get(pk=leave.pk)
+                if leave.status != 'pending_superintendent':
+                    return Response({"detail": "This request has already been finalized."}, status=400)
+
                 employee = Employee.objects.select_for_update().get(id=leave.employee_id)
                 try:
                     days_deducted = employee.deduct_leave(leave.leave_type, duration)

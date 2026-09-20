@@ -75,11 +75,9 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
 
   const { data: salaryGrades } = useQuery({
     queryKey: ['salary-grades'],
-    queryFn: () => api.get('/salary-grades/').then(res => Array.isArray(res.data) ? res.data : res.data.results || []),
+    queryFn: () => api.get('salary-grades/').then(res => Array.isArray(res.data) ? res.data : res.data.results || []),
     enabled: isOpen // Only fetch when modal is open
   });
-
-  if (!isOpen) return null;
 
   const employeeRole = watch('role');
   const setEmployeeRole = (val) => setValue('role', val);
@@ -224,6 +222,8 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal modal-open">

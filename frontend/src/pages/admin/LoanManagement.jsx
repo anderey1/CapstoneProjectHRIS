@@ -43,6 +43,10 @@ const LoanManagement = () => {
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [approveRemarks, setApproveRemarks] = useState('');
 
+  const canVerify = user?.is_superuser || ['ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
+  const canApprove = user?.is_superuser || ['SUPERINTENDENT', 'ADMINISTRATIVE', 'HR'].includes(user?.role);
+  const canDisburse = user?.is_superuser || ['ACCOUNTANT', 'ADMINISTRATIVE'].includes(user?.role);
+
   const {
     checklist,
     documents,
@@ -401,30 +405,51 @@ const LoanManagement = () => {
                     </div>
                   )}
 
-                  {/* Action Section (Accountant Verification) */}
+                  {/* Action Section (Verification & Direct Approval) */}
                   {selectedLoan.status === 'pending' && (
                     <div className="space-y-4 pt-4 border-t border-base-100">
-                      <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Accountant Verification</h4>
-                      {(user?.role === 'ACCOUNTANT' || user?.is_superuser) ? (
+                      <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Document Verification & Approval</h4>
+                      {(canVerify || canApprove) ? (
                         <>
                           <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
                             <p className="text-[10px] font-bold text-primary/70 uppercase leading-relaxed text-center">
-                              Verify that all required documents are uploaded and valid before endorsing to the Superintendent.
+                              Verify required documents or approve the application directly.
                             </p>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await verifyLoan(selectedLoan.id);
-                                  setSelectedLoan(null);
-                                } catch {
-                                  // Handled by hook
-                                }
-                              }}
-                              disabled={isVerifying}
-                              className="btn btn-primary btn-block rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
-                            >
-                              {isVerifying ? 'Verifying...' : 'Verify & Endorse Loan Documents'}
-                            </button>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {canVerify && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await verifyLoan(selectedLoan.id);
+                                      setSelectedLoan(null);
+                                    } catch {
+                                      // Handled by hook
+                                    }
+                                  }}
+                                  disabled={isVerifying}
+                                  className="btn btn-primary rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-primary/20"
+                                >
+                                  {isVerifying ? 'Verifying...' : 'Verify Documents'}
+                                </button>
+                              )}
+                              {canApprove && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await approveLoan({ id: selectedLoan.id, remarks: approveRemarks });
+                                      setSelectedLoan(null);
+                                      setApproveRemarks('');
+                                    } catch {
+                                      // Handled by hook
+                                    }
+                                  }}
+                                  disabled={isApproving}
+                                  className={`btn btn-success ${!canVerify ? 'btn-block sm:col-span-2' : ''} rounded-lg font-black text-[11px] uppercase tracking-widest h-12 shadow-md shadow-success/20`}
+                                >
+                                  {isApproving ? 'Approving...' : 'Directly Approve'}
+                                </button>
+                              )}
+                            </div>
                           </div>
 
                           {/* Reject Section */}
@@ -455,17 +480,17 @@ const LoanManagement = () => {
                         </>
                       ) : (
                         <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
-                          Only Accountants can verify loan documents.
+                          Only Accountants, Superintendents, or Admins can verify or approve loan applications.
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Action Section (Superintendent Approval) */}
+                  {/* Action Section (Superintendent & Admin Approval) */}
                   {selectedLoan.status === 'verified' && (
                     <div className="space-y-4 pt-4 border-t border-base-100">
-                      <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Superintendent Approval</h4>
-                      {(user?.role === 'SUPERINTENDENT' || user?.is_superuser) ? (
+                      <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Executive Approval (Superintendent / Admin)</h4>
+                      {canApprove ? (
                         <>
                           {/* Approve Section */}
                           <div className="p-4 bg-success/5 border border-success/10 rounded-xl space-y-3">
@@ -521,17 +546,17 @@ const LoanManagement = () => {
                         </>
                       ) : (
                         <div className="p-4 bg-base-100 rounded-lg text-center text-xs font-bold opacity-40 italic">
-                          Waiting for Superintendent approval.
+                          Waiting for Superintendent or Admin approval.
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Release Section (Accountant) */}
+                  {/* Release Section (Accountant / Admin) */}
                   {selectedLoan.status === 'approved' && (
                     <div className="space-y-4 pt-4 border-t border-base-100">
                       <h4 className="text-[11px] font-black uppercase tracking-widest opacity-40 px-1">Disbursement</h4>
-                      {(user?.role === 'ACCOUNTANT' || user?.is_superuser) ? (
+                      {canDisburse ? (
                         <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
                           <p className="text-[10px] font-bold text-primary/70 uppercase leading-relaxed text-center mb-2">
                             Verify fund availability before releasing.

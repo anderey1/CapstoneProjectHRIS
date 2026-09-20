@@ -45,7 +45,8 @@ def generate_form_48(employee, month_str, attendance_records, cutoff=None):
         current = max(lv.start_date, date(year, month_num, 1))
         limit = min(lv.end_date, date(year, month_num, num_days))
         while current <= limit:
-            leave_days.add(current.day)
+            if current.weekday() < 5 or lv.leave_type in ['maternity', 'paternity']:
+                leave_days.add(current.day)
             current += timedelta(days=1)
     
     def create_dtr_card(start_day=1, end_day=31):

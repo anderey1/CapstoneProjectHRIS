@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter    
 from .views import (
-    AttendanceViewSet, LoanViewSet, EmployeeViewSet,
+    AttendanceViewSet, LoanViewSet, EmployeeViewSet, EmployeeDocumentViewSet,
     LeaveViewSet, PayrollViewSet, PerformanceReviewViewSet,
     ApplicantViewSet, AuditLogViewSet, SchoolViewSet, SalaryGradeViewSet,
     PDSExtractionView,
@@ -12,6 +12,7 @@ router = DefaultRouter()
 router.register(r'attendance', AttendanceViewSet)
 router.register(r'loans', LoanViewSet)
 router.register(r'employees', EmployeeViewSet)
+router.register(r'employee-documents', EmployeeDocumentViewSet)
 router.register(r'leaves', LeaveViewSet)
 router.register(r'payroll', PayrollViewSet)
 router.register(r'performance', PerformanceReviewViewSet)

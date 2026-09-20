@@ -7,33 +7,57 @@ import {
 
 const AREA_POSITIONS = {
   Instructional: [
-    'Teacher I', 'Teacher II', 'Teacher III', 'Teacher IV', 'Teacher V', 'Teacher VI',
-    'Master Teacher I', 'Master Teacher II', 'Master Teacher III', 'Master Teacher IV'
+    'Teacher I', 'Teacher II', 'Teacher III', 'Teacher IV', 'Teacher V', 'Teacher VI', 'Teacher VII',
+    'Master Teacher I', 'Master Teacher II', 'Master Teacher III', 'Master Teacher IV',
+    'SPED Teacher I', 'SPED Teacher II', 'SPED Teacher III'
   ],
   Administrative: [
-    'Head Teacher I', 'Head Teacher III',
     'Principal I', 'Principal II', 'Principal III', 'Principal IV',
-    'Administrative Officer I', 'Administrative Officer II',
-    'Administrative Assistant I', 'Administrative Assistant II'
+    'Head Teacher I', 'Head Teacher II', 'Head Teacher III', 'Head Teacher IV', 'Head Teacher V', 'Head Teacher VI',
+    'Administrative Officer V', 'Administrative Officer IV', 'Administrative Officer II', 'Administrative Officer I',
+    'Administrative Assistant III', 'Administrative Assistant II', 'Administrative Assistant I',
+    'Administrative Aide VI', 'Administrative Aide IV',
+    'Registrar II', 'Registrar I'
   ],
   Finance: [
-    'Accountant I',
-    'Administrative Officer I', 'Administrative Officer II',
-    'Administrative Assistant I', 'Administrative Assistant II'
+    'Accountant III', 'Accountant II', 'Accountant I',
+    'Administrative Officer V (Budget Officer)',
+    'Administrative Assistant III (Senior Bookkeeper)',
+    'Administrative Assistant II (Accounting / Cash)',
+    'Administrative Assistant I',
+    'Administrative Aide VI'
   ],
   'ICT Section': [
-    'Administrative Assistant I', 'Administrative Assistant II',
-    'Administrative Officer I', 'Administrative Officer II'
+    'Information Technology Officer I',
+    'Computer Programmer II',
+    'Administrative Assistant III (Computer Operator)',
+    'Administrative Assistant II',
+    'Administrative Assistant I',
+    'Administrative Officer I'
   ],
   'Division Office': [
     'Schools Division Superintendent',
-    'Administrative Officer I', 'Administrative Officer II',
-    'Administrative Assistant I', 'Administrative Assistant II',
-    'Registrar I', 'Accountant I'
+    'Assistant Schools Division Superintendent',
+    'Attorney III (Legal Officer)',
+    'Public Schools District Supervisor (PSDS)',
+    'Education Program Supervisor (EPS)',
+    'Planning Officer III',
+    'Administrative Officer V',
+    'Administrative Officer IV',
+    'Administrative Assistant III',
+    'Administrative Assistant II',
+    'Administrative Assistant I'
   ]
 };
 
 const DEPARTMENTS = Object.keys(AREA_POSITIONS);
+const TEACHING_DEPTS = ['Instructional'];
+const NON_TEACHING_DEPTS = ['Administrative', 'Finance', 'ICT Section', 'Division Office'];
+
+const isTeachingPosition = (pos) => {
+  if (!pos) return false;
+  return pos.startsWith('Teacher') || pos.startsWith('Master Teacher') || pos.startsWith('SPED');
+};
 
 const RegisterExisting = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +71,7 @@ const RegisterExisting = () => {
     last_name: '',
     department: '',
     position: '',
-    role: 'TEACHING',
+    role: '',
     username: '',
     email: '',
     password: '',
@@ -59,15 +83,38 @@ const RegisterExisting = () => {
     setFormData(prev => {
       const next = { ...prev, [name]: value };
       
-      // Reset position when department changes
+      // Staff Category changed -> sync department & position
+      if (name === 'role') {
+        if (value === 'TEACHING') {
+          if (!TEACHING_DEPTS.includes(next.department)) {
+            next.department = 'Instructional';
+            next.position = '';
+          } else if (next.position && !isTeachingPosition(next.position)) {
+            next.position = '';
+          }
+        } else if (value === 'NON_TEACHING') {
+          if (TEACHING_DEPTS.includes(next.department)) {
+            next.department = '';
+            next.position = '';
+          } else if (next.position && isTeachingPosition(next.position)) {
+            next.position = '';
+          }
+        }
+      }
+
+      // Department changed -> sync staff category & reset position
       if (name === 'department') {
         next.position = '';
+        if (value) {
+          next.role = TEACHING_DEPTS.includes(value) ? 'TEACHING' : 'NON_TEACHING';
+        }
       }
       
-      // Auto-set staff category when position changes
+      // Position changed -> auto-set staff category accordingly
       if (name === 'position') {
-        const isTeaching = value.startsWith('Teacher') || value.startsWith('Master Teacher') || value.startsWith('SPED');
-        next.role = isTeaching ? 'TEACHING' : 'NON_TEACHING';
+        if (value) {
+          next.role = isTeachingPosition(value) ? 'TEACHING' : 'NON_TEACHING';
+        }
       }
       
       return next;
@@ -117,7 +164,16 @@ const RegisterExisting = () => {
     }
   };
 
-  const filteredPositions = formData.department ? AREA_POSITIONS[formData.department] || [] : [];
+  const availableDepartments = formData.role === 'TEACHING'
+    ? TEACHING_DEPTS
+    : (formData.role === 'NON_TEACHING' ? NON_TEACHING_DEPTS : DEPARTMENTS);
+
+  const departmentPositions = formData.department ? AREA_POSITIONS[formData.department] || [] : [];
+  const filteredPositions = departmentPositions.filter(pos => {
+    if (formData.role === 'TEACHING') return isTeachingPosition(pos);
+    if (formData.role === 'NON_TEACHING') return !isTeachingPosition(pos);
+    return true;
+  });
 
   if (isSuccess) {
     return (
@@ -227,6 +283,26 @@ const RegisterExisting = () => {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Staff Category (Teaching / Non-Teaching)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="select select-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
+                    required
+                  >
+                    <option value="">Select Staff Category</option>
+                    <option value="TEACHING">Teaching Staff</option>
+                    <option value="NON_TEACHING">Non-Teaching Staff</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Area (Department)</label>
@@ -242,7 +318,7 @@ const RegisterExisting = () => {
                       required
                     >
                       <option value="">Select Area (Department)</option>
-                      {DEPARTMENTS.map(dept => (
+                      {availableDepartments.map(dept => (
                         <option key={dept} value={dept}>{dept}</option>
                       ))}
                     </select>
@@ -272,20 +348,6 @@ const RegisterExisting = () => {
                     </select>
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Staff Category (Teaching / Non-Teaching)</label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="select select-bordered w-full bg-base-50 border-base-200 focus:border-[#0038A8] rounded-xl text-xs font-bold"
-                  required
-                >
-                  <option value="TEACHING">Teaching Staff</option>
-                  <option value="NON_TEACHING">Non-Teaching Staff</option>
-                </select>
               </div>
             </div>
 

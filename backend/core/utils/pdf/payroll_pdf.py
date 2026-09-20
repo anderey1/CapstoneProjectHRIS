@@ -39,7 +39,7 @@ def generate_general_payroll_pdf(cutoff_period, payrolls):
     total_net = Decimal('0.00')
     
     for idx, p in enumerate(payrolls, 1):
-        total_gross += p.basic_salary
+        total_gross += p.gross_salary
         total_sss += p.sss
         total_philhealth += p.philhealth
         total_pagibig += p.pagibig
@@ -54,7 +54,7 @@ def generate_general_payroll_pdf(cutoff_period, payrolls):
             str(idx),
             f"{p.employee.first_name} {p.employee.last_name}",
             f"{p.employee.position or 'Staff'}\n({p.employee.school.name if p.employee.school else 'Main Office'})",
-            f"Php {p.basic_salary:,.2f}",
+            f"Php {p.gross_salary:,.2f}",
             f"Php {p.sss:,.2f}",
             f"Php {p.philhealth:,.2f}",
             f"Php {p.pagibig:,.2f}",
@@ -289,10 +289,11 @@ def generate_payslip_pdf(payroll):
          Paragraph("PhilHealth", item_label), Paragraph(f"Php {payroll.philhealth:,.2f}", item_val)],
         [Paragraph("Calculated Basic Salary", item_label), Paragraph(f"Php {payroll.basic_salary:,.2f}", item_val),
          Paragraph("Pag-IBIG", item_label), Paragraph(f"Php {payroll.pagibig:,.2f}", item_val)],
-        ["", "", Paragraph("Withholding Tax", item_label), Paragraph(f"Php {payroll.tax:,.2f}", item_val)],
+        [Paragraph("PERA Allowance", item_label), Paragraph(f"Php {getattr(payroll, 'pera', Decimal('1000.00')):,.2f}", item_val),
+         Paragraph("Withholding Tax", item_label), Paragraph(f"Php {payroll.tax:,.2f}", item_val)],
         ["", "", Paragraph("Provident Loan Payment", item_label), Paragraph(f"Php {payroll.loans:,.2f}", item_val)],
         [Paragraph("<b>Gross Earnings</b>", ParagraphStyle('EB', parent=item_label, fontName='Helvetica-Bold')), 
-         Paragraph(f"<b>Php {payroll.basic_salary:,.2f}</b>", item_val_bold),
+         Paragraph(f"<b>Php {payroll.gross_salary:,.2f}</b>", item_val_bold),
          Paragraph("<b>Total Deductions</b>", ParagraphStyle('DB', parent=item_label, fontName='Helvetica-Bold')), 
          Paragraph(f"<b>Php {payroll.total_deductions:,.2f}</b>", item_val_bold)]
     ]

@@ -9,8 +9,8 @@ import { X, Award, Target, TrendingUp, UserCheck, ShieldCheck, FileText, Printer
 const IPCRFDetailsModal = ({ review, onClose }) => {
   if (!review) return null;
 
-  const scores = [review.punctuality_score, review.quality_score, review.behavior_score].filter(s => s !== null && s !== undefined);
-  const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const scores = [review.punctuality_score, review.quality_score, review.behavior_score].filter(s => s !== null && s !== undefined && s !== '');
+  const avg = scores.length > 0 ? scores.reduce((a, b) => Number(a) + Number(b), 0) / scores.length : 0;
 
   return (
     <div className="modal modal-open">

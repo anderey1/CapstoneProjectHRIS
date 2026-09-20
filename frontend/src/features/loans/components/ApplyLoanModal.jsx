@@ -63,6 +63,15 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
     }
   }, [isOpen, initialData]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleInputChange = (e) => {
@@ -96,14 +105,6 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
   const totalInterest = amount * (rate / 100);
   const totalRepayable = amount + totalInterest;
   const monthlyPayment = totalRepayable / term;
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   const handleFormSubmit = (e) => {
     e.preventDefault();

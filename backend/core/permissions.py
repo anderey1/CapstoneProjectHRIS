@@ -17,6 +17,9 @@ class IsHR(BaseRolePermission):
 class IsSuperintendent(BaseRolePermission):
     allowed_roles = [Role.SUPERINTENDENT]
 
+class IsSuperintendentOrAdmin(BaseRolePermission):
+    allowed_roles = [Role.SUPERINTENDENT, Role.ADMINISTRATIVE, Role.HR]
+
 class IsAccountant(BaseRolePermission):
     allowed_roles = [Role.ACCOUNTANT]
 

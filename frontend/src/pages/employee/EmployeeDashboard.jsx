@@ -89,7 +89,7 @@ const EmployeeDashboard = () => {
                   <Clock className="w-4 h-4" />
                   Clock In/Out
                </Link>
-               <Link to="/leave" className="btn btn-ghost bg-base-100 border-base-200 rounded-lg px-8 h-12 font-black uppercase tracking-widest text-[11px] hover:bg-base-200">
+               <Link to="/my-leaves" className="btn btn-ghost bg-base-100 border-base-200 rounded-lg px-8 h-12 font-black uppercase tracking-widest text-[11px] hover:bg-base-200">
                   Request Leave
                </Link>
             </div>

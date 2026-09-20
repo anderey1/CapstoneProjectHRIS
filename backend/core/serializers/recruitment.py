@@ -13,5 +13,9 @@ class ApplicantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Applicant
         fields = '__all__'
-        read_only_fields = ('date_applied', 'total_score', 'last_status_update', 'is_notified')
+        read_only_fields = (
+            'date_applied', 'total_score', 'last_status_update', 'is_notified',
+            'status', 'education_score', 'training_score', 'experience_score',
+            'demo_teaching_score', 'exam_score', 'interview_score'
+        )
 

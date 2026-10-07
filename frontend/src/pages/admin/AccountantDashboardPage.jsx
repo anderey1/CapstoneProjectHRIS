@@ -13,7 +13,7 @@ import { Wallet, ShieldCheck } from 'lucide-react';
 const AccountantDashboardPage = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.DASHBOARD],
-    queryFn: () => api.get('analytics/dashboard/').then(res => res.data)
+    queryFn: () => api.get('dashboard/').then(res => res.data)
   });
 
   if (isLoading) {

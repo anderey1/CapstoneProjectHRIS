@@ -1,24 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
-import { Wallet, Download, Eye, AlertCircle, FileText, Printer, FileCheck, Info } from 'lucide-react';
+import {
+  Wallet,
+  Download,
+  Eye,
+  AlertCircle,
+  Printer,
+  FileCheck,
+} from 'lucide-react';
 
 /**
- * My Payslips (Employee View)
- * Redesigned, clean visual layout for staff to view salary history and download payslips.
+ * My Payslips (Personal Compensation & Semi-Monthly Earnings History)
+ * Conforming to DepEd Payroll Calculator & CSC Institutional Standards.
  */
 const MyPayroll = () => {
   const [selectedPayroll, setSelectedPayroll] = useState(null);
 
   // 1. Data Fetching
-  const { data: payrolls, isLoading } = useQuery({
+  const { data: payrolls = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.PAYROLL],
     queryFn: async () => {
       const res = await api.get('payroll/');
       return Array.isArray(res.data) ? res.data : res.data.results || [];
     },
   });
+
+  // Default selection to latest released payroll
+  const activePayroll = useMemo(() => {
+    if (selectedPayroll) return selectedPayroll;
+    if (payrolls && payrolls.length > 0) return payrolls[0];
+    return null;
+  }, [selectedPayroll, payrolls]);
 
   const handlePrint = () => {
     window.print();
@@ -27,259 +41,360 @@ const MyPayroll = () => {
   const handleDownloadPDF = async (p) => {
     try {
       const response = await api.get(`payroll/${p.id}/export_payslip/`, {
-        responseType: 'blob'
+        responseType: 'blob',
       });
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Payslip_${p.cutoff_period.replace(/ /g, '_').replace(/,/g, '')}.pdf`);
+      link.setAttribute(
+        'download',
+        `Payslip_${(p.cutoff_period || 'period').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (err) {
-      alert("Failed to download payslip PDF. Please try again.");
+    } catch {
+      alert('Unable to download payslip PDF. Please verify your connection and try again.');
     }
   };
 
-  const calculateNet = (p) => {
-    if (!p) return 0;
-    return parseFloat(p.basic_salary) - parseFloat(p.sss) - parseFloat(p.philhealth) - parseFloat(p.pagibig) - parseFloat(p.tax) - parseFloat(p.loans);
-  };
-
-  if (isLoading) return (
-    <div className="p-8 flex justify-center h-[60vh] items-center">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
-    </div>
-  );
+  if (isLoading) {
+    return (
+      <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
+        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+          Loading Compensation Archive...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
-      
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* DepEd Institutional Header */}
+      <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
-              <FileCheck className="w-6 h-6" />
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
+            Republic of the Philippines • Department of Education • SDO Lucena City
+          </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
+              <FileCheck className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">My Payslips / Salaries</h1>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-emerald-600 rounded-full"></span>
-                <p className="text-[10px] font-black opacity-45 uppercase tracking-widest">Personal Salary Records</p>
-              </div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                Personal Compensation &amp; Payslip Archive
+              </h1>
             </div>
           </div>
+          <p className="text-xs text-slate-600">
+            Semi-Monthly Salary Disbursements • Civil Service Commission &amp; DBM SSL Schedule
+          </p>
         </div>
 
-        {/* Tip Box */}
-        <div className="text-[10px] bg-blue-50 border border-blue-100 rounded-xl px-4 py-2 text-blue-800 flex items-center gap-2 max-w-xs">
-          <Info className="w-4 h-4 text-blue-600 flex-shrink-0" />
-          <span>Payslips are generated twice a month and are released after Accountant and Superintendent sign-offs.</span>
+        <div className="flex items-center gap-2 self-start md:self-auto text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#0038A8] border border-blue-200 rounded font-semibold">
+            <Wallet className="w-3.5 h-3.5" />
+            Semi-Monthly Cutoffs
+          </span>
         </div>
       </div>
 
-      {payrolls && payrolls.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* LEFT: History List Table */}
-          <div className="lg:col-span-7 bg-white rounded-xl border border-base-200 shadow-sm overflow-hidden">
-             <div className="p-6 border-b border-base-100 bg-base-50/10">
-                <h3 className="text-sm font-black uppercase tracking-wider text-base-content">Salary Release History</h3>
-                <p className="text-[10px] font-bold opacity-30 mt-0.5 uppercase tracking-wide">Select a period to view details</p>
-             </div>
-             
-             <div className="overflow-x-auto">
-                <table className="table table-md w-full">
-                  <thead>
-                    <tr className="bg-base-50/20 border-b border-base-100 uppercase text-[9px] tracking-widest font-black opacity-40">
-                      <th className="px-6 py-4">Pay Period</th>
-                      <th className="px-6 py-4 text-right">Net Take-Home Pay</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-center">Option</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-base-100 text-xs font-bold">
-                    {payrolls.map((p) => {
-                      const netSalary = calculateNet(p);
-                      const isSelected = selectedPayroll?.id === p.id;
-                      return (
-                        <tr 
-                          key={p.id} 
-                          className={`hover:bg-base-50/50 transition-colors ${
-                            isSelected ? 'bg-blue-50/40 text-blue-900' : ''
-                          }`}
-                        >
-                          <td className="px-6 py-4 font-black text-sm uppercase">{p.cutoff_period}</td>
-                          <td className="px-6 py-4 text-right font-black text-blue-700">
-                            ₱{netSalary.toLocaleString(undefined, {minimumFractionDigits: 2})}
-                          </td>
-                          <td className="px-6 py-4">
-                             <span className={`px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider border ${
-                                p.status === 'released' 
-                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                                  : p.status === 'approved' 
-                                  ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                                  : 'bg-amber-50 border-amber-200 text-amber-700'
-                             }`}>
-                                {p.status === 'released' ? 'Paid' : p.status}
-                             </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <button 
-                              onClick={() => setSelectedPayroll(p)}
-                              disabled={p.status !== 'released'}
-                              className={`btn btn-xs rounded-lg uppercase tracking-wider ${
-                                p.status === 'released'
-                                  ? isSelected
-                                    ? 'btn-primary'
-                                    : 'btn-outline border-blue-200 hover:bg-blue-50 hover:text-blue-700 text-blue-600'
-                                  : 'btn-disabled opacity-30'
-                              }`}
-                            >
-                              <Eye className="w-3.5 h-3.5 mr-1" />
-                              {p.status === 'released' ? 'View' : 'Processing'}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-             </div>
+      {payrolls.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* LEFT: Semi-Monthly Payslip Ledger Table (7 cols) */}
+          <div className="lg:col-span-7 bg-white border border-slate-300 rounded-lg overflow-hidden shadow-xs">
+            <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Salary Release History
+              </h2>
+              <span className="text-[11px] text-slate-500 font-mono">
+                {payrolls.length} Recorded Cycles
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-[11px] uppercase tracking-wider">
+                    <th className="py-2.5 px-4 font-bold">Cutoff Period</th>
+                    <th className="py-2.5 px-3 font-bold text-right">Gross Pay</th>
+                    <th className="py-2.5 px-3 font-bold text-right">Deductions</th>
+                    <th className="py-2.5 px-3 font-bold text-right">Net Take-Home</th>
+                    <th className="py-2.5 px-3 font-bold text-center">Status</th>
+                    <th className="py-2.5 px-4 font-bold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {payrolls.map((p) => {
+                    const isSelected = activePayroll?.id === p.id;
+                    const gross = Number(p.gross_salary || p.basic_salary || 0);
+                    const deductions = Number(p.total_deductions || 0);
+                    const net = Number(p.net_salary || gross - deductions);
+
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`hover:bg-slate-50/70 transition-colors ${
+                          isSelected ? 'bg-blue-50/50' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-mono font-semibold text-slate-900 text-xs">
+                          {p.cutoff_period}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-800">
+                          ₱{gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums text-red-700">
+                          -₱{deductions.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-[#0038A8]">
+                          ₱{net.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              p.status === 'released'
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : p.status === 'approved'
+                                ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                : 'bg-amber-50 text-amber-800 border border-amber-200'
+                            }`}
+                          >
+                            {p.status === 'released' ? 'Disbursed' : p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => setSelectedPayroll(p)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
+                              isSelected
+                                ? 'bg-[#0038A8] text-white'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Docket
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-slate-50 border-t border-slate-300 px-4 py-2 text-[11px] text-slate-500 flex justify-between">
+              <span>Select any cutoff cycle to preview the itemized payslip breakdown.</span>
+              <span className="font-mono">DepEd Lucena Division</span>
+            </div>
           </div>
 
-          {/* RIGHT: Redesigned Interactive Payslip Viewer Card */}
+          {/* RIGHT: Official Electronic Payslip Docket (5 cols) */}
           <div className="lg:col-span-5">
-             {selectedPayroll ? (
-                <div id="printable-payslip" className="bg-white shadow-sm border border-slate-200 rounded-xl overflow-hidden sticky top-8">
-                   
-                   {/* Payslip Header Card */}
-                   <div className="bg-[#0038A8] p-6 text-white relative overflow-hidden">
-                      <div className="flex justify-between items-start">
-                         <div className="space-y-1">
-                            <p className="text-[9px] font-black uppercase text-amber-400 tracking-[0.2em]">DEPED LUCENA CITY DIVISION</p>
-                            <h3 className="font-black text-xl uppercase tracking-tight">{selectedPayroll.cutoff_period}</h3>
-                            <p className="text-[8px] opacity-60">OFFICIAL DIGITAL PAYSLIP</p>
-                         </div>
-                         
-                         {/* Action Buttons Row */}
-                         <div className="flex gap-2">
-                            <button 
-                              onClick={() => handleDownloadPDF(selectedPayroll)} 
-                              title="Download PDF Copy"
-                              className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors text-white hover:text-amber-400"
-                            >
-                               <Download className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={handlePrint} 
-                              title="Print Payslip"
-                              className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors text-white"
-                            >
-                               <Printer className="w-4 h-4" />
-                            </button>
-                         </div>
-                      </div>
-                   </div>
-                   
-                   {/* Payslip Info Grid */}
-                   <div className="p-6 space-y-6">
-                      <div className="grid grid-cols-2 gap-4 border-b border-base-100 pb-4 text-xs">
-                         <div>
-                            <span className="block text-[8px] font-black uppercase opacity-35">Employee Name</span>
-                            <span className="font-black text-sm text-base-content">{selectedPayroll.employee_name}</span>
-                         </div>
-                         <div>
-                            <span className="block text-[8px] font-black uppercase opacity-35">Position</span>
-                            <span className="font-black text-sm text-base-content">{selectedPayroll.employee_role || 'Teacher'}</span>
-                         </div>
-                      </div>
+            {activePayroll ? (
+              <div
+                id="printable-payslip"
+                className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden sticky top-6"
+              >
+                {/* Institutional Docket Top Header */}
+                <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
+                      Department of Education • SDO Lucena City
+                    </span>
+                    <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+                      Official Semi-Monthly Payslip Docket
+                    </h3>
+                    <span className="font-mono tabular-nums text-xs font-semibold text-[#0038A8]">
+                      {activePayroll.cutoff_period}
+                    </span>
+                  </div>
 
-                      {/* Earnings vs Deductions Split Columns */}
-                      <div className="grid grid-cols-2 gap-6 text-xs">
-                        
-                        {/* Left Side: Earnings */}
-                        <div className="space-y-3">
-                           <h4 className="text-[9px] font-black uppercase tracking-widest text-blue-700 border-b border-blue-100 pb-1">Earnings</h4>
-                           <div className="space-y-2 font-bold">
-                              <div className="flex justify-between">
-                                 <span className="opacity-40 uppercase text-[9px]">Basic Rate</span>
-                                 <span>₱{parseFloat(selectedPayroll.basic_salary).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                              </div>
-                              <div className="flex justify-between text-blue-700">
-                                 <span className="opacity-40 uppercase text-[9px]">Gross Pay</span>
-                                 <span>₱{parseFloat(selectedPayroll.basic_salary).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                              </div>
-                           </div>
-                        </div>
-
-                        {/* Right Side: Deductions */}
-                        <div className="space-y-3">
-                           <h4 className="text-[9px] font-black uppercase tracking-widest text-rose-600 border-b border-rose-100 pb-1">Deductions</h4>
-                           <div className="space-y-1.5 font-bold">
-                              <div className="flex justify-between">
-                                 <span className="opacity-40 uppercase text-[9px]">SSS/GSIS</span>
-                                 <span className="text-rose-600">₱{parseFloat(selectedPayroll.sss).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                 <span className="opacity-40 uppercase text-[9px]">PhilHealth</span>
-                                 <span className="text-rose-600">₱{parseFloat(selectedPayroll.philhealth).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                 <span className="opacity-40 uppercase text-[9px]">Pag-IBIG</span>
-                                 <span className="text-rose-600">₱{parseFloat(selectedPayroll.pagibig).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                 <span className="opacity-40 uppercase text-[9px]">Loans</span>
-                                 <span className="text-rose-600">₱{parseFloat(selectedPayroll.loans).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                 <span className="opacity-40 uppercase text-[9px]">Tax</span>
-                                 <span className="text-rose-600">₱{parseFloat(selectedPayroll.tax).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                              </div>
-                           </div>
-                        </div>
-                      </div>
-
-                      {/* Sub-total Summary Box */}
-                      <div className="border-t border-base-100 pt-4 grid grid-cols-2 gap-4 text-xs font-black">
-                         <div>
-                            <span className="block text-[8px] uppercase opacity-35">Total Deductions</span>
-                            <span className="text-rose-600 font-black text-sm">₱{parseFloat(selectedPayroll.total_deductions).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                         </div>
-                         <div className="text-right">
-                            <span className="block text-[8px] uppercase opacity-35">Gross Pay</span>
-                            <span className="text-base-content font-black text-sm">₱{parseFloat(selectedPayroll.basic_salary).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                         </div>
-                      </div>
-
-                      {/* NET Pay Giant Callout */}
-                      <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 mt-6 text-center">
-                         <p className="text-[9px] font-black uppercase tracking-widest opacity-45 text-blue-700 mb-1">Your Net Pay (Take-Home)</p>
-                         <h2 className="text-3xl font-black text-blue-800 tracking-tight">
-                            ₱{calculateNet(selectedPayroll).toLocaleString(undefined, {minimumFractionDigits: 2})}
-                         </h2>
-                      </div>
-
-                      <div className="pt-2 text-center opacity-30 text-[8px] font-bold uppercase tracking-widest leading-relaxed">
-                         This is a digital copy generated by the DepEd HRIS system.
-                      </div>
-                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleDownloadPDF(activePayroll)}
+                      title="Download signed PDF payslip"
+                      className="p-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded transition-colors"
+                    >
+                      <Download className="w-4 h-4 text-[#0038A8]" />
+                    </button>
+                    <button
+                      onClick={handlePrint}
+                      title="Print payslip"
+                      className="p-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded transition-colors"
+                    >
+                      <Printer className="w-4 h-4 text-slate-700" />
+                    </button>
+                  </div>
                 </div>
-             ) : (
-                <div className="h-[380px] flex flex-col items-center justify-center p-8 bg-white rounded-xl border border-dashed border-base-300 opacity-40 text-center">
-                   <FileText className="w-12 h-12 mb-4 opacity-25" />
-                   <p className="text-xs font-black uppercase tracking-widest leading-relaxed">Select a pay period to view detailed payslip breakdowns</p>
+
+                {/* Ratee & Workstation Metadata */}
+                <div className="p-4 border-b border-slate-200 bg-white grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">
+                      Employee Personnel
+                    </span>
+                    <strong className="text-slate-900 block mt-0.5">
+                      {activePayroll.employee_name || 'Plantilla Employee'}
+                    </strong>
+                    <span className="text-slate-500 text-[11px] block">
+                      Position: {activePayroll.position || 'Plantilla Staff'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">
+                      Station / Division
+                    </span>
+                    <span className="text-slate-800 text-xs block mt-0.5 font-medium">
+                      {activePayroll.department || 'SDO Lucena City'}
+                    </span>
+                    <span className="text-[11px] text-slate-500 block font-mono">
+                      Ref: #PAY-{activePayroll.id?.toString().padStart(6, '0')}
+                    </span>
+                  </div>
                 </div>
-             )}
+
+                {/* Earnings & Deductions Breakdown */}
+                <div className="p-4 space-y-4 text-xs">
+                  {/* Earnings Breakdown */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center text-xs font-bold text-slate-900 border-b border-slate-200 pb-1">
+                      <span>I. Gross Compensation</span>
+                      <span className="font-mono tabular-nums text-slate-700">Amount (₱)</span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-700 py-0.5">
+                      <span>Basic Salary (Attendance Computed)</span>
+                      <span className="font-mono tabular-nums">
+                        {Number(activePayroll.basic_salary || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-700 py-0.5">
+                      <span>PERA Allowance (₱1,000 / semi-monthly)</span>
+                      <span className="font-mono tabular-nums">
+                        {Number(activePayroll.pera || 1000).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-100">
+                      <span>Total Gross Compensation</span>
+                      <span className="font-mono tabular-nums">
+                        ₱
+                        {Number(
+                          activePayroll.gross_salary ||
+                            Number(activePayroll.basic_salary) + Number(activePayroll.pera || 1000)
+                        ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Deductions Breakdown */}
+                  <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                    <div className="flex justify-between items-center text-xs font-bold text-slate-900 border-b border-slate-200 pb-1">
+                      <span>II. Statutory &amp; Other Deductions</span>
+                      <span className="font-mono tabular-nums text-slate-700">Amount (₱)</span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-700 py-0.5">
+                      <span>GSIS Life &amp; Retirement (9%)</span>
+                      <span className="font-mono tabular-nums text-red-700">
+                        {Number(activePayroll.gsis || activePayroll.sss || 0).toLocaleString(
+                          undefined,
+                          { minimumFractionDigits: 2 }
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-700 py-0.5">
+                      <span>PhilHealth Contribution</span>
+                      <span className="font-mono tabular-nums text-red-700">
+                        {Number(activePayroll.philhealth || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-700 py-0.5">
+                      <span>Pag-IBIG Contribution</span>
+                      <span className="font-mono tabular-nums text-red-700">
+                        {Number(activePayroll.pagibig || 100).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-700 py-0.5">
+                      <span>Withholding Tax (TRAIN Law)</span>
+                      <span className="font-mono tabular-nums text-red-700">
+                        {Number(activePayroll.tax || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-700 py-0.5">
+                      <span>Provident Loan Deductions</span>
+                      <span className="font-mono tabular-nums text-red-700">
+                        {Number(activePayroll.loans || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between font-bold text-red-700 pt-1 border-t border-slate-100">
+                      <span>Total Deductions</span>
+                      <span className="font-mono tabular-nums">
+                        -₱
+                        {Number(activePayroll.total_deductions || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Net Take-Home Pay Callout */}
+                  <div className="bg-slate-50 border border-slate-200 rounded p-3 text-center space-y-0.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
+                      Net Take-Home Pay
+                    </span>
+                    <span className="text-2xl font-bold font-mono tabular-nums text-[#0038A8] block">
+                      ₱
+                      {Number(activePayroll.net_salary || 0).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      Disbursed to official LandBank payroll account
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer Notes */}
+                <div className="bg-slate-50 border-t border-slate-200 p-3 text-center text-[10px] text-slate-400 font-mono">
+                  Official Electronic Document • DepEd Division of Lucena City
+                </div>
+              </div>
+            ) : (
+              <div className="h-64 border border-dashed border-slate-300 rounded-lg flex items-center justify-center text-xs text-slate-400">
+                Select a salary cutoff to display the payslip docket.
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-32 bg-white rounded-xl border border-dashed border-base-300 opacity-40 text-center">
-          <AlertCircle className="w-12 h-12 mb-3" />
-          <p className="text-base font-black uppercase tracking-widest">No payslip records available yet</p>
+        <div className="bg-white border border-slate-300 rounded-lg p-12 text-center text-slate-500 space-y-2">
+          <AlertCircle className="w-8 h-8 text-slate-300 mx-auto" />
+          <p className="text-sm font-semibold">No payslip records available yet.</p>
+          <p className="text-xs text-slate-400">
+            Semi-monthly payslips will appear once generated and released by the Division Accountant.
+          </p>
         </div>
       )}
     </div>

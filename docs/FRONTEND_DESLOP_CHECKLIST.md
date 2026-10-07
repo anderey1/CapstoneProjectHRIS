@@ -61,8 +61,9 @@
   - [x] De-slop `frontend/src/pages/admin/AdminDashboard.jsx` (Executive operations cockpit with 4-metric operational summary strip, high-priority approval action docket, station deployment matrix, clean DepEd Blue/Slate distribution charts, and RQA recruitment funnel).
   - [x] De-slop `frontend/src/pages/employee/EmployeeDashboard.jsx` (Calm institutional personal workstation with employee service credentials, personal VL/SL balances, 5-day Form 48 recent attendance ledger, compensation summary, and quick action shortcuts).
   - [x] De-slop `frontend/src/pages/employee/MyPayroll.jsx` (High-density semi-monthly payslip ledger with itemized earnings [Basic, PERA] and statutory deductions [GSIS, PhilHealth, Pag-IBIG, TRAIN Tax, Loans], net take-home callout, and PDF export).
+  - [x] De-slop `frontend/src/pages/employee/MyLoans.jsx` & `ApplyLoanModal.jsx` (Replaced cards with high-density personal loan master ledger table, 4-metric strip, Subsidiary Ledger modal inspection docket, and clean application form).
   - [x] Patched `/api/dashboard/` endpoint routes in `AccountantDashboardPage.jsx` and `SuperintendentDashboardPage.jsx`.
-  - [x] Passed frontend lint check (0 errors, 0 warnings on modified files) and production build. Ran backend payroll test suite (`test_payroll.py`, 14 passed).
+  - [x] Passed frontend lint check (0 errors, 0 warnings on modified files) and production build. Ran backend payroll test suite (`test_payroll.py`, 14 passed) and loan test suite (`test_loan.py`, 6 passed).
 
 ---
 

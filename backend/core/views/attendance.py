@@ -90,14 +90,36 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         if not employee.school:
             return Response({"detail": "Profile has no assigned school workstation."}, status=400)
 
-        # 2. Geo-validation accepts out-of-zone scans but flags them for review.
+        # 2. Strict Geo-validation: reject out-of-zone scans
+        raw_accuracy = request.data.get('accuracy')
+        accuracy = 0
+        if raw_accuracy is not None:
+            try:
+                accuracy = max(0.0, float(raw_accuracy))
+            except (TypeError, ValueError):
+                accuracy = 0.0
+
         is_in_zone, distance = validate_attendance_geo(
             lat,
             lng,
             employee.school.latitude,
             employee.school.longitude,
             radius=employee.school.radius_meters,
+            accuracy=accuracy,
         )
+
+        if not is_in_zone:
+            return Response(
+                {
+                    "detail": (
+                        f"Geofence validation failed: You are {round(distance, 1)}m away from "
+                        f"{employee.school.name} (allowed radius: {employee.school.radius_meters}m)."
+                    ),
+                    "distance": round(distance, 2),
+                    "allowed_radius": employee.school.radius_meters,
+                },
+                status=400,
+            )
 
         # 3. Slot-Based Logic
         now = timezone.localtime(timezone.now())
@@ -116,18 +138,14 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 latest_time = max(times)
                 latest_dt = datetime.combine(today, latest_time)
                 current_dt = datetime.combine(today, current_time)
-                if current_dt - latest_dt < timedelta(minutes=2):
-                    diff = timedelta(minutes=2) - (current_dt - latest_dt)
+                time_diff = current_dt - latest_dt
+                if timedelta(0) <= time_diff < timedelta(minutes=2):
+                    diff = timedelta(minutes=2) - time_diff
                     remaining_sec = int(diff.total_seconds())
                     remaining_min = (remaining_sec // 60) + 1
                     return Response({
                         "detail": f"Please wait {remaining_min} minute(s) before logging attendance again to prevent duplicate logs."
                     }, status=400)
-
-            # Update status if it's currently 'present' and we detect a 'late' condition
-            current_status = get_attendance_status(now)
-            if attendance.status == 'present' and current_status == 'late':
-                attendance.status = 'late'
 
             try:
                 slot_mapped, message = resolve_attendance_slot(
@@ -141,23 +159,27 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                     err_payload["requires_ot_confirmation"] = True
                 return Response(err_payload, status=400)
 
+            # Update punctuality status only on entry slots:
+            # - am_in: check against 8:00 AM PST cutoff (present vs late)
+            # - pm_in without prior morning presence: half-day afternoon arrival is late
+            if slot_mapped == 'am_in':
+                attendance.status = get_attendance_status(now)
+            elif slot_mapped == 'pm_in' and not attendance.am_in:
+                attendance.status = 'late'
+
             # Update Geo data
             attendance.latitude = lat
             attendance.longitude = lng
-            if not is_in_zone:
-                attendance.is_geo_flagged = True
+            attendance.is_geo_flagged = False
             
             attendance.save()
-
-        if not is_in_zone:
-            message += f" (Note: Outside zone - {round(distance, 1)}m away)"
 
         return Response({
             "message": message,
             "slot": slot_mapped,
             "time": current_time,
             "status": attendance.status,
-            "is_geo_flagged": attendance.is_geo_flagged,
+            "is_geo_flagged": False,
             "distance": round(distance, 2)
         })
 

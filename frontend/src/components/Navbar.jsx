@@ -1,9 +1,9 @@
 import React from 'react';
-import { Menu, User, LogOut, ChevronDown, Calendar } from 'lucide-react';
+import { Menu, User, LogOut, ChevronDown, Calendar, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
-const Navbar = ({ toggleDrawer }) => {
+const Navbar = ({ toggleDrawer, toggleCollapse, isCollapsed }) => {
   const { user, logout } = useAuth();
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
@@ -24,6 +24,17 @@ const Navbar = ({ toggleDrawer }) => {
             aria-label="Open Navigation"
           >
             <Menu className="w-5 h-5" />
+          </button>
+        )}
+        {toggleCollapse && (
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            className="btn btn-ghost btn-sm btn-square hidden lg:flex text-slate-600 hover:text-slate-900 transition-colors"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
         )}
         <Link to="/" className="flex flex-col ml-1 hover:opacity-90 transition-opacity min-w-0">

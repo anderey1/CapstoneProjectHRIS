@@ -189,12 +189,15 @@ def haversine(lat1, lon1, lat2, lon2):
     r = 6371000 # Radius of earth in meters.
     return c * r
 
-def validate_attendance_geo(employee_lat, employee_lng, school_lat, school_lng, radius=100):
+def validate_attendance_geo(employee_lat, employee_lng, school_lat, school_lng, radius=100, accuracy=0):
     """
     Validates if the employee is within the allowed radius of the school.
+    Allows a bounded GPS accuracy tolerance (up to 30m) for mobile device jitter.
     """
     distance = haversine(employee_lat, employee_lng, school_lat, school_lng)
-    return distance <= radius, distance
+    tolerance = min(max(0.0, float(accuracy or 0)), 30.0)
+    effective_distance = max(0.0, distance - tolerance)
+    return effective_distance <= radius, distance
 
 def get_attendance_status(check_in_time):
     """

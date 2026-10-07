@@ -131,7 +131,7 @@ class TestAttendanceScanGeo:
         assert attendance.latitude == school.latitude
         assert attendance.longitude == school.longitude
 
-    def test_scan_outside_school_geofence_is_flagged_and_persists_distance(
+    def test_scan_outside_school_geofence_is_rejected_without_attendance_record(
         self, client, teacher_employee, monkeypatch
     ):
         self.freeze_scan_time(monkeypatch)
@@ -149,14 +149,12 @@ class TestAttendanceScanGeo:
             "lng": str(lng),
         }, format='json')
 
-        assert response.status_code == 200
+        assert response.status_code == 400
         assert expected_in_zone is False
-        assert response.data["is_geo_flagged"] is True
+        assert "geofence validation failed" in response.data["detail"].lower()
         assert response.data["distance"] == round(expected_distance, 2)
-        attendance = Attendance.objects.get(employee=teacher_employee)
-        assert attendance.latitude == lat
-        assert attendance.longitude == lng
-        assert attendance.is_geo_flagged is True
+        assert response.data["allowed_radius"] == school.radius_meters
+        assert not Attendance.objects.filter(employee=teacher_employee).exists()
 
     def test_scan_without_school_is_rejected_without_attendance_record(
         self, client, teacher_employee, monkeypatch
@@ -199,6 +197,71 @@ class TestAttendanceScanGeo:
         assert response.status_code == 400
         assert "numeric" in response.data["detail"]
         assert not Attendance.objects.filter(employee=teacher_employee).exists()
+
+    def test_punctuality_status_preserved_on_lunch_am_out(self, client, teacher_employee, monkeypatch):
+        """On-time employee does not get overwritten to 'late' when punching out for lunch."""
+        # Step 1: Punch AM IN at 7:50 AM (on-time)
+        fixed_morning = datetime(2026, 5, 4, 7, 50, tzinfo=zoneinfo.ZoneInfo("Asia/Manila"))
+        monkeypatch.setattr(timezone, "now", lambda: fixed_morning)
+        client.force_authenticate(user=teacher_employee.user)
+        school = teacher_employee.school
+
+        res1 = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": str(school.latitude),
+            "lng": str(school.longitude),
+        }, format='json')
+        assert res1.status_code == 200
+        assert res1.data["status"] == "present"
+
+        # Step 2: Punch AM OUT at 12:05 PM (> 8:00 AM cutoff)
+        fixed_noon = datetime(2026, 5, 4, 12, 5, tzinfo=zoneinfo.ZoneInfo("Asia/Manila"))
+        monkeypatch.setattr(timezone, "now", lambda: fixed_noon)
+
+        res2 = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": str(school.latitude),
+            "lng": str(school.longitude),
+        }, format='json')
+        assert res2.status_code == 200
+        assert res2.data["slot"] == "am_out"
+        assert res2.data["status"] == "present"
+        record = Attendance.objects.get(employee=teacher_employee)
+        assert record.status == "present"
+
+    def test_gps_accuracy_tolerance_allows_near_boundary_scan(self, client, teacher_employee, monkeypatch):
+        """GPS accuracy tolerance buffers device jitter near the school geofence."""
+        self.freeze_scan_time(monkeypatch)
+        client.force_authenticate(user=teacher_employee.user)
+        school = teacher_employee.school
+
+        # Offset by ~0.001 deg (~111 meters away). Radius is 100m.
+        # With accuracy=20m, effective distance is ~91m <= 100m -> accepted.
+        offset_lat = school.latitude + Decimal("0.00095")
+        res_with_acc = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": str(offset_lat),
+            "lng": str(school.longitude),
+            "accuracy": 25.0,
+        }, format='json')
+        assert res_with_acc.status_code == 200
+
+    def test_gps_accuracy_tolerance_does_not_permit_far_scan(self, client, teacher_employee, monkeypatch):
+        """Device far outside station boundary is rejected even with claimed accuracy."""
+        self.freeze_scan_time(monkeypatch)
+        client.force_authenticate(user=teacher_employee.user)
+        school = teacher_employee.school
+
+        # Offset by 0.01 deg (~1.1 km away). Even with accuracy=30m, effective distance >> 100m.
+        offset_lat = school.latitude + Decimal("0.01")
+        res = client.post('/api/attendance/scan/', {
+            "qr_token": generate_daily_qr_token(),
+            "lat": str(offset_lat),
+            "lng": str(school.longitude),
+            "accuracy": 30.0,
+        }, format='json')
+        assert res.status_code == 400
+        assert "geofence validation failed" in res.data["detail"].lower()
 
 
 @pytest.mark.django_db

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db.models import Exists, OuterRef
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from ..models import Employee, School, Role, AuditLog, SalaryGrade, EmployeeDocument
 from ..serializers import EmployeeSerializer, SchoolSerializer, SalaryGradeSerializer, EmployeeDocumentSerializer
 from ..permissions import IsAdminOrHR, IsSuperintendent, IsAdminOrHRorSuperintendent
@@ -288,9 +289,17 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         return Response({"message": "Password changed successfully."})
 
 
+from rest_framework.pagination import PageNumberPagination
+
+class EmployeeDocumentPagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class EmployeeDocumentViewSet(viewsets.ModelViewSet):
     queryset = EmployeeDocument.objects.all()
     serializer_class = EmployeeDocumentSerializer
+    pagination_class = EmployeeDocumentPagination
     permission_classes = [IsAuthenticated]
     parser_classes = (parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser)
 
@@ -302,13 +311,15 @@ class EmployeeDocumentViewSet(viewsets.ModelViewSet):
         is_management = user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
         if is_management:
             if emp_id:
-                qs = qs.filter(employee_id=emp_id)
-        else:
+                return qs.filter(employee_id=emp_id)
+            if self.detail or self.action in ['verify', 'retrieve', 'destroy', 'update', 'partial_update']:
+                return qs
             if hasattr(user, 'employee_profile'):
-                qs = qs.filter(employee=user.employee_profile)
-            else:
-                qs = qs.none()
-        return qs
+                return qs.filter(employee=user.employee_profile)
+            return qs
+        if hasattr(user, 'employee_profile'):
+            return qs.filter(employee=user.employee_profile)
+        return qs.none()
 
     def perform_create(self, serializer):
         user = self.request.user

@@ -36,8 +36,11 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
     co_maker_name: '',
   });
   const [files, setFiles] = useState([]); // { doc_type, file }
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
 
-  useEffect(() => {
+  // Synchronize formData when modal is opened without cascading effect renders
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       if (initialData) {
         setFormData({
@@ -47,7 +50,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
           purpose: initialData.purpose,
           letter_request: initialData.letter_request,
           co_maker_name: initialData.co_maker_name || '',
-          employee: initialData.employee
+          employee: initialData.employee,
         });
       } else {
         setFormData({
@@ -57,11 +60,12 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
           purpose: 'general',
           letter_request: '',
           co_maker_name: '',
+          employee: user?.employee_id || '',
         });
       }
       setFiles([]);
     }
-  }, [isOpen, initialData]);
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -137,12 +141,12 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
         <form onSubmit={handleFormSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 min-h-0">
           {/* Staff selector (Admin/HR) or info banner */}
-          {['HR'].includes(user?.role) ? (
+          {['HR'].includes(user?.role) && employees && employees.length > 0 ? (
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Select Staff</label>
               <select name="employee" className="select select-sm w-full bg-base-50 border-base-100 focus:border-secondary rounded-lg text-[10px] font-black uppercase tracking-widest" required onChange={handleInputChange}>
                 <option value="">Choose Staff Member...</option>
-                {employees?.map(emp => (
+                {employees.map(emp => (
                   <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} ({emp.position})</option>
                 ))}
               </select>

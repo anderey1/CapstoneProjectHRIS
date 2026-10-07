@@ -4,6 +4,7 @@ import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
 import { CheckCircle, XCircle, Plus, FileText, BarChart3, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal';
 
 /**
@@ -13,9 +14,10 @@ import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal
  */
 const IPCRFManagement = () => {
   const { user } = useAuth();
+  const { can } = useRBAC();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
-  const canRate = ['HR', 'SUPERINTENDENT'].includes(user?.role);
+  const canRate = can(PERMISSIONS.RATE_PERFORMANCE);
 
   // 1. Data Fetching
   const { data: reviews, isLoading } = useQuery({

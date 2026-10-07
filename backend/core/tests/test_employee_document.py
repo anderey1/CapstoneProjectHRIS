@@ -45,6 +45,43 @@ def test_employee_document_upload_and_verify():
     assert verify_res.data['verified_by_name'] == "hr_staff"
 
 @pytest.mark.django_db
+def test_document_list_is_paginated_envelope_with_every_document_present():
+    """
+    Regression: the list endpoint is globally paginated, so the frontend must unwrap
+    `{count, results}`. Guards against dropping uploads from the checklist.
+    """
+    user = User.objects.create_user(username="list_owner", password="password123", role=Role.TEACHING)
+    employee = Employee.objects.create(
+        user=user,
+        first_name="Ana",
+        last_name="Dela Cruz",
+        email="ana.dela.cruz@deped.gov.ph",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    for doc_type, filename in (("tor", "tor.pdf"), ("pds_file", "pds.pdf")):
+        response = client.post(
+            '/api/employee-documents/',
+            {
+                'file': SimpleUploadedFile(filename, b"%PDF-1.4 dummy", content_type="application/pdf"),
+                'document_type': doc_type,
+                'file_name': filename,
+                'employee': employee.id,
+            },
+            format='multipart',
+        )
+        assert response.status_code == 201
+
+    list_response = client.get(f'/api/employee-documents/?employee={employee.id}')
+    assert list_response.status_code == 200
+    assert 'results' in list_response.data
+    assert list_response.data['count'] == 2
+    assert {item['document_type'] for item in list_response.data['results']} == {"tor", "pds_file"}
+
+
+@pytest.mark.django_db
 def test_applicant_hired_transfers_documents_to_employee():
     applicant = Applicant.objects.create(
         first_name="Carlos",

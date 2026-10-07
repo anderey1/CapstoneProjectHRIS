@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Users, UserPlus, Search, Filter, FileDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import { 
   useEmployees, 
   EmployeeTable, 
@@ -16,6 +17,7 @@ import { exportToCSV } from '../../utils/export';
  */
 const Employees = () => {
   const { user } = useAuth();
+  const { can } = useRBAC();
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'pending'
   const [searchTerm, setSearchTerm] = useState('');
   const [activeModal, setActiveModal] = useState(null);
@@ -113,7 +115,7 @@ const Employees = () => {
     );
   }
 
-  const canManageRegistrations = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
+  const canManageRegistrations = can(PERMISSIONS.MANAGE_EMPLOYEES);
 
   return (
     <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -128,7 +130,7 @@ const Employees = () => {
           <p className="text-xs text-slate-500 mt-1">Official registry of teaching, non-teaching, and administrative personnel</p>
         </div>
 
-        {['HR', 'SUPERINTENDENT'].includes(user?.role) && activeTab === 'active' ? (
+        {can(PERMISSIONS.MANAGE_EMPLOYEES) && activeTab === 'active' ? (
           <button
             onClick={() => setActiveModal('form')}
             className="btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-semibold px-4 h-9 min-h-0 shadow-sm"

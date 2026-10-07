@@ -39,10 +39,10 @@ class IsAdminOnly(BaseRolePermission):
     allowed_roles = [Role.ADMINISTRATIVE]
 
 class IsAdminOrHR(BaseRolePermission):
-    allowed_roles = [Role.HR]
+    allowed_roles = [Role.HR, Role.ADMINISTRATIVE]
 
 class IsAdminOrHRorSuperintendent(BaseRolePermission):
-    allowed_roles = [Role.HR, Role.SUPERINTENDENT]
+    allowed_roles = [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
 
 class IsManagement(BaseRolePermission):
     """Matches frontend isManagement check."""

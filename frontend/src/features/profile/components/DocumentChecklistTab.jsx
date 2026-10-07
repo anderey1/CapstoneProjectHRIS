@@ -3,7 +3,7 @@ import { FileCheck, FileText, Upload, Download, Eye, RefreshCw, Trash2 } from 'l
 import { REQUIRED_DOCS_LIST } from './constants';
 
 const DocumentChecklistTab = ({ 
-  simulatedDocs, 
+  documents, 
   isAdmin,
   canEdit = true,
   canVerify = false,
@@ -21,7 +21,7 @@ const DocumentChecklistTab = ({
 
       <div className="space-y-2.5">
         {REQUIRED_DOCS_LIST.map((doc) => {
-          const docData = simulatedDocs?.[doc.key];
+          const docData = documents?.[doc.key];
           const hasFile = !!docData;
           const uploadDate = docData?.uploadDate;
           const isDocVerified = !!docData?.verified;

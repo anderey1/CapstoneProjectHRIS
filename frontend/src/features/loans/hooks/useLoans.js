@@ -71,6 +71,11 @@ export function useLoans(selectedLoanId = null) {
         if (typeof errorData === 'string') msg = errorData;
         else if (Array.isArray(errorData)) msg = errorData[0];
         else if (errorData.detail) msg = errorData.detail;
+        else if (typeof errorData === 'object') {
+          const firstKey = Object.keys(errorData)[0];
+          const val = errorData[firstKey];
+          msg = Array.isArray(val) ? `${firstKey}: ${val[0]}` : `${firstKey}: ${val}`;
+        }
       }
       toast.error(msg);
     },
@@ -100,6 +105,11 @@ export function useLoans(selectedLoanId = null) {
         if (typeof errorData === 'string') msg = errorData;
         else if (Array.isArray(errorData)) msg = errorData[0];
         else if (errorData.detail) msg = errorData.detail;
+        else if (typeof errorData === 'object') {
+          const firstKey = Object.keys(errorData)[0];
+          const val = errorData[firstKey];
+          msg = Array.isArray(val) ? `${firstKey}: ${val[0]}` : `${firstKey}: ${val}`;
+        }
       }
       toast.error(msg);
     },

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { Activity, Clock, User, ShieldAlert, Search, ShieldCheck } from 'lucide-react';
+import RoleBadge from '../../components/common/RoleBadge';
 
 /**
  * System Logs (Audit Logs)
@@ -68,13 +69,11 @@ const AuditLogs = () => {
                           {log.user_name?.charAt(0) || 'S'}
                         </div>
                         <div>
-                          <span className="font-black text-xs uppercase tracking-tight text-base-content block">
+                          <span className="font-black text-xs uppercase tracking-tight text-base-content block mb-1">
                              {log.user_name || 'System'}
                           </span>
                           {log.user_role && (
-                             <span className="text-[9px] font-black uppercase tracking-wider text-primary block mt-0.5 opacity-60">
-                                {log.user_role}
-                             </span>
+                             <RoleBadge role={log.user_role} size="xs" />
                           )}
                         </div>
                       </div>

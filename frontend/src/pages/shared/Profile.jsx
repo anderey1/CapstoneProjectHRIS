@@ -22,10 +22,10 @@ import {
   DocumentPreviewModal,
   loadProfilePhoto,
   saveProfilePhoto,
-  loadProfileDocs,
-  saveProfileDocs,
   loadProfileIDs,
   saveProfileIDs,
+  useEmployeeDocuments,
+  mapDocumentsToChecklist,
 } from '../../features/profile';
 
 /**
@@ -49,9 +49,8 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [isUploadingSig, setIsUploadingSig] = useState(false);
   
-  // Custom Local Storage Mocks for high-fidelity interactive simulation
+  // Profile photo stays local: the Employee record has no photo field to save it to.
   const [profilePhoto, setProfilePhoto] = useState(null);
-  const [simulatedDocs, setSimulatedDocs] = useState({});
   const [simulatedIDs, setSimulatedIDs] = useState({});
   const [activeDocUpload, setActiveDocUpload] = useState(null);
   const [activeIDUpload, setActiveIDUpload] = useState(null);
@@ -86,33 +85,14 @@ const Profile = () => {
 
   const targetEmployeeId = id || me?.id;
 
-  // Fetch real employee documents from database
-  const { data: dbDocs = [] } = useQuery({
-    queryKey: ['employee-documents', targetEmployeeId],
-    queryFn: () => {
-      if (!targetEmployeeId) return [];
-      return api.get(`employee-documents/?employee=${targetEmployeeId}`).then(res => res.data);
-    },
-    enabled: !!targetEmployeeId
-  });
+  const {
+    documents,
+    uploadDocument,
+    deleteDocument,
+    verifyDocument,
+  } = useEmployeeDocuments(targetEmployeeId);
 
-  // Map database documents and merge with simulatedDocs
-  const docsMap = useMemo(() => {
-    const map = {};
-    if (Array.isArray(dbDocs)) {
-      dbDocs.forEach(item => {
-        map[item.document_type] = {
-          id: item.id,
-          fileName: item.file_name || `${item.document_type}.pdf`,
-          uploadDate: new Date(item.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          verified: item.verified,
-          fileData: item.file_url,
-          isDbRecord: true,
-        };
-      });
-    }
-    return { ...simulatedDocs, ...map };
-  }, [dbDocs, simulatedDocs]);
+  const docsMap = useMemo(() => mapDocumentsToChecklist(documents), [documents]);
 
   const isOwnProfile = !id || 
     (Boolean(user?.employee_id) && String(user.employee_id) === String(id)) || 
@@ -133,14 +113,13 @@ const Profile = () => {
   const canUploadSignature = isOwnProfile;
   const canVerifyDocs = isHrOrSuperintendent || currentUserRole === 'ADMINISTRATIVE';
 
-  // Initialize photo and simulated storage
-  useEffect(() => {
-    if (me?.id) {
-      setProfilePhoto(loadProfilePhoto(me.id));
-      setSimulatedDocs(loadProfileDocs(me.id));
-      setSimulatedIDs(loadProfileIDs(me.id));
-    }
-  }, [me?.id]);
+  // Synchronize local storage photo and simulated IDs when employee id changes
+  const [syncedEmployeeId, setSyncedEmployeeId] = useState(null);
+  if (me?.id && syncedEmployeeId !== me.id) {
+    setSyncedEmployeeId(me.id);
+    setProfilePhoto(loadProfilePhoto(me.id));
+    setSimulatedIDs(loadProfileIDs(me));
+  }
 
   // Update profile mutation
   const updateMutation = useMutation({
@@ -241,47 +220,15 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
-  // Document Checklist handlers (Persistent Database API with local fallback)
+  // Document Checklist handlers
   const handleDocFileSelect = async (e) => {
     const file = e.target.files[0];
-    if (!file || !activeDocUpload || !me?.id) return;
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('document_type', activeDocUpload);
-    formData.append('file_name', file.name);
-    formData.append('employee', me.id);
+    if (!file || !activeDocUpload) return;
 
-    try {
-      await api.post('employee-documents/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      queryClient.invalidateQueries({ queryKey: ['employee-documents', targetEmployeeId] });
-      toast.success('Document uploaded and saved to database successfully!');
-    } catch (err) {
-      console.error(err);
-      // Fallback to local storage if network fails
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const updated = {
-          ...simulatedDocs,
-          [activeDocUpload]: {
-            uploaded: true,
-            fileName: file.name,
-            uploadDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            data: reader.result,
-            verified: false
-          }
-        };
-        setSimulatedDocs(updated);
-        saveProfileDocs(me.id, updated);
-        toast.warning('Saved to local storage (server sync pending).');
-      };
-      reader.readAsDataURL(file);
-    } finally {
-      setActiveDocUpload(null);
-      if (docInputRef.current) docInputRef.current.value = '';
-    }
+    await uploadDocument({ file, documentType: activeDocUpload });
+
+    setActiveDocUpload(null);
+    if (docInputRef.current) docInputRef.current.value = '';
   };
 
   const triggerDocUpload = (docKey) => {
@@ -289,66 +236,29 @@ const Profile = () => {
     docInputRef.current?.click();
   };
 
-  const handleDeleteDoc = async (docKey) => {
-    if (!me?.id) return;
+  const handleDeleteDoc = (docKey) => {
     const docItem = docsMap[docKey];
-    if (docItem?.id && docItem.isDbRecord) {
-      try {
-        await api.delete(`employee-documents/${docItem.id}/`);
-        queryClient.invalidateQueries({ queryKey: ['employee-documents', targetEmployeeId] });
-        toast.info('Document deleted from database.');
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to delete document from database.');
-      }
-    } else {
-      const updated = { ...simulatedDocs };
-      delete updated[docKey];
-      setSimulatedDocs(updated);
-      saveProfileDocs(me.id, updated);
-      toast.info('Document removed.');
-    }
+    if (!docItem) return;
+    deleteDocument(docItem.id);
   };
 
-  const handleVerifyDoc = async (docKey, newVerifiedStatus) => {
-    if (!me?.id) return;
+  const handleVerifyDoc = (docKey, newVerifiedStatus) => {
     const docItem = docsMap[docKey];
-    if (docItem?.id && docItem.isDbRecord) {
-      try {
-        await api.post(`employee-documents/${docItem.id}/verify/`, {
-          verified: newVerifiedStatus
-        });
-        queryClient.invalidateQueries({ queryKey: ['employee-documents', targetEmployeeId] });
-        toast.success(newVerifiedStatus ? 'Document verified in database!' : 'Verification revoked in database.');
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to update verification status.');
-      }
-    } else {
-      const current = simulatedDocs[docKey];
-      if (!current) return;
-      const updated = {
-        ...simulatedDocs,
-        [docKey]: { ...current, verified: newVerifiedStatus !== undefined ? newVerifiedStatus : !current.verified }
-      };
-      setSimulatedDocs(updated);
-      saveProfileDocs(me.id, updated);
-      toast.success(updated[docKey].verified ? 'Document verified!' : 'Document unverified.');
-    }
+    if (!docItem) return;
+    verifyDocument({ docId: docItem.id, verified: newVerifiedStatus });
   };
 
-  const handlePreviewDoc = (docItem) => {
-    const docKey = typeof docItem === 'string' ? docItem : docItem?.key;
-    const fileInfo = docsMap[docKey];
+  const handlePreviewDoc = (doc) => {
+    const fileInfo = docsMap[doc.key];
     if (!fileInfo) return;
-    if (fileInfo.fileData && typeof fileInfo.fileData === 'string' && fileInfo.fileData.startsWith('http')) {
+    if (fileInfo.fileData?.startsWith('http')) {
       window.open(fileInfo.fileData, '_blank');
       return;
     }
     setPreviewFile({
-      title: docItem?.name || docKey,
-      fileName: fileInfo?.fileName || `${docKey}.pdf`,
-      data: fileInfo?.fileData || fileInfo?.data || 'MOCK_PDF'
+      title: doc.name,
+      fileName: fileInfo.fileName,
+      data: fileInfo.fileData
     });
   };
 
@@ -518,7 +428,7 @@ const Profile = () => {
           if (!canChangePhoto) return;
           photoInputRef.current?.click();
         }}
-        simulatedDocs={docsMap}
+        documents={docsMap}
         completion={completion}
         canEditProfile={canEditProfile}
         canChangePhoto={canChangePhoto}
@@ -672,7 +582,7 @@ const Profile = () => {
 
             {activeTab === 'documents' && (
               <DocumentChecklistTab 
-                simulatedDocs={docsMap}
+                documents={docsMap}
                 isAdmin={isAdmin}
                 canEdit={canEditProfile}
                 canVerify={canVerifyDocs}

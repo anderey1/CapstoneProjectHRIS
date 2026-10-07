@@ -139,7 +139,7 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Resubmitted Loan #{loan.id}")
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAccountant], url_path='release-funds')
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsSuperintendentOrAdmin], url_path='release-funds')
     def release_funds(self, request, pk=None):
         """Accountant action to release money after superintendent approval."""
         loan = self.get_object()

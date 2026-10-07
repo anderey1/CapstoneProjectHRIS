@@ -1,8 +1,11 @@
 import pytest
 from decimal import Decimal
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from core.models import Applicant
+from core.models import Applicant, Employee, Role
 from rest_framework.test import APIClient
+
+User = get_user_model()
 
 @pytest.fixture
 def client():
@@ -106,3 +109,52 @@ class TestRecruitmentRubric:
         })
         assert response.status_code == 200
         assert "WelcomeDepEd2026!" not in response.data.get("message", "")
+
+    def test_hire_creates_exactly_one_employee_and_user(self, client, superintendent_user, applicant):
+        """A normal hire creates one Employee and one linked User."""
+        client.force_authenticate(user=superintendent_user)
+        response = client.post(
+            f'/api/applicants/{applicant.id}/change-status/',
+            {'status': 'hired'},
+            format='json',
+        )
+        assert response.status_code == 200
+
+        employees = Employee.objects.filter(email=applicant.email)
+        assert employees.count() == 1
+        employee = employees.get()
+        assert employee.user.username.startswith('clara')
+        assert User.objects.filter(username=employee.user.username).count() == 1
+
+    def test_hire_skipped_when_employee_email_already_exists(self, client, superintendent_user, applicant):
+        """
+        Regression: the duplicate-email guard once guarded only an import, so a re-hire
+        silently created a second Employee and User for the same address.
+        """
+        existing_user = User.objects.create_user(
+            username="clara_previous",
+            password="password123",
+            role=Role.TEACHING,
+            email=applicant.email,
+        )
+        existing_employee = Employee.objects.create(
+            user=existing_user,
+            first_name="Clara",
+            last_name="Reyes",
+            email=applicant.email,
+        )
+        users_before = User.objects.count()
+
+        client.force_authenticate(user=superintendent_user)
+        response = client.post(
+            f'/api/applicants/{applicant.id}/change-status/',
+            {'status': 'hired'},
+            format='json',
+        )
+        assert response.status_code == 200
+
+        assert Employee.objects.filter(email=applicant.email).count() == 1
+        assert Employee.objects.filter(pk=existing_employee.pk).exists()
+        assert User.objects.count() == users_before
+        assert "No Employee profile was created" in response.data.get("message", "")
+

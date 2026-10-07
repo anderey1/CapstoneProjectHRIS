@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-import { AccountantDashboard, SuperintendentDashboard } from '../../features/dashboard';
 import {
   Users, Wallet, CalendarCheck, AlertCircle, BarChart3, TrendingUp,
   PieChart as PieChartIcon, ShieldCheck, School, CheckCircle2,
@@ -183,14 +182,8 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {user?.role === 'ACCOUNTANT' ? (
-        <AccountantDashboard stats={stats} />
-      ) : user?.role === 'SUPERINTENDENT' ? (
-        <SuperintendentDashboard stats={stats} />
-      ) : (
-        <>
-          {/* Top Operational KPI Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Top Operational KPI Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             
             {/* KPI 1: Workforce Deployment */}
             <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
@@ -698,8 +691,6 @@ const AdminDashboard = () => {
             </div>
 
           </div>
-        </>
-      )}
     </div>
   );
 };

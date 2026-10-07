@@ -17,46 +17,55 @@ import {
   MapPin
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useRBAC } from '../hooks/useRBAC';
+import { ROLE_GROUPS } from '../utils/rbac';
 
 const SidebarContent = ({ closeDrawer }) => {
   const { user, logout } = useAuth();
+  const { roleLabel } = useRBAC();
   const role = user?.role;
 
   const menuGroups = [
     {
-      title: 'Main Menu',
+      title: 'Navigation',
       links: [
-        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home Dashboard', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
+        { to: '/', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Home Dashboard', roles: ROLE_GROUPS.ALL },
       ]
     },
     {
-      title: 'Employee Portal',
+      title: 'Human Resources & Staffing',
       links: [
-        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Time In / Out', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'My DTR (Form 48)', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/my-leaves', icon: <Clock className="w-4 h-4" />, label: 'My Leave Applications', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/my-payslips', icon: <Wallet className="w-4 h-4" />, label: 'My Payslips / Salaries', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/my-loans', icon: <FileText className="w-4 h-4" />, label: 'My Provident Loans', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/my-performance', icon: <BarChart2 className="w-4 h-4" />, label: 'My Performance Ratings', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-      ]
-    },
-    {
-      title: 'Admin Operations',
-      links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employees List', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'ADMINISTRATIVE'] },
-        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Job Applicants', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'DTR Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Approvals', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Personnel Directory', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'ADMINISTRATIVE'] },
+        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Applicant Board (MSP)', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance Monitor', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/staff-dtr', icon: <FileText className="w-4 h-4" />, label: 'Staff Form 48 (DTR)', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals (Form 6)', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
         { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
       ]
     },
     {
-      title: 'Settings',
+      title: 'Financial & Loan Services',
       links: [
-        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'Account Profile', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'NON_TEACHING', 'TEACHING', 'ADMINISTRATIVE'] },
-        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ['ADMINISTRATIVE'] },
+        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Management', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Processing Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+      ]
+    },
+    {
+      title: 'Employee Self-Service',
+      links: [
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Daily Time Clock', roles: ROLE_GROUPS.ALL },
+        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'My DTR (Form 48)', roles: ROLE_GROUPS.ALL },
+        { to: '/my-leaves', icon: <Clock className="w-4 h-4" />, label: 'My Leave Applications', roles: ROLE_GROUPS.ALL },
+        { to: '/my-payslips', icon: <Wallet className="w-4 h-4" />, label: 'My Payslips & W-2', roles: ROLE_GROUPS.ALL },
+        { to: '/my-loans', icon: <FileText className="w-4 h-4" />, label: 'My Provident Loans', roles: ROLE_GROUPS.ALL },
+        { to: '/my-performance', icon: <BarChart2 className="w-4 h-4" />, label: 'My IPCRF Ratings', roles: ROLE_GROUPS.ALL },
+      ]
+    },
+    {
+      title: 'System & Security',
+      links: [
+        { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Account & PDS', roles: ROLE_GROUPS.ALL },
+        { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ROLE_GROUPS.MANAGEMENT },
       ]
     }
   ];
@@ -128,7 +137,7 @@ const SidebarContent = ({ closeDrawer }) => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold truncate text-white">{user?.username || 'Guest'}</p>
-            <p className="text-[10px] font-medium text-amber-300/80 uppercase tracking-wide truncate">{user?.role?.replace('_', ' ') || 'Staff'}</p>
+            <p className="text-[10px] font-medium text-amber-300/80 uppercase tracking-wide truncate">{roleLabel}</p>
           </div>
         </div>
         

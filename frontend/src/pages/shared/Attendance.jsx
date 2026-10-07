@@ -29,7 +29,7 @@ const Attendance = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [currentPos, setCurrentPos] = useState({ lat: 13.9408, lng: 121.6210 });
-  const [geoStatus, setGeoStatus] = useState('locating');
+  const [geoStatus, setGeoStatus] = useState(() => (typeof navigator !== 'undefined' && !navigator.geolocation ? 'denied' : 'locating'));
   const [message, setMessage] = useState(null);
   const [showOtConfirm, setShowOtConfirm] = useState(false);
 
@@ -57,7 +57,6 @@ const Attendance = () => {
   // 4. GPS Tracking (for recording coordinate stamp, but no range block)
   useEffect(() => {
     if (!navigator.geolocation) {
-      setGeoStatus('denied');
       return;
     }
 

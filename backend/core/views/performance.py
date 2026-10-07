@@ -14,8 +14,8 @@ class PerformanceReviewViewSet(viewsets.ModelViewSet):
             if self.action == 'create':
                 permission_classes = [IsAuthenticated]
             else:
-                from ..permissions import IsHR, IsSuperintendent
-                permission_classes = [IsAuthenticated, (IsHR | IsSuperintendent)]
+                from ..permissions import IsHR, IsSuperintendentOrAdmin
+                permission_classes = [IsAuthenticated, (IsHR | IsSuperintendentOrAdmin)]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -31,7 +31,7 @@ class PerformanceReviewViewSet(viewsets.ModelViewSet):
         employee = serializer.validated_data.get('employee')
         
         # Security: Employees can only create records for themselves
-        if not (user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT]):
+        if not (user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]):
             from ..models import Employee
             try:
                 user_employee = Employee.objects.get(user=user)

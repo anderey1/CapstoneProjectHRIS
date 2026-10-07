@@ -1,5 +1,6 @@
 export * from './utils/mockProfileStorage';
 export * from './components/constants';
+export { useEmployeeDocuments, mapDocumentsToChecklist } from './hooks/useEmployeeDocuments';
 export { default as ProfileHeader } from './components/ProfileHeader';
 export { default as ProfileSidebar } from './components/ProfileSidebar';
 export { default as PersonalInfoTab } from './components/PersonalInfoTab';

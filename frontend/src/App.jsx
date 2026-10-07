@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import Apply from './pages/Apply';
 import RegisterExisting from './pages/RegisterExisting';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AccountantDashboardPage from './pages/admin/AccountantDashboardPage';
+import SuperintendentDashboardPage from './pages/admin/SuperintendentDashboardPage';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import Employees from './pages/admin/Employees';
 import LoanManagement from './pages/admin/LoanManagement';
@@ -20,15 +22,17 @@ import MyLeaves from './pages/employee/MyLeaves';
 import Payroll from './pages/admin/Payroll';
 import MyPayroll from './pages/employee/MyPayroll';
 import AttendanceManagement from './pages/admin/AttendanceManagement';
+import StaffDTRManagement from './pages/admin/StaffDTRManagement';
 import Attendance from './pages/shared/Attendance';
 import DTR from './pages/shared/DTR';
 import Profile from './pages/shared/Profile';
 import AuditLogs from './pages/admin/AuditLogs';
 
-// Role Groups
-const MANAGEMENT_ROLES = ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'];
-const HR_SUPERINTENDENT_ADMIN = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'];
-const ADMIN_ONLY = ['ADMINISTRATIVE'];
+import { ROLE_GROUPS } from './utils/rbac';
+
+// Role Groups (canonical from rbac.js)
+const MANAGEMENT_ROLES = ROLE_GROUPS.MANAGEMENT;
+const HR_SUPERINTENDENT_ADMIN = ROLE_GROUPS.OPERATIONS;
 
 /**
  * App Component
@@ -38,7 +42,14 @@ const ADMIN_ONLY = ['ADMINISTRATIVE'];
  */
 function App() {
   const { user } = useAuth();
-  const isManagement = user && MANAGEMENT_ROLES.includes(user.role);
+  const role = user?.role;
+  const renderDashboard = () => {
+    if (!user) return <EmployeeDashboard />;
+    if (role === 'ACCOUNTANT') return <AccountantDashboardPage />;
+    if (role === 'SUPERINTENDENT') return <SuperintendentDashboardPage />;
+    if (MANAGEMENT_ROLES.includes(role)) return <AdminDashboard />;
+    return <EmployeeDashboard />;
+  };
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -50,8 +61,8 @@ function App() {
 
         {/* Protected Layout Shell */}
         <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-          {/* Dashboard Home */}
-          <Route index element={isManagement ? <AdminDashboard /> : <EmployeeDashboard />} />
+          {/* Dashboard Home - Dispatched cleanly per role */}
+          <Route index element={renderDashboard()} />
 
           {/* Shared / Self-Service Routes */}
           <Route path="attendance" element={<Attendance />} />
@@ -74,12 +85,13 @@ function App() {
           <Route element={<ProtectedRoute roles={HR_SUPERINTENDENT_ADMIN} />}>
             <Route path="leave-management" element={<LeaveManagement />} />
             <Route path="attendance-management" element={<AttendanceManagement />} />
+            <Route path="staff-dtr" element={<StaffDTRManagement />} />
             <Route path="performance-management" element={<IPCRFManagement />} />
             <Route path="recruitment" element={<Recruitment />} />
           </Route>
 
-          {/* Exclusive Admin Audit Logs Tier */}
-          <Route element={<ProtectedRoute roles={ADMIN_ONLY} />}>
+          {/* Management Audit Logs Tier */}
+          <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>
             <Route path="audit-logs" element={<AuditLogs />} />
           </Route>
         </Route>

@@ -11,7 +11,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
   const selectedSG = watch('salary_grade');
   const selectedRole = watch('role');
 
-  // Auto-set Salary & SG when position changes
+  // Auto-set Salary & SG and sync Role when position changes
   useEffect(() => {
     if (selectedPosition) {
       const match = salaryGrades?.find(sg => 
@@ -21,8 +21,23 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
         setValue('salary', match.amount);
         setValue('salary_grade', match.id);
       }
+
+      // Sync staff category (Role) when picking a position
+      if (DEPED_POSITIONS.NON_TEACHING.includes(selectedPosition)) {
+        if (![ROLES.NON_TEACHING, ROLES.HR, ROLES.ACCOUNTANT].includes(selectedRole)) {
+          setValue('role', ROLES.NON_TEACHING);
+        }
+      } else if (DEPED_POSITIONS.TEACHING.includes(selectedPosition)) {
+        if (selectedRole !== ROLES.TEACHING) {
+          setValue('role', ROLES.TEACHING);
+        }
+      } else if (DEPED_POSITIONS.ADMINISTRATIVE.includes(selectedPosition)) {
+        if (selectedRole !== ROLES.ADMINISTRATIVE) {
+          setValue('role', ROLES.ADMINISTRATIVE);
+        }
+      }
     }
-  }, [selectedPosition, salaryGrades, setValue]);
+  }, [selectedPosition, salaryGrades, setValue, selectedRole]);
 
   // Filter positions based on role
   const getFilteredPositions = () => {

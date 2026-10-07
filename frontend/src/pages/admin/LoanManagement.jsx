@@ -5,6 +5,7 @@ import {
   TrendingUp, Circle, FileCheck, Calendar
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import { useLoans, SubsidiaryLedger } from '../../features/loans';
 
 const PURPOSE_LABELS = {
@@ -38,14 +39,15 @@ const getFileUrl = (path) => {
  */
 const LoanManagement = () => {
   const { user } = useAuth();
+  const { can } = useRBAC();
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [approveRemarks, setApproveRemarks] = useState('');
 
-  const canVerify = user?.is_superuser || ['ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
-  const canApprove = user?.is_superuser || ['SUPERINTENDENT', 'ADMINISTRATIVE', 'HR'].includes(user?.role);
-  const canDisburse = user?.is_superuser || ['ACCOUNTANT', 'ADMINISTRATIVE'].includes(user?.role);
+  const canVerify = can(PERMISSIONS.VERIFY_LOANS);
+  const canApprove = can(PERMISSIONS.APPROVE_LOANS);
+  const canDisburse = can(PERMISSIONS.DISBURSE_LOANS);
 
   const {
     checklist,

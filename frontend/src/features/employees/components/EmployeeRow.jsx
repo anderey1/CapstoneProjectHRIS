@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreVertical, Briefcase, Building2, Trash2, Edit, Calendar, Heart, Plane } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useRBAC, PERMISSIONS } from '../../../hooks/useRBAC';
 
 /**
  * Employee Row (Table Row)
@@ -9,9 +9,9 @@ import { useAuth } from '../../../context/AuthContext';
  * Simple, professional redesign for the staff directory.
  */
 const EmployeeRow = ({ emp, onDelete, onEdit }) => {
-  const { user } = useAuth();
+  const { can } = useRBAC();
   const navigate = useNavigate();
-  const canEdit = ['HR', 'SUPERINTENDENT'].includes(user?.role);
+  const canEdit = can(PERMISSIONS.MANAGE_EMPLOYEES);
 
   const handleRowClick = () => {
     navigate(`/employees/${emp.id}`);

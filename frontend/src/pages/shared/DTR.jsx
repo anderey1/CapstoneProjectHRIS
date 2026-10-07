@@ -4,7 +4,6 @@ import { Clock, Download, FileText, MapPin, AlertCircle, CheckCircle2, Calendar 
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
-import { ROLES } from '../../utils/constants';
 // Helper to format HH:MM:SS string to 12-hour AM/PM format
 const formatTime = (timeStr, fallback = '---') => {
   if (!timeStr) return fallback;
@@ -25,15 +24,9 @@ const formatTime = (timeStr, fallback = '---') => {
  */
 const DTR = () => {
   const { user } = useAuth();
-  const [selectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [downloading, setDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  // Allow all employees to export their own DTR PDF records.
-  const canExport = !!user?.role;
-  // Only HR and Superintendent can select and export other employees' DTRs.
-  const canSelectEmployee = ['HR', 'SUPERINTENDENT'].includes(user?.role);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth],
@@ -44,29 +37,15 @@ const DTR = () => {
     },
   });
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees_for_dtr'],
-    queryFn: async () => {
-      const response = await api.get('employees/');
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
-    enabled: canSelectEmployee,
-  });
-
   const handleDownload = async (cutoff) => {
     try {
       setDownloading(true);
       setErrorMessage('');
 
-      if (canSelectEmployee && !selectedEmployeeId) {
-        throw new Error('Please select an employee before exporting.');
-      }
-
       const response = await api.get('attendance/dtr_pdf/', {
         params: {
           month: selectedMonth,
           cutoff,
-          ...(selectedEmployeeId ? { employee_id: selectedEmployeeId } : {}),
         },
         responseType: 'blob'
       });
@@ -117,35 +96,26 @@ const DTR = () => {
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
-            {canSelectEmployee && (
-              <select
-                className="select select-bordered select-sm w-full md:min-w-[240px] md:w-auto text-xs"
-                value={selectedEmployeeId}
-                onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              >
-                <option value="">Select employee</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name}
-                  </option>
-                ))}
-              </select>
-            )}
-            {canExport && (
-              <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className={`btn btn-primary bg-[#0038A8] hover:bg-[#002b80] text-white border-none rounded-md px-5 text-xs font-semibold ${downloading ? 'loading' : ''}`}>
-                      <Download className="w-4 h-4 mr-1.5" />
-                      Export PDF
-                  </label>
-                  <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 border border-base-200 rounded-xl w-52 mt-2">
-                      <li className="menu-title font-black text-[9px] uppercase tracking-widest opacity-40">Choose Cutoff</li>
-                      <li><button type="button" onClick={() => handleDownload('1')} className="font-bold text-xs uppercase py-3">1st Cutoff (1-15)</button></li>
-                      <li><button type="button" onClick={() => handleDownload('2')} className="font-bold text-xs uppercase py-3">2nd Cutoff (16-31)</button></li>
-                      <li><button type="button" onClick={() => handleDownload('split')} className="font-bold text-xs uppercase py-3">Split (Both Cards)</button></li>
-                      <li><button type="button" onClick={() => handleDownload('')} className="font-bold text-xs uppercase py-3">Full Month (Copy)</button></li>
-                  </ul>
-              </div>
-            )}
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="input input-sm input-bordered text-xs bg-white text-slate-700"
+          />
+
+          <div className="dropdown dropdown-end">
+              <label tabIndex={0} className={`btn btn-primary bg-[#0038A8] hover:bg-[#002b80] text-white border-none rounded-md px-5 text-xs font-semibold ${downloading ? 'loading' : ''}`}>
+                  <Download className="w-4 h-4 mr-1.5" />
+                  Export PDF
+              </label>
+              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 border border-base-200 rounded-xl w-52 mt-2">
+                  <li className="menu-title font-black text-[9px] uppercase tracking-widest opacity-40">Choose Cutoff</li>
+                  <li><button type="button" onClick={() => handleDownload('1')} className="font-bold text-xs uppercase py-3">1st Cutoff (1-15)</button></li>
+                  <li><button type="button" onClick={() => handleDownload('2')} className="font-bold text-xs uppercase py-3">2nd Cutoff (16-31)</button></li>
+                  <li><button type="button" onClick={() => handleDownload('split')} className="font-bold text-xs uppercase py-3">Split (Both Cards)</button></li>
+                  <li><button type="button" onClick={() => handleDownload('')} className="font-bold text-xs uppercase py-3">Full Month (Copy)</button></li>
+              </ul>
+          </div>
         </div>
       </div>
 

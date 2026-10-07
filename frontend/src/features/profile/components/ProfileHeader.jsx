@@ -5,22 +5,23 @@ import {
   FileText, Award 
 } from 'lucide-react';
 import { REQUIRED_DOCS_LIST } from './constants';
+import RoleBadge from '../../../components/common/RoleBadge';
 
 const ProfileHeader = ({ 
   me, 
   profilePhoto, 
   onEditProfile, 
   onChangePhoto, 
-  simulatedDocs, 
+  documents, 
   completion,
   canEditProfile = false,
   canChangePhoto = false
 }) => {
-  const uploadedDocsCount = Object.keys(simulatedDocs || {}).length;
+  const uploadedDocsCount = Object.keys(documents || {}).length;
   const mandatoryDocsCount = REQUIRED_DOCS_LIST.filter(d => d.mandatory).length;
   const uploadedMandatoryCount = REQUIRED_DOCS_LIST
     .filter(d => d.mandatory)
-    .filter(d => simulatedDocs?.[d.key]).length;
+    .filter(d => documents?.[d.key]).length;
 
   return (
     <div className="space-y-4">
@@ -61,9 +62,7 @@ const ProfileHeader = ({
                 {me?.first_name} {me?.middle_name ? `${me.middle_name.charAt(0)}.` : ''} {me?.last_name} {me?.name_extension || ''}
               </h2>
               
-              <span className="px-2.5 py-0.5 bg-blue-50 text-[#0038A8] rounded-full text-xs font-medium border border-blue-100">
-                {me?.user_details?.role?.replace('_', ' ') || 'Staff'}
-              </span>
+              <RoleBadge role={me?.user_details?.role || me?.role} />
               
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 ${
                 me?.date_hired 

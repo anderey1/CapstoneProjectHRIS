@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Edit, Trash2, MoreVertical, Briefcase, Building2, Calendar, User } from 'lucide-react';
 import EmployeeRow from './EmployeeRow';
-import { useAuth } from '../../../context/AuthContext';
+import { useRBAC, PERMISSIONS } from '../../../hooks/useRBAC';
 
 /**
  * Employee Table (Staff Directory)
@@ -10,9 +10,9 @@ import { useAuth } from '../../../context/AuthContext';
  * Simple, professional redesign with high-density data display.
  */
 const EmployeeTable = ({ employees, onDelete, onEdit }) => {
-  const { user } = useAuth();
+  const { can } = useRBAC();
   const navigate = useNavigate();
-  const canEdit = ['HR', 'SUPERINTENDENT'].includes(user?.role);
+  const canEdit = can(PERMISSIONS.MANAGE_EMPLOYEES);
 
   return (
     <div className="space-y-6">

@@ -9,6 +9,7 @@ export const QUERY_KEYS = {
   AUDIT_LOGS: 'audit-logs',
   SCHOOLS: 'schools',
   ME: 'me',
+  EMPLOYEE_DOCUMENTS: 'employee-documents',
   DAILY_QR: 'daily-qr',
   SALARY_GRADES: 'salary-grades',
   DASHBOARD_STATS: 'dashboard_stats',

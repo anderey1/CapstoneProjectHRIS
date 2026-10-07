@@ -1,14 +1,33 @@
+import logging
 import secrets
 import string
+from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from ..models import Applicant, AuditLog
+from ..models import (
+    Applicant,
+    ApplicantDocument,
+    AuditLog,
+    Employee,
+    EmployeeDocument,
+    FamilyMember,
+    Education,
+    Eligibility,
+    Role,
+    WorkExperience,
+)
+from ..models.recruitment import TEACHING_POSITIONS
 from ..serializers import ApplicantSerializer
 from ..permissions import IsAdminOrHRorSuperintendent
 from ..notifications import send_applicant_notification
+from ..utils import extract_pds_data
+
+logger = logging.getLogger(__name__)
+
 
 class ApplicantViewSet(viewsets.ModelViewSet):
     queryset = Applicant.objects.all().order_by('-date_applied')
@@ -16,13 +35,11 @@ class ApplicantViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            from rest_framework.permissions import AllowAny
             return [AllowAny()]
         return [IsAuthenticated(), IsAdminOrHRorSuperintendent()]
 
     def perform_create(self, serializer):
         applicant = serializer.save()
-        from ..models import ApplicantDocument
         for file_key in self.request.FILES:
             clean_type = file_key
             if '[' in clean_type:
@@ -40,7 +57,6 @@ class ApplicantViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='change-status')
     def change_status(self, request, pk=None):
-        from ..models import Employee, Role
         applicant = self.get_object()
         new_status = request.data.get('status')
         notes = request.data.get('notes', '')
@@ -58,186 +74,182 @@ class ApplicantViewSet(viewsets.ModelViewSet):
         temp_password = ""
         if new_status == 'hired':
             with transaction.atomic():
-                if not Employee.objects.filter(email=applicant.email).exists():
-                    from django.contrib.auth import get_user_model
-                from django.utils import timezone
-                from ..models.recruitment import TEACHING_POSITIONS
-                from ..utils import extract_pds_data
-                import logging
-                logger = logging.getLogger(__name__)
+                if Employee.objects.filter(email=applicant.email).exists():
+                    logger.warning(
+                        "Hire skipped for applicant %s: an employee already uses email %s.",
+                        applicant.pk,
+                        applicant.email,
+                    )
+                else:
+                    # Check and parse PDS file if present
+                    pds_data = None
+                    if applicant.pds_file:
+                        try:
+                            applicant.pds_file.seek(0)
+                            file_bytes = applicant.pds_file.read()
+                            extracted, err = extract_pds_data(file_bytes)
+                            if not err and extracted:
+                                pds_data = extracted
+                                logger.info(f"Successfully auto-extracted PDS data for hired applicant {applicant.id}")
+                            else:
+                                logger.warning(f"PDS file present but extraction failed: {err}")
+                        except Exception as e:
+                            logger.error(f"Error auto-extracting hired applicant's PDS: {e}")
                 
-                # Check and parse PDS file if present
-                pds_data = None
-                if applicant.pds_file:
-                    try:
-                        applicant.pds_file.seek(0)
-                        file_bytes = applicant.pds_file.read()
-                        extracted, err = extract_pds_data(file_bytes)
-                        if not err and extracted:
-                            pds_data = extracted
-                            logger.info(f"Successfully auto-extracted PDS data for hired applicant {applicant.id}")
-                        else:
-                            logger.warning(f"PDS file present but extraction failed: {err}")
-                    except Exception as e:
-                        logger.error(f"Error auto-extracting hired applicant's PDS: {e}")
-                
-                User_model = get_user_model()
-                base_username = applicant.email.split('@')[0].lower()
-                base_username = "".join(c for c in base_username if c.isalnum() or c in ['.', '_'])
-                username = base_username
-                counter = 1
-                while User_model.objects.filter(username=username).exists():
-                    username = f"{base_username}{counter}"
-                    counter += 1
+                    User_model = get_user_model()
+                    base_username = applicant.email.split('@')[0].lower()
+                    base_username = "".join(c for c in base_username if c.isalnum() or c in ['.', '_'])
+                    username = base_username
+                    counter = 1
+                    while User_model.objects.filter(username=username).exists():
+                        username = f"{base_username}{counter}"
+                        counter += 1
                     
-                is_teaching = any(applicant.position_applied == item[0] for item in TEACHING_POSITIONS)
-                role = Role.TEACHING if is_teaching else Role.NON_TEACHING
+                    is_teaching = any(applicant.position_applied == item[0] for item in TEACHING_POSITIONS)
+                    role = Role.TEACHING if is_teaching else Role.NON_TEACHING
                 
-                emp_data = {
-                    'first_name': applicant.first_name,
-                    'last_name': applicant.last_name,
-                    'middle_name': pds_data.get('middle_name') if pds_data else '',
-                    'name_extension': pds_data.get('name_extension') if pds_data else '',
-                    'date_of_birth': pds_data.get('date_of_birth') if (pds_data and pds_data.get('date_of_birth')) else None,
-                    'place_of_birth': pds_data.get('place_of_birth') if pds_data else '',
-                    'sex': pds_data.get('sex') if pds_data else '',
-                    'civil_status': pds_data.get('civil_status') if pds_data else '',
-                    'umid_id': pds_data.get('umid_id') if pds_data else '',
-                    'pagibig_id': pds_data.get('pagibig_id') if pds_data else '',
-                    'philhealth_no': pds_data.get('philhealth_no') if pds_data else '',
-                    'philsys_id': pds_data.get('philsys_id') if pds_data else '',
-                    'tin_no': pds_data.get('tin_no') if pds_data else '',
-                    'agency_employee_no': pds_data.get('agency_employee_no') if pds_data else '',
-                    'mobile_no': (pds_data.get('mobile_no') or applicant.phone or '') if pds_data else applicant.phone,
-                    'email': applicant.email,
-                    'residential_address': pds_data.get('residential_address') if pds_data else '',
-                    'permanent_address': pds_data.get('permanent_address') if pds_data else '',
-                    'position': applicant.position_applied,
-                    'department': 'Operations',
-                    'date_hired': timezone.localdate(),
-                }
-                
-                alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-                temp_password = ''.join(secrets.choice(alphabet) for _ in range(14))
-
-                employee = Employee.objects.create_with_user(
-                    user_data={
-                        'username': username,
+                    emp_data = {
+                        'first_name': applicant.first_name,
+                        'last_name': applicant.last_name,
+                        'middle_name': pds_data.get('middle_name') if pds_data else '',
+                        'name_extension': pds_data.get('name_extension') if pds_data else '',
+                        'date_of_birth': pds_data.get('date_of_birth') if (pds_data and pds_data.get('date_of_birth')) else None,
+                        'place_of_birth': pds_data.get('place_of_birth') if pds_data else '',
+                        'sex': pds_data.get('sex') if pds_data else '',
+                        'civil_status': pds_data.get('civil_status') if pds_data else '',
+                        'umid_id': pds_data.get('umid_id') if pds_data else '',
+                        'pagibig_id': pds_data.get('pagibig_id') if pds_data else '',
+                        'philhealth_no': pds_data.get('philhealth_no') if pds_data else '',
+                        'philsys_id': pds_data.get('philsys_id') if pds_data else '',
+                        'tin_no': pds_data.get('tin_no') if pds_data else '',
+                        'agency_employee_no': pds_data.get('agency_employee_no') if pds_data else '',
+                        'mobile_no': (pds_data.get('mobile_no') or applicant.phone or '') if pds_data else applicant.phone,
                         'email': applicant.email,
-                        'password': temp_password,
-                        'role': role
-                    },
-                    employee_data=emp_data
-                )
+                        'residential_address': pds_data.get('residential_address') if pds_data else '',
+                        'permanent_address': pds_data.get('permanent_address') if pds_data else '',
+                        'position': applicant.position_applied,
+                        'department': 'Operations',
+                        'date_hired': timezone.localdate(),
+                    }
                 
-                # Create related PDS records if pds_data is available
-                if pds_data:
-                    from ..models.pds_details import FamilyMember, Education, Eligibility, WorkExperience
-                    
-                    family_list = pds_data.get('family', [])
-                    if isinstance(family_list, list):
-                        for item in family_list:
-                            FamilyMember.objects.create(
-                                employee=employee,
-                                relationship=item.get('relationship', ''),
-                                surname=item.get('surname', ''),
-                                first_name=item.get('first_name', ''),
-                                middle_name=item.get('middle_name', ''),
-                                full_name=item.get('full_name', ''),
-                                extension=item.get('extension', ''),
-                                occupation=item.get('occupation', ''),
-                                employer=item.get('employer', ''),
-                                date_of_birth=item.get('date_of_birth') if item.get('date_of_birth') else None
-                            )
-                    
-                    education_list = pds_data.get('education', [])
-                    if isinstance(education_list, list):
-                        for item in education_list:
-                            Education.objects.create(
-                                employee=employee,
-                                level=item.get('level', ''),
-                                school_name=item.get('school_name', ''),
-                                degree_course=item.get('degree_course', ''),
-                                period_from=item.get('period_from', ''),
-                                period_to=item.get('period_to', ''),
-                                highest_level=item.get('highest_level', ''),
-                                year_graduated=item.get('year_graduated', ''),
-                                honors_received=item.get('honors_received', '')
-                            )
-                            
-                    eligibility_list = pds_data.get('eligibilities', [])
-                    if isinstance(eligibility_list, list):
-                        for item in eligibility_list:
-                            Eligibility.objects.create(
-                                employee=employee,
-                                service=item.get('service', ''),
-                                rating=item.get('rating', ''),
-                                date_of_exam=item.get('date_of_exam') if item.get('date_of_exam') else None,
-                                place_of_exam=item.get('place_of_exam', ''),
-                                license_number=item.get('license_number', ''),
-                                validity_date=item.get('validity_date') if item.get('validity_date') else None
-                            )
-                            
-                    work_list = pds_data.get('work_experience', [])
-                    if isinstance(work_list, list):
-                        for item in work_list:
-                            date_to_val = item.get('date_to')
-                            is_present = False
-                            if date_to_val == 'present' or not date_to_val:
-                                date_to_val = None
-                                is_present = True
-                            
-                            WorkExperience.objects.create(
-                                employee=employee,
-                                date_from=item.get('date_from') if item.get('date_from') else None,
-                                date_to=date_to_val if date_to_val else None,
-                                is_present=is_present,
-                                position_title=item.get('position_title', ''),
-                                agency=item.get('agency', ''),
-                                monthly_salary=item.get('monthly_salary') if item.get('monthly_salary') else None,
-                                salary_grade=item.get('salary_grade', ''),
-                                status_of_appointment=item.get('status_of_appointment', ''),
-                                is_gov_service=item.get('is_gov_service', True)
-                            )
-                
-                # Copy applicant documents to persistent EmployeeDocument table
-                from ..models import EmployeeDocument
-                if applicant.pds_file:
-                    EmployeeDocument.objects.get_or_create(
-                        employee=employee,
-                        document_type='pds_file',
-                        defaults={
-                            'file': applicant.pds_file,
-                            'file_name': 'Accomplished_PDS.pdf',
-                            'verified': True,
-                            'verified_by': request.user
-                        }
-                    )
-                if applicant.resume:
-                    EmployeeDocument.objects.get_or_create(
-                        employee=employee,
-                        document_type='employment_documents',
-                        defaults={
-                            'file': applicant.resume,
-                            'file_name': 'Resume_CV.pdf',
-                            'verified': True,
-                            'verified_by': request.user
-                        }
-                    )
-                for app_doc in applicant.documents.all():
-                    EmployeeDocument.objects.get_or_create(
-                        employee=employee,
-                        document_type=app_doc.document_type,
-                        defaults={
-                            'file': app_doc.file,
-                            'file_name': app_doc.filename or app_doc.document_type,
-                            'verified': True,
-                            'verified_by': request.user
-                        }
-                    )
+                    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+                    temp_password = ''.join(secrets.choice(alphabet) for _ in range(14))
 
-                employee_created = True
-                username_created = username
+                    employee = Employee.objects.create_with_user(
+                        user_data={
+                            'username': username,
+                            'email': applicant.email,
+                            'password': temp_password,
+                            'role': role
+                        },
+                        employee_data=emp_data
+                    )
+                
+                    # Create related PDS records if pds_data is available
+                    if pds_data:
+                        family_list = pds_data.get('family', [])
+                        if isinstance(family_list, list):
+                            for item in family_list:
+                                FamilyMember.objects.create(
+                                    employee=employee,
+                                    relationship=item.get('relationship', ''),
+                                    surname=item.get('surname', ''),
+                                    first_name=item.get('first_name', ''),
+                                    middle_name=item.get('middle_name', ''),
+                                    full_name=item.get('full_name', ''),
+                                    extension=item.get('extension', ''),
+                                    occupation=item.get('occupation', ''),
+                                    employer=item.get('employer', ''),
+                                    date_of_birth=item.get('date_of_birth') if item.get('date_of_birth') else None
+                                )
+                    
+                        education_list = pds_data.get('education', [])
+                        if isinstance(education_list, list):
+                            for item in education_list:
+                                Education.objects.create(
+                                    employee=employee,
+                                    level=item.get('level', ''),
+                                    school_name=item.get('school_name', ''),
+                                    degree_course=item.get('degree_course', ''),
+                                    period_from=item.get('period_from', ''),
+                                    period_to=item.get('period_to', ''),
+                                    highest_level=item.get('highest_level', ''),
+                                    year_graduated=item.get('year_graduated', ''),
+                                    honors_received=item.get('honors_received', '')
+                                )
+                            
+                        eligibility_list = pds_data.get('eligibilities', [])
+                        if isinstance(eligibility_list, list):
+                            for item in eligibility_list:
+                                Eligibility.objects.create(
+                                    employee=employee,
+                                    service=item.get('service', ''),
+                                    rating=item.get('rating', ''),
+                                    date_of_exam=item.get('date_of_exam') if item.get('date_of_exam') else None,
+                                    place_of_exam=item.get('place_of_exam', ''),
+                                    license_number=item.get('license_number', ''),
+                                    validity_date=item.get('validity_date') if item.get('validity_date') else None
+                                )
+                            
+                        work_list = pds_data.get('work_experience', [])
+                        if isinstance(work_list, list):
+                            for item in work_list:
+                                date_to_val = item.get('date_to')
+                                is_present = False
+                                if date_to_val == 'present' or not date_to_val:
+                                    date_to_val = None
+                                    is_present = True
+                            
+                                WorkExperience.objects.create(
+                                    employee=employee,
+                                    date_from=item.get('date_from') if item.get('date_from') else None,
+                                    date_to=date_to_val if date_to_val else None,
+                                    is_present=is_present,
+                                    position_title=item.get('position_title', ''),
+                                    agency=item.get('agency', ''),
+                                    monthly_salary=item.get('monthly_salary') if item.get('monthly_salary') else None,
+                                    salary_grade=item.get('salary_grade', ''),
+                                    status_of_appointment=item.get('status_of_appointment', ''),
+                                    is_gov_service=item.get('is_gov_service', True)
+                                )
+                
+                    # Copy applicant documents to persistent EmployeeDocument table
+                    if applicant.pds_file:
+                        EmployeeDocument.objects.get_or_create(
+                            employee=employee,
+                            document_type='pds_file',
+                            defaults={
+                                'file': applicant.pds_file,
+                                'file_name': 'Accomplished_PDS.pdf',
+                                'verified': True,
+                                'verified_by': request.user
+                            }
+                        )
+                    if applicant.resume:
+                        EmployeeDocument.objects.get_or_create(
+                            employee=employee,
+                            document_type='employment_documents',
+                            defaults={
+                                'file': applicant.resume,
+                                'file_name': 'Resume_CV.pdf',
+                                'verified': True,
+                                'verified_by': request.user
+                            }
+                        )
+                    for app_doc in applicant.documents.all():
+                        EmployeeDocument.objects.get_or_create(
+                            employee=employee,
+                            document_type=app_doc.document_type,
+                            defaults={
+                                'file': app_doc.file,
+                                'file_name': app_doc.filename or app_doc.document_type,
+                                'verified': True,
+                                'verified_by': request.user
+                            }
+                        )
+
+                    employee_created = True
+                    username_created = username
 
         # Actual Notification logic
         new_status_display = applicant.get_status_display()
@@ -263,6 +275,11 @@ class ApplicantViewSet(viewsets.ModelViewSet):
         msg = f"Status updated to {new_status_display}."
         if employee_created:
             msg += f" An Employee profile has been automatically created (Username: {username_created}, Password: {temp_password})."
+        elif new_status == 'hired':
+            msg += (
+                f" No Employee profile was created: an existing employee already uses"
+                f" {applicant.email}. Resolve the duplicate before re-hiring."
+            )
         if email_sent:
             msg += " Applicant has been notified via email."
         else:

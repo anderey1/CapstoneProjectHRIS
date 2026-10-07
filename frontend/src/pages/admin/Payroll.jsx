@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Wallet, ShieldCheck, Loader2 
+  Wallet, ShieldCheck, Loader2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -11,10 +11,14 @@ import {
   PayrollBreakdownTable,
 } from '../../features/payroll';
 
+const formatCurrency = (val) => {
+  const num = parseFloat(val) || 0;
+  return `₱${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 /**
- * Payroll & Payslip Management
- * Grouped Cutoff Workflow (Preparation -> Approval -> DV -> ATM Release)
- * Clean, declarative view driven by usePayroll domain hook.
+ * Payroll Management (Institutional Financial Control Center)
+ * Official General Payroll (Form 7) and Semi-Monthly ATM Disbursement Portal.
  */
 const Payroll = () => {
   const { user } = useAuth();
@@ -61,7 +65,7 @@ const Payroll = () => {
     if (!selectedEmployee) return;
     const employee = employees?.find((emp) => emp.id === parseInt(selectedEmployee));
     if (employee && (employee.salary === null || employee.salary === undefined || parseFloat(employee.salary) <= 0)) {
-      alert(`Cannot generate payroll: ${employee.first_name} ${employee.last_name} has no salary set in their profile.`);
+      alert(`Cannot generate payroll: ${employee.first_name} ${employee.last_name} has no salary grade set in their profile.`);
       return;
     }
     await generatePayroll({ employee_id: selectedEmployee, cutoff_period: selectedCutoff });
@@ -72,70 +76,140 @@ const Payroll = () => {
   };
 
   const handleBulkApprove = () => {
-    if (window.confirm(`Are you sure you want to approve the General Payroll Sheet for ${selectedCutoff}?`)) {
+    if (window.confirm(`Certify and approve the General Payroll Sheet (Form 7) for ${selectedCutoff}?`)) {
       bulkApprovePayroll({ cutoff_period: selectedCutoff });
     }
   };
 
   const handleBulkRelease = () => {
-    if (window.confirm(`Are you sure you want to release and credit all salaries to LandBank ATM for ${selectedCutoff}? This will record any loan payments and notify staff.`)) {
+    if (window.confirm(`Disburse and credit all net salaries to LandBank ATM accounts for ${selectedCutoff}? This will record statutory loan payments and lock the cycle.`)) {
       bulkReleasePayroll({ cutoff_period: selectedCutoff });
     }
   };
 
   const activePayrolls = cutoffPayrolls.filter((p) =>
-    p.employee_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.employee_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.department || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
     return (
-      <div className="h-[60vh] flex flex-col items-center justify-center gap-4 text-primary">
-        <Loader2 className="w-12 h-12 animate-spin opacity-20" />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Loading Payroll Data...</p>
+      <div className="h-[60vh] flex flex-col items-center justify-center gap-3 text-slate-400">
+        <Loader2 className="w-8 h-8 animate-spin text-[#0038A8]" />
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Loading Division Payroll Ledger...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-750 max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="space-y-1">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-300">
+      {/* Official Government Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
-              <Wallet className="w-6 h-6" />
+            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8] shrink-0">
+              <Wallet className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Release Salaries & Payslips</h1>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-emerald-600 rounded-full"></span>
-                <p className="text-[10px] font-black opacity-45 uppercase tracking-widest">Lucena School Division</p>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                  Payroll & Disbursement Center
+                </h1>
+                <span className="badge badge-sm bg-slate-100 text-slate-700 border-slate-200 font-semibold text-[10px]">
+                  General Payroll (Form 7)
+                </span>
               </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                DepEd Schools Division of Lucena City • Accounting & Cash Management Services
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Info Box */}
-        <div className="text-[10px] bg-blue-50 border border-blue-100 rounded-xl px-4 py-2 text-blue-800 flex items-center gap-2 max-w-sm">
-          <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0" />
-          <span>Only the <strong>Accountant</strong> can calculate and release salaries. Only the <strong>Superintendent</strong> can sign and approve the general payroll sheets.</span>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-slate-700 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#0038A8] shrink-0" />
+            <span>
+              Role: <strong className="text-slate-900">{user?.role?.replace('_', ' ')}</strong>
+            </span>
+          </div>
         </div>
       </div>
 
+      {/* Financial Executive Summary Cards (4 Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Gross Compensation
+          </span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-xl font-bold text-slate-900 font-mono tabular-nums">
+              {formatCurrency(totalGross)}
+            </span>
+            <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              Pre-deduction
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Mandatory Withholdings
+          </span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-xl font-bold text-rose-700 font-mono tabular-nums">
+              {formatCurrency(totalDeductions)}
+            </span>
+            <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
+              Statutory & Loans
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Net Cash Payable
+          </span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-xl font-bold text-[#0038A8] font-mono tabular-nums">
+              {formatCurrency(totalNet)}
+            </span>
+            <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+              LandBank ATM
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Active Payroll Staff
+          </span>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-xl font-bold text-slate-900 font-mono tabular-nums">
+              {cutoffPayrolls.length} <span className="text-xs font-normal text-slate-500">Personnel</span>
+            </span>
+            <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+              Period Cycle
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 1. Cutoff Selector */}
       <PayrollCutoffSelector
         selectedCutoff={selectedCutoff}
         onSelectCutoff={(period) => setSelectedCutoff(period)}
         allPayrolls={allPayrolls}
       />
 
+      {/* 2. Pipeline Stepper */}
       <PayrollWorkflowStepper
-        selectedCutoff={selectedCutoff}
         cutoffStatus={cutoffStatus}
-        totalGross={totalGross}
-        totalDeductions={totalDeductions}
-        totalNet={totalNet}
       />
 
+      {/* 3. Action Command Panel */}
       <PayrollActionPanel
         cutoffStatus={cutoffStatus}
         canGenerate={canGenerate}
@@ -156,6 +230,7 @@ const Payroll = () => {
         generateLoading={isGenerating}
       />
 
+      {/* 4. General Payroll Sheet Table */}
       <PayrollBreakdownTable
         selectedCutoff={selectedCutoff}
         searchTerm={searchTerm}

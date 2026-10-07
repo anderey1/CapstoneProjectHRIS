@@ -1,5 +1,10 @@
 import React from 'react';
-import { Search, Users } from 'lucide-react';
+import { Search, FileSpreadsheet, Check, Send } from 'lucide-react';
+
+const formatCurrency = (val) => {
+  const num = parseFloat(val) || 0;
+  return `₱${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
 const PayrollBreakdownTable = ({
   selectedCutoff,
@@ -13,119 +18,164 @@ const PayrollBreakdownTable = ({
   onRelease,
   releaseLoading
 }) => {
+  // Aggregate page totals
+  const totalGross = activePayrolls.reduce((sum, p) => sum + (parseFloat(p.gross_salary || p.basic_salary) || 0), 0);
+  const totalDeductions = activePayrolls.reduce((sum, p) => sum + (parseFloat(p.total_deductions) || 0), 0);
+  const totalNet = activePayrolls.reduce((sum, p) => sum + (parseFloat(p.net_salary) || 0), 0);
+
   return (
-    <div className="bg-white rounded-xl border border-base-200 shadow-sm overflow-hidden">
-      {/* Table Controls */}
-      <div className="p-6 border-b border-base-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-base-50/20">
+    <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+      {/* Header Controls */}
+      <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70">
         <div>
-          <h3 className="text-sm font-black uppercase tracking-wider text-base-content">Staff Pay Sheet Breakdown</h3>
-          <p className="text-[10px] font-bold opacity-30 mt-0.5 uppercase tracking-wide">Records for cutoff period ({selectedCutoff})</p>
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="w-4 h-4 text-[#0038A8]" />
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+              General Payroll Sheet (Form 7)
+            </h3>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Semi-monthly compensation and statutory deduction breakdown • {selectedCutoff}
+          </p>
         </div>
 
-        <div className="relative max-w-xs w-full">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+        <div className="relative w-full md:w-72">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
           <input 
             type="text" 
-            placeholder="Search employee names..." 
-            className="input input-bordered w-full pl-11 bg-base-50 border-base-200 focus:bg-white focus:border-blue-400 font-bold text-xs h-10 rounded-xl"
+            placeholder="Search personnel or station..." 
+            className="input input-sm input-bordered w-full pl-8.5 bg-white border-slate-200 text-xs font-medium rounded-md"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      {/* The Table */}
+      {/* Structured Ledger Table */}
       <div className="overflow-x-auto">
-        <table className="table table-md w-full">
+        <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-base-50/40 text-[9px] uppercase tracking-[0.15em] opacity-45 border-b border-base-100">
-              <th className="px-6 py-4">Employee</th>
-              <th>Cutoff Period</th>
-              <th>Days Worked</th>
-              <th className="text-right">Gross Salary</th>
-              <th className="text-right text-rose-500">Deductions</th>
-              <th className="text-right text-blue-700">Net Salary</th>
-              <th>Status</th>
-              <th className="text-center">Audit Actions</th>
+            <tr className="bg-slate-50/90 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+              <th className="px-4 py-3">Personnel</th>
+              <th className="px-3 py-3">Station / Position</th>
+              <th className="px-3 py-3 text-center">Days Worked</th>
+              <th className="px-3 py-3 text-right">Gross Salary</th>
+              <th className="px-3 py-3 text-right text-rose-700">Deductions</th>
+              <th className="px-3 py-3 text-right text-[#0038A8]">Net Take-Home</th>
+              <th className="px-3 py-3 text-center">Status</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-base-100 text-xs font-bold">
-            {activePayrolls.length > 0 ? activePayrolls.map(p => (
-              <tr key={p.id} className="hover:bg-base-50/50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center font-black text-xs text-blue-700">
-                      {p.employee_name?.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-black text-sm tracking-tight">{p.employee_name}</div>
-                      <span className="text-[8px] opacity-40 bg-base-100 px-1 py-0.5 rounded uppercase">{p.employee_role || 'Staff'}</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="opacity-60">{p.cutoff_period}</td>
-                <td>{p.days_worked || '11.0'}</td>
-                <td className="text-right">₱{parseFloat(p.gross_salary || p.basic_salary).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                <td className="text-right text-rose-600">
-                  <span className="tooltip tooltip-bottom" data-tip={`SSS: ₱${p.sss} | PhilHealth: ₱${p.philhealth} | PagIBIG: ₱${p.pagibig} | Loans: ₱${p.loans} | Tax: ₱${p.tax}`}>
-                    ₱{parseFloat(p.total_deductions).toLocaleString(undefined, {minimumFractionDigits: 2})}
-                  </span>
-                </td>
-                <td className="text-right text-blue-700 font-black">₱{parseFloat(p.net_salary).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                <td>
-                  <span className={`px-2.5 py-0.5 rounded-full font-black text-[9px] uppercase tracking-[0.1em] border ${
-                    p.status === 'released' 
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                      : p.status === 'approved' 
-                      ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                      : 'bg-amber-50 border-amber-200 text-amber-700'
-                  }`}>
-                    {p.status}
-                  </span>
-                </td>
-                <td className="text-center">
-                  <div className="flex items-center justify-center gap-1.5">
-                    {p.status === 'draft' && canApprove && (
-                      <button 
-                        type="button"
-                        onClick={() => onApprove(p.id)}
-                        className="btn btn-xs btn-primary text-[8px] rounded-lg font-black uppercase tracking-wider"
-                        disabled={approveLoading}
+          <tbody className="divide-y divide-slate-100">
+            {activePayrolls.length > 0 ? (
+              activePayrolls.map((p) => {
+                const grossVal = parseFloat(p.gross_salary || p.basic_salary) || 0;
+                const deductVal = parseFloat(p.total_deductions) || 0;
+                const netVal = parseFloat(p.net_salary) || 0;
+
+                const deductionBreakdown = `GSIS (9%): ₱${parseFloat(p.sss || 0).toFixed(2)} | PhilHealth: ₱${parseFloat(p.philhealth || 0).toFixed(2)} | Pag-IBIG: ₱${parseFloat(p.pagibig || 0).toFixed(2)} | Loans: ₱${parseFloat(p.loans || 0).toFixed(2)} | Tax: ₱${parseFloat(p.tax || 0).toFixed(2)}`;
+
+                return (
+                  <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-slate-900">
+                      <div>{p.employee_name}</div>
+                      <span className="text-[10px] font-mono text-slate-400">ID #{p.employee || p.id}</span>
+                    </td>
+                    <td className="px-3 py-3 text-slate-600">
+                      <div className="font-medium text-slate-800">{p.position || 'Staff'}</div>
+                      <div className="text-[10px] text-slate-500">{p.department || 'Division Office'}</div>
+                    </td>
+                    <td className="px-3 py-3 text-center font-mono font-medium text-slate-700">
+                      {p.days_worked || '11.0'}
+                    </td>
+                    <td className="px-3 py-3 text-right font-mono font-semibold text-slate-800">
+                      {formatCurrency(grossVal)}
+                    </td>
+                    <td className="px-3 py-3 text-right font-mono font-semibold text-rose-700">
+                      <span
+                        className="cursor-help underline decoration-dotted decoration-rose-300"
+                        title={deductionBreakdown}
                       >
-                        Approve
-                      </button>
-                    )}
-                    {p.status === 'approved' && canRelease && (
-                      <button 
-                        type="button"
-                        onClick={() => onRelease(p.id)}
-                        className="btn btn-xs btn-success text-white text-[8px] rounded-lg font-black uppercase tracking-wider"
-                        disabled={releaseLoading}
-                      >
-                        Disburse
-                      </button>
-                    )}
-                    {p.status === 'released' ? (
-                      <span className="text-[8px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Disbursed</span>
-                    ) : (
-                      (p.status === 'draft' && !canApprove) || (p.status === 'approved' && !canRelease) ? (
-                        <span className="text-[8px] opacity-35 font-bold uppercase tracking-wider italic">Locked</span>
-                      ) : null
-                    )}
-                  </div>
-                </td>
-              </tr>
-            )) : (
+                        {formatCurrency(deductVal)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-right font-mono font-bold text-[#0038A8]">
+                      {formatCurrency(netVal)}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border uppercase ${
+                        p.status === 'released'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : p.status === 'approved'
+                          ? 'bg-blue-50 text-[#0038A8] border-blue-200'
+                          : p.status === 'draft'
+                          ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {p.status === 'draft' && canApprove && (
+                          <button
+                            type="button"
+                            onClick={() => onApprove(p.id)}
+                            disabled={approveLoading}
+                            className="btn btn-ghost btn-xs text-blue-700 hover:bg-blue-50 font-semibold px-2"
+                            title="Sign and certify this record"
+                          >
+                            <Check className="w-3 h-3 mr-1" /> Sign
+                          </button>
+                        )}
+                        {p.status === 'approved' && canRelease && (
+                          <button
+                            type="button"
+                            onClick={() => onRelease(p.id)}
+                            disabled={releaseLoading}
+                            className="btn btn-ghost btn-xs text-emerald-700 hover:bg-emerald-50 font-semibold px-2"
+                            title="Release to ATM account"
+                          >
+                            <Send className="w-3 h-3 mr-1" /> Disburse
+                          </button>
+                        )}
+                        {p.status === 'released' && (
+                          <span className="text-[10px] font-medium text-slate-400">Locked</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
               <tr>
-                <td colSpan="8" className="text-center py-16">
-                  <div className="flex flex-col items-center gap-3 opacity-25">
-                    <Users className="w-12 h-12" />
-                    <p className="font-black uppercase text-xs tracking-wider">No payroll records found for this cutoff</p>
-                  </div>
+                <td colSpan="8" className="text-center py-12 text-slate-400 italic">
+                  No payroll records found matching current filters for {selectedCutoff}.
                 </td>
               </tr>
             )}
           </tbody>
+
+          {/* Table Footer Totals */}
+          {activePayrolls.length > 0 && (
+            <tfoot>
+              <tr className="bg-slate-50 border-t-2 border-slate-200 font-bold text-slate-800">
+                <td colSpan="3" className="px-4 py-3 uppercase tracking-wider text-[10px]">
+                  Batch Totals ({activePayrolls.length} Personnel)
+                </td>
+                <td className="px-3 py-3 text-right font-mono text-slate-900">
+                  {formatCurrency(totalGross)}
+                </td>
+                <td className="px-3 py-3 text-right font-mono text-rose-700">
+                  {formatCurrency(totalDeductions)}
+                </td>
+                <td className="px-3 py-3 text-right font-mono text-[#0038A8]">
+                  {formatCurrency(totalNet)}
+                </td>
+                <td colSpan="2"></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>

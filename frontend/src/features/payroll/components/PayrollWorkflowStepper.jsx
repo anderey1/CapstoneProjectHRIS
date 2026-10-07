@@ -1,118 +1,97 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { Check, Circle } from 'lucide-react';
 
-const PayrollWorkflowStepper = ({ selectedCutoff, cutoffStatus, totalGross, totalDeductions, totalNet }) => {
+const PayrollWorkflowStepper = ({ cutoffStatus }) => {
+  const steps = [
+    {
+      num: 1,
+      name: 'Preparation & Calculation',
+      actor: 'Division Accountant',
+      isComplete: cutoffStatus === 'draft' || cutoffStatus === 'approved' || cutoffStatus === 'released',
+      isCurrent: cutoffStatus === 'unprepared',
+      desc: 'Computes gross earnings, statutory GSIS 9%, PhilHealth, Pag-IBIG, and loan deductions from DTR.',
+    },
+    {
+      num: 2,
+      name: 'Certification & Approval',
+      actor: 'Schools Division Superintendent',
+      isComplete: cutoffStatus === 'approved' || cutoffStatus === 'released',
+      isCurrent: cutoffStatus === 'draft',
+      desc: 'Audits General Payroll summary, signs Form 7, and authorizes the Disbursement Voucher (DV).',
+    },
+    {
+      num: 3,
+      name: 'Disbursement & ATM Credit',
+      actor: 'LandBank of the Philippines',
+      isComplete: cutoffStatus === 'released',
+      isCurrent: cutoffStatus === 'approved',
+      desc: 'Credits net salaries to employee ATM accounts, locks ledger, and releases digital payslips.',
+    },
+  ];
+
   return (
-    <div className="bg-white rounded-xl p-6 border border-base-200 shadow-sm space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-base-100 pb-5">
-        <div className="space-y-1">
-          <h3 className="text-sm font-black uppercase tracking-wider text-base-content flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue-600" />
-            Steps for selected period: {selectedCutoff}
-          </h3>
-          <p className="text-[10px] font-bold uppercase opacity-45">Follow these steps to calculate, approve, and send salaries to bank accounts</p>
-        </div>
-        
-        {/* Stats Badges */}
-        <div className="flex gap-2">
-          <div className="px-3 py-1 bg-base-100 rounded-lg text-center border border-base-200">
-            <span className="block text-[8px] font-black uppercase tracking-wider opacity-40">Gross Pay (Before Deductions)</span>
-            <span className="text-xs font-black text-base-content">₱{totalGross.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-          </div>
-          <div className="px-3 py-1 bg-base-100 rounded-lg text-center border border-base-200">
-            <span className="block text-[8px] font-black uppercase tracking-wider opacity-40">Total Deductions</span>
-            <span className="text-xs font-black text-rose-600">₱{totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-          </div>
-          <div className="px-3 py-1 bg-blue-50 rounded-lg text-center border border-blue-100">
-            <span className="block text-[8px] font-black uppercase tracking-wider opacity-40 text-blue-600">Net Pay (Take-Home)</span>
-            <span className="text-xs font-black text-blue-700">₱{totalNet.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-          </div>
+    <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+        <div>
+          <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+            Division Payroll Processing Pipeline
+          </h2>
+          <p className="text-[11px] text-slate-500">
+            Civil Service Commission & Commission on Audit (COA) compliance chain
+          </p>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
-        <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-          cutoffStatus !== 'unprepared' 
-            ? 'bg-blue-50 border-blue-200 text-blue-900' 
-            : 'bg-base-50 border-base-200 opacity-60'
-        }`}>
-          <div className="flex items-center gap-3">
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-              cutoffStatus !== 'unprepared' ? 'bg-blue-600 text-white' : 'bg-base-300 text-base-content/60'
-            }`}>1</span>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wide">1. Accountant Preparation</p>
-              <p className="text-[9px] opacity-60 font-bold uppercase">{cutoffStatus === 'unprepared' ? 'Not Started' : 'Draft Prepared'}</p>
-            </div>
-          </div>
-        </div>
 
-        <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-          cutoffStatus === 'approved' || cutoffStatus === 'released'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
-            : cutoffStatus === 'draft'
-            ? 'bg-amber-50 border-amber-200 text-amber-950'
-            : 'bg-base-50 border-base-200 opacity-60'
-        }`}>
-          <div className="flex items-center gap-3">
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-              cutoffStatus === 'approved' || cutoffStatus === 'released'
-                ? 'bg-emerald-600 text-white'
-                : cutoffStatus === 'draft'
-                ? 'bg-amber-500 text-white'
-                : 'bg-base-300 text-base-content/60'
-            }`}>2</span>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wide">2. Superintendent Review</p>
-              <p className="text-[9px] opacity-60 font-bold uppercase">
-                {cutoffStatus === 'released' || cutoffStatus === 'approved' ? 'Approved & Signed' : cutoffStatus === 'draft' ? 'Awaiting Signature' : 'Awaiting Step 1'}
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {steps.map((step) => {
+          let badgeBorder = 'border-slate-200 bg-slate-50 text-slate-600';
+          let icon = <Circle className="w-3.5 h-3.5 text-slate-400" />;
 
-        <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-          cutoffStatus === 'released'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
-            : cutoffStatus === 'approved'
-            ? 'bg-amber-50 border-amber-200 text-amber-950'
-            : 'bg-base-50 border-base-200 opacity-60'
-        }`}>
-          <div className="flex items-center gap-3">
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-              cutoffStatus === 'released'
-                ? 'bg-emerald-600 text-white'
-                : cutoffStatus === 'approved'
-                ? 'bg-amber-500 text-white'
-                : 'bg-base-300 text-base-content/60'
-            }`}>3</span>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wide">3. Official Voucher (DV)</p>
-              <p className="text-[9px] opacity-60 font-bold uppercase">
-                {cutoffStatus === 'released' ? 'Voucher Prepared' : cutoffStatus === 'approved' ? 'Ready to Release' : 'Awaiting Step 2'}
-              </p>
-            </div>
-          </div>
-        </div>
+          if (step.isComplete) {
+            badgeBorder = 'border-emerald-200 bg-emerald-50/60 text-emerald-900';
+            icon = (
+              <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                <Check className="w-3 h-3 stroke-3" />
+              </span>
+            );
+          } else if (step.isCurrent) {
+            badgeBorder = 'border-[#0038A8] bg-blue-50/70 text-slate-900 ring-1 ring-[#0038A8]';
+            icon = (
+              <span className="w-4 h-4 rounded-full bg-[#0038A8] text-white flex items-center justify-center text-[10px] font-bold">
+                {step.num}
+              </span>
+            );
+          }
 
-        <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-          cutoffStatus === 'released'
-            ? 'bg-emerald-100 border-emerald-300 text-emerald-950'
-            : 'bg-base-50 border-base-200 opacity-60'
-        }`}>
-          <div className="flex items-center gap-3">
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-              cutoffStatus === 'released' ? 'bg-emerald-600 text-white' : 'bg-base-300 text-base-content/60'
-            }`}>4</span>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wide">4. Sent to Bank (ATM)</p>
-              <p className="text-[9px] opacity-60 font-bold uppercase">
-                {cutoffStatus === 'released' ? 'Paid to Employees' : 'Awaiting Release'}
-              </p>
+          return (
+            <div
+              key={step.num}
+              className={`p-3 rounded-md border flex flex-col justify-between transition-colors ${badgeBorder}`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    {icon}
+                    <span className="text-xs font-bold">{step.name}</span>
+                  </div>
+                </div>
+                <div className="text-[11px] font-semibold text-slate-600 mb-1">
+                  Responsible: <span className="font-bold text-slate-800">{step.actor}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  {step.desc}
+                </p>
+              </div>
+
+              <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px] font-semibold">
+                <span className="text-slate-400 uppercase tracking-wider">Status</span>
+                <span className={step.isComplete ? 'text-emerald-700' : step.isCurrent ? 'text-[#0038A8]' : 'text-slate-500'}>
+                  {step.isComplete ? 'Completed' : step.isCurrent ? 'Active In Progress' : 'Pending Previous Step'}
+                </span>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

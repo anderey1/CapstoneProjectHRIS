@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
-  Wallet, FileText, Banknote, Users, 
-  Loader2, FileSignature, CheckCircle, HelpCircle 
+  FileText, Download, Users, 
+  Loader2, Calculator, CheckCircle2, Send
 } from 'lucide-react';
 
 const PayrollActionPanel = ({
@@ -24,197 +24,168 @@ const PayrollActionPanel = ({
   generateLoading
 }) => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      {/* Bulk Action / Stepper Detail Card */}
-      <div className="lg:col-span-8 bg-[#0038A8] text-white rounded-xl p-8 space-y-6 shadow-sm relative overflow-hidden">
-
-        <div className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-            Action Needed
-          </span>
-          <h3 className="text-2xl font-black tracking-tight mt-2">
-            {cutoffStatus === 'unprepared' && "Calculate Draft Payroll"}
-            {cutoffStatus === 'draft' && "Approve General Payroll Sheet"}
-            {cutoffStatus === 'approved' && "Confirm & Release Salary to Bank"}
-            {cutoffStatus === 'released' && "Salaries Released successfully"}
-          </h3>
-          <p className="text-xs text-blue-200 leading-relaxed">
-            {cutoffStatus === 'unprepared' && "Draft payroll records have not been generated for this period yet. The Accountant must prepare drafts using staff DTR logs before approvals can be started."}
-            {cutoffStatus === 'draft' && "Draft payroll sheets have been prepared. The Superintendent must review the summary and approve the payroll to proceed."}
-            {cutoffStatus === 'approved' && "The Superintendent has signed off. The Accountant should export the official files and click 'Release Salaries' to credit the employee bank accounts."}
-            {cutoffStatus === 'released' && "All employee salaries have been sent to their bank accounts. Payslips are now viewable in the employee portals."}
+    <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs space-y-4">
+      {/* Top Header Row with Status and Direct Operational CTAs */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              Accounting Command Center
+            </span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+              cutoffStatus === 'released'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : cutoffStatus === 'approved'
+                ? 'bg-blue-50 text-[#0038A8] border-blue-200'
+                : cutoffStatus === 'draft'
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+            }`}>
+              {cutoffStatus === 'unprepared' && 'Awaiting Draft Calculation'}
+              {cutoffStatus === 'draft' && 'Pending Superintendent Sign-off'}
+              {cutoffStatus === 'approved' && 'Ready for ATM Release'}
+              {cutoffStatus === 'released' && 'Cutoff Completed & Disbursed'}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            {cutoffStatus === 'unprepared' && 'Calculate semi-monthly draft gross pay, statutory withholdings, and loan amortizations.'}
+            {cutoffStatus === 'draft' && 'Draft payroll sheets generated. Superintendent signature required on General Payroll Sheet (Form 7).'}
+            {cutoffStatus === 'approved' && 'Executive sign-off complete. Export Disbursement Voucher and credit funds to LandBank ATM accounts.'}
+            {cutoffStatus === 'released' && 'Salaries have been credited. Payroll ledger is locked for this period.'}
           </p>
         </div>
 
-        {/* Action Buttons based on Status */}
-        <div className="flex flex-wrap items-center gap-4 pt-2">
-          {cutoffStatus === 'unprepared' && (
-            <>
-              {canGenerate ? (
+        {/* Primary Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          {cutoffStatus === 'unprepared' && canGenerate && (
+            <button
+              type="button"
+              onClick={handleBulkGenerate}
+              disabled={bulkGenerateLoading}
+              className="btn btn-sm bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+            >
+              {bulkGenerateLoading ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Calculator className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Calculate Division Payroll
+            </button>
+          )}
+
+          {cutoffStatus === 'draft' && canApprove && (
+            <button
+              type="button"
+              onClick={handleBulkApprove}
+              disabled={bulkApproveLoading}
+              className="btn btn-sm bg-emerald-700 hover:bg-emerald-800 text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+            >
+              {bulkApproveLoading ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Certify & Sign General Payroll (Form 7)
+            </button>
+          )}
+
+          {cutoffStatus === 'approved' && canRelease && (
+            <button
+              type="button"
+              onClick={handleBulkRelease}
+              disabled={bulkReleaseLoading}
+              className="btn btn-sm bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+            >
+              {bulkReleaseLoading ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Disburse & Credit Salaries to LandBank ATM
+            </button>
+          )}
+
+          {/* Official Document Export Dropdown */}
+          <div className="dropdown dropdown-end">
+            <label
+              tabIndex={0}
+              className="btn btn-sm bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-semibold px-3 h-9"
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
+              Export Reports
+            </label>
+            <ul
+              tabIndex={0}
+              className="dropdown-content z-20 menu p-1.5 shadow-md bg-white border border-slate-200 rounded-md w-60 mt-1"
+            >
+              <li className="menu-title text-[10px] font-bold uppercase text-slate-400 px-2 py-1">
+                Official Commission on Audit Reports
+              </li>
+              <li>
                 <button
                   type="button"
-                  onClick={handleBulkGenerate}
-                  disabled={bulkGenerateLoading}
-                  className={`btn btn-warning border-none hover:bg-amber-500 rounded-xl font-black text-xs uppercase tracking-wider px-6 h-12 shadow-lg shadow-amber-500/20 ${bulkGenerateLoading ? 'loading' : ''}`}
+                  onClick={handleExportPayrollSheet}
+                  className="text-xs text-slate-700 hover:bg-slate-50 font-medium py-2 rounded"
                 >
-                  {!bulkGenerateLoading && <Users className="w-4 h-4 mr-2" />}
-                  Generate Drafts for All Staff
+                  <FileText className="w-3.5 h-3.5 text-[#0038A8] mr-2" />
+                  General Payroll Sheet (Form 7)
                 </button>
-              ) : (
-                <span className="text-xs font-bold text-amber-400/90 italic flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                  Awaiting Accountant to prepare draft payrolls...
-                </span>
-              )}
-            </>
-          )}
-
-          {cutoffStatus === 'draft' && (
-            <>
-              <button
-                type="button"
-                onClick={handleExportPayrollSheet}
-                className="btn btn-outline border-blue-500 text-blue-200 hover:bg-blue-800 hover:text-white rounded-xl font-black text-xs uppercase tracking-wider px-6 h-12"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Download Payroll Sheet (PDF)
-              </button>
-              
-              {canApprove ? (
+              </li>
+              <li>
                 <button
                   type="button"
-                  onClick={handleBulkApprove}
-                  disabled={bulkApproveLoading}
-                  className={`btn btn-warning border-none hover:bg-amber-500 rounded-xl font-black text-xs uppercase tracking-wider px-6 h-12 shadow-lg shadow-amber-500/20 ${bulkApproveLoading ? 'loading' : ''}`}
+                  onClick={handleExportDV}
+                  className="text-xs text-slate-700 hover:bg-slate-50 font-medium py-2 rounded"
                 >
-                  {!bulkApproveLoading && <FileSignature className="w-4 h-4 mr-2" />}
-                  Approve Payroll Sheet
+                  <FileText className="w-3.5 h-3.5 text-emerald-700 mr-2" />
+                  Disbursement Voucher (DV)
                 </button>
-              ) : (
-                <span className="text-xs font-bold text-amber-400/90 italic flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                  Awaiting Superintendent signature...
-                </span>
-              )}
-            </>
-          )}
-
-          {cutoffStatus === 'approved' && (
-            <>
-              <button
-                type="button"
-                onClick={handleExportPayrollSheet}
-                className="btn btn-outline border-blue-500 text-blue-200 hover:bg-blue-800 hover:text-white rounded-xl font-black text-xs uppercase tracking-wider px-5 h-12"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                General Payroll Sheet (PDF)
-              </button>
-              <button
-                type="button"
-                onClick={handleExportDV}
-                className="btn btn-outline border-blue-500 text-blue-200 hover:bg-blue-800 hover:text-white rounded-xl font-black text-xs uppercase tracking-wider px-5 h-12"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Disbursement Voucher (PDF)
-              </button>
-
-              {canRelease ? (
-                <button
-                  type="button"
-                  onClick={handleBulkRelease}
-                  disabled={bulkReleaseLoading}
-                  className={`btn btn-warning border-none hover:bg-amber-500 rounded-xl font-black text-xs uppercase tracking-wider px-6 h-12 shadow-lg shadow-amber-500/20 ${bulkReleaseLoading ? 'loading' : ''}`}
-                >
-                  {!bulkReleaseLoading && <Banknote className="w-4 h-4 mr-2" />}
-                  Release Salaries to ATM
-                </button>
-              ) : (
-                <span className="text-xs font-bold text-amber-400/90 italic flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                  Awaiting Accountant to send funds to bank...
-                </span>
-              )}
-            </>
-          )}
-
-          {cutoffStatus === 'released' && (
-            <div className="flex flex-wrap gap-3 w-full">
-              <div className="bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded-xl p-4 flex items-center gap-3 w-full">
-                <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider">Salaries released successfully!</p>
-                  <p className="text-[10px] text-emerald-400/70 mt-0.5">Vouchers and approved payroll sheets have been saved. Staff payslips are now available in their portals.</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleExportPayrollSheet}
-                className="btn btn-outline border-blue-800 text-blue-200 hover:bg-blue-800 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-wider"
-              >
-                <FileText className="w-4 h-4 mr-1" /> Payroll Summary (PDF)
-              </button>
-              <button
-                type="button"
-                onClick={handleExportDV}
-                className="btn btn-outline border-blue-800 text-blue-200 hover:bg-blue-800 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-wider"
-              >
-                <FileText className="w-4 h-4 mr-1" /> Voucher (PDF)
-              </button>
-            </div>
-          )}
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
-      {/* Generate / Action Form (Only visible to Accountant, during unprepared/draft cutoff status) */}
-      <div className="lg:col-span-4 space-y-6">
-        {canGenerate && (cutoffStatus === 'unprepared' || cutoffStatus === 'draft') ? (
-          <div className="bg-white rounded-xl border border-base-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-base-100 bg-base-50/50">
-               <h3 className="text-xs font-black uppercase tracking-wider text-blue-700">Calculate for Single Staff</h3>
-               <p className="text-[9px] font-semibold opacity-40 uppercase tracking-wide mt-0.5">Calculate draft salary for a single employee</p>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-45 ml-1">Staff Member</label>
-                <select
-                  className="select select-bordered w-full bg-base-50 border-base-200 hover:border-blue-400 transition-all rounded-xl text-xs font-bold h-12"
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                >
-                  <option value="">Select staff...</option>
-                  {employees?.map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} ({emp.position})</option>
-                  ))}
-                </select>
-              </div>
+      {/* Secondary Bar: Single Employee Recalculation (Compact, non-invasive) */}
+      {canGenerate && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs">
+          <div className="flex items-center gap-2 text-slate-600">
+            <Users className="w-4 h-4 text-slate-400 shrink-0" />
+            <span className="font-medium">Single Staff Recalculation:</span>
+            <span className="text-slate-400 text-[11px] hidden md:inline">
+              Re-run calculation for an individual personnel after DTR update
+            </span>
+          </div>
 
-              <button
-                type="button"
-                className={`btn btn-primary w-full rounded-xl h-12 uppercase font-black text-[10px] tracking-wider shadow-sm transition-all ${generateLoading ? 'loading' : ''}`}
-                onClick={handleGenerate}
-                disabled={generateLoading || !selectedEmployee}
-              >
-                {!generateLoading && <FileText className="w-4 h-4 mr-2" />}
-                Generate Draft
-              </button>
-            </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <select
+              value={selectedEmployee}
+              onChange={(e) => setSelectedEmployee(e.target.value)}
+              className="select select-bordered select-sm text-xs bg-slate-50 border-slate-200 text-slate-700 rounded-md flex-1 sm:w-64"
+            >
+              <option value="">Select individual staff member...</option>
+              {employees?.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.first_name} {emp.last_name} ({emp.position || 'Staff'})
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              disabled={!selectedEmployee || generateLoading}
+              onClick={handleGenerate}
+              className="btn btn-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-md text-xs font-semibold px-3 h-8"
+            >
+              {generateLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                'Recalculate'
+              )}
+            </button>
           </div>
-        ) : (
-          <div className="bg-white rounded-xl p-6 border border-base-200 shadow-sm space-y-4 text-center">
-            <div className="w-12 h-12 bg-base-100 rounded-full flex items-center justify-center mx-auto text-base-content/40">
-              <HelpCircle className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wider text-base-content">Status: {cutoffStatus}</p>
-              <p className="text-[9px] font-bold opacity-45 uppercase mt-1 leading-relaxed">
-                {cutoffStatus === 'released' && "All steps completed. This pay period is closed."}
-                {cutoffStatus === 'approved' && "General payroll is signed. Accountant needs to release the funds to bank accounts."}
-                {!canGenerate && "Only Accountants can calculate and release salaries."}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

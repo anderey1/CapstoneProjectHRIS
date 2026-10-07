@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
-import { ChevronRight, AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Send } from 'lucide-react';
 import { INITIAL_FILES } from './apply/applyConstants';
 import ApplicantInfoFields from './apply/ApplicantInfoFields';
 import DocumentSectionsAccordion from './apply/DocumentSectionsAccordion';
 import ApplicationSuccess from './apply/ApplicationSuccess';
 
+/**
+ * Official DepEd Division Job Application & Checklist Portal
+ * Conforms to DepEd Order No. 007, s. 2023 Guidelines.
+ */
 const Apply = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -87,7 +92,7 @@ const Apply = () => {
     });
   };
 
-  const isMandatoryComplete = !!(
+  const isMandatoryComplete = Boolean(
     uploadedFiles.letter_of_intent &&
     uploadedFiles.pds_file &&
     uploadedFiles.tor &&
@@ -128,9 +133,9 @@ const Apply = () => {
     } catch (err) {
       console.error(err);
       const errData = err.response?.data;
-      let msg = "We encountered an issue submitting your application.";
+      let msg = 'We encountered an issue submitting your application.';
       if (typeof errData === 'object' && errData !== null) {
-         msg = Object.entries(errData).map(([k, v]) => `${k}: ${v}`).join('\n');
+        msg = Object.entries(errData).map(([k, v]) => `${k}: ${v}`).join('\n');
       }
       setErrorMsg(msg);
     } finally {
@@ -143,75 +148,107 @@ const Apply = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f0f4f8] relative overflow-hidden py-12 px-6">
-      <div className="absolute top-0 left-0 w-full h-2 bg-[#0038A8]"></div>
-
-      <div className="w-full max-w-2xl bg-white shadow-lg border border-slate-200 rounded-xl overflow-hidden z-10 my-6">
-        <div className="p-8 sm:p-10 border-b border-base-100 bg-base-50/30 flex flex-col items-center text-center">
-          <div className="flex items-center gap-4 mb-6">
-            <img src="/Deped2.png" alt="DepEd Seal" className="w-14 h-14 drop-shadow-sm" />
-            <div className="w-px h-10 bg-base-300"></div>
-            <img src="/Deped logo.png" alt="DepEd Logo" className="h-10" />
+    <div className="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-900">
+      {/* DepEd Institutional Top Header Bar */}
+      <header className="w-full bg-[#0038A8] border-b-2 border-[#FCD116] px-4 py-3 shadow-sm">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/Deped2.png" alt="Republic of the Philippines Seal" className="w-9 h-9 object-contain" />
+            <div className="w-px h-7 bg-blue-300/40"></div>
+            <img src="/Deped logo.png" alt="Department of Education" className="h-8 object-contain" />
+            <div className="text-white">
+              <p className="text-xs font-bold uppercase tracking-wide leading-none">Republic of the Philippines</p>
+              <p className="text-[11px] font-semibold text-blue-100 uppercase tracking-tight mt-0.5">Department of Education • Division of Lucena City</p>
+            </div>
           </div>
-          
-          <h1 className="text-xl font-black text-[#0038A8] uppercase tracking-tight">Job Application Portal</h1>
-          <p className="text-[10px] font-black text-base-content/40 uppercase tracking-[0.2em] mt-1.5">
-            Division of Lucena City
-          </p>
+          <Link to="/login" className="text-xs text-blue-100 hover:text-white flex items-center gap-1">
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Login
+          </Link>
         </div>
+      </header>
 
-        <div className="p-8 sm:p-10">
-          {errorMsg && (
-            <div className="alert alert-error bg-error/10 border-error/20 text-error rounded-xl p-4 flex items-start gap-3 mb-6 animate-in fade-in slide-in-from-top-2">
-              <AlertCircle className="w-5 h-5 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-[10px] font-black uppercase tracking-widest mb-1">Submission Error</p>
-                <p className="text-xs font-bold opacity-80 whitespace-pre-wrap">{errorMsg}</p>
+      {/* Main Form Body */}
+      <main className="flex-1 flex items-center justify-center p-4 py-8">
+        <div className="w-full max-w-3xl bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
+          {/* Form Header */}
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h1 className="text-base font-bold uppercase tracking-tight text-slate-900">
+                Official Job Application & 201-Checklist Submission
+              </h1>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Pursuant to DepEd Order No. 007, s. 2023 (Comparative Assessment Guidelines)
+              </p>
+            </div>
+            <span className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 text-[#0038A8] text-[11px] font-semibold uppercase rounded self-start sm:self-auto">
+              Public Portal
+            </span>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            {errorMsg && (
+              <div role="alert" className="mb-6 bg-red-50 border border-red-300 p-3.5 rounded flex items-start gap-2.5 text-xs text-red-800">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span className="whitespace-pre-wrap">{errorMsg}</span>
               </div>
-            </div>
-          )}
+            )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <ApplicantInfoFields register={register} errors={errors} />
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Applicant Personal & Contact Info Fields */}
+              <div>
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
+                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-[10px] font-bold flex items-center justify-center font-mono">1</span>
+                  <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">
+                    Applicant Information & Position Applied
+                  </h2>
+                </div>
+                <ApplicantInfoFields register={register} errors={errors} />
+              </div>
 
-            <DocumentSectionsAccordion
-              collapsedSections={collapsedSections}
-              toggleSection={toggleSection}
-              uploadedFiles={uploadedFiles}
-              fileErrors={fileErrors}
-              handleFileChange={handleFileChange}
-              handleFileRemove={handleFileRemove}
-            />
+              {/* 201-Document Upload Accordion */}
+              <div>
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
+                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-[10px] font-bold flex items-center justify-center font-mono">2</span>
+                  <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">
+                    Documentary Requirements & Compliance Checklist
+                  </h2>
+                </div>
+                <DocumentSectionsAccordion
+                  collapsedSections={collapsedSections}
+                  toggleSection={toggleSection}
+                  uploadedFiles={uploadedFiles}
+                  fileErrors={fileErrors}
+                  handleFileChange={handleFileChange}
+                  handleFileRemove={handleFileRemove}
+                />
+              </div>
 
-            <div className="pt-5 border-t border-base-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <a 
-                href="/login" 
-                className="text-xs font-bold text-base-content/40 hover:text-[#0038A8] transition-colors flex items-center gap-1.5 order-2 sm:order-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Login
-              </a>
-              <button
-                type="submit"
-                disabled={!isMandatoryComplete || isLoading}
-                className={`btn bg-[#0038A8] hover:bg-[#002d86] active:scale-[0.97] transition-[transform,background-color,box-shadow] duration-150 text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest px-8 h-12 w-full sm:w-auto order-1 sm:order-2 ${(!isMandatoryComplete || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {isLoading ? "Submitting Application..." : !isMandatoryComplete ? "Incomplete Documents" : (
-                  <>
-                    Submit Application
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <Link 
+                  to="/login" 
+                  className="text-xs font-semibold text-slate-600 hover:text-[#0038A8] flex items-center gap-1.5"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Login
+                </Link>
+                <button
+                  type="submit"
+                  disabled={!isMandatoryComplete || isLoading}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                  {isLoading ? 'Submitting Application...' : !isMandatoryComplete ? 'Upload Mandatory Documents (*)' : 'Submit Official Application'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-      
-      <div className="text-center mt-4 opacity-40">
-        <p className="text-[9px] font-black uppercase tracking-widest">
-          © 2026 DepEd Lucena City Division • Secure Application Submission
-        </p>
-      </div>
+      </main>
+
+      {/* Institutional Footer */}
+      <footer className="w-full bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
+        <p>Department of Education — Schools Division of Lucena City • Human Resource Information System</p>
+      </footer>
     </div>
   );
 };

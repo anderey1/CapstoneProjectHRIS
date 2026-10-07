@@ -214,39 +214,39 @@ const StaffDTRManagement = () => {
               <span className="loading loading-spinner loading-lg"></span>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-              <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-300 overflow-hidden">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">
                     {selectedEmployee?.first_name} {selectedEmployee?.last_name}
                   </h3>
                   <p className="text-xs text-slate-500 font-mono">
-                    ID #{selectedEmployee?.id} • Period: {selectedMonth}
+                    Plantilla ID #{selectedEmployee?.id} • Period: {selectedMonth}
                   </p>
                 </div>
-                <span className="badge badge-primary badge-outline text-xs">
-                  {records.length} records recorded
+                <span className="px-2.5 py-1 bg-blue-50 border border-blue-200 text-[#0038A8] text-xs font-semibold rounded font-mono tabular-nums">
+                  {records.length} DTR Entries Recorded
                 </span>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="table table-sm w-full text-xs">
+                <table className="w-full text-xs text-left border-collapse">
                   <thead>
-                    <tr className="bg-base-50/50 border-b border-base-200 uppercase text-[10px] tracking-widest font-black opacity-50">
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3 text-center">AM Arrival</th>
-                      <th className="px-4 py-3 text-center">AM Departure</th>
-                      <th className="px-4 py-3 text-center">PM Arrival</th>
-                      <th className="px-4 py-3 text-center">PM Departure</th>
-                      <th className="px-4 py-3 text-center">Undertime</th>
-                      <th className="px-4 py-3 text-right">Status</th>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+                      <th className="px-4 py-3">Calendar Date</th>
+                      <th className="px-4 py-3 text-center">A.M. Arrival</th>
+                      <th className="px-4 py-3 text-center">A.M. Departure</th>
+                      <th className="px-4 py-3 text-center">P.M. Arrival</th>
+                      <th className="px-4 py-3 text-center">P.M. Departure</th>
+                      <th className="px-4 py-3 text-center">Undertime (Mins)</th>
+                      <th className="px-4 py-3 text-right">Verification Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-base-100">
+                  <tbody className="divide-y divide-slate-200">
                     {records.length > 0 ? (
                       records.map((row) => (
-                        <tr key={row.id} className="hover:bg-base-50/30 transition-colors">
-                          <td className="px-4 py-3 font-semibold text-slate-800">
+                        <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="px-4 py-3 font-semibold text-slate-900">
                             {row.date ? new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' }) : '---'}
                           </td>
                           <td className="px-4 py-3 text-center font-mono">{formatTime(row.time_in)}</td>

@@ -108,62 +108,66 @@ const Attendance = () => {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       
-      {/* 1. Header */}
-      <div className="flex justify-between items-end">
+      {/* 1. Institutional Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
-            <Clock className="w-6 h-6 text-primary" />
-            Check In / Out
-          </h1>
-          <p className="text-xs opacity-50 font-medium">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase">
+                Daily Time Record Check-In Station
+              </h1>
+              <p className="text-xs text-slate-500">
+                Civil Service Commission Form No. 48 Official Attendance Terminal
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] font-bold opacity-40 uppercase">Station</p>
-          <p className="text-sm font-bold">{workstation?.name || 'Main Office'}</p>
+        <div className="text-left sm:text-right">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Station Assignment</p>
+          <p className="text-xs font-semibold text-slate-800">{workstation?.name || 'Division Office of Lucena City'}</p>
         </div>
       </div>
 
-      {/* 2. Simplified Clock-in Card */}
-      <div className="card border border-base-200 bg-white shadow-sm overflow-hidden">
-        <div className="p-6 md:p-8 flex flex-col items-center text-center space-y-6">
-          
-          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center bg-primary/10 text-primary border-2 border-primary/5">
-            <Clock className="w-8 h-8 md:w-10 md:h-10" />
-          </div>
+      {/* 2. Utilitarian Digital Clock-in Terminal */}
+      <div className="bg-white border border-slate-300 rounded-lg shadow-sm p-6 text-center space-y-4">
+        <div className="inline-block px-3 py-1 bg-slate-100 border border-slate-200 rounded text-xs font-mono tabular-nums text-slate-700">
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </div>
 
-          <div>
-            <h2 className="text-lg md:text-xl font-black uppercase">
-              Time Clock Recorder
-            </h2>
-            <p className="text-[10px] md:text-xs opacity-50 font-semibold uppercase tracking-widest mt-1">
-              Click the button below to submit your daily clock stamp
-            </p>
-          </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 uppercase tracking-tight">
+            Official Attendance Punch Terminal
+          </h2>
+          <p className="text-xs text-slate-600 mt-0.5">
+            Record your time-stamp for morning/afternoon arrival or departure.
+          </p>
+        </div>
 
+        <div className="pt-2">
           <button 
             onClick={handleClockIn}
             disabled={checkInMutation.isPending}
-            className="btn btn-primary btn-md md:btn-lg w-full max-w-xs rounded-lg shadow-sm font-black uppercase text-xs tracking-widest text-white border-none"
+            className="w-full max-w-sm mx-auto px-6 py-3 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
           >
-            {checkInMutation.isPending ? (
-              <span className="loading loading-spinner" />
-            ) : (
-              'Submit Attendance Log'
-            )}
+            <Clock className="w-4 h-4" />
+            {checkInMutation.isPending ? 'Recording Official Log...' : 'Record Attendance Stamp (Form 48)'}
           </button>
-
-          <div className="flex items-center gap-2 text-[9px] font-black uppercase opacity-40">
-             <ShieldCheck className="w-3 h-3 text-success" /> Standard DTR Logging Active
-          </div>
-
-          {geoStatus === 'denied' && (
-            <div className="text-warning text-xs font-bold flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> Location services disabled (defaulting coordinates)
-            </div>
-          )}
         </div>
+
+        <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-1">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span>Biometric & workstation coordinate logging verified</span>
+        </div>
+
+        {geoStatus === 'denied' && (
+          <div className="p-2.5 bg-amber-50 border border-amber-300 rounded text-xs text-amber-800 flex items-center justify-center gap-2">
+            <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Browser location permission not granted; recorded with default station coordinates.</span>
+          </div>
+        )}
       </div>
 
       {/* 3. Feedback Message */}

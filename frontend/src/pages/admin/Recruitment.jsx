@@ -99,123 +99,247 @@ const Recruitment = () => {
     if (window.confirm('Remove this applicant record?')) deleteMutation.mutate(id);
   };
 
-  const filteredApplicants = applicants.filter(a => 
-    `${a.first_name} ${a.middle_name || ''} ${a.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.position_applied.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [activeStage, setActiveStage] = useState('all');
+
+  const filteredApplicants = applicants.filter(a => {
+    const fullName = `${a.first_name} ${a.middle_name || ''} ${a.last_name}`.toLowerCase();
+    const position = (a.position_applied || '').toLowerCase();
+    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) || position.includes(searchTerm.toLowerCase());
+    const matchesStage = activeStage === 'all' || a.status === activeStage;
+    return matchesSearch && matchesStage;
+  });
+
+  const stageCounts = COLUMNS.reduce((acc, col) => {
+    acc[col.id] = applicants.filter(a => a.status === col.id).length;
+    return acc;
+  }, {});
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700 h-[calc(100vh-100px)] flex flex-col">
-
-      {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 shrink-0">
-        <div className="space-y-1">
+    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
+      {/* Institutional Page Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-5">
+        <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <Layout className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Recruitment Board</h1>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+                Comparative Assessment Result (CAR) Ledger
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                DepEd Order No. 007, s. 2023 • Merit Selection Plan & Personnel Evaluation
+              </p>
+            </div>
           </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">DepEd Merit Selection Plan (MSP) Portal</p>
         </div>
 
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-30" />
-             <input 
-                type="text" 
-                placeholder="Search candidates..." 
-                className="input input-sm input-bordered w-full pl-9 bg-white rounded-lg text-xs"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-             />
-          </div>
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <button
-            className="btn btn-primary btn-sm rounded-lg shadow-lg shadow-primary/20 px-6 font-black uppercase tracking-widest text-[10px]"
+            className="px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center gap-1.5 transition-colors"
             onClick={() => setShowAddModal(true)}
           >
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            New Applicant
+            <Plus className="w-4 h-4" />
+            Encode Applicant Profile
           </button>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex-1 flex items-center justify-center text-primary"><span className="loading loading-spinner loading-lg" /></div>
-      ) : (
-        <div className="flex-1 overflow-x-auto pb-8 flex gap-6 scrollbar-thin">
-          {COLUMNS.map((column) => (
-            <div key={column.id} className="flex-shrink-0 w-80 flex flex-col gap-4">
+      {/* 5-Metric Portfolio Summary Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Applicants</p>
+          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{applicants.length}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">All candidate records</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Initial Review</p>
+          <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{stageCounts.initial_evaluation || 0}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Document screening</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Comparative Assessment</p>
+          <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{stageCounts.comparative_assessment || 0}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Rubric points evaluation</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Ready for Hiring</p>
+          <p className="text-xl font-bold text-blue-700 font-mono tabular-nums mt-1">{stageCounts.appointment_proposed || 0}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Endorsed to SDS</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hired / Appointed</p>
+          <p className="text-xl font-bold text-emerald-700 font-mono tabular-nums mt-1">{stageCounts.hired || 0}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Plantilla deployed</p>
+        </div>
+      </div>
 
-              {/* Column Header */}
-              <div className={`p-4 rounded-lg border ${column.color} flex items-center justify-between shadow-sm bg-white/80 backdrop-blur-md sticky top-0 z-10`}>
-                <span className="font-black uppercase tracking-widest text-[10px]">{column.label}</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/50 border border-current/10">
-                   {filteredApplicants.filter(a => a.status === column.id).length}
-                </span>
-              </div>
+      {/* Stage Selector Tabs & Search Bar */}
+      <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-300 space-y-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search candidate by name or position applied..." 
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="text-xs text-slate-500 shrink-0 font-medium">
+            Showing <span className="font-mono tabular-nums font-semibold text-slate-800">{filteredApplicants.length}</span> of <span className="font-mono tabular-nums text-slate-800">{applicants.length}</span> candidates
+          </div>
+        </div>
 
-              {/* Column Body */}
-              <div className="flex-1 flex flex-col gap-4 min-h-[500px] bg-base-200/30 rounded-xl p-3 border border-dashed border-base-300">
-                {filteredApplicants.filter(a => a.status === column.id).map((applicant) => (
-                  <div 
-                    key={applicant.id} 
-                    className="bg-white border border-base-200 shadow-sm hover:shadow-md transition-all group rounded-xl overflow-hidden cursor-pointer"
-                    onClick={() => {
-                        setSelectedApplicant(applicant);
-                        setIsEditingScores(false);
-                    }}
-                  >
-                    <div className="p-5 space-y-4">
-
-                      <div className="flex justify-between items-start">
-                        <div className="w-10 h-10 rounded-lg bg-base-50 border border-base-200 flex items-center justify-center text-xs font-black text-primary group-hover:bg-primary group-hover:text-white transition-colors uppercase">
-                          {applicant.first_name[0]}{applicant.last_name[0]}
-                        </div>
-                        <div className="flex items-center gap-1">
-                           {applicant.is_notified && <CheckCircle2 className="w-3.5 h-3.5 text-success opacity-40" title="Notified" />}
-                           <button
-                             onClick={(e) => { e.stopPropagation(); handleDelete(applicant.id); }}
-                             className="btn btn-ghost btn-xs text-error btn-circle opacity-0 group-hover:opacity-100 transition-opacity"
-                           >
-                             <Trash2 className="w-3 h-3" />
-                           </button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="font-bold text-sm text-base-content leading-tight group-hover:text-primary transition-colors">{applicant.first_name} {applicant.middle_name ? applicant.middle_name + ' ' : ''}{applicant.last_name}</h3>
-                        <p className="text-[10px] font-black opacity-30 uppercase tracking-tight mt-0.5">{applicant.position_applied}</p>
-                      </div>
-
-                      <div className="flex items-center justify-between py-2 border-y border-base-50">
-                        <div className="flex items-center gap-1 text-[9px] font-black uppercase text-primary">
-                           <Star className="w-3 h-3 fill-current" />
-                           {applicant.total_score} pts
-                        </div>
-                        <div className="text-[9px] font-bold opacity-30 uppercase">
-                           {new Date(applicant.date_applied).toLocaleDateString()}
-                        </div>
-                      </div>
-                      
-                      <button className="btn btn-ghost btn-block btn-xs h-7 text-[9px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 bg-base-50 rounded-md">
-                         Review Details
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                {filteredApplicants.filter(a => a.status === column.id).length === 0 && (
-                  <div className="flex-1 flex flex-col items-center justify-center opacity-10 py-10">
-                    <User className="w-8 h-8 mb-2" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">No candidates</span>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Stage Tabs */}
+        <div className="flex flex-wrap gap-1.5 border-t border-slate-200 pt-2.5">
+          <button
+            onClick={() => setActiveStage('all')}
+            className={`px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors ${
+              activeStage === 'all'
+                ? 'bg-[#0038A8] text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            All Stages ({applicants.length})
+          </button>
+          {COLUMNS.map(col => (
+            <button
+              key={col.id}
+              onClick={() => setActiveStage(col.id)}
+              className={`px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors flex items-center gap-1.5 ${
+                activeStage === col.id
+                  ? 'bg-[#0038A8] text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <span>{col.label}</span>
+              <span className={`px-1 py-0.2 rounded text-[10px] font-mono tabular-nums ${
+                activeStage === col.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {stageCounts[col.id] || 0}
+              </span>
+            </button>
           ))}
         </div>
-      )}
+      </div>
+
+      {/* High-Density CAR Evaluation Ledger Table */}
+      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="p-12 text-center text-primary">
+            <span className="loading loading-spinner loading-lg text-[#0038A8]" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+                  <th className="px-4 py-3">Candidate</th>
+                  <th className="px-4 py-3">Position Applied</th>
+                  <th className="px-4 py-3 text-right">Education</th>
+                  <th className="px-4 py-3 text-right">Training</th>
+                  <th className="px-4 py-3 text-right">Experience</th>
+                  <th className="px-4 py-3 text-right">Demo / Exam</th>
+                  <th className="px-4 py-3 text-right">Interview</th>
+                  <th className="px-4 py-3 text-right">Total Score</th>
+                  <th className="px-4 py-3">Pipeline Status</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filteredApplicants.length > 0 ? (
+                  filteredApplicants.map((applicant) => (
+                    <tr 
+                      key={applicant.id} 
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                      onClick={() => {
+                        setSelectedApplicant(applicant);
+                        setIsEditingScores(false);
+                      }}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-slate-900 leading-tight">
+                          {applicant.first_name} {applicant.middle_name ? `${applicant.middle_name} ` : ''}{applicant.last_name}
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                          {applicant.email}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-slate-800">
+                        {applicant.position_applied}
+                        <div className="text-[10px] text-slate-500">
+                          Applied: {new Date(applicant.date_applied).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
+                        {applicant.education_score || 0}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
+                        {applicant.training_score || 0}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
+                        {applicant.experience_score || 0}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
+                        {((Number(applicant.demo_teaching_score) || 0) + (Number(applicant.exam_score) || 0)).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
+                        {applicant.interview_score || 0}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums font-bold text-[#0038A8]">
+                        {applicant.total_score || 0}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-tight border ${
+                          applicant.status === 'hired'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            : applicant.status === 'rejected' || applicant.status === 'disqualified'
+                            ? 'bg-red-50 text-red-800 border-red-300'
+                            : applicant.status === 'appointment_proposed'
+                            ? 'bg-blue-50 text-blue-800 border-blue-300'
+                            : 'bg-amber-50 text-amber-800 border-amber-300'
+                        }`}>
+                          {COLUMNS.find(c => c.id === applicant.status)?.label || applicant.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedApplicant(applicant);
+                              setIsEditingScores(false);
+                            }}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold"
+                          >
+                            Review
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(applicant.id)}
+                            className="p-1 text-slate-400 hover:text-red-600 rounded"
+                            title="Remove applicant"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="10" className="px-4 py-12 text-center text-slate-400 italic">
+                      No candidate records found under this evaluation stage.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
       {/* Add Applicant Modal */}
       {showAddModal && <AddApplicantModal onClose={() => setShowAddModal(false)} />}
 

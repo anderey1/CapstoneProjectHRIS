@@ -109,64 +109,107 @@ const Employees = () => {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex justify-center h-[60vh] items-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+      <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
+        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
       </div>
     );
   }
 
   const canManageRegistrations = can(PERMISSIONS.MANAGE_EMPLOYEES);
 
+  const teachingCount = (employees || []).filter(e => {
+    const role = e.user_details?.role || e.role;
+    return role === 'TEACHING';
+  }).length;
+
+  const nonTeachingCount = (employees || []).filter(e => {
+    const role = e.user_details?.role || e.role;
+    return role && role !== 'TEACHING';
+  }).length;
+
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
+      {/* Institutional Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8]">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <Users className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Personnel Directory</h1>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+                Division Personnel Master Ledger
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Official DepEd Plantilla & Personnel Directory • Schools Division of Lucena City
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Official registry of teaching, non-teaching, and administrative personnel</p>
         </div>
 
-        {can(PERMISSIONS.MANAGE_EMPLOYEES) && activeTab === 'active' ? (
-          <button
-            onClick={() => setActiveModal('form')}
-            className="btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-semibold px-4 h-9 min-h-0 shadow-sm"
-          >
-            <UserPlus className="w-4 h-4 mr-1.5" />
-            Add Employee
-          </button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {can(PERMISSIONS.MANAGE_EMPLOYEES) && activeTab === 'active' && (
+            <button
+              onClick={() => setActiveModal('form')}
+              className="px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center gap-1.5 transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Add Plantilla Employee
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Tabs Selection */}
+      {/* 4-Metric Portfolio Status Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Plantilla Roster</p>
+          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{(employees || []).length}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">All division records</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Teaching Personnel</p>
+          <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{teachingCount}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">Instructional cadre</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Non-Teaching Staff</p>
+          <p className="text-xl font-bold text-slate-700 font-mono tabular-nums mt-1">{nonTeachingCount}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">Admin & support</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pending Activations</p>
+          <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{(pendingRegistrations || []).length}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">Awaiting HR review</p>
+        </div>
+      </div>
+
+      {/* Institutional Tab Navigation */}
       {canManageRegistrations && (
         <div className="flex border-b border-slate-200 gap-6">
           <button
             type="button"
             onClick={() => setActiveTab('active')}
-            className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+            className={`pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
               activeTab === 'active'
                 ? 'border-[#0038A8] text-[#0038A8]'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Active Directory
+            Active Personnel Directory ({filteredEmployees.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('pending')}
-            className={`pb-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer relative ${
+            className={`pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer relative ${
               activeTab === 'pending'
                 ? 'border-[#0038A8] text-[#0038A8]'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Pending Approvals
+            Pending Account Activations
             {pendingRegistrations && pendingRegistrations.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 bg-rose-600 text-white text-[10px] font-bold rounded-full inline-flex items-center justify-center min-w-[16px] h-4">
+              <span className="ml-1.5 px-1.5 py-0.2 bg-amber-600 text-white text-[10px] font-bold rounded-full font-mono tabular-nums inline-flex items-center justify-center min-w-[16px] h-4">
                 {pendingRegistrations.length}
               </span>
             )}
@@ -176,14 +219,14 @@ const Employees = () => {
 
       {activeTab === 'active' ? (
         <>
-          {/* Filters Bar */}
-          <div className="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex flex-col lg:flex-row gap-3 items-center">
+          {/* Institutional Filters & Export Bar */}
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-300 flex flex-col lg:flex-row gap-3 items-center justify-between">
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by personnel name or department..."
-                className="input input-sm w-full pl-10 bg-slate-50 focus:bg-white border-slate-200 focus:border-[#0038A8] rounded-lg text-xs text-slate-800 transition-colors h-9"
+                placeholder="Search by personnel name, plantilla position, or station..."
+                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -193,37 +236,37 @@ const Employees = () => {
               <div className="relative flex-1 lg:flex-none">
                 <button
                   onClick={() => setShowFilters((prev) => !prev)}
-                  className={`btn btn-sm h-9 min-h-0 rounded-lg text-xs font-medium px-4 border ${
+                  className={`px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider border transition-colors flex items-center gap-1.5 ${
                     appliedRole || appliedArea 
-                      ? 'bg-blue-50 text-[#0038A8] border-blue-200' 
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      ? 'bg-blue-50 text-[#0038A8] border-blue-300' 
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                   }`}
                 >
-                  <Filter className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
-                  Filters {(appliedRole || appliedArea) ? '(Active)' : ''}
+                  <Filter className="w-3.5 h-3.5 text-slate-500" />
+                  Filters {(appliedRole || appliedArea) ? '(Filtered)' : ''}
                 </button>
 
                 {showFilters && (
-                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-xl space-y-3.5">
+                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-lg border border-slate-300 bg-white p-4 shadow-lg space-y-3">
                     <div>
-                      <label className="text-xs font-medium text-slate-600 block mb-1">Personnel Role</label>
+                      <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">Personnel Classification</label>
                       <select
                         value={selectedRole}
                         onChange={(e) => setSelectedRole(e.target.value)}
-                        className="select select-bordered select-sm w-full text-xs"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
                       >
-                        <option value="">All Roles</option>
+                        <option value="">All Classifications</option>
                         {roleOptions.map((role) => (
                           <option key={role} value={role}>{role}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-600 block mb-1">Station / District</label>
+                      <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">Department / Station</label>
                       <select
                         value={selectedArea}
                         onChange={(e) => setSelectedArea(e.target.value)}
-                        className="select select-bordered select-sm w-full text-xs"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
                       >
                         <option value="">All Stations</option>
                         {areaOptions.map((area) => (
@@ -231,20 +274,21 @@ const Employees = () => {
                         ))}
                       </select>
                     </div>
-                    <div className="flex gap-2 pt-1 border-t border-slate-100">
-                      <button onClick={applyFilters} className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-sm flex-1 text-xs rounded-lg">Apply</button>
-                      <button onClick={resetFilters} className="btn btn-ghost btn-sm text-xs rounded-lg text-slate-600">Reset</button>
+                    <div className="flex gap-2 pt-2 border-t border-slate-200">
+                      <button onClick={applyFilters} className="px-3 py-1.5 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase rounded flex-1">Apply Filters</button>
+                      <button onClick={resetFilters} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold uppercase rounded">Reset</button>
                     </div>
                   </div>
                 )}
               </div>
 
               <button
-                onClick={() => exportToCSV(filteredEmployees, 'Staff_List')}
-                className="btn btn-sm h-9 min-h-0 bg-white text-slate-700 border-slate-200 hover:bg-slate-50 flex-1 lg:flex-none rounded-lg text-xs font-medium px-4"
+                onClick={() => exportToCSV(filteredEmployees, 'Plantilla_Ledger_DBM_Form_B')}
+                className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                title="Export DBM Form B / Plantilla Personnel CSV"
               >
-                <FileDown className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
-                Export CSV
+                <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                Export Plantilla (DBM Form B)
               </button>
             </div>
           </div>

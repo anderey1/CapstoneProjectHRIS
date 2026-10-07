@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, CalendarRange } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { 
   useLeaves, 
@@ -10,8 +10,8 @@ import {
 } from '../../features/leaves';
 
 /**
- * MyLeaves (Employee View) - CSC Form No. 6 Compliant Orchestrator
- * Clean feature-hook driven view with zero data-fetching boilerplate.
+ * MyLeaves (Employee View)
+ * CSC Form No. 6 Self-Service Portal & Supervisory Endorsements
  */
 const MyLeaves = () => {
   const { user } = useAuth();
@@ -48,12 +48,14 @@ const MyLeaves = () => {
       await applyLeave(formData);
       setIsModalOpen(false);
     } catch {
-      // Error handled by hook's toast
+      // Error handled by hook toast
     }
   };
 
   const isSupervisorOrManager = 
     ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor;
+
+  const pendingSubordinateCount = teamLeaves.filter(l => ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status)).length;
 
   if (isLoading) {
     return (
@@ -64,19 +66,23 @@ const MyLeaves = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-              <CalendarRange className="w-5 h-5" />
-            </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">
-              {activeMainTab === 'mine' ? 'My Leaves' : 'Leave Approvals'}
-            </h1>
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+              DepEd SDO Lucena City
+            </span>
+            <span className="text-[11px] font-mono text-slate-500">CSC Form No. 6 (Revised 2020)</span>
           </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">
-            {activeMainTab === 'mine' ? 'CSC Form No. 6 Compliant' : 'CSC Form No. 6 Review Portal'}
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            {activeMainTab === 'mine' ? 'Application for Leave Portal' : 'Subordinate Leave Endorsements'}
+          </h1>
+          <p className="text-xs text-slate-600 mt-0.5">
+            {activeMainTab === 'mine' 
+              ? 'Employee self-service leave applications, credit balances, and docket history.' 
+              : 'Review and supervisory endorsement queue for division personnel.'}
           </p>
         </div>
         
@@ -90,44 +96,53 @@ const MyLeaves = () => {
               setIsWithinPhilippines(true);
               setIsModalOpen(true);
             }} 
-            className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-8"
+            className="btn btn-sm bg-[#0038a8] text-white hover:bg-[#002b80] rounded font-semibold text-xs px-4 h-9 shadow-xs border-none flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            New Application
+            <Plus className="w-4 h-4" />
+            File CSC Form No. 6
           </button>
         )}
       </div>
 
       {/* Main Tab Toggle for Supervisors/Managers */}
       {isSupervisorOrManager && (
-         <div className="flex gap-4 border-b border-base-200">
-            <button 
-              type="button"
-              onClick={() => setActiveMainTab('mine')}
-              className={`pb-2 px-2 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${
-                activeMainTab === 'mine' ? 'border-primary text-primary' : 'border-transparent opacity-40 hover:opacity-100'
-              }`}
-            >
-              My Applications
-            </button>
-            <button 
-              type="button"
-              onClick={() => setActiveMainTab('approvals')}
-              className={`pb-2 px-2 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${
-                activeMainTab === 'approvals' ? 'border-primary text-primary' : 'border-transparent opacity-40 hover:opacity-100'
-              }`}
-            >
-              Team Approvals ({teamLeaves.filter(l => ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status)).length} Pending)
-            </button>
-         </div>
+        <div className="inline-flex rounded border border-slate-200 p-0.5 bg-slate-50">
+          <button 
+            type="button"
+            onClick={() => setActiveMainTab('mine')}
+            className={`px-4 py-1.5 text-xs font-semibold rounded transition-colors ${
+              activeMainTab === 'mine' 
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80 font-bold' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            My Applications & Credits
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveMainTab('approvals')}
+            className={`px-4 py-1.5 text-xs font-semibold rounded transition-colors flex items-center gap-1.5 ${
+              activeMainTab === 'approvals' 
+                ? 'bg-white text-[#0038a8] shadow-xs border border-slate-200/80 font-bold' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>Team Endorsement Queue</span>
+            {pendingSubordinateCount > 0 && (
+              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-1.5 py-0.2 rounded font-mono">
+                {pendingSubordinateCount}
+              </span>
+            )}
+          </button>
+        </div>
       )}
 
       {/* 1. MY APPLICATIONS VIEW */}
       {activeMainTab === 'mine' && (
-        <>
+        <div className="space-y-6">
           <LeaveBalanceCards employee={employee} />
           <LeaveHistorySection leaves={myLeaves} />
-        </>
+        </div>
       )}
 
       {/* 2. TEAM APPROVALS VIEW */}

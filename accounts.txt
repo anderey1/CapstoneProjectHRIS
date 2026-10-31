@@ -1,0 +1,15 @@
+
+   Role                                                │ Username                                           │ Email
+  ─────────────────────────────────────────────────────┼────────────────────────────────────────────────────┼────────────────────────────────────────────────────
+   HR                                                  │ hr_lucena                                          │ hr.lucena@deped.gov.ph
+   ACCOUNTANT                                          │ accountant                                         │ finance.lucena@deped.gov.ph
+   SUPERINTENDENT                                      │ superintendent                                     │ sds.lucena@deped.gov.ph
+   ADMINISTRATIVE                                      │ admin                                              │ admin@deped.gov.ph
+   TEACHING                                            │ maria.santos                                       │ maria.santos@deped.gov.ph
+   NON_TEACHING                                        │ roberto.navarro                                    │ roberto.navarro@deped.gov.ph
+
+
+  1. Teaching Staff:
+  Employee -> Supervisor (pending_supervisor) -> HR (pending_hr) -> Superintendent (approved)
+  2. Non-Teaching / Administrative Staff:
+  Employee -> HR (pending_hr) -> Superintendent (approved)

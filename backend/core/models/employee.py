@@ -2,10 +2,6 @@
 from django.db import models
 # pyrefly: ignore [missing-import]
 from django.contrib.auth.models import AbstractUser
-
-# -------------------------
-# ROLES
-# -------------------------
 class Role(models.TextChoices):
     # Core System Roles
     HR = 'HR', 'HR Staff'
@@ -18,9 +14,9 @@ class Role(models.TextChoices):
     ADMINISTRATIVE = 'ADMINISTRATIVE', 'Administrative Staff'
 
 
-# -------------------------
-# USER MODEL
-# -------------------------
+MANAGEMENT_ROLES = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
+
+
 class User(AbstractUser):
     role = models.CharField(
         max_length=20,
@@ -28,14 +24,15 @@ class User(AbstractUser):
         default=Role.TEACHING
     )
 
+    @property
+    def is_management(self):
+        return self.is_superuser or self.role in MANAGEMENT_ROLES
+
 
     def __str__(self):
         return f"{self.username} ({self.role})"
 
 
-# -------------------------
-# SCHOOL / OFFICE LOCATION
-# -------------------------
 class School(models.Model):
     name = models.CharField(max_length=100)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
@@ -46,9 +43,6 @@ class School(models.Model):
         return self.name
 
 
-# -------------------------
-# MANAGERS
-# -------------------------
 class EmployeeManager(models.Manager):
     def create_with_user(self, user_data, employee_data):
         """
@@ -65,14 +59,12 @@ class EmployeeManager(models.Manager):
                 password=user_data['password'],
                 role=user_data.get('role', Role.TEACHING),
                 first_name=employee_data.get('first_name', ''),
-                last_name=employee_data.get('last_name', '')
+                last_name=employee_data.get('last_name', ''),
+                is_active=user_data.get('is_active', True)
             )
             employee = self.create(user=user, **employee_data)
             return employee
 
-# -------------------------
-# SALARY GRADE
-# -------------------------
 class SalaryGrade(models.Model):
     """
     Standardized Salary Grade based on SSL (Salary Standardization Law).
@@ -89,9 +81,6 @@ class SalaryGrade(models.Model):
         return f"SG {self.grade}{label_str} (₱{self.amount:,.2f})"
 
 
-# -------------------------
-# EMPLOYEE
-# -------------------------
 class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile', null=True, blank=True)
     objects = EmployeeManager()
@@ -144,9 +133,6 @@ class Employee(models.Model):
     bank_name = models.CharField(max_length=100, default="Land Bank of the Philippines")
     account_number = models.CharField(max_length=20, null=True, blank=True)
 
-    # Biometric Data (JSON string of 128-float array)
-    face_descriptor = models.TextField(null=True, blank=True)
-
     # Leave Balances (Standard CSC)
     vacation_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
     sick_leave_balance = models.DecimalField(max_digits=5, decimal_places=3, default=15.0)
@@ -158,6 +144,45 @@ class Employee(models.Model):
     @property
     def leave_balance(self):
         return self.vacation_leave_balance + self.sick_leave_balance
+
+    def deduct_leave(self, leave_type: str, days):
+        """
+        Deducts leave credits according to standard CSC rules:
+        - sick leave: consumes sick balance first; remaining spills to vacation balance.
+        - vacation / forced leave: consumes vacation balance only.
+        - statutory special leaves: granted with pay, 0 balance deducted.
+        Returns the number of days deducted.
+        """
+        from decimal import Decimal
+        from django.core.exceptions import ValidationError
+        
+        duration = Decimal(str(days))
+        days_deducted = Decimal('0.0')
+
+        if leave_type == 'sick':
+            total_balance = self.sick_leave_balance + self.vacation_leave_balance
+            if total_balance < duration:
+                raise ValidationError("Insufficient leave balance.")
+            if self.sick_leave_balance >= duration:
+                self.sick_leave_balance -= duration
+            else:
+                remaining = duration - self.sick_leave_balance
+                self.sick_leave_balance = Decimal('0.0')
+                self.vacation_leave_balance -= remaining
+            days_deducted = duration
+            self.save(update_fields=['sick_leave_balance', 'vacation_leave_balance'])
+
+        elif leave_type in ['vacation', 'forced']:
+            if self.vacation_leave_balance < duration:
+                raise ValidationError(f"Insufficient vacation balance. Employee only has {self.vacation_leave_balance} days left.")
+            self.vacation_leave_balance -= duration
+            days_deducted = duration
+            self.save(update_fields=['vacation_leave_balance'])
+
+        else:
+            days_deducted = Decimal('0.0')
+
+        return days_deducted
 
     def save(self, *args, **kwargs):
         # 1. If position is provided, try to auto-match the Salary Grade
@@ -174,8 +199,26 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
-     
-        super().save(*args, **kwargs)
+
+
+class EmployeeDocument(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='documents')
+    document_type = models.CharField(max_length=100)
+    file = models.FileField(upload_to='employee_documents/')
+    file_name = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    verified = models.BooleanField(default=False)
+    verified_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_documents'
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.employee} - {self.document_type}"

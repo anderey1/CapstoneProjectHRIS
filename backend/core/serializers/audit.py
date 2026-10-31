@@ -11,8 +11,8 @@ class AuditLogSerializer(serializers.ModelSerializer):
 
     def get_user_name(self, obj):
         if obj.user:
-            if hasattr(obj.user, 'employee'):
-                emp = obj.user.employee
+            if hasattr(obj.user, 'employee_profile'):
+                emp = obj.user.employee_profile
                 if emp.first_name or emp.last_name:
                     return f"{emp.first_name} {emp.last_name}"
             return obj.user.username

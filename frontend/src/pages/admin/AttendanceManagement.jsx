@@ -2,20 +2,16 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
-import { History, Clock } from 'lucide-react';
-import Attendance from '../shared/Attendance';
+import { History, ShieldCheck } from 'lucide-react';
 
 // Sub-components
-import AttendanceStats from '../../components/features/attendance/AttendanceStats';
 import AttendanceLogs from '../../components/features/attendance/AttendanceLogs';
 
 /**
- * Attendance Management (Admin/HR View)
- * 
- * Simple, professional redesign for monitoring staff check-ins.
+ * Division Attendance Monitoring Console (Admin/HR View)
+ * Tracks real-time biometric and station check-ins across division personnel.
  */
 const AttendanceManagement = () => {
-  const [activeTab, setActiveTab] = useState('monitor'); // 'monitor' or 'clock-in'
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('All');
   const [flaggedOnly, setFlaggedOnly] = useState(false);
@@ -37,79 +33,83 @@ const AttendanceManagement = () => {
     return matchesSearch && matchesDept && matchesFlag;
   });
 
-  const stats = {
-    total: filteredRecords?.length || 0,
-    flagged: filteredRecords?.filter(r => r.is_geo_flagged).length || 0,
-    present: filteredRecords?.filter(r => r.status === 'present').length || 0,
-  };
+  const totalLogs = filteredRecords?.length || 0;
+  const presentCount = filteredRecords?.filter(r => r.status === 'present').length || 0;
+  const flaggedCount = filteredRecords?.filter(r => r.is_geo_flagged).length || 0;
+  const lateCount = filteredRecords?.filter(r => r.status === 'late').length || 0;
 
   if (isLoading) return (
-    <div className="p-8 flex justify-center h-[60vh] items-center">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
+    <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
+      <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
     </div>
   );
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
-        <div className="space-y-1">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-5">
+        <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <History className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">DTR & Attendance Approvals</h1>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+                Division Attendance Monitoring Console
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Real-Time Personnel Verification • Daily Log Monitoring • Schools Division of Lucena City
+              </p>
+            </div>
           </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Track staff attendance logs and approve employee DTRs</p>
         </div>
 
-        {activeTab === 'monitor' && (
-          <div className="w-full lg:w-auto animate-in fade-in duration-1000">
-            <AttendanceStats stats={stats} />
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-700">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            Biometric & Station Logging Active
+          </span>
+        </div>
       </div>
 
-      {/* Tabs Selector */}
-      <div className="flex gap-2 bg-base-200/50 p-1 rounded-xl w-fit border border-base-200 overflow-x-auto no-scrollbar max-w-full">
-        <button
-          type="button"
-          className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'monitor' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
-          onClick={() => setActiveTab('monitor')}
-        >
-          <History className="w-3.5 h-3.5" />
-          Monitor Staff
-        </button>
-        <button
-          type="button"
-          className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'clock-in' ? 'bg-white text-primary shadow-sm' : 'opacity-40 hover:opacity-100'}`}
-          onClick={() => setActiveTab('clock-in')}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          My Clock In / Out
-        </button>
+      {/* 4-Metric Status Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Check-Ins</p>
+          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{totalLogs}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Filtered division logs</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Present On Time</p>
+          <p className="text-xl font-bold text-emerald-700 font-mono tabular-nums mt-1">{presentCount}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Standard arrival verified</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Tardy / Late</p>
+          <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{lateCount}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Subject to undertime tracking</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Location Flagged</p>
+          <p className="text-xl font-bold text-rose-700 font-mono tabular-nums mt-1">{flaggedCount}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Outside designated station</p>
+        </div>
       </div>
 
-      {/* Conditional Content rendering */}
-      {activeTab === 'monitor' ? (
-        <div className="w-full">
-          <AttendanceLogs 
-            records={filteredRecords}
-            isLoading={isLoading}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            deptFilter={deptFilter}
-            setDeptFilter={setDeptFilter}
-            flaggedOnly={flaggedOnly}
-            setFlaggedOnly={setFlaggedOnly}
-          />
-        </div>
-      ) : (
-        <div className="w-full animate-in fade-in duration-300">
-          <Attendance />
-        </div>
-      )}
+      {/* Staff Attendance Monitor */}
+      <div className="w-full">
+        <AttendanceLogs 
+          records={filteredRecords}
+          isLoading={isLoading}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          deptFilter={deptFilter}
+          setDeptFilter={setDeptFilter}
+          flaggedOnly={flaggedOnly}
+          setFlaggedOnly={setFlaggedOnly}
+        />
+      </div>
     </div>
   );
 };

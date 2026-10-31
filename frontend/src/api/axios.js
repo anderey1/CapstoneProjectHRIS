@@ -21,15 +21,20 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('token/')) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
         const response = await axios.post(`${api.defaults.baseURL}token/refresh/`, {
           refresh: refreshToken,
         });
         localStorage.setItem('access_token', response.data.access);
         api.defaults.headers.common.Authorization = `Bearer ${response.data.access}`;
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
         return api(originalRequest);
       } catch (refreshError) {
         // Handle refresh token failure (e.g., logout user)

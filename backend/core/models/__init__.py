@@ -1,4 +1,4 @@
-from .employee import Role, User, School, Employee, SalaryGrade
+from .employee import Role, User, School, Employee, SalaryGrade, EmployeeDocument
 from .attendance import Attendance
 from .leave import LeaveRequest
 from .loan import ProvidentLoan, LoanPayment, LoanDocument
@@ -14,6 +14,7 @@ __all__ = [
     'User',
     'School',
     'Employee',
+    'EmployeeDocument',
     'SalaryGrade',
     'Attendance',
     'LeaveRequest',
@@ -24,9 +25,6 @@ __all__ = [
     'Applicant',
     'ApplicantDocument',
     'PerformanceReview',
-    'IPCRFKRA',
-    'IPCRFObjective',
-    'IPCRFRating',
     'AuditLog',
     'PDSUpload',
     'FamilyMember',

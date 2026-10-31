@@ -21,15 +21,30 @@ const formatTime = (timeStr, fallback = '--:--') => {
   return `${hours}:${minutes.padStart(2, '0')} ${ampm}`;
 };
 
+// Helper to calculate distance in meters via Haversine formula
+const haversineDistanceMeters = (lat1, lon1, lat2, lon2) => {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const toRad = (x) => (x * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const rLat1 = toRad(lat1);
+  const rLat2 = toRad(lat2);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(rLat1) * Math.cos(rLat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return 6371000 * c;
+};
+
 /**
  * Attendance Recording - Core HRIS Implementation
- * Simple Clock In / Out flow without Biometric or Geo-blocking (removed for pre-oral defense)
+ * Civil Service Form 48 terminal with strict Haversine geofence validation.
  */
 const Attendance = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [currentPos, setCurrentPos] = useState({ lat: 13.9408, lng: 121.6210 });
-  const [geoStatus, setGeoStatus] = useState('locating');
+  const [currentPos, setCurrentPos] = useState(null);
+  const [geoStatus, setGeoStatus] = useState(() => (typeof navigator !== 'undefined' && !navigator.geolocation ? 'unavailable' : 'locating'));
   const [message, setMessage] = useState(null);
   const [showOtConfirm, setShowOtConfirm] = useState(false);
 
@@ -53,25 +68,44 @@ const Attendance = () => {
   });
 
   const workstation = me?.school_details;
+  const distanceMeters = currentPos && workstation?.latitude && workstation?.longitude
+    ? haversineDistanceMeters(
+        currentPos.lat,
+        currentPos.lng,
+        parseFloat(workstation.latitude),
+        parseFloat(workstation.longitude)
+      )
+    : null;
+  const allowedRadius = workstation?.radius_meters || 100;
+  const isWithinGeofence = distanceMeters != null ? distanceMeters <= allowedRadius : null;
 
-  // 4. GPS Tracking (for recording coordinate stamp, but no range block)
-  useEffect(() => {
+  // 4. GPS Tracking (requires real coordinates, no dummy Lucena fallback)
+  const requestLocation = () => {
     if (!navigator.geolocation) {
-      setGeoStatus('denied');
+      setGeoStatus('unavailable');
       return;
     }
 
+    setGeoStatus('locating');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setCurrentPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setCurrentPos({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
+        });
         setGeoStatus('ready');
       },
       (err) => {
         console.error(err);
         setGeoStatus('denied');
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
+  };
+
+  useEffect(() => {
+    requestLocation();
   }, []);
 
   // 5. Check-In Mutation
@@ -99,69 +133,128 @@ const Attendance = () => {
   });
 
   const handleClockIn = () => {
+    if (!currentPos) {
+      setMessage({
+        type: 'error',
+        text: 'Device GPS required. Please enable location permissions and retry.'
+      });
+      return;
+    }
+
     checkInMutation.mutate({
-      qr_token: qrData?.token || 'legacy_face_only',
+      qr_token: qrData?.token || 'standard_web_log',
       lat: currentPos.lat,
-      lng: currentPos.lng
+      lng: currentPos.lng,
+      accuracy: currentPos.accuracy || 0
     });
+  };
+
+  const isPunchDisabled = checkInMutation.isPending || !currentPos || geoStatus !== 'ready' || isWithinGeofence === false;
+
+  const getButtonLabel = () => {
+    if (checkInMutation.isPending) return 'Recording Official Log...';
+    if (geoStatus === 'locating') return 'Acquiring GPS Position...';
+    if (geoStatus === 'denied') return 'GPS Permission Required';
+    if (geoStatus === 'unavailable') return 'Geolocation Unavailable';
+    if (isWithinGeofence === false) return `Outside Boundary (${Math.round(distanceMeters)}m away)`;
+    return 'Record Attendance Stamp (Form 48)';
   };
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       
-      {/* 1. Header */}
-      <div className="flex justify-between items-end">
+      {/* 1. Institutional Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
-            <Clock className="w-6 h-6 text-primary" />
-            Check In / Out
-          </h1>
-          <p className="text-xs opacity-50 font-medium">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase">
+                Daily Time Record Check-In Station
+              </h1>
+              <p className="text-xs text-slate-500">
+                Civil Service Commission Form No. 48 Official Attendance Terminal
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] font-bold opacity-40 uppercase">Station</p>
-          <p className="text-sm font-bold">{workstation?.name || 'Main Office'}</p>
+        <div className="text-left sm:text-right">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Station Assignment</p>
+          <p className="text-xs font-semibold text-slate-800">{workstation?.name || 'Division Office of Lucena City'}</p>
         </div>
       </div>
 
-      {/* 2. Simplified Clock-in Card */}
-      <div className="card border border-base-200 bg-white shadow-sm overflow-hidden">
-        <div className="p-6 md:p-8 flex flex-col items-center text-center space-y-6">
-          
-          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center bg-primary/10 text-primary border-2 border-primary/5">
-            <Clock className="w-8 h-8 md:w-10 md:h-10 animate-pulse" />
-          </div>
+      {/* 2. Utilitarian Digital Clock-in Terminal */}
+      <div className="bg-white border border-slate-300 rounded-lg shadow-sm p-6 text-center space-y-4">
+        <div className="inline-block px-3 py-1 bg-slate-100 border border-slate-200 rounded text-xs font-mono tabular-nums text-slate-700">
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </div>
 
-          <div>
-            <h2 className="text-lg md:text-xl font-black uppercase">
-              Time Clock Recorder
-            </h2>
-            <p className="text-[10px] md:text-xs opacity-50 font-semibold uppercase tracking-widest mt-1">
-              Click the button below to submit your daily clock stamp
-            </p>
-          </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 uppercase tracking-tight">
+            Official Attendance Punch Terminal
+          </h2>
+          <p className="text-xs text-slate-600 mt-0.5">
+            Record your time-stamp for morning/afternoon arrival or departure.
+          </p>
+        </div>
 
+        <div className="pt-2">
           <button 
             onClick={handleClockIn}
-            disabled={checkInMutation.isPending}
-            className="btn btn-primary btn-md md:btn-lg w-full max-w-xs rounded-xl shadow-lg font-black uppercase text-xs tracking-widest text-white border-none"
+            disabled={isPunchDisabled}
+            className="w-full max-w-sm mx-auto px-6 py-3 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
-            {checkInMutation.isPending ? (
-              <span className="loading loading-spinner" />
-            ) : (
-              'Submit Attendance Log'
-            )}
+            <Clock className="w-4 h-4" />
+            {getButtonLabel()}
           </button>
+        </div>
 
-          <div className="flex items-center gap-2 text-[9px] font-black uppercase opacity-40">
-             <ShieldCheck className="w-3 h-3 text-success" /> Standard DTR Logging Active
-          </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs pt-1">
+          {geoStatus === 'locating' && (
+            <div className="flex items-center gap-2 text-slate-500">
+              <span className="loading loading-spinner loading-xs text-[#0038A8]"></span>
+              <span>Acquiring device GPS coordinates...</span>
+            </div>
+          )}
+
+          {geoStatus === 'ready' && isWithinGeofence === true && (
+            <div className="flex flex-wrap items-center justify-center gap-2 text-emerald-700 font-semibold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Within station boundary ({Math.round(distanceMeters)}m from {workstation?.name || 'workstation'})</span>
+              {currentPos?.accuracy != null && (
+                <span className="text-[10px] bg-emerald-100/70 text-emerald-800 px-1.5 py-0.5 rounded font-mono">
+                  ±{Math.round(currentPos.accuracy)}m accuracy
+                </span>
+              )}
+            </div>
+          )}
+
+          {geoStatus === 'ready' && isWithinGeofence === false && (
+            <div className="flex flex-wrap items-center justify-center gap-2 text-rose-700 font-semibold bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+              <AlertTriangle className="w-4 h-4 text-rose-600" />
+              <span>Outside station boundary: {Math.round(distanceMeters)}m away (limit: {allowedRadius}m)</span>
+              {currentPos?.accuracy != null && (
+                <span className="text-[10px] bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-mono">
+                  ±{Math.round(currentPos.accuracy)}m accuracy
+                </span>
+              )}
+            </div>
+          )}
 
           {geoStatus === 'denied' && (
-            <div className="text-warning text-xs font-bold flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> Location services disabled (defaulting coordinates)
+            <div className="flex items-center gap-2 text-rose-700 font-semibold">
+              <MapPin className="w-4 h-4 text-rose-600" />
+              <span>Location permission denied. GPS access required.</span>
+              <button 
+                type="button" 
+                onClick={requestLocation} 
+                className="underline text-xs text-[#0038A8] ml-1 font-bold cursor-pointer"
+              >
+                Retry
+              </button>
             </div>
           )}
         </div>
@@ -193,10 +286,12 @@ const Attendance = () => {
             <button 
               onClick={() => {
                 setShowOtConfirm(false);
+                if (!currentPos) return;
                 checkInMutation.mutate({
-                  qr_token: qrData?.token || 'legacy_face_only',
+                  qr_token: qrData?.token || 'standard_web_log',
                   lat: currentPos.lat,
                   lng: currentPos.lng,
+                  accuracy: currentPos.accuracy || 0,
                   is_ot: true
                 });
               }}

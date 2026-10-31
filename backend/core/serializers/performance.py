@@ -4,6 +4,7 @@ from ..models import PerformanceReview, Employee
 class PerformanceReviewSerializer(serializers.ModelSerializer):
     employee_name = serializers.ReadOnlyField(source='employee.__str__')
     department = serializers.ReadOnlyField(source='employee.department')
+    position = serializers.ReadOnlyField(source='employee.position')
     employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), required=False)
 
     class Meta:

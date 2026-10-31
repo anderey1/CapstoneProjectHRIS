@@ -128,3 +128,22 @@ def test_register_existing_employee_failures():
     response = client.post('/api/employees/register-existing/', data_email_conflict, format='json')
     assert response.status_code == 400
     assert "Email is already registered" in response.data["error"]
+
+
+@pytest.mark.django_db
+def test_employee_manager_create_with_user_supports_inactive():
+    emp = Employee.objects.create_with_user(
+        user_data={
+            "username": "inactive_user",
+            "password": "password123",
+            "is_active": False,
+        },
+        employee_data={
+            "first_name": "Inactive",
+            "last_name": "User",
+        }
+    )
+    assert emp.user.is_active is False
+    assert emp.user.username == "inactive_user"
+    assert emp.first_name == "Inactive"
+

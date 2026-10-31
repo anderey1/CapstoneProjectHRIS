@@ -6,9 +6,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.db import transaction
+from decimal import Decimal, InvalidOperation
 from ..models import Employee, ProvidentLoan, LoanDocument, LoanPayment, Role, AuditLog
 from ..serializers import LoanSerializer, LoanDocumentSerializer, LoanPaymentSerializer
-from ..permissions import IsAdminOrHR, IsHR, IsSuperintendent, IsAccountant
+from ..permissions import IsAdminOrHR, IsHR, IsSuperintendent, IsAccountant, IsSuperintendentOrAdmin
 
 # Required documents for every loan application
 BASE_REQUIRED_DOCS = ['laf', 'letter_request', 'auth_deduct', 'payslip', 'deped_id', 'comaker_payslip']
@@ -30,9 +32,17 @@ class LoanViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
-            return ProvidentLoan.objects.all().order_by('-date_applied')
-        return ProvidentLoan.objects.filter(employee__user=user).order_by('-date_applied')
+        base_qs = ProvidentLoan.objects.select_related(
+            'employee',
+            'employee__user',
+            'co_maker',
+            'co_maker__user',
+            'reviewed_by'
+        ).order_by('-date_applied')
+
+        if user.is_management:
+            return base_qs.all()
+        return base_qs.filter(employee__user=user)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -46,8 +56,8 @@ class LoanViewSet(viewsets.ModelViewSet):
                 raise ValidationError({"detail": "You must have an employee profile."})
 
         # 2. Validation — no duplicate active loans
-        if ProvidentLoan.objects.filter(employee=employee, status__in=['pending', 'approved']).exists():
-            raise ValidationError({"detail": "A pending or active loan already exists."})
+        if ProvidentLoan.objects.filter(employee=employee, status__in=['pending', 'verified', 'approved', 'released']).exists():
+            raise ValidationError({"detail": "A pending, approved, or active loan already exists."})
 
         if serializer.validated_data.get('loan_amount', 0) <= 0:
             raise ValidationError({"detail": "Loan amount must be greater than zero."})
@@ -57,13 +67,9 @@ class LoanViewSet(viewsets.ModelViewSet):
             user=user,
             action=f"Loan Applied for {employee}: ₱{instance.loan_amount} ({instance.get_purpose_display()})"
         )
-
-    # ---------------------------
-    # APPROVE / REJECT
-    # ---------------------------
-    @action(detail=True, methods=['post'], permission_classes=[IsAccountant])
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsSuperintendentOrAdmin])
     def verify(self, request, pk=None):
-        """Accountant action to verify documents and mark as ready for superintendent."""
+        """Accountant/Admin/Superintendent action to verify documents and mark as ready for approval."""
         loan = self.get_object()
         if loan.status != 'pending':
             return Response({"detail": "Only pending loans can be verified."}, status=status.HTTP_400_BAD_REQUEST)
@@ -75,14 +81,14 @@ class LoanViewSet(viewsets.ModelViewSet):
             user=request.user, 
             action=f"Verified loan documents for Loan #{loan.id} ({loan.employee})"
         )
-        return Response({"message": "Loan documents verified. Sent to superintendent for approval.", "status": "verified"})
+        return Response({"message": "Loan documents verified. Sent for executive approval.", "status": "verified"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendentOrAdmin])
     def approve(self, request, pk=None):
-        """Superintendent action to approve a verified loan."""
+        """Superintendent or Admin action to approve a loan."""
         loan = self.get_object()
-        if loan.status != 'verified':
-            return Response({"detail": "Only verified loans can be approved by the superintendent."}, status=status.HTTP_400_BAD_REQUEST)
+        if loan.status not in ['pending', 'verified']:
+            return Response({"detail": "Only pending or verified loans can be approved."}, status=status.HTTP_400_BAD_REQUEST)
 
         loan.status = 'approved'
         loan.remarks = request.data.get('remarks', '')
@@ -93,17 +99,11 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Approved Loan: {loan.employee}")
         return Response({"message": "Loan approved.", "status": "approved"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendent | IsAccountant])
+    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendentOrAdmin | IsAccountant])
     def reject(self, request, pk=None):
-        """Rejects a loan. Accountant can reject pending loans, Superintendent can reject verified ones."""
+        """Rejects a loan. Accountant, Superintendent, or Admin can reject pending or verified loans."""
         loan = self.get_object()
-        user_role = request.user.role
-
-        if loan.status == 'pending' and user_role != Role.ACCOUNTANT and not request.user.is_superuser:
-            return Response({"detail": "Only accountants can reject loans during verification."}, status=status.HTTP_403_FORBIDDEN)
-        elif loan.status == 'verified' and user_role != Role.SUPERINTENDENT and not request.user.is_superuser:
-            return Response({"detail": "Only superintendents can reject loans during approval."}, status=status.HTTP_403_FORBIDDEN)
-        elif loan.status not in ['pending', 'verified']:
+        if loan.status not in ['pending', 'verified']:
             return Response({"detail": "Only pending or verified loans can be rejected."}, status=status.HTTP_400_BAD_REQUEST)
 
         remarks = request.data.get('remarks', '')
@@ -125,7 +125,9 @@ class LoanViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def resubmit(self, request, pk=None):
         """Allows employee to update and resubmit a rejected loan."""
-        loan = self.get_object()
+        loan = get_object_or_404(ProvidentLoan, pk=pk)
+        if loan.employee.user != request.user and not request.user.is_superuser:
+            return Response({"detail": "You can only resubmit your own rejected loans."}, status=status.HTTP_403_FORBIDDEN)
         if loan.status != 'rejected':
             return Response({"detail": "Only rejected loans can be resubmitted."}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -137,21 +139,23 @@ class LoanViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=request.user, action=f"Resubmitted Loan #{loan.id}")
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAccountant], url_path='release-funds')
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsSuperintendentOrAdmin], url_path='release-funds')
     def release_funds(self, request, pk=None):
         """Accountant action to release money after superintendent approval."""
         loan = self.get_object()
-        if loan.status != 'approved':
-            return Response({"detail": "Only approved loans can be released."}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            loan = ProvidentLoan.objects.select_for_update().get(pk=loan.pk)
+            if loan.status != 'approved':
+                return Response({"detail": "Only approved loans can be released."}, status=status.HTTP_400_BAD_REQUEST)
 
-        loan.status = 'released'
-        loan.date_granted = timezone.localdate()
-        
-        # Pull station code from employee school if blank
-        if not loan.station_code and loan.employee.school:
-            loan.station_code = loan.employee.school.name
+            loan.status = 'released'
+            loan.date_granted = timezone.localdate()
+            
+            # Pull station code from employee school if blank
+            if not loan.station_code and loan.employee.school:
+                loan.station_code = loan.employee.school.name
 
-        loan.save()
+            loan.save()
 
         AuditLog.objects.create(user=request.user, action=f"Released Funds for Loan #{loan.id} ({loan.employee})")
         return Response({"message": "Loan funds released successfully.", "status": "released"})
@@ -168,19 +172,25 @@ class LoanViewSet(viewsets.ModelViewSet):
             return Response({"detail": "amount_paid is required."}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            from decimal import Decimal
             amount_paid = Decimal(str(amount_paid))
-        except ValueError:
+        except (InvalidOperation, TypeError, ValueError):
             return Response({"detail": "Invalid amount format."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if amount_paid <= 0:
+        if not amount_paid.is_finite() or amount_paid <= 0:
             return Response({"detail": "Amount paid must be greater than zero."}, status=status.HTTP_400_BAD_REQUEST)
 
-        payment = LoanPayment.objects.create(
-            loan=loan,
-            amount_paid=amount_paid,
-            posted_by=request.user
-        )
+        with transaction.atomic():
+            loan = ProvidentLoan.objects.select_for_update().get(pk=loan.pk)
+            if loan.status not in ['released', 'paid']:
+                return Response({"detail": "Payments can only be posted for released/active loans."}, status=status.HTTP_400_BAD_REQUEST)
+            if amount_paid > max(loan.current_balance, Decimal('0.00')):
+                return Response({"detail": "Amount paid cannot exceed the loan's current balance."}, status=status.HTTP_400_BAD_REQUEST)
+
+            payment = LoanPayment.objects.create(
+                loan=loan,
+                amount_paid=amount_paid,
+                posted_by=request.user
+            )
 
         AuditLog.objects.create(
             user=request.user,
@@ -193,10 +203,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             "payment": LoanPaymentSerializer(payment).data,
             "loan": serializer.data
         }, status=status.HTTP_201_CREATED)
-
-    # ---------------------------
-    # DOCUMENT UPLOAD
-    # ---------------------------
     @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     def upload_document(self, request, pk=None):
         """Upload a required document for a loan application."""
@@ -238,10 +244,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             action=f"Uploaded {doc_type} for Loan #{loan.id} ({loan.employee})"
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    # ---------------------------
-    # DOCUMENTS LIST
-    # ---------------------------
     @action(detail=True, methods=['get'])
     def documents(self, request, pk=None):
         """List all uploaded documents for a loan."""
@@ -249,10 +251,6 @@ class LoanViewSet(viewsets.ModelViewSet):
         docs = LoanDocument.objects.filter(loan=loan)
         serializer = LoanDocumentSerializer(docs, many=True, context={'request': request})
         return Response(serializer.data)
-
-    # ---------------------------
-    # DOCUMENT CHECKLIST
-    # ---------------------------
     @action(detail=True, methods=['get'])
     def checklist(self, request, pk=None):
         """Return which required documents have been submitted vs. missing."""
@@ -296,10 +294,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             'all_required_submitted': all_required_submitted,
             'checklist': checklist,
         })
-
-    # ---------------------------
-    # AMORTIZATION SCHEDULE
-    # ---------------------------
     @action(detail=True, methods=['get'])
     def amortization(self, request, pk=None):
         loan = self.get_object()
@@ -314,10 +308,6 @@ class LoanViewSet(viewsets.ModelViewSet):
             "monthly_amortization": loan.monthly_payment,
             "schedule": schedule
         })
-
-    # ---------------------------
-    # MARK AS PAID
-    # ---------------------------
     @action(detail=True, methods=['post'], permission_classes=[IsHR])
     def pay(self, request, pk=None):
         loan = self.get_object()

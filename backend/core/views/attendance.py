@@ -2,13 +2,21 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta
-from ..permissions import IsAdminOrHR, IsAccountant
-from ..models import Attendance, Employee, Role
+from decimal import Decimal, InvalidOperation
+from ..permissions import IsAdminOrHR, IsAccountant, IsAdminOrHRorSuperintendent
+from ..models import Attendance, Employee, Role, AuditLog
 from ..serializers import AttendanceSerializer
-from ..utils import validate_attendance_geo, get_attendance_status, generate_daily_qr_token
+from ..utils import (
+    validate_attendance_geo,
+    get_attendance_status,
+    generate_daily_qr_token,
+    resolve_attendance_slot,
+    AttendanceSlotError,
+)
 from ..utils.pdf_generator import generate_form_48
 from django.http import HttpResponse
 
@@ -24,7 +32,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
+        if user.is_management:
             return Attendance.objects.all()
         return Attendance.objects.filter(employee__user=user)
 
@@ -40,18 +48,40 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated])
     def scan(self, request):
-        """Processes a QR scan for DTR slot mapping with Geo-validation."""
+        """Processes a QR scan, flagging accepted scans outside the school geofence."""
         user = request.user
         if not hasattr(user, 'employee_profile'):
             return Response({"detail": "User account is not registered as an employee."}, status=400)
         
         employee = user.employee_profile
         token = request.data.get('qr_token')
-        lat = request.data.get('lat')
-        lng = request.data.get('lng')
+        raw_lat = request.data.get('lat')
+        raw_lng = request.data.get('lng')
 
-        if lat is None or lng is None:
+        if raw_lat is None or raw_lng is None:
             return Response({"detail": "GPS coordinates are required."}, status=400)
+
+        try:
+            if isinstance(raw_lat, bool) or isinstance(raw_lng, bool):
+                raise InvalidOperation
+            lat = Decimal(str(raw_lat))
+            lng = Decimal(str(raw_lng))
+        except (InvalidOperation, TypeError, ValueError):
+            return Response(
+                {"detail": "GPS coordinates must be numeric and within valid ranges."},
+                status=400,
+            )
+
+        if (
+            not lat.is_finite()
+            or not lng.is_finite()
+            or not Decimal("-90") <= lat <= Decimal("90")
+            or not Decimal("-180") <= lng <= Decimal("180")
+        ):
+            return Response(
+                {"detail": "GPS coordinates must be numeric and within valid ranges."},
+                status=400,
+            )
 
         # 1. Validate QR Token
         if token != generate_daily_qr_token():
@@ -60,127 +90,100 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         if not employee.school:
             return Response({"detail": "Profile has no assigned school workstation."}, status=400)
 
-        # 2. Geo-Validation (Bypassed for Core HRIS)
-        is_in_zone, distance = True, 0.0
+        # 2. Strict Geo-validation: reject out-of-zone scans
+        raw_accuracy = request.data.get('accuracy')
+        accuracy = 0
+        if raw_accuracy is not None:
+            try:
+                accuracy = max(0.0, float(raw_accuracy))
+            except (TypeError, ValueError):
+                accuracy = 0.0
+
+        is_in_zone, distance = validate_attendance_geo(
+            lat,
+            lng,
+            employee.school.latitude,
+            employee.school.longitude,
+            radius=employee.school.radius_meters,
+            accuracy=accuracy,
+        )
+
+        if not is_in_zone:
+            return Response(
+                {
+                    "detail": (
+                        f"Geofence validation failed: You are {round(distance, 1)}m away from "
+                        f"{employee.school.name} (allowed radius: {employee.school.radius_meters}m)."
+                    ),
+                    "distance": round(distance, 2),
+                    "allowed_radius": employee.school.radius_meters,
+                },
+                status=400,
+            )
 
         # 3. Slot-Based Logic
         now = timezone.localtime(timezone.now())
         today = now.date()
         current_time = now.time()
         
-        attendance, created = Attendance.objects.get_or_create(
-            employee=employee, 
-            date=today
-        )
+        with transaction.atomic():
+            attendance, created = Attendance.objects.select_for_update().get_or_create(
+                employee=employee, 
+                date=today
+            )
 
-        # Anti-spam logic: enforce a minimum 2-minute cooldown between logs
-        times = [t for t in [attendance.am_in, attendance.am_out, attendance.pm_in, attendance.pm_out, attendance.ot_in, attendance.ot_out] if t is not None]
-        if times:
-            latest_time = max(times)
-            latest_dt = datetime.combine(today, latest_time)
-            current_dt = datetime.combine(today, current_time)
-            if current_dt - latest_dt < timedelta(minutes=2):
-                diff = timedelta(minutes=2) - (current_dt - latest_dt)
-                remaining_sec = int(diff.total_seconds())
-                remaining_min = (remaining_sec // 60) + 1
-                return Response({
-                    "detail": f"Please wait {remaining_min} minute(s) before logging attendance again to prevent duplicate logs."
-                }, status=400)
-
-        # Update status if it's currently 'present' and we detect a 'late' condition
-        current_status = get_attendance_status(now)
-        if attendance.status == 'present' and current_status == 'late':
-            attendance.status = 'late'
-
-        slot_mapped = None
-        message = ""
-
-        # Helper to convert string to time object
-        def t(time_str):
-            return datetime.strptime(time_str, "%H:%M").time()
-
-        # Slot Windows:
-        
-        # AM IN: 5:00 - 11:59 (AM IN only allowed before 11:00 AM)
-        if t("05:00") <= current_time < t("12:00"):
-            if not attendance.am_in and current_time < t("11:00"):
-                attendance.am_in = current_time
-                slot_mapped = "am_in"
-                message = "AM IN recorded."
-            elif current_time >= t("10:00") and not attendance.am_out:
-                attendance.am_out = current_time
-                slot_mapped = "am_out"
-                message = "AM OUT recorded."
-
-        # AM OUT / PM IN overlap: 12:00 - 13:00
-        if not slot_mapped and t("12:00") <= current_time < t("13:00"):
-            # If they checked in this morning, prioritize AM OUT. If they didn't, prioritize PM IN.
-            if attendance.am_in and not attendance.am_out:
-                attendance.am_out = current_time
-                slot_mapped = "am_out"
-                message = "AM OUT recorded."
-            elif not attendance.pm_in:
-                attendance.pm_in = current_time
-                slot_mapped = "pm_in"
-                message = "PM IN recorded."
-            elif not attendance.am_out:
-                attendance.am_out = current_time
-                slot_mapped = "am_out"
-                message = "AM OUT recorded."
-
-        # PM IN / PM OUT: 13:00 - 23:59 (PM IN only allowed before 4:00 PM)
-        if not slot_mapped and t("13:00") <= current_time <= t("23:59"):
-            if not attendance.pm_in and current_time < t("16:00"):
-                attendance.pm_in = current_time
-                slot_mapped = "pm_in"
-                message = "PM IN recorded."
-            elif current_time >= t("15:00") and not attendance.pm_out:
-                attendance.pm_out = current_time
-                slot_mapped = "pm_out"
-                message = "PM OUT recorded."
-            elif attendance.pm_out:
-                # If PM OUT is already filled, check for OT
-                # Only allow OT logging if the employee explicitly confirms it via is_ot=True
-                is_ot = request.data.get('is_ot', False)
-                if not is_ot:
+            # Anti-spam logic: enforce a minimum 2-minute cooldown between logs
+            times = [t for t in [attendance.am_in, attendance.am_out, attendance.pm_in, attendance.pm_out, attendance.ot_in, attendance.ot_out] if t is not None]
+            if times:
+                latest_time = max(times)
+                latest_dt = datetime.combine(today, latest_time)
+                current_dt = datetime.combine(today, current_time)
+                time_diff = current_dt - latest_dt
+                if timedelta(0) <= time_diff < timedelta(minutes=2):
+                    diff = timedelta(minutes=2) - time_diff
+                    remaining_sec = int(diff.total_seconds())
+                    remaining_min = (remaining_sec // 60) + 1
                     return Response({
-                        "detail": "Your regular hours for today are already complete (PM OUT recorded). To log overtime, please confirm.",
-                        "requires_ot_confirmation": True
+                        "detail": f"Please wait {remaining_min} minute(s) before logging attendance again to prevent duplicate logs."
                     }, status=400)
 
-                if not attendance.ot_in:
-                    attendance.ot_in = current_time
-                    slot_mapped = "ot_in"
-                    message = "OT IN recorded."
-                elif not attendance.ot_out:
-                    attendance.ot_out = current_time
-                    slot_mapped = "ot_out"
-                    message = "OT OUT recorded."
+            try:
+                slot_mapped, message = resolve_attendance_slot(
+                    attendance=attendance,
+                    current_time=current_time,
+                    is_ot=request.data.get('is_ot', False)
+                )
+            except AttendanceSlotError as e:
+                err_payload = {"detail": e.detail}
+                if e.requires_ot_confirmation:
+                    err_payload["requires_ot_confirmation"] = True
+                return Response(err_payload, status=400)
 
-        if not slot_mapped:
-            return Response({"detail": f"No valid slot available for this time ({current_time.strftime('%H:%M')}) or attendance already completed."}, status=400)
+            # Update punctuality status only on entry slots:
+            # - am_in: check against 8:00 AM PST cutoff (present vs late)
+            # - pm_in without prior morning presence: half-day afternoon arrival is late
+            if slot_mapped == 'am_in':
+                attendance.status = get_attendance_status(now)
+            elif slot_mapped == 'pm_in' and not attendance.am_in:
+                attendance.status = 'late'
 
-        # Update Geo data
-        attendance.latitude = lat
-        attendance.longitude = lng
-        if not is_in_zone:
-            attendance.is_geo_flagged = True
-        
-        attendance.save()
-
-        if not is_in_zone:
-            message += f" (Note: Outside zone - {round(distance, 1)}m away)"
+            # Update Geo data
+            attendance.latitude = lat
+            attendance.longitude = lng
+            attendance.is_geo_flagged = False
+            
+            attendance.save()
 
         return Response({
             "message": message,
             "slot": slot_mapped,
             "time": current_time,
             "status": attendance.status,
-            "is_geo_flagged": attendance.is_geo_flagged,
+            "is_geo_flagged": False,
             "distance": round(distance, 2)
         })
 
-    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHR])
+    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
     def approve_dtr(self, request):
         """Approves all attendance records for an employee within a specific month."""
         employee_id = request.data.get('employee_id')
@@ -208,6 +211,11 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             dtr_approved_by=request.user,
             dtr_approved_at=timezone.now()
         )
+
+        AuditLog.objects.create(
+            user=request.user,
+            action=f"Approved DTR for employee #{employee_id} for period {month} ({count} records)"
+        )
         
         return Response({
             "message": f"Successfully approved {count} DTR records.",
@@ -228,7 +236,14 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         # Allow HR/admin to export for a selected employee when provided;
         # otherwise fall back to the logged-in user's own profile.
         if employee_id:
-            employee = get_object_or_404(Employee, id=employee_id)
+            is_privileged = user.is_management
+            target_employee = get_object_or_404(Employee, id=employee_id)
+            is_own_profile = hasattr(user, 'employee_profile') and target_employee.id == user.employee_profile.id
+            is_supervisor = hasattr(user, 'employee_profile') and target_employee.supervisor_id == user.employee_profile.id
+
+            if not (is_privileged or is_own_profile or is_supervisor):
+                return Response({"detail": "You do not have permission to view this employee's DTR."}, status=403)
+            employee = target_employee
         else:
             employee = getattr(user, 'employee_profile', None)
             if not employee:
@@ -257,5 +272,3 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         return response
-
-

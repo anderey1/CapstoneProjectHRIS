@@ -51,7 +51,7 @@ class LoanSerializer(serializers.ModelSerializer):
             'documents', 'payments',
         ]
         read_only_fields = [
-            'monthly_payment', 'total_amount', 'date_applied',
+            'status', 'monthly_payment', 'total_amount', 'date_applied',
             'reviewed_by', 'reviewed_at', 'interest_receivable',
         ]
 

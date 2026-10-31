@@ -1,10 +1,8 @@
 from django.db import models
 from .employee import Employee
 
-# -------------------------
-# II. FAMILY BACKGROUND
-# -------------------------
 class FamilyMember(models.Model):
+    """PDS Section II: Family Background"""
     RELATION_CHOICES = [
         ('SPOUSE', 'Spouse'),
         ('FATHER', 'Father'),
@@ -29,10 +27,8 @@ class FamilyMember(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.surname} ({self.relationship})"
 
-# -------------------------
-# III. EDUCATIONAL BACKGROUND
-# -------------------------
 class Education(models.Model):
+    """PDS Section III: Educational Background"""
     LEVEL_CHOICES = [
         ('ELEMENTARY', 'Elementary'),
         ('SECONDARY', 'Secondary'),
@@ -53,10 +49,8 @@ class Education(models.Model):
     def __str__(self):
         return f"{self.level} - {self.school_name}"
 
-# -------------------------
-# IV. CIVIL SERVICE ELIGIBILITY
-# -------------------------
 class Eligibility(models.Model):
+    """PDS Section IV: Civil Service Eligibility"""
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='eligibilities')
     service = models.CharField(max_length=255, null=True, blank=True) # e.g. Career Service Professional
     rating = models.CharField(max_length=50, null=True, blank=True)
@@ -68,10 +62,8 @@ class Eligibility(models.Model):
     def __str__(self):
         return self.service or "Unnamed Eligibility"
 
-# -------------------------
-# V. WORK EXPERIENCE
-# -------------------------
 class WorkExperience(models.Model):
+    """PDS Section V: Work Experience"""
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='work_experience')
     date_from = models.DateField(null=True, blank=True)
     date_to = models.DateField(null=True, blank=True) # Null if Present

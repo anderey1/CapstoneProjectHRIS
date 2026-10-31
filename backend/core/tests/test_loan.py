@@ -1,0 +1,180 @@
+import pytest
+from decimal import Decimal
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIRequestFactory, force_authenticate
+from core.models import ProvidentLoan, LoanPayment, Role
+from core.views.loan import LoanViewSet
+
+@pytest.mark.django_db
+class TestLoanRules:
+    def test_cannot_apply_duplicate_loan_when_active_released(self, teacher_employee):
+        """Applying for a loan while having a released active loan is rejected."""
+        ProvidentLoan.objects.create(
+            employee=teacher_employee,
+            loan_amount=Decimal("30000.00"),
+            interest_rate=Decimal("6.0"),
+            term_months=12,
+            status='released'
+        )
+
+        factory = APIRequestFactory()
+        request = factory.post('/api/loans/', {
+            'loan_amount': '20000.00',
+            'interest_rate': '6.0',
+            'term_months': 12,
+            'purpose': 'emergency'
+        }, format='json')
+        force_authenticate(request, user=teacher_employee.user)
+        view = LoanViewSet.as_view({'post': 'create'})
+        response = view(request)
+
+        assert response.status_code == 400
+        assert "already exists" in str(response.data)
+
+    def test_cannot_apply_duplicate_loan_when_verified(self, teacher_employee):
+        """Applying for a loan while having a verified loan pending superintendent approval is rejected."""
+        ProvidentLoan.objects.create(
+            employee=teacher_employee,
+            loan_amount=Decimal("30000.00"),
+            interest_rate=Decimal("6.0"),
+            term_months=12,
+            status='verified'
+        )
+
+        factory = APIRequestFactory()
+        request = factory.post('/api/loans/', {
+            'loan_amount': '20000.00',
+            'interest_rate': '6.0',
+            'term_months': 12,
+            'purpose': 'medical'
+        }, format='json')
+        force_authenticate(request, user=teacher_employee.user)
+        view = LoanViewSet.as_view({'post': 'create'})
+        response = view(request)
+
+        assert response.status_code == 400
+        assert "already exists" in str(response.data)
+
+    def test_can_apply_loan_when_previous_loan_paid(self, teacher_employee):
+        """Applying for a loan after fully paying off a previous loan is permitted."""
+        ProvidentLoan.objects.create(
+            employee=teacher_employee,
+            loan_amount=Decimal("30000.00"),
+            interest_rate=Decimal("6.0"),
+            term_months=12,
+            status='paid'
+        )
+
+        factory = APIRequestFactory()
+        request = factory.post('/api/loans/', {
+            'loan_amount': '20000.00',
+            'interest_rate': '6.0',
+            'term_months': 12,
+            'purpose': 'general'
+        }, format='json')
+        force_authenticate(request, user=teacher_employee.user)
+        view = LoanViewSet.as_view({'post': 'create'})
+        response = view(request)
+
+        assert response.status_code == 201
+        assert response.data['status'] == 'pending'
+
+    def test_manual_payment_rejects_amount_above_current_balance(self, teacher_employee):
+        loan = ProvidentLoan.objects.create(
+            employee=teacher_employee,
+            loan_amount=Decimal("1000.00"),
+            interest_rate=Decimal("0.00"),
+            term_months=1,
+            status="released",
+        )
+        accountant = get_user_model().objects.create_user(
+            username="loan_accountant",
+            password="test-password",
+            role=Role.ACCOUNTANT,
+        )
+        factory = APIRequestFactory()
+        request = factory.post(
+            f"/api/loans/{loan.id}/post-payment/",
+            {"amount_paid": "1000.01"},
+            format="json",
+        )
+        force_authenticate(request, user=accountant)
+
+        response = LoanViewSet.as_view({"post": "post_payment"})(request, pk=loan.id)
+
+        assert response.status_code == 400
+        assert "cannot exceed" in str(response.data).lower()
+        assert not LoanPayment.objects.filter(loan=loan).exists()
+
+
+@pytest.fixture
+def client():
+    from rest_framework.test import APIClient
+    return APIClient()
+
+
+@pytest.fixture
+def teaching_user(teacher_employee):
+    return teacher_employee.user
+
+
+@pytest.fixture
+def other_rejected_loan(non_teaching_employee):
+    return ProvidentLoan.objects.create(
+        employee=non_teaching_employee,
+        loan_amount=Decimal("30000.00"),
+        interest_rate=Decimal("6.0"),
+        term_months=12,
+        purpose='medical',
+        status='rejected',
+        remarks='Incomplete documents'
+    )
+
+
+@pytest.mark.django_db
+def test_cannot_resubmit_other_employees_rejected_loan(client, teaching_user, other_rejected_loan):
+    """An authenticated user cannot tamper with or resubmit a loan belonging to someone else."""
+    client.force_authenticate(user=teaching_user)
+    response = client.post(f'/api/loans/{other_rejected_loan.id}/resubmit/', {
+        'loan_amount': '50000.00'
+    })
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_superintendent_and_admin_can_approve_loan(client, teacher_employee):
+    """Both Superintendent and Admin can approve loans (both verified and pending)."""
+    User = get_user_model()
+    superintendent = User.objects.create_user(username="supt", password="pwd", role=Role.SUPERINTENDENT)
+    admin_user = User.objects.create_user(username="admin_staff", password="pwd", role=Role.ADMINISTRATIVE)
+
+    # Loan 1: Verified loan approved by Superintendent
+    loan1 = ProvidentLoan.objects.create(
+        employee=teacher_employee,
+        loan_amount=Decimal("15000.00"),
+        interest_rate=Decimal("5.0"),
+        term_months=12,
+        status='verified'
+    )
+    client.force_authenticate(user=superintendent)
+    res1 = client.post(f'/api/loans/{loan1.id}/approve/', {'remarks': 'Approved by SDS'}, format='json')
+    assert res1.status_code == 200
+    loan1.refresh_from_db()
+    assert loan1.status == 'approved'
+    assert loan1.reviewed_by == superintendent
+
+    # Loan 2: Pending loan approved directly by Admin
+    loan2 = ProvidentLoan.objects.create(
+        employee=teacher_employee,
+        loan_amount=Decimal("20000.00"),
+        interest_rate=Decimal("5.0"),
+        term_months=12,
+        status='pending'
+    )
+    client.force_authenticate(user=admin_user)
+    res2 = client.post(f'/api/loans/{loan2.id}/approve/', {'remarks': 'Approved by Admin'}, format='json')
+    assert res2.status_code == 200
+    loan2.refresh_from_db()
+    assert loan2.status == 'approved'
+    assert loan2.reviewed_by == admin_user
+

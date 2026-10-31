@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import Apply from './pages/Apply';
 import RegisterExisting from './pages/RegisterExisting';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AccountantDashboardPage from './pages/admin/AccountantDashboardPage';
+import SuperintendentDashboardPage from './pages/admin/SuperintendentDashboardPage';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import Employees from './pages/admin/Employees';
 import LoanManagement from './pages/admin/LoanManagement';
@@ -20,27 +22,34 @@ import MyLeaves from './pages/employee/MyLeaves';
 import Payroll from './pages/admin/Payroll';
 import MyPayroll from './pages/employee/MyPayroll';
 import AttendanceManagement from './pages/admin/AttendanceManagement';
-import LocationTracking from './pages/admin/LocationTracking';
+import StaffDTRManagement from './pages/admin/StaffDTRManagement';
 import Attendance from './pages/shared/Attendance';
 import DTR from './pages/shared/DTR';
 import Profile from './pages/shared/Profile';
 import AuditLogs from './pages/admin/AuditLogs';
-import SchoolManagement from './pages/admin/SchoolManagement';
+
+import { ROLE_GROUPS } from './utils/rbac';
+
+// Role Groups (canonical from rbac.js)
+const MANAGEMENT_ROLES = ROLE_GROUPS.MANAGEMENT;
+const HR_SUPERINTENDENT_ADMIN = ROLE_GROUPS.OPERATIONS;
 
 /**
  * App Component
  * 
  * Handles the main routing configuration for the HRIS.
- * Mobile-first architecture using MainLayout shell for protected routes.
+ * Clean, declarative role-gated route architecture using ProtectedRoute layout routes.
  */
 function App() {
   const { user } = useAuth();
-
-  const isAdminOrHR = user && ['HR', 'ADMINISTRATIVE'].includes(user.role);
-  const isManagement = user && ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
-  const canManageLeaves = user && ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
-  const canManageAttendance = user && ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user.role);
-  const canManagePerformance = user && ['HR', 'SUPERINTENDENT'].includes(user.role);
+  const role = user?.role;
+  const renderDashboard = () => {
+    if (!user) return <EmployeeDashboard />;
+    if (role === 'ACCOUNTANT') return <AccountantDashboardPage />;
+    if (role === 'SUPERINTENDENT') return <SuperintendentDashboardPage />;
+    if (MANAGEMENT_ROLES.includes(role)) return <AdminDashboard />;
+    return <EmployeeDashboard />;
+  };
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -51,84 +60,40 @@ function App() {
         <Route path="/register-existing" element={<RegisterExisting />} />
 
         {/* Protected Layout Shell */}
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          {/* Child Routes injected into MainLayout's <Outlet /> */}
-          <Route index element={isManagement ? <AdminDashboard /> : <EmployeeDashboard />} />
-          
-          {/* Employees - Management only */}
-          <Route 
-            path="employees" 
-            element={isManagement ? <Employees /> : <Navigate to="/" replace />} 
-          />
-          
-          {/* Loans - Dedicated Pages */}
-          <Route path="my-loans" element={<MyLoans />} />
-          <Route 
-            path="loan-management" 
-            element={isManagement ? <LoanManagement /> : <Navigate to="/" replace />} 
-          />
+        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+          {/* Dashboard Home - Dispatched cleanly per role */}
+          <Route index element={renderDashboard()} />
 
-          {/* Leaves - Dedicated Pages */}
-          <Route path="my-leaves" element={<MyLeaves />} />
-          <Route 
-            path="leave-management" 
-            element={canManageLeaves ? <LeaveManagement /> : <Navigate to="/" replace />} 
-          />
-          
-          {/* Attendance - Dedicated Pages */}
+          {/* Shared / Self-Service Routes */}
           <Route path="attendance" element={<Attendance />} />
-          <Route 
-            path="attendance-management" 
-            element={canManageAttendance ? <AttendanceManagement /> : <Navigate to="/" replace />} 
-          />
-          
-          <Route
-            path="location-tracking"
-            element={<Navigate to="/" replace />}
-          />
-          
           <Route path="dtr" element={<DTR />} />
           <Route path="profile" element={<Profile />} />
           <Route path="employees/:id" element={<Profile />} />
-
-          {/* Payroll - Dedicated Pages */}
+          <Route path="my-loans" element={<MyLoans />} />
+          <Route path="my-leaves" element={<MyLeaves />} />
           <Route path="my-payslips" element={<MyPayroll />} />
-          <Route 
-            path="payroll-management" 
-            element={isManagement ? <Payroll /> : <Navigate to="/" replace />} 
-          />
-
-          {/* IPCRF (Performance) - Dedicated Pages */}
           <Route path="my-performance" element={<MyIPCRF />} />
-          <Route 
-            path="performance-management" 
-            element={canManagePerformance ? <IPCRFManagement /> : <Navigate to="/" replace />} 
-          />
 
-          {/* Recruitment - HR or Superintendent */}
-          <Route
-            path="recruitment"
-            element={(isAdminOrHR || user?.role === 'SUPERINTENDENT') ? <Recruitment /> : <Navigate to="/" replace />}
-          />
+          {/* Management Tier (HR, Accountant, Superintendent, Admin) */}
+          <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>
+            <Route path="employees" element={<Employees />} />
+            <Route path="loan-management" element={<LoanManagement />} />
+            <Route path="payroll-management" element={<Payroll />} />
+          </Route>
 
-          {/* Schools/Geofencing - Disabled */}
-          <Route
-            path="schools"
-            element={<Navigate to="/" replace />}
-          />
+          {/* HR, Superintendent & Admin Operations Tier */}
+          <Route element={<ProtectedRoute roles={HR_SUPERINTENDENT_ADMIN} />}>
+            <Route path="leave-management" element={<LeaveManagement />} />
+            <Route path="attendance-management" element={<AttendanceManagement />} />
+            <Route path="staff-dtr" element={<StaffDTRManagement />} />
+            <Route path="performance-management" element={<IPCRFManagement />} />
+            <Route path="recruitment" element={<Recruitment />} />
+          </Route>
 
-          {/* Audit Logs - Admin/HR only */}
-          <Route
-            path="audit-logs"
-            element={isAdminOrHR ? <AuditLogs /> : <Navigate to="/" replace />}
-          />
+          {/* Management Audit Logs Tier */}
+          <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>
+            <Route path="audit-logs" element={<AuditLogs />} />
+          </Route>
         </Route>
 
         {/* Catch-all - Redirect to Dashboard */}

@@ -1,0 +1,14 @@
+{
+  "status": "PATCHED",
+  "error": "GET http://localhost:8000/api/analytics/dashboard/ 404 (Not Found)",
+  "root_cause": "Mismatch between frontend route calling api/analytics/dashboard/ and backend route registered at api/dashboard/",
+  "affected_files": [
+    "frontend/src/pages/admin/AccountantDashboardPage.jsx",
+    "frontend/src/pages/admin/SuperintendentDashboardPage.jsx"
+  ],
+  "applied_patch": "Changed api.get('analytics/dashboard/') to api.get('dashboard/') in both affected files",
+  "verification": {
+    "eslint": "PASS (0 errors, 0 warnings)",
+    "build": "PASS (vite built in 5.94s)"
+  }
+}

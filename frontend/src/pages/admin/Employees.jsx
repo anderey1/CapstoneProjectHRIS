@@ -1,172 +1,67 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, UserPlus, Search, Filter, CheckCircle2, FileDown } from 'lucide-react';
-import api from '../../api/axios';
-import { QUERY_KEYS } from '../../api/queryKeys';
+import { Users, UserPlus, Search, Filter, FileDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import EmployeeTable from '../../components/features/employees/EmployeeTable';
-import PersonnelFormModal from '../../components/features/employees/PersonnelFormModal';
+import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
+import { 
+  useEmployees, 
+  EmployeeTable, 
+  PersonnelFormModal 
+} from '../../features/employees';
 import { exportToCSV } from '../../utils/export';
 
 /**
  * Employees Management Page
  * 
- * Simple, professional redesign with clean filters and actions.
+ * Clean orchestrator powered by useEmployees domain hook.
+ * Includes Active Personnel and Pending Registration Approvals tabs.
  */
 const Employees = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const { can } = useRBAC();
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'pending'
   const [searchTerm, setSearchTerm] = useState('');
   const [activeModal, setActiveModal] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [successMsg, setSuccessMsg] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
   const [appliedRole, setAppliedRole] = useState('');
   const [appliedArea, setAppliedArea] = useState('');
-  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'pending'
-  const ROLE = 'HR'
 
-  // 1. Data Fetching
-  const { data: employees, isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.EMPLOYEES],
-    queryFn: async () => {
-      const response = await api.get('employees/');
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
-  });
+  const {
+    employees,
+    schools,
+    pendingRegistrations,
+    isLoading,
+    isSaving,
+    saveEmployee,
+    deleteEmployee,
+    approveRegistration,
+    rejectRegistration,
+    isApproving,
+    isRejecting,
+  } = useEmployees();
 
-  const { data: pendingRegistrations } = useQuery({
-    queryKey: ['pendingRegistrations'],
-    queryFn: async () => {
-      const response = await api.get('employees/pending-registrations/');
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
-    enabled: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role)
-  });
-
-  const { data: schools } = useQuery({
-    queryKey: ['schools'],
-    queryFn: async () => {
-      const res = await api.get('schools/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    }
-  });
-
-  // 2. Mutations
-  const addMutation = useMutation({
-    mutationFn: (newEmployee) => api.post('employees/', newEmployee),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
-      closeModal();
-      showToast('Employee added!');
-    },
-    onError: (err) => {
-      console.error("Add staff error:", err.response?.data);
-      alert('Failed to add employee. Check console for details.');
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => api.patch(`employees/${selectedEmployee.id}/`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
-      closeModal();
-      showToast('Record updated!');
-    },
-    onError: (err) => {
-      console.error("Update staff error:", err.response?.data);
-      alert('Update failed. Check console for details.');
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`employees/${id}/`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
-      showToast('Employee removed.');
-    },
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: (id) => api.post(`employees/${id}/approve-registration/`),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
-      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
-      showToast(res.data.message || 'Registration approved.');
-    },
-    onError: (err) => {
-      console.error(err);
-      alert('Failed to approve registration.');
-    }
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: (id) => api.post(`employees/${id}/reject-registration/`),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
-      showToast(res.data.message || 'Registration request rejected.');
-    },
-    onError: (err) => {
-      console.error(err);
-      alert('Failed to reject registration.');
-    }
-  });
-
-  // 3. Handlers
   const closeModal = () => {
     setActiveModal(null);
     setSelectedEmployee(null);
   };
 
-  const showToast = (msg) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 3000);
-  };
-
   const handleFormSubmit = async (data) => {
-    // Check if there's a file to upload
-    const hasFile = data.e_signature_file && data.e_signature_file.length > 0;
-    
-    let payload = data;
-    
-    if (hasFile) {
-      payload = new FormData();
-      // Append all fields to FormData
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === 'e_signature_file') {
-          payload.append('e_signature', value[0]);
-        } else if (key === 'family' || key === 'education' || key === 'eligibilities' || key === 'work_experience') {
-          // DRF MultiPartParser needs JSON strings for nested fields
-          payload.append(key, JSON.stringify(value));
-        } else if (value !== null && value !== undefined) {
-          payload.append(key, value);
-        }
-      });
-    } else {
-      // Clean up helper fields from JSON payload
-      delete payload.e_signature_file;
-      delete payload.e_signature_preview;
-    }
-
-    if (selectedEmployee) {
-      await updateMutation.mutateAsync(payload);
-    } else {
-      await addMutation.mutateAsync(payload);
-    }
+    await saveEmployee(data, selectedEmployee?.id);
+    closeModal();
   };
 
   const roleOptions = useMemo(() => {
     const values = (employees || [])
-      .map(emp => emp.user_details?.role || emp.role || '')
+      .map((emp) => emp.user_details?.role || emp.role || '')
       .filter(Boolean);
     return Array.from(new Set(values)).sort();
   }, [employees]);
 
   const areaOptions = useMemo(() => {
     const values = (employees || [])
-      .map(emp => emp.department || '')
+      .map((emp) => emp.department || '')
       .filter(Boolean);
     return Array.from(new Set(values)).sort();
   }, [employees]);
@@ -188,13 +83,21 @@ const Employees = () => {
   const filteredEmployees = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return (employees || []).filter(emp => {
+    return (employees || []).filter((emp) => {
+      // Exclude currently logged-in user from the employee directory
+      const isCurrentUser = 
+        (user?.employee_id && String(emp.id) === String(user.employee_id)) ||
+        (user?.id && String(emp.user_details?.id) === String(user.id)) ||
+        (user?.username && emp.user_details?.username === user.username);
+      if (isCurrentUser) return false;
+
       const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim().toLowerCase();
       const department = (emp.department || '').toLowerCase();
       const role = (emp.user_details?.role || emp.role || '').toUpperCase();
       const area = (emp.department || '').toLowerCase();
 
-      const matchesSearch = !normalizedSearch ||
+      const matchesSearch =
+        !normalizedSearch ||
         fullName.includes(normalizedSearch) ||
         department.includes(normalizedSearch);
       const matchesRole = !appliedRole || role === appliedRole.toUpperCase();
@@ -202,70 +105,111 @@ const Employees = () => {
 
       return matchesSearch && matchesRole && matchesArea;
     });
-  }, [employees, searchTerm, appliedRole, appliedArea]);
+  }, [employees, searchTerm, appliedRole, appliedArea, user]);
 
-  if (isLoading) return (
-    <div className="p-8 flex justify-center h-[60vh] items-center">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
-    </div>
-  );
+  if (isLoading) {
+    return (
+      <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
+        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
+      </div>
+    );
+  }
+
+  const canManageRegistrations = can(PERMISSIONS.MANAGE_EMPLOYEES);
+
+  const teachingCount = (employees || []).filter(e => {
+    const role = e.user_details?.role || e.role;
+    return role === 'TEACHING';
+  }).length;
+
+  const nonTeachingCount = (employees || []).filter(e => {
+    const role = e.user_details?.role || e.role;
+    return role && role !== 'TEACHING';
+  }).length;
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
-
-      {/* Toast Notification */}
-      {successMsg && (
-        <div className="toast toast-top toast-end z-[100] mt-16">
-          <div className="alert bg-primary text-white shadow-xl border-none rounded-lg flex items-center gap-3 py-3 px-6">
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="font-bold text-xs uppercase tracking-widest">{successMsg}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-1">
+    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
+      {/* Institutional Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <Users className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Staff List</h1>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+                Division Personnel Master Ledger
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Official DepEd Plantilla & Personnel Directory • Schools Division of Lucena City
+              </p>
+            </div>
           </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Staff Management Portal</p>
         </div>
 
-
-        {['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) ? (
-          <button
-            onClick={() => setActiveModal('form')}
-            className="btn btn-primary rounded-lg shadow-lg shadow-primary/20 px-6"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Add Staff Member
-          </button>
-        ) : null}
-
+        <div className="flex items-center gap-2">
+          {can(PERMISSIONS.MANAGE_EMPLOYEES) && activeTab === 'active' && (
+            <button
+              onClick={() => setActiveModal('form')}
+              className="px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center gap-1.5 transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Add Plantilla Employee
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Tabs Selection */}
-      {['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) && (
-        <div className="flex border-b border-base-200 gap-6">
+      {/* 4-Metric Portfolio Status Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Plantilla Roster</p>
+          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{(employees || []).length}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">All division records</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Teaching Personnel</p>
+          <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{teachingCount}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">Instructional cadre</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Non-Teaching Staff</p>
+          <p className="text-xl font-bold text-slate-700 font-mono tabular-nums mt-1">{nonTeachingCount}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">Admin & support</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pending Activations</p>
+          <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{(pendingRegistrations || []).length}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">Awaiting HR review</p>
+        </div>
+      </div>
+
+      {/* Institutional Tab Navigation */}
+      {canManageRegistrations && (
+        <div className="flex border-b border-slate-200 gap-6">
           <button
             type="button"
             onClick={() => setActiveTab('active')}
-            className={`pb-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${activeTab === 'active' ? 'border-[#0038A8] text-[#0038A8]' : 'border-transparent text-base-content/40 hover:text-base-content/60'}`}
+            className={`pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+              activeTab === 'active'
+                ? 'border-[#0038A8] text-[#0038A8]'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
           >
-            Active Directory
+            Active Personnel Directory ({filteredEmployees.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('pending')}
-            className={`pb-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer relative ${activeTab === 'pending' ? 'border-[#0038A8] text-[#0038A8]' : 'border-transparent text-base-content/40 hover:text-base-content/60'}`}
+            className={`pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer relative ${
+              activeTab === 'pending'
+                ? 'border-[#0038A8] text-[#0038A8]'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
           >
-            Pending Approvals
+            Pending Account Activations
             {pendingRegistrations && pendingRegistrations.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 bg-error text-white text-[8px] font-black rounded-full inline-flex items-center justify-center min-w-[16px] h-4 animate-pulse">
+              <span className="ml-1.5 px-1.5 py-0.2 bg-amber-600 text-white text-[10px] font-bold rounded-full font-mono tabular-nums inline-flex items-center justify-center min-w-[16px] h-4">
                 {pendingRegistrations.length}
               </span>
             )}
@@ -275,14 +219,14 @@ const Employees = () => {
 
       {activeTab === 'active' ? (
         <>
-          {/* Filters Bar */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-base-200 flex flex-col lg:flex-row gap-4 items-center">
+          {/* Institutional Filters & Export Bar */}
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-300 flex flex-col lg:flex-row gap-3 items-center justify-between">
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by name or department..."
-                className="input input-bordered w-full pl-12 bg-base-50/50 focus:bg-white border-base-200 focus:border-primary transition-all rounded-lg text-sm"
+                placeholder="Search by personnel name, plantilla position, or station..."
+                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -291,59 +235,60 @@ const Employees = () => {
             <div className="flex items-center gap-2 w-full lg:w-auto">
               <div className="relative flex-1 lg:flex-none">
                 <button
-                  type="button"
-                  onClick={() => setShowFilters(prev => !prev)}
-                  className={`btn rounded-lg text-xs font-bold uppercase tracking-widest px-6 ${
-                    appliedRole || appliedArea ? 'btn-primary' : 'btn-ghost bg-base-50 border-base-200'
+                  onClick={() => setShowFilters((prev) => !prev)}
+                  className={`px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider border transition-colors flex items-center gap-1.5 ${
+                    appliedRole || appliedArea 
+                      ? 'bg-blue-50 text-[#0038A8] border-blue-300' 
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                   }`}
                 >
-                  <Filter className="w-3 h-3 mr-2 opacity-50" />
-                  Filter
+                  <Filter className="w-3.5 h-3.5 text-slate-500" />
+                  Filters {(appliedRole || appliedArea) ? '(Filtered)' : ''}
                 </button>
 
                 {showFilters && (
-                  <div className="absolute right-0 top-full mt-2 z-20 w-80 rounded-xl border border-base-200 bg-white p-4 shadow-2xl space-y-3">
+                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-lg border border-slate-300 bg-white p-4 shadow-lg space-y-3">
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Role</label>
+                      <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">Personnel Classification</label>
                       <select
                         value={selectedRole}
                         onChange={(e) => setSelectedRole(e.target.value)}
-                        className="select select-bordered w-full mt-1"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
                       >
-                        <option value="">All Roles</option>
-                        {roleOptions.map(role => (
+                        <option value="">All Classifications</option>
+                        {roleOptions.map((role) => (
                           <option key={role} value={role}>{role}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Area</label>
+                      <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">Department / Station</label>
                       <select
                         value={selectedArea}
                         onChange={(e) => setSelectedArea(e.target.value)}
-                        className="select select-bordered w-full mt-1"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
                       >
-                        <option value="">All Areas</option>
-                        {areaOptions.map(area => (
+                        <option value="">All Stations</option>
+                        {areaOptions.map((area) => (
                           <option key={area} value={area}>{area}</option>
                         ))}
                       </select>
                     </div>
-                    <div className="flex gap-2 pt-1">
-                      <button type="button" onClick={applyFilters} className="btn btn-primary btn-sm flex-1">Apply</button>
-                      <button type="button" onClick={resetFilters} className="btn btn-ghost btn-sm">Reset</button>
+                    <div className="flex gap-2 pt-2 border-t border-slate-200">
+                      <button onClick={applyFilters} className="px-3 py-1.5 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase rounded flex-1">Apply Filters</button>
+                      <button onClick={resetFilters} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold uppercase rounded">Reset</button>
                     </div>
                   </div>
                 )}
               </div>
 
               <button
-                type="button"
-                onClick={() => exportToCSV(filteredEmployees, 'Staff_List')}
-                className="btn btn-ghost bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 flex-1 lg:flex-none rounded-lg text-xs font-bold uppercase tracking-widest px-6"
+                onClick={() => exportToCSV(filteredEmployees, 'Plantilla_Ledger_DBM_Form_B')}
+                className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                title="Export DBM Form B / Plantilla Personnel CSV"
               >
-                <FileDown className="w-3 h-3 mr-2" />
-                Download List
+                <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                Export Plantilla (DBM Form B)
               </button>
             </div>
           </div>
@@ -356,9 +301,9 @@ const Employees = () => {
                 setSelectedEmployee(emp);
                 setActiveModal('form');
               }}
-              onDelete={(id) => {
+              onDelete={async (id) => {
                 if (window.confirm('Remove this employee record?')) {
-                  deleteMutation.mutate(id);
+                  await deleteEmployee(id);
                 }
               }}
             />
@@ -366,66 +311,66 @@ const Employees = () => {
         </>
       ) : (
         /* Pending Registrations Approvals Table */
-        <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-700">
           <div className="overflow-x-auto">
             <table className="table table-md w-full">
               <thead>
-                <tr className="bg-base-50/50 border-b border-base-100">
-                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 pl-6">Employee</th>
-                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">Employee ID</th>
-                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">Credentials Requested</th>
-                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50">Position / Dept</th>
-                  <th className="text-[10px] font-black uppercase tracking-widest text-base-content/50 text-right pr-6">Actions</th>
+                <tr className="bg-slate-50/75 border-b border-slate-200 text-slate-500">
+                  <th className="text-[11px] font-semibold uppercase tracking-wider pl-6">Employee</th>
+                  <th className="text-[11px] font-semibold uppercase tracking-wider">Employee ID</th>
+                  <th className="text-[11px] font-semibold uppercase tracking-wider">Credentials Requested</th>
+                  <th className="text-[11px] font-semibold uppercase tracking-wider">Position / Dept</th>
+                  <th className="text-[11px] font-semibold uppercase tracking-wider text-right pr-6">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {!pendingRegistrations || pendingRegistrations.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="text-center py-12">
-                      <p className="text-xs font-bold text-base-content/30 uppercase tracking-widest">No pending registration requests found</p>
+                      <p className="text-xs font-medium text-slate-400">No pending registration requests found</p>
                     </td>
                   </tr>
                 ) : (
                   pendingRegistrations.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-base-50/30 transition-colors border-b border-base-100">
-                      <td className="pl-6">
-                        <div className="font-bold text-xs">{emp.first_name} {emp.last_name}</div>
-                        <div className="text-[10px] opacity-40 font-bold uppercase">{emp.email || 'No email'}</div>
+                    <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
+                      <td className="pl-6 py-4">
+                        <div className="font-semibold text-xs text-slate-900">{emp.first_name} {emp.last_name}</div>
+                        <div className="text-[11px] text-slate-400">{emp.email || 'No email'}</div>
                       </td>
-                      <td className="font-bold text-xs text-[#0038A8]">{emp.agency_employee_no}</td>
+                      <td className="font-semibold text-xs text-[#0038A8]">{emp.agency_employee_no}</td>
                       <td>
-                        <div className="text-xs font-bold bg-base-100 px-2 py-0.5 rounded-md inline-block">@{emp.user_details?.username}</div>
-                        <div className="text-[10px] opacity-50 font-medium mt-0.5">{emp.user_details?.email}</div>
+                        <div className="text-xs font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded inline-block">@{emp.user_details?.username}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">{emp.user_details?.email}</div>
                       </td>
                       <td>
-                        <div className="text-xs font-bold">{emp.position || 'Unassigned'}</div>
-                        <div className="text-[10px] opacity-40 font-bold uppercase">{emp.department || 'Operations'}</div>
+                        <div className="text-xs text-slate-800">{emp.position || 'Unassigned'}</div>
+                        <div className="text-[11px] text-slate-400">{emp.department || 'Operations'}</div>
                       </td>
                       <td className="text-right pr-6">
                         <div className="flex gap-2 justify-end">
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               if (window.confirm(`Approve registration for ${emp.first_name} ${emp.last_name}?`)) {
-                                approveMutation.mutate(emp.id);
+                                await approveRegistration(emp.id);
                               }
                             }}
-                            disabled={approveMutation.isPending}
-                            className="btn btn-success text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider"
+                            disabled={isApproving}
+                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider border-none"
                           >
-                            {approveMutation.isPending ? "Approving..." : "Approve"}
+                            {isApproving ? 'Approving...' : 'Approve'}
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               if (window.confirm(`Reject and delete registration request for ${emp.first_name} ${emp.last_name}?`)) {
-                                rejectMutation.mutate(emp.id);
+                                await rejectRegistration(emp.id);
                               }
                             }}
-                            disabled={rejectMutation.isPending}
-                            className="btn btn-error text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider"
+                            disabled={isRejecting}
+                            className="btn bg-rose-600 hover:bg-rose-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider border-none"
                           >
-                            {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+                            {isRejecting ? 'Rejecting...' : 'Reject'}
                           </button>
                         </div>
                       </td>
@@ -444,7 +389,7 @@ const Employees = () => {
           isOpen={true}
           onClose={closeModal}
           onSubmit={handleFormSubmit}
-          isPending={addMutation.isPending || updateMutation.isPending}
+          isPending={isSaving}
           schools={schools}
           initialData={selectedEmployee}
         />

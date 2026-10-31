@@ -14,12 +14,29 @@ import MobileBottomNav from './MobileBottomNav';
  */
 const MainLayout = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('sidebar-collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const toggleDrawer = () => setIsDrawerOpen(!isDrawerOpen);
   const closeDrawer = () => setIsDrawerOpen(false);
 
+  const toggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('sidebar-collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   return (
-    <div className="drawer lg:drawer-open">
+    <div className="drawer lg:drawer-open max-w-full overflow-x-hidden">
       <input
         id="main-drawer"
         type="checkbox"
@@ -29,8 +46,12 @@ const MainLayout = () => {
       />
 
       {/* Page Content */}
-      <div className="drawer-content flex flex-col min-h-screen bg-base-200/50">
-        <Navbar toggleDrawer={toggleDrawer} />
+      <div className="drawer-content flex flex-col min-h-screen bg-base-200/50 min-w-0 max-w-full overflow-x-hidden">
+        <Navbar 
+          toggleDrawer={toggleDrawer} 
+          toggleCollapse={toggleCollapse} 
+          isCollapsed={isCollapsed} 
+        />
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto pb-24 lg:pb-0">
 
@@ -44,15 +65,19 @@ const MainLayout = () => {
         <MobileBottomNav toggleDrawer={toggleDrawer} />
 
         {/* Simple Mobile Footer Branding */}
-        <footer className="p-4 text-center text-[10px] opacity-30 uppercase tracking-[0.2em] lg:hidden mb-16">
+        <footer className="p-4 text-center text-xs text-slate-400 lg:hidden mb-16">
           DepEd Lucena HRIS © 2026
         </footer>
       </div>
 
       {/* Sidebar / Drawer Side */}
-      <div className="drawer-side z-[60]">
+      <div className="drawer-side z-[60] overflow-x-hidden">
         <label htmlFor="main-drawer" className="drawer-overlay" aria-label="close sidebar"></label>
-        <SidebarContent closeDrawer={closeDrawer} />
+        <SidebarContent 
+          closeDrawer={closeDrawer} 
+          isCollapsed={isCollapsed}
+          toggleCollapse={toggleCollapse}
+        />
       </div>
     </div>
   );

@@ -1,0 +1,9 @@
+When picking None teaching staff position the staff category should cahange accordingly
+
+when clicking the loan apply it thorws an error
+
+required documents not being reflected in the users profile
+
+superintendent or admin cant approve loan, dapat kaya nila mag approve ng loan kase role nila yon
+
+dapat nakikita lahat ng activities ng bawat user, hindi lang admin

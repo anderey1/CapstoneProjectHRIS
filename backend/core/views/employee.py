@@ -1,10 +1,13 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, parsers
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from ..models import Employee, School, Role, AuditLog, SalaryGrade
-from ..serializers import EmployeeSerializer, SchoolSerializer, SalaryGradeSerializer
+from django.db.models import Exists, OuterRef
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from ..models import Employee, School, Role, AuditLog, SalaryGrade, EmployeeDocument
+from ..serializers import EmployeeSerializer, SchoolSerializer, SalaryGradeSerializer, EmployeeDocumentSerializer
 from ..permissions import IsAdminOrHR, IsSuperintendent, IsAdminOrHRorSuperintendent
 
 class SalaryGradeViewSet(viewsets.ModelViewSet):
@@ -54,9 +57,16 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user.is_authenticated:
             return Employee.objects.none()
-        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
-            return Employee.objects.all()
-        return Employee.objects.filter(user=user)
+        supervisor_subquery = Employee.objects.filter(supervisor=OuterRef('pk'))
+        base_qs = Employee.objects.select_related(
+            'user', 'school', 'salary_grade'
+        ).annotate(
+            annotated_is_supervisor=Exists(supervisor_subquery)
+        )
+
+        if user.is_management:
+            return base_qs.all()
+        return base_qs.filter(user=user)
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -92,39 +102,39 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         if User.objects.filter(email=email).exists():
             return Response({"error": "Email is already registered."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create user and employee directly
-        from django.db import transaction
+        # Create user and employee via canonical manager
         try:
-            with transaction.atomic():
-                user_role = Role.TEACHING if staff_role.upper() == 'TEACHING' else Role.NON_TEACHING
+            user_role = Role.TEACHING if staff_role.upper() == 'TEACHING' else Role.NON_TEACHING
+            employee = Employee.objects.create_with_user(
+                user_data={
+                    'username': username,
+                    'email': email,
+                    'password': password,
+                    'role': user_role,
+                    'is_active': False,
+                },
+                employee_data={
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'department': department,
+                    'position': position,
+                    'email': email,
+                }
+            )
 
-                user = User.objects.create_user(
-                    username=username,
-                    email=email,
-                    password=password,
-                    role=user_role,
-                    first_name=first_name,
-                    last_name=last_name,
-                    is_active=False # Pending HR Approval
-                )
-
-                employee = Employee.objects.create(
-                    user=user,
-                    first_name=first_name,
-                    last_name=last_name,
-                    department=department,
-                    position=position,
-                    email=email
-                )
-
-                AuditLog.objects.create(
-                    user=user,
-                    action=f"Registered pending user account '{username}' for new employee '{first_name} {last_name}'"
-                )
+            AuditLog.objects.create(
+                user=employee.user,
+                action=f"Registered pending user account '{username}' for new employee '{first_name} {last_name}'"
+            )
 
             return Response({"message": "Registration submitted successfully! Please wait for HR approval before logging in."}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({"error": f"An error occurred during registration: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import logging
+            logging.getLogger(__name__).error(f"Registration error: {e}", exc_info=True)
+            return Response(
+                {"error": "An unexpected error occurred during registration. Please check your inputs or contact HR."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['GET'], permission_classes=[IsAdminOrHRorSuperintendent], url_path='pending-registrations')
     def list_pending_registrations(self, request):
@@ -217,7 +227,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'date_of_birth', 'place_of_birth', 'sex', 'civil_status',
                 'umid_id', 'pagibig_id', 'philhealth_no', 'philsys_id', 'tin_no', 'agency_employee_no',
                 'mobile_no', 'residential_address', 'permanent_address',
-                'face_descriptor', 'e_signature',
+                'e_signature',
                 'family', 'education', 'eligibilities', 'work_experience'
             ]
             update_data = {k: v for k, v in request.data.items() if k in allowed_fields}
@@ -239,16 +249,23 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
     def award_yearly_credits(self, request):
         from decimal import Decimal
-        # Award +15.0 to vacation and sick leave balances of all employees
-        employees = Employee.objects.all()
-        count = employees.count()
-        for emp in employees:
-            emp.vacation_leave_balance += Decimal('15.0')
-            emp.sick_leave_balance += Decimal('15.0')
-            emp.save()
-        
-        AuditLog.objects.create(user=request.user, action=f"Awarded yearly leave credits (+15 days) to all {count} employees.")
-        return Response({"message": f"Successfully awarded 15 leave credits to {count} employees."})
+        from django.db.models import F
+
+        # In DepEd, only non-teaching/administrative personnel accrue 15/15 VL/SL
+        # Teaching personnel earn Service Credits/PVP during summer vacation
+        non_teaching = Employee.objects.filter(
+            user__role__in=[Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.HR, Role.ACCOUNTANT]
+        )
+        count = non_teaching.count()
+        non_teaching.update(
+            vacation_leave_balance=F('vacation_leave_balance') + Decimal('15.0'),
+            sick_leave_balance=F('sick_leave_balance') + Decimal('15.0')
+        )
+        AuditLog.objects.create(
+            user=request.user, 
+            action=f"Awarded yearly leave credits (+15 VL/SL) to {count} non-teaching personnel via bulk update."
+        )
+        return Response({"message": f"Successfully awarded 15 leave credits to {count} non-teaching personnel."})
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated], url_path='change-password')
     def change_password(self, request):
@@ -270,3 +287,78 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         
         AuditLog.objects.create(user=user, action="Changed password.")
         return Response({"message": "Password changed successfully."})
+
+
+from rest_framework.pagination import PageNumberPagination
+
+class EmployeeDocumentPagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class EmployeeDocumentViewSet(viewsets.ModelViewSet):
+    queryset = EmployeeDocument.objects.all()
+    serializer_class = EmployeeDocumentSerializer
+    pagination_class = EmployeeDocumentPagination
+    permission_classes = [IsAuthenticated]
+    parser_classes = (parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser)
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = EmployeeDocument.objects.all().select_related('employee', 'verified_by')
+        
+        emp_id = self.request.query_params.get('employee')
+        is_management = user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
+        if is_management:
+            if emp_id:
+                return qs.filter(employee_id=emp_id)
+            if self.detail or self.action in ['verify', 'retrieve', 'destroy', 'update', 'partial_update']:
+                return qs
+            if hasattr(user, 'employee_profile'):
+                return qs.filter(employee=user.employee_profile)
+            return qs
+        if hasattr(user, 'employee_profile'):
+            return qs.filter(employee=user.employee_profile)
+        return qs.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        file_obj = self.request.FILES.get('file')
+        file_name = file_obj.name if file_obj else self.request.data.get('file_name', '')
+        
+        emp_id = self.request.data.get('employee')
+        if emp_id and (user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]):
+            employee = get_object_or_404(Employee, id=emp_id)
+        elif hasattr(user, 'employee_profile'):
+            employee = user.employee_profile
+        else:
+            raise ValidationError({"error": "No employee profile found for user."})
+
+        doc_type = self.request.data.get('document_type')
+        existing = EmployeeDocument.objects.filter(employee=employee, document_type=doc_type).first()
+        if existing:
+            existing.file = file_obj
+            existing.file_name = file_name
+            existing.verified = False
+            existing.verified_by = None
+            existing.verified_at = None
+            existing.save()
+            serializer.instance = existing
+            return
+
+        serializer.save(employee=employee, file_name=file_name)
+        AuditLog.objects.create(user=user, action=f"Uploaded document '{doc_type}' for {employee.first_name} {employee.last_name}")
+
+    @action(detail=True, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
+    def verify(self, request, pk=None):
+        doc = self.get_object()
+        verified = request.data.get('verified', True)
+        doc.verified = verified
+        doc.verified_by = request.user if verified else None
+        doc.verified_at = timezone.now() if verified else None
+        doc.save()
+        AuditLog.objects.create(
+            user=request.user, 
+            action=f"{'Verified' if verified else 'Revoked verification of'} document '{doc.document_type}' for {doc.employee}"
+        )
+        return Response(self.get_serializer(doc).data)

@@ -5,10 +5,6 @@ from .models import (
     ProvidentLoan, LoanPayment, LoanDocument, Payroll, 
     PerformanceReview, Applicant, ApplicantDocument, AuditLog
 )
-
-# -------------------------
-# AUTH & USER
-# -------------------------
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = ('username', 'email', 'role', 'is_staff')
@@ -20,9 +16,6 @@ class UserAdmin(BaseUserAdmin):
         ('Custom Fields', {'fields': ('role',)}),
     )
 
-# -------------------------
-# CORE HR
-# -------------------------
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'position', 'department', 'school')
@@ -34,9 +27,6 @@ class SchoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'latitude', 'longitude', 'radius_meters')
     search_fields = ('name',)
 
-# -------------------------
-# ATTENDANCE & LEAVE
-# -------------------------
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
     list_display = ('employee', 'date', 'am_in', 'am_out', 'pm_in', 'pm_out', 'status', 'is_dtr_approved')
@@ -49,9 +39,6 @@ class LeaveRequestAdmin(admin.ModelAdmin):
     list_filter = ('status', 'leave_type', 'date_applied')
     search_fields = ('employee__first_name', 'employee__last_name')
 
-# -------------------------
-# LOANS & PAYROLL
-# -------------------------
 class LoanPaymentInline(admin.TabularInline):
     model = LoanPayment
     extra = 0
@@ -80,9 +67,6 @@ class PayrollAdmin(admin.ModelAdmin):
     list_filter = ('cutoff_period', 'date_generated')
     search_fields = ('employee__first_name', 'employee__last_name')
 
-# -------------------------
-# PERFORMANCE & RECRUITMENT
-# -------------------------
 @admin.register(PerformanceReview)
 class PerformanceReviewAdmin(admin.ModelAdmin):
     list_display = ('employee', 'period', 'get_average_score', 'is_promotion_eligible')
@@ -105,9 +89,6 @@ class ApplicantAdmin(admin.ModelAdmin):
     search_fields = ('first_name', 'last_name', 'position_applied')
     inlines = [ApplicantDocumentInline]
 
-# -------------------------
-# SYSTEM
-# -------------------------
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
     list_display = ('timestamp', 'user', 'action')

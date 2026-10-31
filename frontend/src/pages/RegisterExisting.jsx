@@ -1,39 +1,64 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { 
-  User, Lock, Mail, Briefcase, FolderOpen, Eye, EyeOff, AlertCircle, 
-  CheckCircle2, ArrowLeft, ChevronRight, ShieldCheck 
+  Eye, EyeOff, AlertCircle, 
+  CheckCircle2, ArrowLeft, ShieldCheck 
 } from 'lucide-react';
 
 const AREA_POSITIONS = {
   Instructional: [
-    'Teacher I', 'Teacher II', 'Teacher III', 'Teacher IV', 'Teacher V', 'Teacher VI',
-    'Master Teacher I', 'Master Teacher II', 'Master Teacher III', 'Master Teacher IV'
+    'Teacher I', 'Teacher II', 'Teacher III', 'Teacher IV', 'Teacher V', 'Teacher VI', 'Teacher VII',
+    'Master Teacher I', 'Master Teacher II', 'Master Teacher III', 'Master Teacher IV',
+    'SPED Teacher I', 'SPED Teacher II', 'SPED Teacher III'
   ],
   Administrative: [
-    'Head Teacher I', 'Head Teacher III',
     'Principal I', 'Principal II', 'Principal III', 'Principal IV',
-    'Administrative Officer I', 'Administrative Officer II',
-    'Administrative Assistant I', 'Administrative Assistant II'
+    'Head Teacher I', 'Head Teacher II', 'Head Teacher III', 'Head Teacher IV', 'Head Teacher V', 'Head Teacher VI',
+    'Administrative Officer V', 'Administrative Officer IV', 'Administrative Officer II', 'Administrative Officer I',
+    'Administrative Assistant III', 'Administrative Assistant II', 'Administrative Assistant I',
+    'Administrative Aide VI', 'Administrative Aide IV',
+    'Registrar II', 'Registrar I'
   ],
   Finance: [
-    'Accountant I',
-    'Administrative Officer I', 'Administrative Officer II',
-    'Administrative Assistant I', 'Administrative Assistant II'
+    'Accountant III', 'Accountant II', 'Accountant I',
+    'Administrative Officer V (Budget Officer)',
+    'Administrative Assistant III (Senior Bookkeeper)',
+    'Administrative Assistant II (Accounting / Cash)',
+    'Administrative Assistant I',
+    'Administrative Aide VI'
   ],
   'ICT Section': [
-    'Administrative Assistant I', 'Administrative Assistant II',
-    'Administrative Officer I', 'Administrative Officer II'
+    'Information Technology Officer I',
+    'Computer Programmer II',
+    'Administrative Assistant III (Computer Operator)',
+    'Administrative Assistant II',
+    'Administrative Assistant I',
+    'Administrative Officer I'
   ],
   'Division Office': [
     'Schools Division Superintendent',
-    'Administrative Officer I', 'Administrative Officer II',
-    'Administrative Assistant I', 'Administrative Assistant II',
-    'Registrar I', 'Accountant I'
+    'Assistant Schools Division Superintendent',
+    'Attorney III (Legal Officer)',
+    'Public Schools District Supervisor (PSDS)',
+    'Education Program Supervisor (EPS)',
+    'Planning Officer III',
+    'Administrative Officer V',
+    'Administrative Officer IV',
+    'Administrative Assistant III',
+    'Administrative Assistant II',
+    'Administrative Assistant I'
   ]
 };
 
 const DEPARTMENTS = Object.keys(AREA_POSITIONS);
+const TEACHING_DEPTS = ['Instructional'];
+const NON_TEACHING_DEPTS = ['Administrative', 'Finance', 'ICT Section', 'Division Office'];
+
+const isTeachingPosition = (pos) => {
+  if (!pos) return false;
+  return pos.startsWith('Teacher') || pos.startsWith('Master Teacher') || pos.startsWith('SPED');
+};
 
 const RegisterExisting = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +72,7 @@ const RegisterExisting = () => {
     last_name: '',
     department: '',
     position: '',
-    role: 'TEACHING',
+    role: '',
     username: '',
     email: '',
     password: '',
@@ -59,15 +84,38 @@ const RegisterExisting = () => {
     setFormData(prev => {
       const next = { ...prev, [name]: value };
       
-      // Reset position when department changes
+      // Staff Category changed -> sync department & position
+      if (name === 'role') {
+        if (value === 'TEACHING') {
+          if (!TEACHING_DEPTS.includes(next.department)) {
+            next.department = 'Instructional';
+            next.position = '';
+          } else if (next.position && !isTeachingPosition(next.position)) {
+            next.position = '';
+          }
+        } else if (value === 'NON_TEACHING') {
+          if (TEACHING_DEPTS.includes(next.department)) {
+            next.department = '';
+            next.position = '';
+          } else if (next.position && isTeachingPosition(next.position)) {
+            next.position = '';
+          }
+        }
+      }
+
+      // Department changed -> sync staff category & reset position
       if (name === 'department') {
         next.position = '';
+        if (value) {
+          next.role = TEACHING_DEPTS.includes(value) ? 'TEACHING' : 'NON_TEACHING';
+        }
       }
       
-      // Auto-set staff category when position changes
+      // Position changed -> auto-set staff category accordingly
       if (name === 'position') {
-        const isTeaching = value.startsWith('Teacher') || value.startsWith('Master Teacher') || value.startsWith('SPED');
-        next.role = isTeaching ? 'TEACHING' : 'NON_TEACHING';
+        if (value) {
+          next.role = isTeachingPosition(value) ? 'TEACHING' : 'NON_TEACHING';
+        }
       }
       
       return next;
@@ -117,158 +165,200 @@ const RegisterExisting = () => {
     }
   };
 
-  const filteredPositions = formData.department ? AREA_POSITIONS[formData.department] || [] : [];
+  const availableDepartments = formData.role === 'TEACHING'
+    ? TEACHING_DEPTS
+    : (formData.role === 'NON_TEACHING' ? NON_TEACHING_DEPTS : DEPARTMENTS);
+
+  const departmentPositions = formData.department ? AREA_POSITIONS[formData.department] || [] : [];
+  const filteredPositions = departmentPositions.filter(pos => {
+    if (formData.role === 'TEACHING') return isTeachingPosition(pos);
+    if (formData.role === 'NON_TEACHING') return !isTeachingPosition(pos);
+    return true;
+  });
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0f4f8] relative overflow-hidden p-6">
-        <div className="absolute top-0 left-0 w-full h-2 bg-[#0038A8]"></div>
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[#0038A8]/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[#FCD116]/5 rounded-full blur-3xl"></div>
-        
-        <div className="card w-full max-w-lg bg-white shadow-2xl border border-base-300 rounded-2xl overflow-hidden z-10 text-center p-8 sm:p-12 animate-in zoom-in-95 duration-500">
-          <div className="w-20 h-20 bg-success/15 text-success rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-success/10">
-            <CheckCircle2 className="w-10 h-10" />
+      <div className="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-900">
+        <header className="w-full bg-[#0038A8] border-b-2 border-[#FCD116] px-4 py-3 shadow-sm">
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
+            <img src="/Deped2.png" alt="Republic of the Philippines Seal" className="w-8 h-8 object-contain" />
+            <div className="w-px h-6 bg-blue-300/40"></div>
+            <img src="/Deped logo.png" alt="Department of Education" className="h-7 object-contain" />
+            <div className="text-white text-xs font-bold uppercase tracking-tight">
+              DepEd Lucena City Division • Account Activation
+            </div>
           </div>
-          <h1 className="text-2xl font-black text-[#0038A8] uppercase tracking-tight mb-2">Registration Request Received!</h1>
-          <p className="text-xs font-bold text-base-content/40 uppercase tracking-widest mb-6">DepEd Lucena City Division</p>
-          
-          <div className="bg-success/5 border border-success/15 rounded-xl p-4 text-xs font-medium text-success/80 mb-8 leading-relaxed max-w-sm mx-auto">
-            Your user account registration request has been successfully submitted to HR for validation. You will be able to log in once they approve your account.
-          </div>
+        </header>
 
-          <a 
-            href="/login" 
-            className="btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest px-8 h-12"
-          >
-            Go to Login
-          </a>
-        </div>
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-white border border-slate-300 rounded-lg shadow-sm p-8 text-center space-y-5">
+            <div className="w-12 h-12 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-300 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold uppercase tracking-tight text-slate-900">
+                Activation Request Submitted
+              </h1>
+              <p className="text-xs text-slate-600 mt-1">
+                Your portal account request has been routed to the Division Personnel / HR Section for Plantilla verification.
+              </p>
+            </div>
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded text-left text-xs text-slate-700 space-y-2">
+              <p className="font-semibold text-slate-900">Next Steps:</p>
+              <ul className="list-disc list-inside space-y-1 text-slate-600">
+                <li>HR administrators will match your name against current Division Plantilla records.</li>
+                <li>Once validated and approved, you can sign in using your registered username.</li>
+              </ul>
+            </div>
+            <div className="pt-2">
+              <Link 
+                to="/login"
+                className="inline-flex items-center justify-center px-6 py-2.5 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86]"
+              >
+                Return to Login Terminal
+              </Link>
+            </div>
+          </div>
+        </main>
+
+        <footer className="w-full bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
+          <p>© 2026 DepEd Lucena City Division • Human Resource Information System</p>
+        </footer>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f0f4f8] relative overflow-hidden py-12 px-6">
-      
-      {/* Top Banner Accent */}
-      <div className="absolute top-0 left-0 w-full h-2 bg-[#0038A8]"></div>
-      <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[#0038A8]/5 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[#FCD116]/5 rounded-full blur-3xl"></div>
-
-      <div className="w-full max-w-xl bg-white shadow-2xl border border-base-300 rounded-2xl overflow-hidden z-10 my-6 animate-in slide-in-from-bottom-8 duration-700">
-        
-        {/* Header Block */}
-        <div className="p-8 border-b border-base-100 bg-base-50/30 flex flex-col items-center text-center">
-          <div className="flex items-center gap-4 mb-4">
-            <img src="/Deped2.png" alt="DepEd Seal" className="w-12 h-12 drop-shadow-sm" />
-            <div className="w-px h-8 bg-base-300"></div>
-            <img src="/Deped logo.png" alt="DepEd Logo" className="h-8" />
-          </div>
-          
-          <h1 className="text-xl font-black text-[#0038A8] uppercase tracking-tight">Register Employee Account</h1>
-          <p className="text-[9px] font-black text-base-content/40 uppercase tracking-[0.2em] mt-1.5">
-             For Existing Personnel without Portal Credentials
-          </p>
-        </div>
-
-        {/* Form Body */}
-        <div className="p-8 sm:p-10">
-          
-          {errorMsg && (
-            <div className="alert alert-error bg-error/10 border-error/20 text-error rounded-xl p-4 flex items-start gap-3 mb-6 animate-in fade-in slide-in-from-top-2">
-              <AlertCircle className="w-5 h-5 mt-0.5" />
-              <div className="flex-1">
-                 <p className="text-[10px] font-black uppercase tracking-widest mb-1">Registration Error</p>
-                 <p className="text-xs font-bold opacity-80 whitespace-pre-wrap">{errorMsg}</p>
-              </div>
+    <div className="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-900">
+      {/* DepEd Institutional Top Header Bar */}
+      <header className="w-full bg-[#0038A8] border-b-2 border-[#FCD116] px-4 py-3 shadow-sm">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/Deped2.png" alt="Republic of the Philippines Seal" className="w-9 h-9 object-contain" />
+            <div className="w-px h-7 bg-blue-300/40"></div>
+            <img src="/Deped logo.png" alt="Department of Education" className="h-8 object-contain" />
+            <div className="text-white">
+              <p className="text-xs font-bold uppercase tracking-wide leading-none">Republic of the Philippines</p>
+              <p className="text-[11px] font-semibold text-blue-100 uppercase tracking-tight mt-0.5">Department of Education • Division of Lucena City</p>
             </div>
-          )}
+          </div>
+          <Link to="/login" className="text-xs text-blue-100 hover:text-white flex items-center gap-1">
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Login
+          </Link>
+        </div>
+      </header>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* Section 1: Verification Info */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-black text-[#0038A8] uppercase tracking-wider border-b border-base-100 pb-1.5">
-                1. Verify Identity
-              </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">First Name</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <User className="w-4 h-4" />
-                    </div>
+      {/* Main Container */}
+      <main className="flex-1 flex items-center justify-center p-4 py-8">
+        <div className="w-full max-w-2xl bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
+          {/* Header Title */}
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+            <h1 className="text-base font-bold uppercase tracking-tight text-slate-900">
+              Personnel Portal Account Activation
+            </h1>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Form for regular division personnel activating their online HRIS credentials
+            </p>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            {errorMsg && (
+              <div role="alert" className="mb-6 bg-red-50 border border-red-300 p-3.5 rounded flex items-start gap-2.5 text-xs text-red-800">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span className="whitespace-pre-wrap">{errorMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Section 1: Official Plantilla Identity */}
+              <div>
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
+                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-[10px] font-bold flex items-center justify-center font-mono">1</span>
+                  <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">
+                    Official Plantilla Identity & Assignment
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      First Name <span className="text-red-600">*</span>
+                    </label>
                     <input
                       name="first_name"
                       value={formData.first_name}
                       onChange={handleChange}
                       type="text"
-                      placeholder="First Name"
-                      className="input input-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
+                      placeholder="e.g. Maria"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
                       required
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Last Name</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <User className="w-4 h-4" />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      Last Name <span className="text-red-600">*</span>
+                    </label>
                     <input
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleChange}
                       type="text"
-                      placeholder="Last Name"
-                      className="input input-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
+                      placeholder="e.g. Santos"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
                       required
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Area (Department)</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <FolderOpen className="w-4 h-4" />
-                    </div>
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    Staff Classification <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
+                    required
+                  >
+                    <option value="">-- Select Staff Classification --</option>
+                    <option value="TEACHING">Teaching Personnel</option>
+                    <option value="NON_TEACHING">Non-Teaching Personnel</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      Department / Area <span className="text-red-600">*</span>
+                    </label>
                     <select
                       name="department"
                       value={formData.department}
                       onChange={handleChange}
-                      className="select select-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
                       required
                     >
-                      <option value="">Select Area (Department)</option>
-                      {DEPARTMENTS.map(dept => (
+                      <option value="">-- Select Department --</option>
+                      {availableDepartments.map(dept => (
                         <option key={dept} value={dept}>{dept}</option>
                       ))}
                     </select>
                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Role (Position)</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <Briefcase className="w-4 h-4" />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      Plantilla Position <span className="text-red-600">*</span>
+                    </label>
                     <select
                       name="position"
                       value={formData.position}
                       onChange={handleChange}
-                      className="select select-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8] disabled:bg-slate-50 disabled:text-slate-400"
                       disabled={!formData.department}
                       required
                     >
                       <option value="">
-                        {!formData.department ? "Select Area First" : "Select Role (Position)"}
+                        {!formData.department ? '-- Select Department First --' : '-- Select Plantilla Position --'}
                       </option>
                       {filteredPositions.map(pos => (
                         <option key={pos} value={pos}>{pos}</option>
@@ -278,149 +368,125 @@ const RegisterExisting = () => {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Staff Category (Teaching / Non-Teaching)</label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="select select-bordered w-full bg-base-50 border-base-200 focus:border-[#0038A8] rounded-xl text-xs font-bold"
-                  required
-                >
-                  <option value="TEACHING">Teaching Staff</option>
-                  <option value="NON_TEACHING">Non-Teaching Staff</option>
-                </select>
-              </div>
-            </div>
+              {/* Section 2: Portal Credentials */}
+              <div>
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
+                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-[10px] font-bold flex items-center justify-center font-mono">2</span>
+                  <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">
+                    Portal Security & Login Credentials
+                  </h2>
+                </div>
 
-            {/* Section 2: User Account Credentials */}
-            <div className="space-y-4 pt-4 border-t border-base-200">
-              <h3 className="text-xs font-black text-[#0038A8] uppercase tracking-wider border-b border-base-100 pb-1.5">
-                2. Set Credentials
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Preferred Username</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <User className="w-4 h-4" />
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      Preferred Username <span className="text-red-600">*</span>
+                    </label>
                     <input
                       name="username"
                       value={formData.username}
                       onChange={handleChange}
                       type="text"
-                      placeholder="username"
-                      className="input input-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
+                      placeholder="e.g. maria.santos"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
                       required
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Email Address</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <Mail className="w-4 h-4" />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      Official / DepEd Email <span className="text-red-600">*</span>
+                    </label>
                     <input
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       type="email"
                       placeholder="employee@deped.gov.ph"
-                      className="input input-bordered w-full pl-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
                       required
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      Account Password <span className="text-red-600">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        className="w-full px-3 py-2 pr-10 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
+                        required
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                      Confirm Password <span className="text-red-600">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        name="confirm_password"
+                        value={formData.confirm_password}
+                        onChange={handleChange}
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        className="w-full px-3 py-2 pr-10 bg-white border border-slate-300 rounded text-sm text-slate-900 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
+                        required
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Password</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <input
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      className="input input-bordered w-full pl-11 pr-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 opacity-30 hover:opacity-100 transition-opacity"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Confirm Password</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#0038A8] transition-all">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <input
-                      name="confirm_password"
-                      value={formData.confirm_password}
-                      onChange={handleChange}
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      className="input input-bordered w-full pl-11 pr-11 bg-base-50 focus:border-[#0038A8] rounded-xl text-xs font-bold"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 opacity-30 hover:opacity-100 transition-opacity"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-5 border-t border-base-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-               <a 
-                  href="/login" 
-                  className="text-xs font-bold text-base-content/40 hover:text-[#0038A8] transition-colors flex items-center gap-1.5 order-2 sm:order-1"
-               >
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <Link
+                  to="/login"
+                  className="text-xs font-semibold text-slate-600 hover:text-[#0038A8] flex items-center gap-1.5"
+                >
                   <ArrowLeft className="w-3.5 h-3.5" /> Back to Login
-               </a>
-               <button
+                </Link>
+                <button
                   type="submit"
                   disabled={isLoading}
-                  className={`btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none shadow-lg shadow-blue-900/20 rounded-xl text-xs font-black uppercase tracking-widest px-8 h-12 w-full sm:w-auto order-1 sm:order-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-               >
-                  {isLoading ? "Processing Registration..." : (
-                     <>
-                        Register Account
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                     </>
-                  )}
-               </button>
-            </div>
-          </form>
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  {isLoading ? 'Submitting Registration...' : 'Submit Activation Request'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-      
-      {/* Bottom Legal Notice */}
-      <div className="text-center mt-4 opacity-40">
-        <p className="text-[9px] font-black uppercase tracking-widest">
-           © 2026 DepEd Lucena City Division • Secure Employee Registration
-        </p>
-      </div>
+      </main>
+
+      <footer className="w-full bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
+        <p>Department of Education — Schools Division of Lucena City • Human Resource Information System</p>
+      </footer>
     </div>
   );
 };

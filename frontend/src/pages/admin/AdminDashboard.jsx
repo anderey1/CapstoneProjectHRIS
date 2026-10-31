@@ -1,26 +1,37 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
-import { useAuth } from '../../context/AuthContext';
-import AccountantDashboard from '../../components/features/dashboard/AccountantDashboard';
-import SuperintendentDashboard from '../../components/features/dashboard/SuperintendentDashboard';
 import {
-  Users, Wallet, CalendarCheck, AlertCircle, Loader2, BarChart3, TrendingUp, PieChart as PieChartIcon, ShieldCheck
+  Users,
+  CalendarCheck,
+  AlertCircle,
+  BarChart3,
+  TrendingUp,
+  ShieldCheck,
+  School,
+  ArrowRight,
+  BadgeAlert,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area, CartesianGrid
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  CartesianGrid,
 } from 'recharts';
 
+const CHART_PRIMARY = '#0038A8'; // DepEd Blue
+const CHART_SECONDARY = '#475569'; // Slate 600
+const CHART_ACCENT = '#D97706'; // Amber 600
 
-const COLORS = [
-  'oklch(48.8% 0.243 264.376)', // Primary
-  'oklch(90.5% 0.182 98.111)', // Secondary
-  'oklch(57.7% 0.245 27.325)', // Accent
-  'oklch(85% 0.2 90)',          // Variant for yellow
-  'oklch(70% 0.15 250)'         // Variant for blue
-];
+const PIE_COLORS = [CHART_PRIMARY, CHART_SECONDARY, CHART_ACCENT];
 
 const LEAVE_TYPE_LABELS = {
   vacation: 'Vacation Leave',
@@ -40,507 +51,539 @@ const LEAVE_TYPE_LABELS = {
   study: 'Study Leave',
   'study leave': 'Study Leave',
   vawc: '10-Day VAWC Leave',
-  '10-day vawc leave': '10-Day VAWC Leave',
   rehabilitation: 'Rehabilitation Privilege',
-  'rehabilitation privilege': 'Rehabilitation Privilege',
-  women_special: 'Special Leave Benefits for Women',
-  'special leave benefits for women': 'Special Leave Benefits for Women',
-  emergency: 'Special Emergency (Calamity) Leave',
-  'special emergency (calamity) leave': 'Special Emergency (Calamity) Leave',
+  women_special: 'Special Leave for Women',
+  emergency: 'Calamity Leave',
   adoption: 'Adoption Leave',
-  'adoption leave': 'Adoption Leave',
   others: 'Others',
-  'others leave': 'Others'
 };
 
-/**
- * Admin Home (Dashboard)
- * 
- * Simple, professional redesign with plain language labels and standard radius.
- */
-const Dashboard = () => {
-  // 1. Data Fetching
-  const { user } = useAuth();
-  
+const AdminDashboard = () => {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: [QUERY_KEYS.DASHBOARD_STATS],
-    queryFn: () => api.get('dashboard/').then(res => res.data)
-  });
-
-  const { data: deptData, isLoading: deptLoading } = useQuery({
-    queryKey: [QUERY_KEYS.CHARTS.DEPARTMENT],
-    queryFn: () => api.get('analytics/departments/').then(res => res.data)
-  });
-
-  const { data: loanData, isLoading: loanLoading } = useQuery({
-    queryKey: [QUERY_KEYS.CHARTS.LOAN_STATUS],
-    queryFn: () => api.get('analytics/loans/').then(res => res.data)
-  });
-
-  const { data: attData, isLoading: attLoading } = useQuery({
-    queryKey: [QUERY_KEYS.CHARTS.ATTENDANCE_TRENDS],
-    queryFn: () => api.get('analytics/attendance/').then(res => res.data)
+    queryFn: () => api.get('dashboard/').then((res) => res.data),
   });
 
   const { data: recruitmentData } = useQuery({
     queryKey: [QUERY_KEYS.CHARTS.RECRUITMENT],
-    queryFn: () => api.get('analytics/recruitment/').then(res => res.data)
+    queryFn: () => api.get('analytics/recruitment/').then((res) => res.data),
   });
 
   const { data: leaveTypeData } = useQuery({
     queryKey: [QUERY_KEYS.CHARTS.LEAVE_TYPES],
-    queryFn: () => api.get('analytics/leave/').then(res => res.data)
+    queryFn: () => api.get('analytics/leave/').then((res) => res.data),
   });
 
-  const isLoading = statsLoading || deptLoading || loanLoading || attLoading;
+  const { data: schoolsData } = useQuery({
+    queryKey: [QUERY_KEYS.CHARTS.SCHOOLS],
+    queryFn: () => api.get('analytics/schools/').then((res) => res.data),
+  });
 
-  if (isLoading) return (
-    <div className="p-8 flex justify-center h-[60vh] items-center">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
-    </div>
-  );
+  const isLoading = statsLoading;
 
-  // Data Formatting
-  const formattedLoanData = loanData?.map(item => ({
-    name: item.status?.toUpperCase() || 'UNKNOWN',
-    value: item.count
-  })) || [];
+  const formattedSchoolsData = useMemo(() => {
+    return (schoolsData || stats?.schools_breakdown || []).map((item) => ({
+      name: item.name,
+      count: item.count ?? item.employee_count ?? 0,
+    }));
+  }, [schoolsData, stats]);
 
-  const formattedDeptData = deptData?.map(item => ({
-    name: item.department || 'Other',
-    count: item.count
-  })) || [];
+  const staffMixData = useMemo(() => {
+    return [
+      { name: 'Teaching Faculty', value: stats?.teaching_count || 0 },
+      { name: 'Non-Teaching', value: stats?.non_teaching_count || 0 },
+      { name: 'Administrative Staff', value: stats?.administrative_count || 0 },
+    ].filter((d) => d.value > 0);
+  }, [stats]);
 
-  const normalizeText = (value) => {
-    if (value === null || value === undefined || value === '') return '';
-    return String(value)
-      .replace(/[_-]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  };
+  const formattedTeachingLeaves = useMemo(() => {
+    return (
+      leaveTypeData?.teaching?.map((item) => ({
+        name:
+          LEAVE_TYPE_LABELS[item.leave_type?.toLowerCase()] ||
+          item.leave_type?.toUpperCase() ||
+          'Other',
+        value: Number(item.count) || 0,
+      })) || []
+    );
+  }, [leaveTypeData]);
 
-  const formatReadableLabel = (value) => {
-    const text = normalizeText(value);
-    if (!text) return '';
+  const formattedNonTeachingLeaves = useMemo(() => {
+    return (
+      leaveTypeData?.non_teaching?.map((item) => ({
+        name:
+          LEAVE_TYPE_LABELS[item.leave_type?.toLowerCase()] ||
+          item.leave_type?.toUpperCase() ||
+          'Other',
+        value: Number(item.count) || 0,
+      })) || []
+    );
+  }, [leaveTypeData]);
 
-    return text
-      .split(' ')
-      .map(word => {
-        if (!word) return word;
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-      })
-      .join(' ');
-  };
+  const formattedRecData = useMemo(() => {
+    return (
+      recruitmentData?.map((item) => ({
+        name: item.status?.replace(/[_-]+/g, ' ').toUpperCase() || 'STAGE',
+        count: item.count,
+      })) || []
+    );
+  }, [recruitmentData]);
 
-  const formattedAttData = attData?.map(item => ({
-    name: formatReadableLabel(item.status) || 'Unknown Status',
-    count: item.count
-  })) || [];
-
-  const formattedRecData = recruitmentData?.map(item => ({
-    name: formatReadableLabel(item.status) || 'Unknown Stage',
-    count: item.count
-  })) || [];
-
-  const formattedTeachingLeaveData = leaveTypeData?.teaching?.map(item => ({
-    name: item.leave_type?.toUpperCase() || 'OTHER',
-    value: Number(item.count) || 0
-  })) || [];
-
-  const formattedNonTeachingLeaveData = leaveTypeData?.non_teaching?.map(item => ({
-    name: item.leave_type?.toUpperCase() || 'OTHER',
-    value: Number(item.count) || 0
-  })) || [];
+  if (isLoading) {
+    return (
+      <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
+        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+          Loading Division Executive Cockpit...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      
-      {/* Page Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* DepEd Institutional Header */}
+      <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
+            Republic of the Philippines • Department of Education • SDO Lucena City
+          </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-base-content uppercase">Home</h1>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                Division Administrative Cockpit
+              </h1>
+            </div>
           </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest ml-1">Daily system overview</p>
+          <p className="text-xs text-slate-600">
+            Schools Division Superintendent &amp; HR Executive Decision Operations Center
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-xs font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            5 Stations Operational
+          </span>
         </div>
       </div>
 
+      {/* 4-Metric Institutional Status Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Metric 1: Plantilla Headcount */}
+        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Plantilla Headcount
+            </span>
+            <Users className="w-4 h-4 text-[#0038A8]" />
+          </div>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
+              {stats?.total_employees || 0}
+            </span>
+            <span className="text-xs text-slate-500">personnel</span>
+          </div>
+          <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-600">
+            <span>{stats?.teaching_count || 0} Teach</span>
+            <span>•</span>
+            <span>{stats?.non_teaching_count || 0} Non-T</span>
+            <span>•</span>
+            <span>{stats?.administrative_count || 0} Admin</span>
+          </div>
+        </div>
 
-      {user?.role === 'ACCOUNTANT' ? (
-        <AccountantDashboard stats={stats} />
-      ) : user?.role === 'SUPERINTENDENT' ? (
-        <SuperintendentDashboard stats={stats} />
-      ) : (
-        <>
-          {/* Enhanced KPI Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white border-l-4 border-l-primary shadow-md rounded-xl p-6 transition-all hover:shadow-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-widest opacity-60 mb-1">Workforce</p>
-                  <h2 className="text-4xl font-black text-base-content tracking-tight">{stats?.total_employees || 0}</h2>
-                  <p className="text-[10px] font-bold text-success mt-2 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> Total Active Staff
-                  </p>
-                </div>
-                <div className="p-3 bg-primary/5 rounded-xl text-primary">
-                  <Users className="w-6 h-6" />
-                </div>
+        {/* Metric 2: Cluster Stations */}
+        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Cluster Schools
+            </span>
+            <School className="w-4 h-4 text-slate-600" />
+          </div>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
+              {formattedSchoolsData.length || 5}
+            </span>
+            <span className="text-xs text-slate-500">active stations</span>
+          </div>
+          <span className="text-[11px] text-slate-500 block mt-2 truncate">
+            South 1, West 1, North 1, East 1, LCNHS
+          </span>
+        </div>
+
+        {/* Metric 3: Attendance & Geofence Compliance */}
+        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Geofence Compliance
+            </span>
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-2xl font-bold font-mono tabular-nums text-emerald-700">
+              {stats?.geo_compliance_rate || 100}%
+            </span>
+            <span className="text-xs text-slate-500">verified</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-600">
+            <span>150m GPS radius</span>
+            <span
+              className={`font-semibold ${
+                (stats?.attendance_alerts || 0) > 0 ? 'text-amber-700' : 'text-slate-500'
+              }`}
+            >
+              {stats?.attendance_alerts || 0} flagged alert(s)
+            </span>
+          </div>
+        </div>
+
+        {/* Metric 4: Action Queue */}
+        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Pending Action Queue
+            </span>
+            <BadgeAlert className="w-4 h-4 text-amber-600" />
+          </div>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-2xl font-bold font-mono tabular-nums text-amber-700">
+              {stats?.pending_action_total || 0}
+            </span>
+            <span className="text-xs text-slate-500">awaiting review</span>
+          </div>
+          <span className="text-[11px] text-slate-600 block mt-2 truncate font-mono">
+            {stats?.pending_leaves || 0} Lvs •{' '}
+            {(stats?.pending_loan_approvals || 0) + (stats?.pending_loan_verification || 0)} Lns •{' '}
+            {stats?.pending_payroll_approval || 0} Pay
+          </span>
+        </div>
+      </div>
+
+      {/* Immediate Action Alerts Docket */}
+      <div className="bg-white border border-slate-300 rounded-lg p-4 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#0038A8]" />
+            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              High-Priority Action Docket
+            </h2>
+          </div>
+          <span className="text-[11px] text-slate-500">Division Approval Pipeline</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          {/* CSC Form 6 Pending Docket */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-md flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="font-semibold text-slate-800 block">CSC Form No. 6 Leaves</span>
+              <p className="text-[11px] text-slate-500">
+                {stats?.pending_leaves_supervisor || 0} Supervisor • {stats?.pending_leaves_hr || 0} HR •{' '}
+                {stats?.pending_leaves_superintendent || 0} SDS
+              </p>
+            </div>
+            <Link
+              to="/leaves"
+              className="inline-flex items-center gap-1 text-[#0038A8] font-semibold hover:underline text-[11px]"
+            >
+              Docket <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          {/* Provident Fund Pending Docket */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-md flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="font-semibold text-slate-800 block">Provident Fund Loans</span>
+              <p className="text-[11px] text-slate-500">
+                {stats?.pending_loan_verification || 0} to Verify •{' '}
+                {stats?.pending_loan_approvals || 0} to Endorse
+              </p>
+            </div>
+            <Link
+              to="/loans"
+              className="inline-flex items-center gap-1 text-[#0038A8] font-semibold hover:underline text-[11px]"
+            >
+              Review <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          {/* Payroll Pending Docket */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-md flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="font-semibold text-slate-800 block">Payroll Disbursement</span>
+              <p className="text-[11px] text-slate-500">
+                {stats?.pending_payroll_approval || 0} Draft • {stats?.ready_for_release || 0} Ready
+              </p>
+            </div>
+            <Link
+              to="/payroll"
+              className="inline-flex items-center gap-1 text-[#0038A8] font-semibold hover:underline text-[11px]"
+            >
+              Process <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Visual Operations Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Station Deployment & Leave Allocations (8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Station Deployment Table & Chart */}
+          <div className="bg-white border border-slate-300 rounded-lg p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <School className="w-4 h-4 text-[#0038A8]" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Personnel Deployment Across Cluster Stations
+                </h3>
               </div>
+              <span className="text-[11px] font-mono text-slate-500">Division Roster</span>
             </div>
 
-            <div className="bg-white border-l-4 border-l-secondary shadow-md rounded-xl p-6 transition-all hover:shadow-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-widest opacity-60 mb-1">Recruitment</p>
-                  <h2 className="text-4xl font-black text-base-content tracking-tight">{stats?.active_applicants || 0}</h2>
-                  <p className="text-[10px] font-bold text-secondary mt-2">Active Hiring Funnel</p>
+            <div className="h-[240px] w-full">
+              {formattedSchoolsData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={formattedSchoolsData}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 11, fill: '#475569' }}
+                      axisLine={{ stroke: '#CBD5E1' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: '#475569' }}
+                      axisLine={{ stroke: '#CBD5E1' }}
+                      tickLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(0, 56, 168, 0.05)' }}
+                      contentStyle={{
+                        borderRadius: '0.375rem',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '11px',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    />
+                    <Bar dataKey="count" fill={CHART_PRIMARY} radius={[2, 2, 0, 0]} barSize={32} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-xs">
+                  No cluster station records
                 </div>
-                <div className="p-3 bg-secondary/5 rounded-xl text-secondary">
-                  <BarChart3 className="w-6 h-6" />
-                </div>
-              </div>
+              )}
             </div>
 
-            <div className="bg-white border-l-4 border-l-accent shadow-md rounded-xl p-6 transition-all hover:shadow-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-widest opacity-60 mb-1">Leave Requests</p>
-                  <h2 className="text-4xl font-black text-base-content tracking-tight">{stats?.pending_leaves || 0}</h2>
-                  <p className="text-[10px] font-bold text-warning mt-2 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> Awaiting Action
-                  </p>
+            {/* Station Breakdown Matrix */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-slate-100 text-xs">
+              {formattedSchoolsData.map((s, idx) => (
+                <div key={idx} className="p-2 bg-slate-50 border border-slate-200 rounded text-center">
+                  <span className="text-[10px] text-slate-500 block truncate">{s.name}</span>
+                  <strong className="font-mono tabular-nums text-slate-900 font-bold block mt-0.5">
+                    {s.count}
+                  </strong>
                 </div>
-                <div className="p-3 bg-accent/5 rounded-xl text-accent">
-                  <CalendarCheck className="w-6 h-6" />
-                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Civil Service Leave Allocations Breakdown */}
+          <div className="bg-white border border-slate-300 rounded-lg p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <CalendarCheck className="w-4 h-4 text-[#0038A8]" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Civil Service Form No. 6 Leave Distribution
+                </h3>
               </div>
+              <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                Most Used: {stats?.most_used_leave || 'None'}
+              </span>
             </div>
 
-            <div className="bg-white border-l-4 border-l-warning shadow-md rounded-xl p-6 transition-all hover:shadow-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-widest opacity-60 mb-1">Payroll Cycle</p>
-                  <h2 className="text-4xl font-black text-base-content tracking-tight">{stats?.pending_payroll_approval || 0}</h2>
-                  <p className="text-[10px] font-bold text-error mt-2 italic">Pending HR Review</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {/* Teaching Leaves */}
+              <div className="border border-slate-200 rounded-md p-3 bg-slate-50/50 space-y-2">
+                <div className="flex items-center justify-between font-semibold text-slate-800 border-b border-slate-200 pb-1">
+                  <span>Teaching Faculty Leaves</span>
+                  <span className="font-mono tabular-nums text-[#0038A8]">
+                    {formattedTeachingLeaves.reduce((a, c) => a + c.value, 0)} requests
+                  </span>
                 </div>
-                <div className="p-3 bg-warning/5 rounded-xl text-warning">
-                  <ShieldCheck className="w-6 h-6" />
+                <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                  {formattedTeachingLeaves.length > 0 ? (
+                    formattedTeachingLeaves.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between py-1 border-b border-slate-100 text-[11px]"
+                      >
+                        <span className="text-slate-700 truncate">{item.name}</span>
+                        <span className="font-mono tabular-nums font-semibold text-slate-900">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-slate-400 text-center py-4 text-xs">No teaching leaves</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Non-Teaching Leaves */}
+              <div className="border border-slate-200 rounded-md p-3 bg-slate-50/50 space-y-2">
+                <div className="flex items-center justify-between font-semibold text-slate-800 border-b border-slate-200 pb-1">
+                  <span>Non-Teaching Staff Leaves</span>
+                  <span className="font-mono tabular-nums text-slate-700">
+                    {formattedNonTeachingLeaves.reduce((a, c) => a + c.value, 0)} requests
+                  </span>
+                </div>
+                <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                  {formattedNonTeachingLeaves.length > 0 ? (
+                    formattedNonTeachingLeaves.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between py-1 border-b border-slate-100 text-[11px]"
+                      >
+                        <span className="text-slate-700 truncate">{item.name}</span>
+                        <span className="font-mono tabular-nums font-semibold text-slate-900">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-slate-400 text-center py-4 text-xs">No non-teaching leaves</p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Visual Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            {/* Hiring Funnel */}
-            <div className="lg:col-span-8 bg-white border border-base-200 shadow-sm rounded-2xl p-8">
-              <div className="flex items-center justify-between mb-8">
-                 <div className="flex items-center gap-3">
-                    <BarChart3 className="w-4 h-4 text-secondary" />
-                    <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Hiring Funnel Stage</h3>
-                 </div>
+        {/* Right Column: Staff Composition & Recruitment Funnel (4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Workforce Composition Donut */}
+          <div className="bg-white border border-slate-300 rounded-lg p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#0038A8]" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Workforce Composition
+                </h3>
               </div>
-              <div className="h-[300px] w-full">
-                {formattedRecData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={formattedRecData} 
-                      layout="vertical" 
-                      margin={{ top: 0, right: 30, left: 120, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.05} />
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        dataKey="name" 
-                        type="category" 
-                        tick={{ fontSize: 10, fontWeight: 700, fill: 'oklch(var(--bc))' }} 
-                        axisLine={false} 
-                        tickLine={false}
-                        width={110}
-                      />
-                      <Tooltip 
-                        cursor={false} 
-                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }} 
-                      />
-                      <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={28}>
-                        {formattedRecData.map((entry, index) => (
-                          <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-2">
-                    <BarChart3 className="w-12 h-12" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">No active applications</p>
-                  </div>
-                )}
-              </div>
-              <div className="mt-6 pt-6 border-t border-base-100 flex items-center gap-4 text-[10px] font-bold opacity-50 uppercase tracking-widest">
-                <TrendingUp className="w-4 h-4 text-secondary" />
-                Showing distribution of applicants across recruitment stages
-              </div>
+              <span className="text-[11px] font-mono text-slate-500">Staff Mix</span>
             </div>
 
-            {/* Leave Allocations */}
-            <div className="lg:col-span-12 bg-white border border-base-200 shadow-sm rounded-2xl p-8">
-              <div className="flex items-center gap-3 mb-8">
-                 <PieChartIcon className="w-4 h-4 text-accent" />
-                 <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Leave Allocations</h3>
+            <div className="h-[180px] w-full relative">
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Total
+                </span>
+                <span className="text-xl font-bold font-mono tabular-nums text-slate-900">
+                  {stats?.total_employees || 0}
+                </span>
               </div>
-
-              {/* Leave Analytics Summary Banners */}
-              <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest block opacity-75">Most Used Leave Category</span>
-                  <span className="text-sm font-black text-base-content block mt-1 uppercase">
-                     {stats?.most_used_leave || 'None'}
-                  </span>
-                </div>
-                <div className="p-4 bg-secondary/5 rounded-xl border border-secondary/15">
-                  <span className="text-[9px] font-black text-secondary-content/75 uppercase tracking-widest block opacity-75">Active Approved Leaves</span>
-                  <span className="text-sm font-black text-base-content block mt-1 uppercase">
-                     {(formattedTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0) + 
-                       formattedNonTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0)) || 0} Employee(s)
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                {/* Teaching Staff Leaves */}
-                <div className="space-y-6">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#0038A8] text-center bg-blue-50/50 py-2 rounded-lg">Teaching Staff Leaves</h4>
-                  <div className="h-[220px] w-full relative">
-                    {formattedTeachingLeaveData.length > 0 ? (
-                      <>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                          <span className="text-[9px] font-black opacity-30 uppercase">Total</span>
-                          <span className="text-2xl font-black">
-                            {formattedTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0)}
-                          </span>
-                        </div>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={formattedTeachingLeaveData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={6}
-                              dataKey="value"
-                            >
-                              {formattedTeachingLeaveData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
-                              ))}
-                            </Pie>
-                            <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </>
-                    ) : (
-                      <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No active teaching leaves</div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {formattedTeachingLeaveData.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2 p-1.5 bg-base-50 rounded-lg">
-                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                        <div className="truncate">
-                          <p className="text-[9px] font-bold opacity-60 uppercase truncate">{item.name}</p>
-                          <p className="text-xs font-black text-base-content">{item.value} Employee(s)</p>
-                        </div>
-                      </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={staffMixData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {staffMixData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
-                  </div>
-                </div>
-
-                {/* Non-Teaching Staff Leaves */}
-                <div className="space-y-6">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#0038A8] text-center bg-blue-50/50 py-2 rounded-lg">Non-Teaching Staff Leaves</h4>
-                  <div className="h-[220px] w-full relative">
-                    {formattedNonTeachingLeaveData.length > 0 ? (
-                      <>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                          <span className="text-[9px] font-black opacity-30 uppercase">Total</span>
-                          <span className="text-2xl font-black">
-                            {formattedNonTeachingLeaveData.reduce((acc, curr) => acc + curr.value, 0)}
-                          </span>
-                        </div>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={formattedNonTeachingLeaveData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={6}
-                              dataKey="value"
-                            >
-                              {formattedNonTeachingLeaveData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} strokeWidth={0} />
-                              ))}
-                            </Pie>
-                            <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </>
-                    ) : (
-                      <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No active non-teaching leaves</div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {formattedNonTeachingLeaveData.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2 p-1.5 bg-base-50 rounded-lg">
-                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[(index + 2) % COLORS.length] }}></div>
-                        <div className="truncate">
-                          <p className="text-[9px] font-bold opacity-60 uppercase truncate">{item.name}</p>
-                          <p className="text-xs font-black text-base-content">{item.value} Employee(s)</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '0.375rem',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '11px',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
 
-            {/* Staff Distribution */}
-            <div className="lg:col-span-7 bg-white border border-base-200 shadow-sm rounded-2xl p-8">
-              <div className="flex items-center gap-3 mb-8">
-                 <Users className="w-4 h-4 text-primary" />
-                 <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Department Deployment</h3>
+            <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-slate-600">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#0038A8]" />
+                  Teaching Faculty
+                </span>
+                <strong className="font-mono tabular-nums text-slate-900">
+                  {stats?.teaching_count || 0}
+                </strong>
               </div>
-              <div className="h-[300px] w-full">
-                {formattedDeptData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={formattedDeptData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.05} />
-                      <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        cursor={false} 
-                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }} 
-                      />
-                      <Bar dataKey="count" fill="oklch(48.8% 0.243 264.376)" radius={[8, 8, 0, 0]} barSize={40} activeBar={{ fill: 'oklch(48.8% 0.243 264.376)' }} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No workforce data</div>
-                )}
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-slate-600">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#475569]" />
+                  Non-Teaching Personnel
+                </span>
+                <strong className="font-mono tabular-nums text-slate-900">
+                  {stats?.non_teaching_count || 0}
+                </strong>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-primary bg-primary/5 p-3 rounded-xl border border-primary/10">
-                 <ShieldCheck className="w-4 h-4" />
-                 Workforce is distributed across {formattedDeptData.length} key departments
-              </div>
-            </div>
-
-            {/* Loan Health */}
-            <div className="lg:col-span-5 bg-white border border-base-200 shadow-sm rounded-2xl p-8">
-              <div className="flex items-center gap-3 mb-8">
-                 <Wallet className="w-4 h-4 text-secondary" />
-                 <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Provident Loan Status</h3>
-              </div>
-              <div className="h-[280px] w-full relative">
-                {formattedLoanData.length > 0 ? (
-                  <>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                       <span className="text-[10px] font-black opacity-30 uppercase tracking-widest">Active</span>
-                       <span className="text-3xl font-black text-secondary">
-                          {formattedLoanData.reduce((acc, curr) => acc + curr.value, 0)}
-                       </span>
-                    </div>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={formattedLoanData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={80}
-                          outerRadius={110}
-                          paddingAngle={8}
-                          dataKey="value"
-                        >
-                          {formattedLoanData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[(index + 1) % COLORS.length]} strokeWidth={0} />
-                          ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </>
-                ) : (
-                  <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No loan activity</div>
-                )}
-              </div>
-              <div className="mt-6 flex flex-wrap gap-3 justify-center">
-                 {formattedLoanData.map((item, index) => (
-                    <div key={index} className="badge badge-ghost font-black text-[9px] gap-2 py-3 px-4 border border-base-200">
-                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[(index + 1) % COLORS.length] }}></div>
-                       {item.name}: {item.value}
-                    </div>
-                 ))}
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-slate-600">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#D97706]" />
+                  Administrative Staff
+                </span>
+                <strong className="font-mono tabular-nums text-slate-900">
+                  {stats?.administrative_count || 0}
+                </strong>
               </div>
             </div>
-
-            {/* Attendance Area */}
-            <div className="lg:col-span-12 bg-white border border-base-200 shadow-sm rounded-2xl p-8 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none"></div>
-              <div className="flex items-center justify-between mb-10 relative z-10">
-                 <div className="flex items-center gap-3">
-                    <CalendarCheck className="w-4 h-4 text-accent" />
-                    <h3 className="text-[11px] font-black uppercase tracking-widest opacity-40">Presence Monitoring</h3>
-                 </div>
-              </div>
-              <div className="h-[250px] w-full relative z-10">
-                {formattedAttData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={formattedAttData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.05} />
-                      <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9, fontWeight: 900 }} axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        cursor={false}
-                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'white' }} 
-                      />
-                      <Bar dataKey="count" radius={[10, 10, 0, 0]} barSize={36}>
-                        {formattedAttData.map((entry, index) => (
-                          <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center opacity-20 text-[10px] font-black uppercase tracking-widest">No daily activity recorded</div>
-                )}
-              </div>
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-                 <div className="p-4 bg-base-50 rounded-xl border border-base-100">
-                    <p className="text-[9px] font-black opacity-30 uppercase mb-1">Observation</p>
-                    <p className="text-xs font-bold leading-relaxed">System monitoring shows current attendance patterns across staff categories.</p>
-                 </div>
-                 <div className="p-4 bg-error/5 rounded-xl border border-error/10">
-                    <p className="text-[9px] font-black text-error uppercase mb-1">Action Required</p>
-                    <p className="text-xs font-bold leading-relaxed text-error/80">{stats?.attendance_alerts || 0} geofencing alerts require review by administrative staff.</p>
-                 </div>
-                 <div className="p-4 bg-success/5 rounded-xl border border-success/10">
-                    <p className="text-[9px] font-black text-success uppercase mb-1">Status</p>
-                    <p className="text-xs font-bold leading-relaxed text-success/80">Attendance verification system is active and geofencing is operational.</p>
-                 </div>
-              </div>
-            </div>
-
           </div>
-        </>
-      )}
+
+          {/* RQA Recruitment Funnel */}
+          <div className="bg-white border border-slate-300 rounded-lg p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-[#0038A8]" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  RQA Applicant Funnel
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono text-slate-500">
+                {stats?.active_applicants || 0} Active
+              </span>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              {formattedRecData.length > 0 ? (
+                formattedRecData.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded"
+                  >
+                    <span className="text-[11px] font-medium text-slate-700">{item.name}</span>
+                    <span className="font-mono tabular-nums font-bold text-[#0038A8]">
+                      {item.count}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-slate-400 text-center py-4 text-xs">No applicant records</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;

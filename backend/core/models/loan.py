@@ -1,5 +1,5 @@
 # pyrefly: ignore [missing-import]
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from .employee import Employee
@@ -7,9 +7,6 @@ from decimal import Decimal
 import os
 
 
-# -------------------------
-# PROVIDENT LOAN
-# -------------------------
 class ProvidentLoan(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -41,7 +38,6 @@ class ProvidentLoan(models.Model):
     date_granted = models.DateField(blank=True, null=True)
     date_applied = models.DateField(auto_now_add=True)
 
-    # --- Loan Application Fields ---
     purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='general')
     letter_request = models.TextField(blank=True, help_text="Formal letter stating the purpose of the loan.")
 
@@ -109,9 +105,6 @@ class ProvidentLoan(models.Model):
         return self.total_amount - Decimal(str(payments_sum))
 
 
-# -------------------------
-# LOAN DOCUMENT
-# -------------------------
 def validate_loan_doc_file(value):
     """Validate file size and extension for loan documents."""
     max_size_mb = getattr(settings, 'LOAN_DOC_MAX_SIZE_MB', 10)
@@ -141,7 +134,7 @@ class LoanDocument(models.Model):
         ('service_record', 'Updated Service Record'),
         ('contract', 'Contract of Service'),
         ('comaker_payslip', 'Co-Maker Payslip'),
-        ('medical_abstract', 'Medical Abstract/Certificate'),
+        ('medical_abstract', 'Medical Abstract / Certificate'),
         ('calamity_cert', 'Calamity Certificate'),
     ]
 
@@ -154,12 +147,9 @@ class LoanDocument(models.Model):
         ordering = ['doc_type', '-uploaded_at']
 
     def __str__(self):
-        return f"{self.get_doc_type_display()} — {self.loan}"
+        return f"{self.get_doc_type_display()}: {self.loan}"
 
 
-# -------------------------
-# LOAN PAYMENT
-# -------------------------
 class LoanPayment(models.Model):
     loan = models.ForeignKey(ProvidentLoan, on_delete=models.CASCADE)
     sequence = models.IntegerField(default=1)
@@ -169,6 +159,48 @@ class LoanPayment(models.Model):
     payment_date = models.DateField(auto_now_add=True)
     remaining_balance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     posted_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)
+
+    @classmethod
+    @transaction.atomic
+    def allocate_payroll_deduction(cls, employee, amount, posted_by=None):
+        """Allocate one semi-monthly payroll deduction across active loans."""
+        from decimal import Decimal
+
+        remaining_amount = Decimal(str(amount)).quantize(Decimal('0.01'))
+        if remaining_amount <= 0:
+            return []
+
+        payments = []
+        active_loans = ProvidentLoan.objects.select_for_update().filter(
+            employee=employee,
+            status='released',
+        ).order_by('id')
+
+        for loan in active_loans:
+            if remaining_amount <= 0:
+                break
+
+            current_balance = max(loan.current_balance, Decimal('0.00'))
+            standard_payment = (
+                loan.monthly_payment / Decimal('2.0')
+            ).quantize(Decimal('0.01'))
+            payment_amount = min(
+                remaining_amount,
+                standard_payment,
+                current_balance,
+            )
+            if payment_amount <= 0:
+                continue
+
+            payment = cls.objects.create(
+                loan=loan,
+                amount_paid=payment_amount,
+                posted_by=posted_by,
+            )
+            payments.append(payment)
+            remaining_amount -= payment_amount
+
+        return payments
 
     def save(self, *args, **kwargs):
         if not self.id: # Only for new payments

@@ -11,10 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
-import secrets
 from pathlib import Path
 from dotenv import load_dotenv
-from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,37 +24,12 @@ load_dotenv(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-def _env_bool(name, default=False):
-    return os.environ.get(name, str(default)).strip().lower() in ('true', '1', 'yes', 'on')
+# Development only. Configure a private SECRET_KEY before deploying.
+SECRET_KEY = '@))qg#*#tk5+$o%zwp!-r&ragsg(zlke-vz2!y^3(li+km8@$r'
 
+DEBUG = True
 
-def _env_list(name):
-    return [value.strip() for value in os.environ.get(name, '').split(',') if value.strip()]
-
-
-DEBUG = _env_bool('DEBUG', False)
-
-configured_environment = os.environ.get('DJANGO_ENV', '').strip().lower()
-if configured_environment:
-    DJANGO_ENV = configured_environment
-else:
-    # Preserve the existing local default while requiring DEBUG=False for
-    # production when DJANGO_ENV is not explicitly configured.
-    DJANGO_ENV = 'development' if DEBUG else 'production'
-
-if DJANGO_ENV not in ('development', 'production'):
-    raise ImproperlyConfigured("DJANGO_ENV must be 'development' or 'production'.")
-
-SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
-if not SECRET_KEY:
-    if DJANGO_ENV == 'development':
-        SECRET_KEY = secrets.token_urlsafe(50)
-    else:
-        raise ImproperlyConfigured(
-            'SECRET_KEY must be set when DJANGO_ENV is production.'
-        )
-
-ALLOWED_HOSTS = _env_list('ALLOWED_HOSTS')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 
 
 # Application definition
@@ -84,17 +57,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = _env_bool('CORS_ALLOW_ALL_ORIGINS', False)
-CORS_ALLOWED_ORIGINS = _env_list('CORS_ALLOWED_ORIGINS')
-
-SECURE_SSL_REDIRECT = _env_bool('SECURE_SSL_REDIRECT', not DEBUG)
-SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', not DEBUG)
-CSRF_COOKIE_SECURE = _env_bool('CSRF_COOKIE_SECURE', not DEBUG)
-SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0' if DEBUG else '31536000'))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', not DEBUG)
-SECURE_HSTS_PRELOAD = _env_bool('SECURE_HSTS_PRELOAD', not DEBUG)
-SECURE_CONTENT_TYPE_NOSNIFF = _env_bool('SECURE_CONTENT_TYPE_NOSNIFF', True)
-SECURE_REFERRER_POLICY = os.environ.get('SECURE_REFERRER_POLICY', 'same-origin')
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
 
 ROOT_URLCONF = 'config.urls'
 

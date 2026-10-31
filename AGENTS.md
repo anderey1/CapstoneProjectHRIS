@@ -45,8 +45,8 @@ Playwright specs assume an `admin` / `admin` account on a running backend. `seed
 
 ## Environment and settings
 
-- Settings fail closed. `backend/config/settings.py` raises `ImproperlyConfigured` unless `DJANGO_ENV` is `development` or `production`, and requires `SECRET_KEY` when production. `DEBUG` defaults to `False`, so an unset environment resolves to production and refuses to boot. Copy `backend/.env.example` to `backend/.env`; `load_dotenv` reads only `backend/.env`.
-- `core/tests/test_settings.py` asserts this by shelling out to `manage.py check` with `PYTHON_DOTENV_DISABLED=true`. Changes to settings env handling must keep those subprocess tests passing.
+- Settings use local development defaults: `DEBUG = True`, a development-only secret key, localhost hosts, and CORS for the frontend on port 5173. No `DJANGO_ENV` or security environment variables are required. Configure production settings before deploying. `load_dotenv` reads only `backend/.env` for email and API credentials.
+- `core/tests/test_settings.py` checks startup and local HTTP/CORS behavior with `PYTHON_DOTENV_DISABLED=true`. Changes to settings must keep those subprocess tests passing.
 - Frontend API base is `import.meta.env.VITE_API_URL` with a hardcoded fallback of `http://localhost:8000/api/`. There is no Vite dev proxy, so backend and frontend run as separate origins and CORS must allow `http://localhost:5173`.
 - `GEMINI_API_KEY` is required for PDS PDF extraction (`backend/core/utils/__init__.py`); missing key returns `None, "API key missing"`. `EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD` fall back to Django's console email backend when unset.
 - Media files are served only when `DEBUG` is true (`backend/config/urls.py`).

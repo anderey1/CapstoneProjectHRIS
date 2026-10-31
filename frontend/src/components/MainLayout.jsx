@@ -36,7 +36,7 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="drawer lg:drawer-open max-w-full overflow-x-hidden">
+    <div className="drawer lg:drawer-open min-h-dvh max-w-full">
       <input
         id="main-drawer"
         type="checkbox"

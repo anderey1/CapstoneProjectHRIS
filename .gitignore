@@ -3,7 +3,10 @@ __pycache__/
 *$py.class
 *.log
 venv/
+.venv/
 env/
+ENV/
+.env/
 node_modules/
 dist/
 .DS_Store
@@ -17,16 +20,29 @@ advisor-plans/
 
 # Scratch & local notes
 d.txt
+/accounts.txt
+/debug_outputs/
 
 # Test artifacts & caches
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage/
+htmlcov/
 playwright-report/
 test-results/
 frontend/playwright-report/
 frontend/test-results/
+/.modularization-*.xml
+/.modularization-api-*.json
 
 # Local databases & uploads
 *.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
 backend/db.sqlite3
 backend/media/
 media/

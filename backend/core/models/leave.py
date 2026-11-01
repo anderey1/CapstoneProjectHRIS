@@ -1,13 +1,17 @@
 from django.db import models
-from .employee import Employee
+from django.conf import settings
+from .employee import Employee, Role
 
 class LeaveRequest(models.Model):
     STATUS_CHOICES = [
+        ('pending_checking', 'For Administrative Assistant II checking'),
         ('pending_supervisor', 'Pending Immediate Supervisor / Principal'),
+        ('pending_records', 'For Records Unit receiving'),
         ('pending_hr', 'Pending HR Officer'),
         ('pending_superintendent', 'Pending Superintendent'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
+        ('returned', 'Returned for correction'),
     ]
     
     TYPE_CHOICES = [
@@ -67,6 +71,15 @@ class LeaveRequest(models.Model):
     date_applied = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='pending_supervisor', db_index=True)
     rejection_stage = models.CharField(max_length=25, choices=STATUS_CHOICES, null=True, blank=True, help_text="The stage at which the request was rejected")
+
+    workflow = models.CharField(max_length=20, choices=[('standard', 'Standard / existing'), ('teaching', 'Teaching school routing')], default='standard')
+    assigned_checker = models.ForeignKey(Employee, on_delete=models.PROTECT, null=True, blank=True, related_name='assigned_leave_checks')
+    assigned_principal = models.ForeignKey(Employee, on_delete=models.PROTECT, null=True, blank=True, related_name='assigned_leave_approvals')
+    principal_signature = models.ImageField(upload_to='leave_signatures/', null=True, blank=True)
+    principal_signed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='signed_leaves')
+    principal_signed_at = models.DateTimeField(null=True, blank=True)
+    records_reference = models.CharField(max_length=100, blank=True, default='')
+    correction_reason = models.TextField(blank=True, default='')
     
     # Documentary Requirements
     supporting_document = models.FileField(upload_to='leave_documents/', null=True, blank=True)
@@ -87,9 +100,49 @@ class LeaveRequest(models.Model):
     approved_days_without_pay = models.DecimalField(max_digits=5, decimal_places=1, default=0.0)
     approved_others = models.CharField(max_length=255, null=True, blank=True)
 
+    def can_process(self, user):
+        if not user or not user.is_authenticated or self.employee.user_id == user.pk:
+            return False
+        profile = getattr(user, 'employee_profile', None)
+        if self.workflow == 'teaching':
+            if self.status == 'pending_checking':
+                if not profile or profile.leave_duty != 'checker' or profile.pk == self.assigned_principal_id:
+                    return False
+                if self.assigned_checker_id:
+                    return profile.pk == self.assigned_checker_id
+                return bool(profile.school_id and profile.school_id == self.employee.school_id)
+            if self.status == 'pending_supervisor':
+                return bool(profile and profile.pk == self.assigned_principal_id)
+            if self.status == 'pending_records':
+                return bool(profile and profile.leave_duty == 'records')
+            if self.status == 'pending_hr':
+                return user.role == Role.HR or user.is_superuser
+            return False
+        if self.status == 'pending_supervisor':
+            return bool((profile and self.employee.supervisor_id == profile.pk) or user.role == Role.ADMINISTRATIVE or user.is_superuser)
+        if self.status == 'pending_hr':
+            return user.role == Role.HR or user.is_superuser
+        if self.status == 'pending_superintendent':
+            return user.role == Role.SUPERINTENDENT or user.is_superuser
+        return False
+
     @property
     def duration_days(self):
         return (self.end_date - self.start_date).days + 1
 
     def __str__(self):
         return f"{self.employee} - {self.leave_type} ({self.status})"
+
+
+class LeaveAction(models.Model):
+    leave = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='actions')
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    actor_name = models.CharField(max_length=160)
+    from_status = models.CharField(max_length=25, blank=True)
+    to_status = models.CharField(max_length=25)
+    note = models.TextField(blank=True)
+    signature = models.ImageField(upload_to='leave_signatures/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']

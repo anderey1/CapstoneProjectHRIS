@@ -1,24 +1,17 @@
 import React, { useState } from 'react';
 import { 
-  CheckCircle2, XCircle, Clock as ClockIcon, 
+  XCircle, Clock as ClockIcon,
   Search, UserCheck, ShieldAlert,
   AlertCircle, FileCheck
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import LeaveProcessingActions from '../../features/leaves/components/LeaveProcessingActions';
+import LeaveWorkflowDetails from '../../features/leaves/components/LeaveWorkflowDetails';
+import { formatLeaveStatus as formatStatus, PENDING_LEAVE_STATUSES } from '../../features/leaves/utils/leaveWorkflow';
 import { 
   useLeaves, 
   DocumentAttachmentCard, 
   CSC_DOCUMENT_SPECS 
 } from '../../features/leaves';
-
-const formatStatus = (status) => {
-  if (status === 'pending_supervisor') return 'Pending Supervisor';
-  if (status === 'pending_hr') return 'Pending HR';
-  if (status === 'pending_superintendent') return 'Pending Superintendent';
-  if (status === 'approved') return 'Approved';
-  if (status === 'rejected') return 'Disapproved';
-  return status;
-};
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -30,6 +23,9 @@ const getStatusBadge = (status) => {
       return 'bg-amber-50 text-amber-900 border-amber-300 font-bold';
     case 'pending_hr':
       return 'bg-blue-50 text-blue-800 border-blue-200';
+    case 'pending_checking':
+    case 'pending_records':
+    case 'returned':
     case 'pending_supervisor':
       return 'bg-slate-100 text-slate-700 border-slate-200';
     default:
@@ -42,14 +38,11 @@ const getStatusBadge = (status) => {
  * CSC Form No. 6 Division Processing Docket
  */
 const LeaveManagement = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedLeave, setSelectedLeave] = useState(null);
-  const [rejectionReason, setRejectionReason] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
 
-  const canManage = user?.role === 'HR';
 
   const { 
     leaves, 
@@ -57,12 +50,14 @@ const LeaveManagement = () => {
     approveLeave, 
     isApproving, 
     rejectLeave, 
-    isRejecting 
+    isRejecting,
+    returnLeave,
+    isReturning
   } = useLeaves();
 
   // Tab filtering
   const tabLeaves = leaves.filter(l => {
-    if (activeTab === 'pending') return ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status);
+    if (activeTab === 'pending') return PENDING_LEAVE_STATUSES.includes(l.status);
     if (activeTab === 'approved') return l.status === 'approved';
     if (activeTab === 'rejected') return l.status === 'rejected';
     return true;
@@ -79,8 +74,8 @@ const LeaveManagement = () => {
   });
 
   // Action counts
-  const pendingActionRequiredCount = leaves.filter(l => l.can_approve && ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status)).length;
-  const totalPendingCount = leaves.filter(l => ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status)).length;
+  const pendingActionRequiredCount = leaves.filter(l => l.can_approve && PENDING_LEAVE_STATUSES.includes(l.status)).length;
+  const totalPendingCount = leaves.filter(l => PENDING_LEAVE_STATUSES.includes(l.status)).length;
   const approvedCount = leaves.filter(l => l.status === 'approved').length;
   const rejectedCount = leaves.filter(l => l.status === 'rejected').length;
 
@@ -257,7 +252,7 @@ const LeaveManagement = () => {
             <tbody className="divide-y divide-slate-100">
               {filteredLeaves.length > 0 ? (
                 filteredLeaves.map((leave) => {
-                  const isActionRequired = leave.can_approve && ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(leave.status);
+                  const isActionRequired = leave.can_approve && PENDING_LEAVE_STATUSES.includes(leave.status);
                   return (
                     <tr 
                       key={leave.id} 
@@ -345,7 +340,7 @@ const LeaveManagement = () => {
               </div>
               <button 
                 type="button" 
-                onClick={() => { setSelectedLeave(null); setRejectionReason(''); }} 
+                onClick={() => setSelectedLeave(null)}
                 className="btn btn-ghost btn-xs btn-circle text-slate-500 hover:text-slate-800"
               >
                 <XCircle className="w-5 h-5" />
@@ -471,100 +466,23 @@ const LeaveManagement = () => {
                 </div>
               </div>
 
-              {/* Current Action / Processing Pipeline */}
-              {['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(selectedLeave.status) ? (
-                <div className="border border-slate-200 rounded p-4 bg-slate-50 space-y-3">
-                  <div className="font-bold text-[11px] uppercase tracking-wide text-slate-700">
-                    7. Action on Application
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 block">
-                      Disapproval / Recommendation Reason (Required if disapproving)
-                    </label>
-                    <textarea 
-                      className="textarea textarea-bordered textarea-xs w-full bg-white border-slate-300 rounded text-xs font-medium focus:border-primary" 
-                      placeholder="State precise reason for disapproval or special instructions..."
-                      rows={2}
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                    />
-                  </div>
-
-                  {selectedLeave.can_approve ? (
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            await rejectLeave({ id: selectedLeave.id, reason: rejectionReason });
-                            setSelectedLeave(null);
-                            setRejectionReason('');
-                          } catch {
-                            // Handled by hook
-                          }
-                        }}
-                        disabled={isRejecting}
-                        className="btn btn-sm btn-outline border-rose-300 text-rose-700 hover:bg-rose-50 hover:border-rose-400 rounded text-xs font-semibold px-4"
-                      >
-                        {isRejecting ? 'Processing...' : 'Disapprove'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            await approveLeave(selectedLeave.id);
-                            setSelectedLeave(null);
-                          } catch {
-                            // Handled by hook
-                          }
-                        }}
-                        disabled={isApproving}
-                        className="btn btn-sm bg-[#0038a8] text-white hover:bg-[#002b80] rounded text-xs font-semibold px-5 border-none"
-                      >
-                        {isApproving ? 'Recording...' : (
-                          selectedLeave.status === 'pending_supervisor' ? 'Recommend Approval (Supervisor)' :
-                          selectedLeave.status === 'pending_hr' ? 'Verify & Certify (HR)' : 'Approve for Civil Service'
-                        )}
-                      </button>
-                    </div>
-                  ) : canManage ? (
-                    <div className="p-2.5 bg-blue-50 border border-blue-200 text-blue-900 rounded text-xs font-medium text-center">
-                      Docket is pending review at stage: <strong>{formatStatus(selectedLeave.status)}</strong>.
-                    </div>
-                  ) : (
-                    <div className="p-2.5 bg-slate-100 border border-slate-200 text-slate-600 rounded text-xs font-medium text-center italic">
-                      Read-only docket inspection for your role. Current stage: {formatStatus(selectedLeave.status)}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="border border-slate-200 rounded p-4 bg-slate-50 space-y-2">
-                  <div className="flex items-center gap-2">
-                    {selectedLeave.status === 'approved' ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-rose-600" />
-                    )}
-                    <span className="font-bold text-sm text-slate-900">
-                      Application Status: {formatStatus(selectedLeave.status)}
-                    </span>
-                  </div>
-                  {selectedLeave.disapproval_reason && (
-                    <div className="mt-2 text-xs bg-white border border-slate-200 p-2.5 rounded">
-                      <span className="font-semibold text-slate-500 block uppercase text-[10px]">Official Reason:</span>
-                      <p className="text-slate-700 italic mt-0.5">"{selectedLeave.disapproval_reason}"</p>
-                    </div>
-                  )}
-                </div>
-              )}
+              <LeaveWorkflowDetails leave={selectedLeave} />
+              <LeaveProcessingActions
+                key={selectedLeave.id}
+                leave={selectedLeave}
+                onApprove={approveLeave}
+                onReject={rejectLeave}
+                onReturn={returnLeave}
+                pending={isApproving || isRejecting || isReturning}
+                onComplete={() => setSelectedLeave(null)}
+              />
             </div>
 
             {/* Modal Footer */}
             <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex justify-end shrink-0">
               <button 
                 type="button" 
-                onClick={() => { setSelectedLeave(null); setRejectionReason(''); }} 
+                onClick={() => setSelectedLeave(null)}
                 className="btn btn-xs btn-ghost border border-slate-200 text-slate-700 hover:bg-slate-100 rounded px-4 text-xs font-medium"
               >
                 Close Record

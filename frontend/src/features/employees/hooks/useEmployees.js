@@ -35,6 +35,7 @@ export function useEmployees() {
 
   const invalidateEmployees = () => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVE_STAFF] });
   };
 
   // 3. Add Mutation

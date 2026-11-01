@@ -122,6 +122,17 @@ class Employee(models.Model):
         related_name='subordinates',
         help_text="Immediate supervisor (e.g. Principal or Head Teacher) who gives recommending approval."
      )
+
+    leave_duty = models.CharField(
+        max_length=20,
+        choices=[('', 'No processing duty'), ('checker', 'Administrative Assistant II'), ('records', 'Records Unit')],
+        default='', blank=True,
+    )
+    leave_checker = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='leave_applicants',
+        help_text='Administrative Assistant II assigned to check teaching leave applications.',
+    )
     
     # Salary Grade Linkage
     salary_grade = models.ForeignKey(SalaryGrade, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees')

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { PENDING_LEAVE_STATUSES } from '../../features/leaves/utils/leaveWorkflow';
 import { 
   useLeaves, 
   LeaveBalanceCards, 
@@ -26,11 +27,14 @@ const MyLeaves = () => {
     isApproving,
     rejectLeave,
     isRejecting,
+    returnLeave,
+    isReturning,
     calculateWorkingDays,
   } = useLeaves();
 
   // Modal & Form States
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLeave, setEditingLeave] = useState(null);
   const [leaveType, setLeaveType] = useState('vacation');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -44,8 +48,11 @@ const MyLeaves = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    for (const [key, value] of [...formData.entries()]) {
+      if (value instanceof File && value.size === 0) formData.delete(key);
+    }
     try {
-      await applyLeave(formData);
+      await applyLeave({ formData, id: editingLeave?.id });
       setIsModalOpen(false);
     } catch {
       // Error handled by hook toast
@@ -53,9 +60,9 @@ const MyLeaves = () => {
   };
 
   const isSupervisorOrManager = 
-    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor;
+    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor || !!employee?.leave_duty;
 
-  const pendingSubordinateCount = teamLeaves.filter(l => ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status)).length;
+  const pendingSubordinateCount = teamLeaves.filter(l => l.can_approve && PENDING_LEAVE_STATUSES.includes(l.status)).length;
 
   if (isLoading) {
     return (
@@ -90,6 +97,7 @@ const MyLeaves = () => {
           <button 
             type="button"
             onClick={() => {
+              setEditingLeave(null);
               setLeaveType('vacation');
               setStartDate('');
               setEndDate('');
@@ -127,7 +135,7 @@ const MyLeaves = () => {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span>Team Endorsement Queue</span>
+            <span>Leave Processing Queue</span>
             {pendingSubordinateCount > 0 && (
               <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-1.5 py-0.2 rounded font-mono">
                 {pendingSubordinateCount}
@@ -141,7 +149,14 @@ const MyLeaves = () => {
       {activeMainTab === 'mine' && (
         <div className="space-y-6">
           <LeaveBalanceCards employee={employee} />
-          <LeaveHistorySection leaves={myLeaves} />
+          <LeaveHistorySection leaves={myLeaves} onCorrect={leave => {
+            setEditingLeave(leave);
+            setLeaveType(leave.leave_type);
+            setStartDate(leave.start_date);
+            setEndDate(leave.end_date);
+            setIsWithinPhilippines(leave.is_within_philippines);
+            setIsModalOpen(true);
+          }} />
         </div>
       )}
 
@@ -149,15 +164,20 @@ const MyLeaves = () => {
       {activeMainTab === 'approvals' && (
         <SupervisorApprovalQueue 
           teamLeaves={teamLeaves}
-          onApprove={(id) => approveLeave(id)}
+          onApprove={approveLeave}
           onReject={({ id, reason }) => rejectLeave({ id, reason })}
           isApprovePending={isApproving}
           isRejectPending={isRejecting}
+          onReturn={returnLeave}
+          isReturnPending={isReturning}
         />
       )}
 
       {/* CSC Form No. 6 Application Modal */}
       <LeaveApplicationModal 
+        employee={employee}
+        key={editingLeave?.id || 'new'}
+        initialData={editingLeave}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}

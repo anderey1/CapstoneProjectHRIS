@@ -2,14 +2,12 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from decimal import Decimal
 from django.utils import timezone
-from datetime import datetime
-from ..models import LeaveRequest, Role, AuditLog, Employee
-from ..serializers import LeaveRequestSerializer
-from ..permissions import IsAdminOrHR, IsHR
+from ..models import LeaveRequest, LeaveAction, Role, AuditLog, Employee
+from ..serializers import LeaveRequestSerializer, LeaveApprovalSerializer
 from ..utils import calculate_working_days
 
 class LeaveViewSet(viewsets.ModelViewSet):
@@ -23,8 +21,8 @@ class LeaveViewSet(viewsets.ModelViewSet):
         base_qs = LeaveRequest.objects.select_related(
             'employee',
             'employee__user',
-            'employee__school'
-        ).order_by('-date_applied')
+            'employee__school', 'assigned_checker', 'assigned_principal', 'principal_signed_by'
+        ).prefetch_related('actions').order_by('-date_applied')
 
         if user.is_superuser:
             return base_qs.all()
@@ -49,13 +47,23 @@ class LeaveViewSet(viewsets.ModelViewSet):
         # They can see their own leaves.
         # If they are a supervisor (Principal/Head Teacher), they can also see leaves of their subordinates.
         if employee_profile:
-            return base_qs.filter(
+            scope = (
                 Q(employee__user=user) | 
-                Q(employee__supervisor=employee_profile)
-            ).distinct()
+                Q(employee__supervisor=employee_profile, workflow='standard') |
+                Q(assigned_checker=employee_profile) |
+                Q(assigned_principal=employee_profile) |
+                Q(actions__actor=user)
+            )
+            if employee_profile.leave_duty == 'records':
+                scope |= Q(workflow='teaching', status='pending_records')
+            if employee_profile.leave_duty == 'checker' and employee_profile.school_id:
+                scope |= Q(workflow='teaching', status='pending_checking', assigned_checker__isnull=True,
+                           employee__school_id=employee_profile.school_id)
+            return base_qs.filter(scope).distinct()
             
         return base_qs.filter(employee__user=user)
 
+    @transaction.atomic
     def perform_create(self, serializer):
         user = self.request.user
         employee = getattr(user, 'employee_profile', None)
@@ -63,9 +71,11 @@ class LeaveViewSet(viewsets.ModelViewSet):
         if not employee:
             raise ValidationError("You must have an employee profile to file a leave.")
             
-        start_date = serializer.validated_data['start_date']
-        end_date = serializer.validated_data['end_date']
-        leave_type = serializer.validated_data['leave_type']
+        data = {field.name: getattr(serializer.instance, field.name) for field in LeaveRequest._meta.fields} if serializer.instance else {}
+        data.update(serializer.validated_data)
+        start_date = data['start_date']
+        end_date = data['end_date']
+        leave_type = data['leave_type']
         today = timezone.localdate()
         
         # 1. Basic Validation
@@ -96,9 +106,9 @@ class LeaveViewSet(viewsets.ModelViewSet):
             raise ValidationError("Solo Parent leave must be filed 5 days in advance.")
 
         # 3. Overlap Check
-        overlapping = LeaveRequest.objects.filter(
+        overlapping = LeaveRequest.objects.exclude(pk=serializer.instance.pk if serializer.instance else None).filter(
             employee=employee,
-            status__in=['pending_supervisor', 'pending_hr', 'pending_superintendent', 'approved'],
+            status__in=['pending_checking', 'pending_supervisor', 'pending_records', 'pending_hr', 'pending_superintendent', 'approved'],
             start_date__lte=end_date,
             end_date__gte=start_date
         ).exists()
@@ -128,127 +138,199 @@ class LeaveViewSet(viewsets.ModelViewSet):
 
         # 5. Leave Document Requirements Check
         if leave_type in ['vacation', 'special_privilege']:
-            is_within_philippines = serializer.validated_data.get('is_within_philippines', True)
+            is_within_philippines = data.get('is_within_philippines', True)
             if not is_within_philippines or duration >= 30:
-                travel_auth = serializer.validated_data.get('travel_authority_document')
-                clearance = serializer.validated_data.get('clearance_document')
+                travel_auth = data.get('travel_authority_document')
+                clearance = data.get('clearance_document')
                 if not travel_auth or not clearance:
                     raise ValidationError("Travel Authority and Clearance documents are required for vacation/special privilege leave abroad or for 30+ days.")
 
         elif leave_type == 'maternity':
-            if not serializer.validated_data.get('supporting_document'):
+            if not data.get('supporting_document'):
                 raise ValidationError("Proof of pregnancy (ultrasound or doctor's certificate) is required.")
 
         elif leave_type == 'paternity':
-            delivery_proof = serializer.validated_data.get('supporting_document')
-            marriage_contract = serializer.validated_data.get('paternity_marriage_contract')
+            delivery_proof = data.get('supporting_document')
+            marriage_contract = data.get('paternity_marriage_contract')
             if not delivery_proof or not marriage_contract:
                 raise ValidationError("Both Proof of Child's Delivery and Marriage Contract are required for paternity leave.")
 
         elif leave_type == 'vawc':
-            protection_order = serializer.validated_data.get('supporting_document')
-            med_cert = serializer.validated_data.get('vawc_medical_cert')
+            protection_order = data.get('supporting_document')
+            med_cert = data.get('vawc_medical_cert')
             if not protection_order or not med_cert:
                 raise ValidationError("Both BPO/TPO/PPO/Police Report and Medical Certificate are required for VAWC leave.")
 
         elif leave_type == 'rehabilitation':
-            med_cert = serializer.validated_data.get('supporting_document')
-            letter_req = serializer.validated_data.get('rehab_letter_request')
-            police_rep = serializer.validated_data.get('rehab_police_report')
-            concurrence = serializer.validated_data.get('rehab_concurrence')
+            med_cert = data.get('supporting_document')
+            letter_req = data.get('rehab_letter_request')
+            police_rep = data.get('rehab_police_report')
+            concurrence = data.get('rehab_concurrence')
             if not med_cert or not letter_req or not police_rep or not concurrence:
                 raise ValidationError("Letter Request, Police Report, Medical Certificate, and Written Concurrence of Govt Physician are all required for rehabilitation privilege.")
 
         elif leave_type == 'women_special':
-            med_cert = serializer.validated_data.get('supporting_document')
-            histopath = serializer.validated_data.get('women_special_histopath')
-            op_technique = serializer.validated_data.get('women_special_operative_technique')
+            med_cert = data.get('supporting_document')
+            histopath = data.get('women_special_histopath')
+            op_technique = data.get('women_special_operative_technique')
             if not med_cert or not histopath or not op_technique:
                 raise ValidationError("Medical Certificate/Clinical Summary, Histopathology Report, and Operative Technique are all required for special leave benefits for women.")
 
         elif leave_type == 'sick':
-            if duration > 5 and not serializer.validated_data.get('supporting_document'):
+            if duration > 5 and not data.get('supporting_document'):
                 raise ValidationError("A Medical Certificate (CS Form 41 / Physician Cert) is required for sick leave exceeding 5 days.")
 
-        # Determine initial status based on role:
-        # Teachers go to pending_supervisor first, Non-Teaching go straight to pending_hr.
-        initial_status = 'pending_supervisor' if employee.user.role == Role.TEACHING else 'pending_hr'
+        workflow = 'teaching' if employee.user.role == Role.TEACHING else 'standard'
+        assignments = {}
+        initial_status = 'pending_hr'
+        if workflow == 'teaching':
+            checker = employee.leave_checker
+            principal = employee.supervisor
+            if not principal or not principal.user_id or not principal.user.is_active:
+                raise ValidationError('Ask HR to assign a principal with an active account before filing.')
+            if checker and (checker.leave_duty != 'checker' or not checker.user_id or not checker.user.is_active
+                            or checker.pk in (employee.pk, principal.pk)):
+                checker = None
+            if principal.pk == employee.pk:
+                raise ValidationError('The applicant cannot be their own principal.')
+            assignments = {'assigned_checker': checker, 'assigned_principal': principal}
+            initial_status = 'pending_checking'
 
-        serializer.save(employee=employee, working_days_applied=duration, status=initial_status)
-        AuditLog.objects.create(user=user, action=f"Filed {leave_type} leave: {start_date} to {end_date}")
+        old_status = serializer.instance.status if serializer.instance else ''
+        leave = serializer.save(employee=employee, working_days_applied=duration,
+                                status=initial_status, workflow=workflow,
+                                correction_reason='', **assignments)
+        self._record_action(leave, user, old_status, 'Application resubmitted' if old_status else 'Application submitted')
 
-    def _can_process_stage(self, user, leave):
-        status = leave.status
-        if status == 'pending_supervisor':
-            employee_profile = getattr(user, 'employee_profile', None)
-            is_supervisor = employee_profile and leave.employee.supervisor_id == employee_profile.id
-            is_admin = user.role == Role.ADMINISTRATIVE or user.is_superuser
-            return bool(is_supervisor or is_admin)
-        elif status == 'pending_hr':
-            return user.role == Role.HR or user.is_superuser
-        elif status == 'pending_superintendent':
-            return user.role == Role.SUPERINTENDENT or user.is_superuser
-        return False
+    @staticmethod
+    def _record_action(leave, user, old_status, note):
+        LeaveAction.objects.create(
+            leave=leave, actor=user, actor_name=user.get_full_name() or user.username,
+            from_status=old_status, to_status=leave.status, note=note,
+            signature=leave.principal_signature.name if old_status == 'pending_supervisor' and leave.workflow == 'teaching' and leave.status == 'pending_records' else None,
+        )
+        AuditLog.objects.create(user=user, action=f'Leave #{leave.pk}: {note} ({old_status or "new"} -> {leave.status})')
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        leave = self.get_object()
+        locked = LeaveRequest.objects.select_for_update().get(pk=leave.pk)
+        if locked.workflow != 'teaching' or locked.status != 'returned' or locked.employee.user_id != request.user.pk:
+            raise PermissionDenied('Only the applicant can edit an application returned for correction.')
+        return super().update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        self.perform_create(serializer)
+
+    def destroy(self, request, *args, **kwargs):
+        raise PermissionDenied('Filed leave applications are retained as records and cannot be deleted.')
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @transaction.atomic
     def approve(self, request, pk=None):
-        leave = self.get_object()
-        if leave.status in ['approved', 'rejected']:
-            return Response({"detail": "This request has already been finalized."}, status=400)
-            
-        if not self._can_process_stage(request.user, leave):
-            return Response({"detail": "You do not have permission to approve/recommend this request at its current stage."}, status=403)
-            
-        employee = leave.employee
-        duration = leave.working_days_applied
+        visible_leave = self.get_object()
+        leave = LeaveRequest.objects.select_for_update().select_related('employee__user').get(pk=visible_leave.pk)
+        if leave.status in ('approved', 'rejected'):
+            return Response({'detail': 'This request has already been finalized.'}, status=400)
+        if not leave.can_process(request.user):
+            raise PermissionDenied('You cannot process this request at its current stage.')
+        payload = LeaveApprovalSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        if payload.validated_data.get('expected_status', leave.status) != leave.status:
+            raise ValidationError('This application has moved to another stage. Refresh the queue before processing it.')
         old_status = leave.status
+        days_deducted = None
 
-        if old_status == 'pending_supervisor':
-            leave.status = 'pending_hr'
-            leave.save()
-            AuditLog.objects.create(user=request.user, action=f"Recommended {leave.leave_type} leave for {leave.employee} to HR")
-            return Response({"message": "Leave request recommended to HR", "status": leave.status})
-            
-        elif old_status == 'pending_hr':
-            leave.status = 'pending_superintendent'
-            leave.save()
-            AuditLog.objects.create(user=request.user, action=f"Certified and forwarded {leave.leave_type} leave for {leave.employee} to Superintendent")
-            return Response({"message": "Leave request recommended and sent to Superintendent", "status": leave.status})
-            
-        elif old_status == 'pending_superintendent':
-            with transaction.atomic():
-                leave = LeaveRequest.objects.select_for_update().get(pk=leave.pk)
-                if leave.status != 'pending_superintendent':
-                    return Response({"detail": "This request has already been finalized."}, status=400)
-
-                employee = Employee.objects.select_for_update().get(id=leave.employee_id)
-                try:
-                    days_deducted = employee.deduct_leave(leave.leave_type, duration)
-                except ValidationError as e:
-                    detail = e.message if hasattr(e, 'message') else str(e)
-                    return Response({"detail": detail}, status=400)
-                
+        if leave.workflow == 'teaching':
+            if old_status == 'pending_checking':
+                leave.assigned_checker = request.user.employee_profile
+                leave.status = 'pending_supervisor'
+                message = 'Checked and forwarded to principal'
+            elif old_status == 'pending_supervisor':
+                signature = payload.validated_data.get('signature')
+                if not signature or not payload.validated_data['signature_confirmed']:
+                    raise ValidationError('Upload your signature image and confirm that you approve this application.')
+                leave.principal_signature = signature
+                leave.principal_signed_by = request.user
+                leave.principal_signed_at = timezone.now()
+                leave.status = 'pending_records'
+                message = 'Approved and signed by principal; forwarded to Records Unit'
+            elif old_status == 'pending_records':
+                leave.records_reference = payload.validated_data.get('records_reference', '')
+                leave.status = 'pending_hr'
+                message = 'Received by Records Unit and forwarded to HR'
+            elif old_status == 'pending_hr':
+                days_deducted = self._deduct_balance(leave)
                 leave.status = 'approved'
-                leave.approved_days_with_pay = duration
-                leave.save(update_fields=['status', 'approved_days_with_pay'])
-                
-                AuditLog.objects.create(user=request.user, action=f"Approved {leave.leave_type} leave for {leave.employee} ({duration} days)")
-                return Response({"message": "Leave request approved", "days_deducted": float(days_deducted), "status": leave.status})
+                leave.approved_days_with_pay = leave.working_days_applied
+                message = 'Processing completed by HR'
+        else:
+            if old_status == 'pending_supervisor':
+                leave.status = 'pending_hr'
+                message = 'Leave request recommended to HR'
+            elif old_status == 'pending_hr':
+                leave.status = 'pending_superintendent'
+                message = 'Leave request recommended and sent to Superintendent'
+            elif old_status == 'pending_superintendent':
+                days_deducted = self._deduct_balance(leave)
+                leave.status = 'approved'
+                leave.approved_days_with_pay = leave.working_days_applied
+                message = 'Leave request approved'
+
+        leave.save()
+        self._record_action(leave, request.user, old_status, message)
+        result = {'message': message, 'status': leave.status}
+        if days_deducted is not None:
+            result['days_deducted'] = float(days_deducted)
+        return Response(result)
+
+    @staticmethod
+    def _deduct_balance(leave):
+        employee = Employee.objects.select_for_update().get(pk=leave.employee_id)
+        try:
+            return employee.deduct_leave(leave.leave_type, leave.working_days_applied)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages) from error
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @transaction.atomic
     def reject(self, request, pk=None):
-        leave = self.get_object()
-        if leave.status in ['approved', 'rejected']:
-            return Response({"detail": "This request has already been processed."}, status=400)
-            
-        if not self._can_process_stage(request.user, leave):
-            return Response({"detail": "You do not have permission to reject this request at its current stage."}, status=403)
-            
-        reason = request.data.get('disapproval_reason', 'No reason provided')
-        leave.rejection_stage = leave.status
+        visible_leave = self.get_object()
+        leave = LeaveRequest.objects.select_for_update().get(pk=visible_leave.pk)
+        if leave.status in ('approved', 'rejected'):
+            return Response({'detail': 'This request has already been processed.'}, status=400)
+        if not leave.can_process(request.user):
+            raise PermissionDenied('You cannot disapprove this request at its current stage.')
+        if leave.workflow == 'teaching' and leave.status in ('pending_checking', 'pending_records'):
+            raise PermissionDenied('Checking and receiving staff can return an application for correction, rather than disapprove it.')
+        reason = str(request.data.get('disapproval_reason', '')).strip()
+        if not reason:
+            raise ValidationError('A disapproval reason is required.')
+        old_status = leave.status
+        leave.rejection_stage = old_status
         leave.status = 'rejected'
         leave.disapproval_reason = reason
         leave.save()
-        
-        AuditLog.objects.create(user=request.user, action=f"Rejected leave for {leave.employee}. Reason: {reason}")
-        return Response({"message": "Leave request rejected", "status": leave.status})
+        self._record_action(leave, request.user, old_status, reason)
+        return Response({'message': 'Leave request rejected', 'status': leave.status})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated], url_path='return-for-correction')
+    @transaction.atomic
+    def return_for_correction(self, request, pk=None):
+        visible_leave = self.get_object()
+        leave = LeaveRequest.objects.select_for_update().get(pk=visible_leave.pk)
+        if leave.workflow != 'teaching' or not leave.can_process(request.user):
+            raise PermissionDenied('You cannot return this application at its current stage.')
+        reason = str(request.data.get('reason', '')).strip()
+        if not reason:
+            raise ValidationError('Explain what the applicant needs to correct.')
+        old_status = leave.status
+        leave.status = 'returned'
+        leave.correction_reason = reason
+        leave.principal_signature = None
+        leave.principal_signed_by = None
+        leave.principal_signed_at = None
+        leave.records_reference = ''
+        leave.save()
+        self._record_action(leave, request.user, old_status, reason)
+        return Response({'message': 'Application returned for correction', 'status': leave.status})

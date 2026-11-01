@@ -4,6 +4,7 @@ export const QUERY_KEYS = {
   PAYROLL: 'payroll',
   ATTENDANCE: 'attendance',
   LEAVES: 'leaves',
+  LEAVE_STAFF: 'leave-staff',
   PERFORMANCE: 'performance',
   APPLICANTS: 'applicants',
   AUDIT_LOGS: 'audit-logs',

@@ -2,16 +2,11 @@ import React, { useState } from 'react';
 import { 
   XCircle, AlertCircle, Search
 } from 'lucide-react';
+import LeaveProcessingActions from './LeaveProcessingActions';
+import LeaveWorkflowDetails from './LeaveWorkflowDetails';
 import DocumentAttachmentCard, { CSC_DOCUMENT_SPECS } from './DocumentAttachmentCard';
 
-const formatStatus = (status) => {
-  if (status === 'pending_supervisor') return 'Pending Supervisor';
-  if (status === 'pending_hr') return 'Pending HR';
-  if (status === 'pending_superintendent') return 'Pending Superintendent';
-  if (status === 'approved') return 'Approved';
-  if (status === 'rejected') return 'Disapproved';
-  return status;
-};
+import { formatLeaveStatus as formatStatus, PENDING_LEAVE_STATUSES } from '../utils/leaveWorkflow';
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -23,6 +18,9 @@ const getStatusBadge = (status) => {
       return 'bg-amber-50 text-amber-900 border-amber-300 font-bold';
     case 'pending_hr':
       return 'bg-blue-50 text-blue-800 border-blue-200';
+    case 'pending_checking':
+    case 'pending_records':
+    case 'returned':
     case 'pending_supervisor':
       return 'bg-slate-100 text-slate-700 border-slate-200';
     default:
@@ -39,16 +37,17 @@ const SupervisorApprovalQueue = ({
   onApprove, 
   onReject, 
   isApprovePending, 
-  isRejectPending 
+  isRejectPending,
+  onReturn,
+  isReturnPending
 }) => {
   const [approvalTab, setApprovalTab] = useState('pending'); // 'pending', 'accepted', 'rejected', 'all'
   const [selectedApproval, setSelectedApproval] = useState(null);
-  const [rejectionReason, setRejectionReason] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTeamLeaves = teamLeaves.filter(l => {
     let matchesTab = true;
-    if (approvalTab === 'pending') matchesTab = ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status);
+    if (approvalTab === 'pending') matchesTab = PENDING_LEAVE_STATUSES.includes(l.status);
     else if (approvalTab === 'accepted') matchesTab = l.status === 'approved';
     else if (approvalTab === 'rejected') matchesTab = l.status === 'rejected';
 
@@ -58,8 +57,8 @@ const SupervisorApprovalQueue = ({
     return matchesTab && matchesSearch;
   });
 
-  const pendingActionRequiredCount = teamLeaves.filter(l => l.can_approve && ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status)).length;
-  const totalPendingCount = teamLeaves.filter(l => ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(l.status)).length;
+  const pendingActionRequiredCount = teamLeaves.filter(l => l.can_approve && PENDING_LEAVE_STATUSES.includes(l.status)).length;
+  const totalPendingCount = teamLeaves.filter(l => PENDING_LEAVE_STATUSES.includes(l.status)).length;
   const approvedCount = teamLeaves.filter(l => l.status === 'approved').length;
   const rejectedCount = teamLeaves.filter(l => l.status === 'rejected').length;
 
@@ -70,7 +69,7 @@ const SupervisorApprovalQueue = ({
         <div className="flex items-center justify-between bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2 rounded text-xs">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-            <span>You have <strong>{pendingActionRequiredCount}</strong> subordinate application(s) awaiting your endorsement/decision.</span>
+            <span>You have <strong>{pendingActionRequiredCount}</strong> application(s) awaiting your action.</span>
           </div>
           <span className="font-mono text-[11px] text-amber-700 uppercase font-semibold">Immediate Action</span>
         </div>
@@ -88,7 +87,7 @@ const SupervisorApprovalQueue = ({
             }`}
             onClick={() => setApprovalTab('pending')}
           >
-            Pending Endorsement ({totalPendingCount})
+            Pending Processing ({totalPendingCount})
           </button>
           <button
             type="button"
@@ -144,7 +143,7 @@ const SupervisorApprovalQueue = ({
             <tbody className="divide-y divide-slate-100">
               {filteredTeamLeaves.length > 0 ? (
                 filteredTeamLeaves.map((leave) => {
-                  const isActionRequired = leave.can_approve && ['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(leave.status);
+                  const isActionRequired = leave.can_approve && PENDING_LEAVE_STATUSES.includes(leave.status);
                   return (
                     <tr 
                       key={leave.id} 
@@ -185,7 +184,7 @@ const SupervisorApprovalQueue = ({
                               : 'btn-ghost border border-slate-200 text-slate-700 hover:bg-slate-100'
                           }`}
                         >
-                          {isActionRequired ? 'Review & Endorse' : 'View Docket'}
+                          {isActionRequired ? 'Review application' : 'View Docket'}
                         </button>
                       </td>
                     </tr>
@@ -203,7 +202,7 @@ const SupervisorApprovalQueue = ({
         </div>
       </div>
 
-      {/* Review & Endorsement Modal */}
+      {/* Review applicationment Modal */}
       {selectedApproval && (
         <div className="modal modal-open">
           <div className="modal-box rounded-lg max-w-3xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white h-[85vh] flex flex-col">
@@ -221,7 +220,7 @@ const SupervisorApprovalQueue = ({
               </div>
               <button 
                 type="button" 
-                onClick={() => { setSelectedApproval(null); setRejectionReason(''); }} 
+                onClick={() => setSelectedApproval(null)}
                 className="btn btn-ghost btn-xs btn-circle text-slate-500 hover:text-slate-800"
               >
                 <XCircle className="w-5 h-5" />
@@ -291,67 +290,22 @@ const SupervisorApprovalQueue = ({
                 </div>
               </div>
 
-              {/* Action Endorsement */}
-              {['pending_supervisor', 'pending_hr', 'pending_superintendent'].includes(selectedApproval.status) && (
-                <div className="border border-slate-200 rounded p-4 bg-slate-50 space-y-3">
-                  <div className="font-bold text-[11px] uppercase tracking-wide text-slate-700">
-                    7.A Recommendation for Approval
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 block">
-                      Disapproval Reason or Supervisory Remarks (if rejecting)
-                    </label>
-                    <textarea 
-                      className="textarea textarea-bordered textarea-xs w-full bg-white border-slate-300 rounded text-xs font-medium focus:border-primary" 
-                      placeholder="State reason if not recommending..."
-                      rows={2}
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                    />
-                  </div>
-
-                  {selectedApproval.can_approve ? (
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onReject({ id: selectedApproval.id, reason: rejectionReason });
-                          setSelectedApproval(null);
-                          setRejectionReason('');
-                        }}
-                        disabled={isRejectPending}
-                        className="btn btn-sm btn-outline border-rose-300 text-rose-700 hover:bg-rose-50 rounded text-xs font-semibold px-4"
-                      >
-                        {isRejectPending ? 'Processing...' : 'Disapprove'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onApprove(selectedApproval.id);
-                          setSelectedApproval(null);
-                        }}
-                        disabled={isApprovePending}
-                        className="btn btn-sm bg-[#0038a8] text-white hover:bg-[#002b80] rounded text-xs font-semibold px-5 border-none"
-                      >
-                        {isApprovePending ? 'Endorsing...' : (
-                          selectedApproval.status === 'pending_supervisor' ? 'Recommend Approval (Supervisor)' :
-                          selectedApproval.status === 'pending_hr' ? 'Verify & Certify (HR)' : 'Final Approve'
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="p-2.5 bg-slate-100 border border-slate-200 text-slate-600 rounded text-xs text-center italic">
-                      Current stage: {formatStatus(selectedApproval.status)}. Awaiting action from authorized signatory.
-                    </div>
-                  )}
-                </div>
-              )}
+              <LeaveWorkflowDetails leave={selectedApproval} />
+              <LeaveProcessingActions
+                key={selectedApproval.id}
+                leave={selectedApproval}
+                onApprove={onApprove}
+                onReject={onReject}
+                onReturn={onReturn}
+                pending={isApprovePending || isRejectPending || isReturnPending}
+                onComplete={() => setSelectedApproval(null)}
+              />
             </div>
 
             <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex justify-end shrink-0">
               <button 
                 type="button" 
-                onClick={() => { setSelectedApproval(null); setRejectionReason(''); }} 
+                onClick={() => setSelectedApproval(null)}
                 className="btn btn-xs btn-ghost border border-slate-200 text-slate-700 hover:bg-slate-100 rounded px-4 text-xs font-medium"
               >
                 Close Record

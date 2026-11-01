@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
+import LeaveWorkflowDetails from './LeaveWorkflowDetails';
+import { formatLeaveStatus as formatStatus } from '../utils/leaveWorkflow';
 import { Clock as ClockIcon, FileText, CheckCircle2, XCircle, Search, ExternalLink } from 'lucide-react';
-
-const formatStatus = (status) => {
-  if (status === 'pending_supervisor') return 'Pending Supervisor';
-  if (status === 'pending_hr') return 'Pending HR';
-  if (status === 'pending_superintendent') return 'Pending Superintendent';
-  if (status === 'approved') return 'Approved';
-  if (status === 'rejected') return 'Disapproved';
-  return status;
-};
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -20,6 +13,9 @@ const getStatusBadge = (status) => {
       return 'bg-amber-50 text-amber-900 border-amber-300 font-bold';
     case 'pending_hr':
       return 'bg-blue-50 text-blue-800 border-blue-200';
+    case 'pending_checking':
+    case 'pending_records':
+    case 'returned':
     case 'pending_supervisor':
       return 'bg-slate-100 text-slate-700 border-slate-200';
     default:
@@ -31,7 +27,8 @@ const getStatusBadge = (status) => {
  * LeaveHistorySection
  * High-density CSC Form No. 6 personal application history table.
  */
-const LeaveHistorySection = ({ leaves }) => {
+const LeaveHistorySection = ({ leaves, onCorrect }) => {
+  const [selectedLeave, setSelectedLeave] = useState(null);
   const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -161,6 +158,7 @@ const LeaveHistorySection = ({ leaves }) => {
                       {leave.status === 'rejected' && <XCircle className="w-3 h-3 text-rose-600" />}
                       {formatStatus(leave.status)}
                     </span>
+                    <button type="button" className="mt-1 block text-xs font-medium text-primary underline" onClick={() => setSelectedLeave(leave)}>Track application #{leave.id}</button>
                   </td>
                   <td className="py-2 px-3 text-center">
                     <div className="flex items-center justify-center gap-1">
@@ -205,6 +203,21 @@ const LeaveHistorySection = ({ leaves }) => {
           </tbody>
         </table>
       </div>
+      {selectedLeave && (
+        <div className="modal modal-open" role="dialog" aria-modal="true" aria-label={`Application #${selectedLeave.id} progress`}>
+          <div className="modal-box max-h-[85dvh] space-y-4">
+            <h3 className="text-lg font-semibold">Leave application #{selectedLeave.id}</h3>
+            <LeaveWorkflowDetails leave={selectedLeave} />
+            <div className="flex flex-wrap justify-end gap-2">
+              {selectedLeave.status === 'returned' && onCorrect && (
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => { onCorrect(selectedLeave); setSelectedLeave(null); }}>Correct & resubmit</button>
+              )}
+              <button type="button" className="btn btn-sm" onClick={() => setSelectedLeave(null)}>Close</button>
+            </div>
+          </div>
+          <button type="button" aria-label="Close application progress" className="modal-backdrop bg-black/40" onClick={() => setSelectedLeave(null)} />
+        </div>
+      )}
     </div>
   );
 };

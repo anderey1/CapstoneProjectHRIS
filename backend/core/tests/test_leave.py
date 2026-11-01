@@ -9,9 +9,13 @@ from core.views.leave import LeaveViewSet
 
 @pytest.mark.django_db
 class TestLeaveRules:
-    def test_sick_leave_retrospective_filing_allowed(self, teacher_employee):
+    def test_sick_leave_retrospective_filing_allowed(self, teacher_employee, non_teaching_employee):
         """CSC Form 6 allows sick leave to be filed retrospectively up to 30 days."""
         factory = APIRequestFactory()
+        non_teaching_employee.leave_duty = 'checker'
+        non_teaching_employee.save(update_fields=['leave_duty'])
+        teacher_employee.leave_checker = non_teaching_employee
+        teacher_employee.save(update_fields=['leave_checker'])
         today = timezone.localdate()
         # Ensure dates are past weekdays within 30 days regardless of test execution day
         days_back = today.weekday() + 7  # Monday of the previous week
@@ -31,7 +35,7 @@ class TestLeaveRules:
         
         assert response.status_code == 201
         assert response.data['leave_type'] == 'sick'
-        assert response.data['status'] == 'pending_supervisor'
+        assert response.data['status'] == 'pending_checking'
 
     def test_vacation_leave_in_past_raises_validation_error(self, teacher_employee):
         """Vacation leave cannot be filed for past dates."""

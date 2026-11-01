@@ -6,7 +6,7 @@ import { ROLES, DEPED_POSITIONS } from '../../../utils/constants';
  * 
  * Simple, professional redesign with high-density labels and standard radius.
  */
-const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, errors }) => {
+const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, errors, leaveStaff = [], currentEmployeeId }) => {
   const selectedPosition = watch('position');
   const selectedSG = watch('salary_grade');
   const selectedRole = watch('role');
@@ -62,6 +62,25 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
 
   return (
     <div className="space-y-6">
+      <fieldset className="grid gap-4 rounded-lg border border-slate-200 p-4 md:grid-cols-2">
+        <legend className="px-2 text-sm font-semibold text-slate-800">Leave processing assignments</legend>
+        <label className="space-y-1 text-xs font-medium text-slate-700">
+          <span>Processing duty</span>
+          <select {...register('leave_duty')} className="select select-bordered select-sm w-full">
+            <option value="">No processing duty</option>
+            <option value="checker">Administrative Assistant II checking</option>
+            <option value="records">Records Unit receiving</option>
+          </select>
+        </label>
+        <label className="space-y-1 text-xs font-medium text-slate-700">
+          <span>Principal / Immediate Supervisor</span>
+          <select {...register('supervisor')} className="select select-bordered select-sm w-full">
+            <option value="">Not assigned</option>
+            {leaveStaff.filter(person => person.id !== currentEmployeeId).map(person => <option key={person.id} value={person.id}>{person.name}{person.position ? ` (${person.position})` : ''}</option>)}
+          </select>
+        </label>
+        <p className="text-xs text-slate-600 md:col-span-2">Assistant II staff receive applications from their school. Set their processing duty and workplace; teachers do not need an individual checker assignment. The Principal / Immediate Supervisor handles the next stage.</p>
+      </fieldset>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Role</label>

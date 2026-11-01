@@ -1,6 +1,6 @@
 from .employee import UserSerializer, EmployeeSerializer, SchoolSerializer, SalaryGradeSerializer, EmployeeDocumentSerializer
 from .attendance import AttendanceSerializer
-from .leave import LeaveRequestSerializer
+from .leave import LeaveRequestSerializer, LeaveApprovalSerializer
 from .loan import LoanSerializer, LoanPaymentSerializer, LoanDocumentSerializer
 from .payroll import PayrollSerializer
 from .recruitment import ApplicantSerializer
@@ -15,6 +15,7 @@ __all__ = [
     'SalaryGradeSerializer',
     'AttendanceSerializer',
     'LeaveRequestSerializer',
+    'LeaveApprovalSerializer',
     'LoanSerializer',
     'LoanPaymentSerializer',
     'LoanDocumentSerializer',

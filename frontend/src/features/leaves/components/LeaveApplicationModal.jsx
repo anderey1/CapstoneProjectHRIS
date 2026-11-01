@@ -1,341 +1,185 @@
-import React, { useEffect } from 'react';
-import { XCircle, CalendarRange, Upload, CheckCircle2 } from 'lucide-react';
+import { useEffect, useId, useRef } from 'react';
+import { CalendarDays, X } from 'lucide-react';
+import LeaveDocumentUpload from './LeaveDocumentUpload';
+import { LEAVE_TYPES, getLeaveDocuments, getMinimumLeaveDate, calendarDaysBetween } from '../utils/leaveApplication';
 
-/**
- * LeaveApplicationModal
- * Renders the CSC Form No. 6 leave application modal dialog.
- */
-const LeaveApplicationModal = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  isSubmitting,
-  leaveType,
-  setLeaveType,
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
-  isWithinPhilippines,
-  setIsWithinPhilippines,
-  durationDays
-}) => {
+const fieldClass = 'input input-bordered w-full bg-white text-sm';
+
+function keepFocusInDialog(event) {
+  if (event.key !== 'Tab') return;
+  const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, a[href]')]
+    .filter(element => element.getClientRects().length > 0);
+  const first = controls[0];
+  const last = controls[controls.length - 1];
+  if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  } else if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  }
+}
+
+export default function LeaveApplicationModal({
+  isOpen, onClose, onSubmit, isSubmitting, leaveType, setLeaveType,
+  startDate, setStartDate, endDate, setEndDate,
+  isWithinPhilippines, setIsWithinPhilippines, durationDays, initialData, employee,
+}) {
+  const dialog = useRef(null);
+  const id = useId();
+
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+    const element = dialog.current;
+    const opener = document.activeElement;
+    element.showModal();
+    element.querySelector('[name="leave_type"]').focus({ preventScroll: true });
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      element.close();
+      document.body.style.overflow = previousOverflow;
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const minDateStr = `${yyyy}-${mm}-${dd}`;
-
-  // CSC Form 6: Retrospective leaves (Sick, Emergency, Rehabilitation) allowed up to 30 days past
-  const isRetrospective = ['sick', 'emergency', 'rehabilitation'].includes(leaveType);
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const pastMinStr = thirtyDaysAgo.toISOString().split('T')[0];
-  const effectiveMinDate = isRetrospective ? pastMinStr : minDateStr;
+  const usesCalendarDays = ['maternity', 'adoption'].includes(leaveType);
+  const days = usesCalendarDays ? calendarDaysBetween(startDate, endDate) : durationDays;
+  const minDate = getMinimumLeaveDate(leaveType);
+  const datesReversed = !!(startDate && endDate && endDate < startDate);
+  const noWorkingDays = !!(startDate && endDate && !datesReversed && !usesCalendarDays && days === 0);
+  const documents = getLeaveDocuments(leaveType, days, isWithinPhilippines);
+  const requiredCount = documents.filter(document => document.required).length;
+  const selectedType = LEAVE_TYPES.find(([value]) => value === leaveType)?.[1];
+  const needsLocation = ['vacation', 'special_privilege'].includes(leaveType);
+  const needsMedicalDetails = ['sick', 'women_special', 'rehabilitation'].includes(leaveType);
+  const hasDates = !!(startDate && endDate);
+  const dateError = datesReversed ? 'End date must be on or after the start date.' : noWorkingDays ? 'These dates contain no working days. Choose dates that include a weekday.' : '';
+  const filingHint = ['vacation', 'solo_parent'].includes(leaveType)
+    ? 'Choose a start date at least 5 days from today.'
+    : ['sick', 'emergency', 'rehabilitation'].includes(leaveType)
+      ? 'You can file for past dates within the last 30 days.'
+      : 'Include the first and last day of your requested leave.';
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box rounded-lg p-0 overflow-hidden border border-slate-200 max-w-4xl shadow-lg bg-white h-[90vh] flex flex-col">
-        {/* Modal Header */}
-        <div className="bg-slate-50 border-b border-slate-200 p-5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-[#0038A8]">
-              <CalendarRange className="w-5 h-5" />
-            </div>
+    <dialog ref={dialog} className="modal z-[80]" style={{ '--color-primary': 'var(--color-deped-blue)' }} aria-labelledby={`${id}-title`} aria-describedby={`${id}-intro`} onKeyDown={keepFocusInDialog}
+      onCancel={event => { event.preventDefault(); if (!isSubmitting) onClose(); }}>
+      <div className="modal-box flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-3xl flex-col overflow-hidden rounded-xl bg-white p-0 sm:max-h-[90dvh]">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
+          <div>
+            <p className="mb-1 text-xs font-medium text-primary">CSC Form No. 6 ? Revised 2020</p>
+            <h2 id={`${id}-title`} className="text-xl font-semibold tracking-tight text-slate-900">{initialData ? 'Correct your leave application' : 'Apply for leave'}</h2>
+            <p id={`${id}-intro`} className="mt-1 text-sm text-slate-600">Choose your leave, set the dates, and attach the requested documents.</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={isSubmitting} aria-label="Close leave application" className="btn btn-ghost btn-sm btn-square shrink-0"><X className="size-5" /></button>
+        </header>
+
+        <form id={`${id}-form`} onSubmit={onSubmit} className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6" aria-busy={isSubmitting}>
+          {initialData && <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <p className="font-semibold">Application #{initialData.id} needs a correction</p>
+            <p>{initialData.correction_reason}</p>
+            <p className="text-xs">Existing attachments stay on file. Resubmitting starts the checking process again.</p>
+          </div>}
+          <p className="text-xs text-slate-500">Fields marked <span className="font-medium text-primary">Required</span> must be completed.</p>
+
+          <fieldset className="space-y-4">
+            <legend className="mb-3 text-base font-semibold text-slate-900">1. Leave details</legend>
             <div>
-              <h3 className="font-bold text-base text-slate-900">Application for Leave</h3>
-              <p className="text-xs font-medium text-slate-500">CSC Form No. 6 (Revised 2020)</p>
+              <label htmlFor={`${id}-type`} className="mb-1.5 flex items-center justify-between gap-2 text-sm font-medium text-slate-800">Type of leave <span className="text-xs text-primary">Required</span></label>
+              <select id={`${id}-type`} name="leave_type" value={leaveType} onChange={event => setLeaveType(event.target.value)} className="select select-bordered w-full bg-white text-sm" required>
+                {LEAVE_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
             </div>
-          </div>
-          <button 
-            type="button"
-            className="btn btn-ghost btn-sm btn-circle text-slate-500 hover:text-slate-800" 
-            onClick={onClose}
-            aria-label="Close dialog"
-          >
-            <XCircle className="w-5 h-5" />
-          </button>
-        </div>
+            {leaveType === 'others' && <div>
+              <label htmlFor={`${id}-other`} className="mb-1.5 block text-sm font-medium text-slate-800">Specify your leave <span className="text-xs text-primary">Required</span></label>
+              <input id={`${id}-other`} name="other_type_details" defaultValue={initialData?.other_type_details || ''} className={fieldClass} placeholder="Enter the type of leave" required />
+            </div>}
+            {needsLocation && <div className="grid gap-4 sm:grid-cols-2">
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium text-slate-800">Where will you spend your leave?</legend>
+                <div className="flex flex-wrap gap-4 rounded-lg border border-slate-200 px-3 py-3">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm"><input type="radio" name="is_within_philippines" value="true" checked={isWithinPhilippines} onChange={() => setIsWithinPhilippines(true)} className="radio radio-primary radio-sm" />Philippines</label>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm"><input type="radio" name="is_within_philippines" value="false" checked={!isWithinPhilippines} onChange={() => setIsWithinPhilippines(false)} className="radio radio-primary radio-sm" />Abroad</label>
+                </div>
+              </fieldset>
+              <div>
+                <label htmlFor={`${id}-location`} className="mb-1.5 block text-sm font-medium text-slate-800">City / Country <span className="text-xs font-normal text-slate-500">Optional</span></label>
+                <input id={`${id}-location`} name="location_details" defaultValue={initialData?.location_details || ''} className={fieldClass} placeholder={isWithinPhilippines ? 'e.g. Lucena City' : 'e.g. Tokyo, Japan'} />
+              </div>
+            </div>}
+            {needsMedicalDetails && <div className="space-y-4">
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium text-slate-800">Treatment setting</legend>
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" name="is_in_hospital" value="false" className="radio radio-primary radio-sm" defaultChecked={initialData?.is_in_hospital !== true} />Outpatient / At home</label>
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" name="is_in_hospital" value="true" className="radio radio-primary radio-sm" defaultChecked={initialData?.is_in_hospital === true} />In hospital</label>
+                </div>
+              </fieldset>
+              <div>
+                <label htmlFor={`${id}-illness`} className="mb-1.5 block text-sm font-medium text-slate-800">Illness / Medical details <span className="text-xs font-normal text-slate-500">Optional</span></label>
+                <textarea id={`${id}-illness`} name="illness_details" defaultValue={initialData?.illness_details || ''} rows={2} className="textarea textarea-bordered w-full bg-white text-sm" placeholder="Briefly describe the reason for this leave." />
+              </div>
+            </div>}
+            {leaveType === 'study' && <div>
+              <label htmlFor={`${id}-study`} className="mb-1.5 block text-sm font-medium text-slate-800">Purpose of study leave <span className="text-xs text-primary">Required</span></label>
+              <select id={`${id}-study`} name="study_type" defaultValue={initialData?.study_type || ''} className="select select-bordered w-full bg-white text-sm" required>
+                <option value="">Choose a purpose</option><option value="masters">Completion of master's degree</option><option value="board_exam">BAR / Board examination review</option>
+              </select>
+            </div>}
+          </fieldset>
 
-        <form onSubmit={onSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 bg-base-50/20">
-          {/* Type of Leave Section */}
-          <div className="space-y-4 p-6 bg-white rounded-2xl border border-base-200 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center gap-2 border-b border-base-100 pb-3">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black">1</span>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-base-content/70">6.A Type of Leave to be Availed Of</h4>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase opacity-40 ml-1">Select Leave Type</label>
-                <select 
-                  name="leave_type" 
-                  className="select select-bordered select-sm w-full bg-base-50 border-base-200 focus:border-primary focus:ring-1 focus:ring-primary rounded-lg text-xs font-bold transition-all" 
-                  value={leaveType}
-                  onChange={(e) => setLeaveType(e.target.value)}
-                  required
-                >
-                  <option value="vacation">Vacation Leave</option>
-                  <option value="forced">Mandatory/Forced Leave</option>
-                  <option value="sick">Sick Leave</option>
-                  <option value="maternity">Maternity Leave</option>
-                  <option value="paternity">Paternity Leave</option>
-                  <option value="special_privilege">Special Privilege Leave</option>
-                  <option value="solo_parent">Solo Parent Leave</option>
-                  <option value="study">Study Leave</option>
-                  <option value="vawc">10-Day VAWC Leave</option>
-                  <option value="rehabilitation">Rehabilitation Privilege</option>
-                  <option value="women_special">Special Leave Benefits for Women</option>
-                  <option value="emergency">Special Emergency Leave</option>
-                  <option value="adoption">Adoption Leave</option>
-                  <option value="others">Others</option>
-                </select>
+          <fieldset className="space-y-4 border-t border-slate-200 pt-5">
+            <legend className="pr-3 text-base font-semibold text-slate-900">2. Dates and duration</legend>
+            <p id={`${id}-date-help`} className="text-sm text-slate-600">{filingHint}</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor={`${id}-start`} className="mb-1.5 flex items-center justify-between text-sm font-medium text-slate-800">Start date <span className="text-xs text-primary">Required</span></label>
+                <input id={`${id}-start`} name="start_date" type="date" min={minDate} value={startDate} onChange={event => setStartDate(event.target.value)} required className={fieldClass} aria-describedby={`${id}-date-help`} />
               </div>
-              {leaveType === 'others' && (
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase opacity-40 ml-1">Specify Other Type</label>
-                  <input 
-                    name="other_type_details" 
-                    type="text" 
-                    placeholder="e.g. Bereavement Leave" 
-                    className="input input-bordered input-sm w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold focus:border-primary" 
-                    required 
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Details of Leave Section */}
-          <div className="space-y-4 p-6 bg-white rounded-2xl border border-base-200 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center gap-2 border-b border-base-100 pb-3">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black">2</span>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-base-content/70">6.B Details of Leave</h4>
-            </div>
-            
-            {['vacation', 'special_privilege'].includes(leaveType) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase opacity-40 ml-1">Location Details</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div 
-                      onClick={() => setIsWithinPhilippines(true)}
-                      className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all hover:bg-base-50 ${isWithinPhilippines === true ? 'border-primary bg-primary/5 text-primary' : 'border-base-200 text-base-content/60'}`}
-                    >
-                      <input 
-                        type="radio" 
-                        name="is_within_philippines" 
-                        value="true" 
-                        className="radio radio-primary radio-xs" 
-                        checked={isWithinPhilippines === true} 
-                        onChange={() => setIsWithinPhilippines(true)} 
-                      />
-                      <span className="text-[10px] font-black uppercase tracking-tight">Within PH</span>
-                    </div>
-                    <div 
-                      onClick={() => setIsWithinPhilippines(false)}
-                      className={`flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all hover:bg-base-50 ${isWithinPhilippines === false ? 'border-primary bg-primary/5 text-primary' : 'border-base-200 text-base-content/60'}`}
-                    >
-                      <input 
-                        type="radio" 
-                        name="is_within_philippines" 
-                        value="false" 
-                        className="radio radio-primary radio-xs" 
-                        checked={isWithinPhilippines === false} 
-                        onChange={() => setIsWithinPhilippines(false)} 
-                      />
-                      <span className="text-[10px] font-black uppercase tracking-tight">Abroad</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase opacity-40 ml-1">Specify Location details</label>
-                  <input 
-                    name="location_details" 
-                    type="text" 
-                    className="input input-bordered input-sm w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold focus:border-primary" 
-                    placeholder="e.g. Manila, or Tokyo (Japan)" 
-                  />
-                </div>
-              </div>
-            )}
-
-            {['sick', 'women_special', 'rehabilitation'].includes(leaveType) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase opacity-40 ml-1">Treatment Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer hover:bg-base-50 border-base-200 text-base-content/60">
-                      <input type="radio" name="is_in_hospital" value="true" className="radio radio-primary radio-xs" />
-                      <span className="text-[10px] font-black uppercase tracking-tight">In-Hospital</span>
-                    </label>
-                    <label className="flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer hover:bg-base-50 border-base-200 text-base-content/60">
-                      <input type="radio" name="is_in_hospital" value="false" className="radio radio-primary radio-xs" defaultChecked />
-                      <span className="text-[10px] font-black uppercase tracking-tight">Out-Patient</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase opacity-40 ml-1">Specify Illness / Diagnosis</label>
-                  <input 
-                    name="illness_details" 
-                    type="text" 
-                    className="input input-bordered input-sm w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold focus:border-primary" 
-                    placeholder="Diagnosis/Illness" 
-                    required 
-                  />
-                </div>
-              </div>
-            )}
-
-            {leaveType === 'study' && (
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase opacity-40 ml-1">Purpose of Study</label>
-                <select name="study_type" className="select select-bordered select-sm w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold focus:border-primary" required>
-                  <option value="masters">Completion of Master's Degree</option>
-                  <option value="board_exam">BAR/Board Examination Review</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Working Days & Commutation Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4 p-6 bg-white rounded-2xl border border-base-200 shadow-sm transition-all hover:shadow-md">
-              <div className="flex items-center justify-between border-b border-base-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black">3</span>
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-base-content/70">6.C Dates Applied</h4>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase opacity-40 ml-1">Start Date</label>
-                  <input 
-                    name="start_date" 
-                    type="date" 
-                    className="input input-bordered input-sm w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold focus:border-primary" 
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    min={effectiveMinDate}
-                    required 
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black uppercase opacity-40 ml-1">End Date</label>
-                  <input 
-                    name="end_date" 
-                    type="date" 
-                    className="input input-bordered input-sm w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold focus:border-primary" 
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={effectiveMinDate}
-                    required 
-                  />
-                </div>
-              </div>
-              {durationDays > 0 && (
-                <div className="flex items-center gap-2 text-success bg-success/5 border border-success/10 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider justify-center">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  {durationDays} Working Days calculated
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4 p-6 bg-white rounded-2xl border border-base-200 shadow-sm transition-all hover:shadow-md">
-              <div className="flex items-center gap-2 border-b border-base-100 pb-3">
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black">4</span>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-base-content/70">6.D Commutation</h4>
-              </div>
-              <div className="grid grid-cols-2 gap-3 h-[60px] items-center">
-                <label className="flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer hover:bg-base-50 border-base-200 text-base-content/60">
-                  <input type="radio" name="commutation" value="not_requested" className="radio radio-primary radio-xs" defaultChecked />
-                  <span className="text-[10px] font-black uppercase tracking-tight">Not Requested</span>
-                </label>
-                <label className="flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer hover:bg-base-50 border-base-200 text-base-content/60">
-                  <input type="radio" name="commutation" value="requested" className="radio radio-primary radio-xs" />
-                  <span className="text-[10px] font-black uppercase tracking-tight">Requested</span>
-                </label>
+              <div>
+                <label htmlFor={`${id}-end`} className="mb-1.5 flex items-center justify-between text-sm font-medium text-slate-800">End date <span className="text-xs text-primary">Required</span></label>
+                <input id={`${id}-end`} name="end_date" type="date" min={startDate && startDate > minDate ? startDate : minDate} value={endDate} onChange={event => setEndDate(event.target.value)} required className={fieldClass} aria-invalid={!!dateError} aria-describedby={dateError ? `${id}-date-error` : `${id}-date-help`} />
               </div>
             </div>
-          </div>
-
-          {/* Documentary Requirements Uploads */}
-          <div className="space-y-4 p-6 bg-primary/5 rounded-xl border border-primary/10 transition-all">
-            <div className="flex items-center justify-between">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Documentary Requirements</h4>
-              <span className="text-[8px] font-bold opacity-60 uppercase">Attach valid files (PDF / Image)</span>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase opacity-40 ml-1">
-                  {leaveType === 'sick' ? 'Medical Certificate (if > 5 days)' : 'Supporting Document'}
-                </label>
-                <div className="relative group cursor-pointer border-2 border-dashed border-primary/20 hover:border-primary/50 rounded-lg p-4 transition-colors">
-                  <input type="file" name="supporting_document" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="w-5 h-5 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Upload Document</span>
-                  </div>
-                </div>
+            {dateError && <p id={`${id}-date-error`} role="alert" className="text-sm text-error">{dateError}</p>}
+            <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm" role="status">
+              <CalendarDays className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+              <div>
+                <p className="font-semibold text-slate-900">{hasDates && !dateError ? `${days} ${usesCalendarDays ? 'calendar' : 'working'} day${days === 1 ? '' : 's'} requested` : 'Select your dates to calculate the duration'}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{usesCalendarDays ? 'Includes weekends. Both the start and end date are counted.' : 'Counts Monday to Friday, including holidays. Both the start and end date are counted.'}</p>
               </div>
-
-              {['vacation', 'special_privilege'].includes(leaveType) && (!isWithinPhilippines || durationDays >= 30) && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase opacity-40 ml-1">Travel Authority Document</label>
-                    <div className="relative group cursor-pointer border-2 border-dashed border-primary/20 hover:border-primary/50 rounded-lg p-4 transition-colors">
-                      <input type="file" name="travel_authority_document" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                      <div className="flex flex-col items-center gap-2">
-                        <Upload className="w-5 h-5 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Upload Travel Authority</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase opacity-40 ml-1">Clearance Document</label>
-                    <div className="relative group cursor-pointer border-2 border-dashed border-primary/20 hover:border-primary/50 rounded-lg p-4 transition-colors">
-                      <input type="file" name="clearance_document" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                      <div className="flex flex-col items-center gap-2">
-                        <Upload className="w-5 h-5 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Upload Clearance</span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
-          </div>
+            {employee && ['vacation', 'forced', 'sick'].includes(leaveType) && <p className="text-xs text-slate-600">Available credits: {leaveType === 'sick' && employee.sick_leave_balance != null ? `Sick ${Number(employee.sick_leave_balance)} days ? ` : ''}{employee.vacation_leave_balance != null ? `Vacation ${Number(employee.vacation_leave_balance)} days` : ''}</p>}
+            <details className="rounded-lg border border-slate-200 p-3">
+              <summary className="cursor-pointer text-sm font-medium text-slate-800">Commutation of leave credits <span className="font-normal text-slate-500">(optional)</span></summary>
+              <p className="mt-2 text-xs text-slate-600">Indicate whether you are requesting the cash value of leave credits.</p>
+              <div className="mt-3 flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="commutation" value="not_requested" defaultChecked={initialData?.commutation !== 'requested'} className="radio radio-primary radio-sm" />Not requested</label>
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="commutation" value="requested" defaultChecked={initialData?.commutation === 'requested'} className="radio radio-primary radio-sm" />Requested</label>
+              </div>
+            </details>
+          </fieldset>
 
-          {/* Submit Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-            <button type="button" onClick={onClose} className="btn btn-ghost rounded-md text-xs font-semibold">
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={isSubmitting} 
-              className="btn btn-primary bg-[#0038A8] text-white hover:bg-[#002b80] rounded-md text-xs font-semibold px-6"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Application'}
-            </button>
-          </div>
+          <fieldset className="space-y-4 border-t border-slate-200 pt-5">
+            <legend className="pr-3 text-base font-semibold text-slate-900">3. Attachments</legend>
+            <p className="text-sm text-slate-600">{requiredCount ? `${requiredCount} required document${requiredCount === 1 ? '' : 's'} for this application.` : 'No mandatory attachments for this selection. You can still add a supporting document.'} Use PDF, PNG, or JPEG files.</p>
+            <div className="grid gap-3 sm:grid-cols-2">{documents.map(document => <LeaveDocumentUpload key={`${leaveType}-${document.name}`} document={document} existingUrl={initialData?.[document.name]} />)}</div>
+          </fieldset>
         </form>
-      </div>
-      <div className="modal-backdrop bg-black/40" onClick={onClose}></div>
-    </div>
-  );
-};
 
-export default LeaveApplicationModal;
+        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+          <div className="min-w-0 text-xs text-slate-600">
+            <p className="font-medium text-slate-800">{selectedType}</p>
+            <p>{hasDates && !dateError ? `${days} ${usesCalendarDays ? 'calendar' : 'working'} day${days === 1 ? '' : 's'}` : 'Complete the required fields to submit.'}</p>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" className="btn btn-ghost btn-sm min-h-11" disabled={isSubmitting} onClick={onClose}>Cancel</button>
+            <button form={`${id}-form`} type="submit" className="btn btn-primary btn-sm min-h-11" disabled={isSubmitting || !!dateError}>{isSubmitting ? 'Submitting...' : initialData ? 'Resubmit application' : 'Submit application'}</button>
+          </div>
+        </footer>
+      </div>
+    </dialog>
+  );
+}

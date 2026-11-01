@@ -58,6 +58,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     supervisor_name = serializers.SerializerMethodField()
+    leave_checker_name = serializers.StringRelatedField(source='leave_checker', read_only=True)
 
     def get_supervisor_name(self, obj):
         if obj.supervisor:
@@ -78,6 +79,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'umid_id', 'pagibig_id', 'philhealth_no', 'philsys_id', 'tin_no', 'agency_employee_no',
             'mobile_no', 'residential_address', 'permanent_address',
             'position', 'department', 'school', 'school_details', 'supervisor', 'supervisor_name',
+            'leave_duty', 'leave_checker', 'leave_checker_name',
             'salary_grade', 'salary_grade_details', 'salary', 'date_hired', 
             'leave_balance', 'vacation_leave_balance', 'sick_leave_balance',
             'e_signature',
@@ -86,6 +88,19 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'is_supervisor'
         )
         read_only_fields = ('user',)
+
+    def validate(self, attrs):
+        instance = self.instance
+        for field in ('leave_checker', 'supervisor'):
+            person = attrs.get(field)
+            if person and instance and person.pk == instance.pk:
+                raise serializers.ValidationError({field: 'An employee cannot be their own leave processor.'})
+            if person and (not person.user_id or not person.user.is_active):
+                raise serializers.ValidationError({field: 'Select an employee with an active account.'})
+        checker = attrs.get('leave_checker')
+        if checker and checker.leave_duty != 'checker':
+            raise serializers.ValidationError({'leave_checker': 'Select staff assigned to Administrative Assistant II checking.'})
+        return attrs
 
     def to_internal_value(self, data):
         # Convert empty strings to None for nullable fields recursively
@@ -103,6 +118,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
                     clean_nested(item)
 
         clean_nested(data)
+        if 'leave_duty' in data and data['leave_duty'] is None:
+            data['leave_duty'] = ''
         
         # Sanitize salary/numeric fields (strip currency, commas)
         def sanitize_decimal(val):

@@ -80,6 +80,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         AuditLog.objects.create(user=self.request.user, action=f"Deleted Employee: {instance}")
         instance.delete()
 
+    @action(detail=False, methods=['get'], url_path='leave-staff')
+    def leave_staff(self, request):
+        staff = Employee.objects.select_related('user').filter(user__is_active=True).order_by('last_name', 'first_name')
+        return Response([
+            {'id': person.pk, 'name': str(person), 'leave_duty': person.leave_duty,
+             'school': person.school_id, 'position': person.position}
+            for person in staff
+        ])
+
     @action(detail=False, methods=['POST'], permission_classes=[AllowAny], url_path='register-existing')
     def register_existing(self, request):
         first_name = request.data.get('first_name')

@@ -281,12 +281,13 @@ const AdminDashboard = () => {
             <div className="space-y-1">
               <span className="font-semibold text-slate-800 block">CSC Form No. 6 Leaves</span>
               <p className="text-[11px] text-slate-500">
-                {stats?.pending_leaves_supervisor || 0} Supervisor • {stats?.pending_leaves_hr || 0} HR •{' '}
+                {stats?.pending_leaves_checking || 0} Checking • {stats?.pending_leaves_supervisor || 0} Principal •{' '}
+                {stats?.pending_leaves_records || 0} Records • {stats?.pending_leaves_hr || 0} HR •{' '}
                 {stats?.pending_leaves_superintendent || 0} SDS
               </p>
             </div>
             <Link
-              to="/leaves"
+              to="/leave-management"
               className="inline-flex items-center gap-1 text-[#0038A8] font-semibold hover:underline text-[11px]"
             >
               Docket <ArrowRight className="w-3 h-3" />

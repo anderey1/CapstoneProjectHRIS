@@ -33,7 +33,9 @@ def dashboard_stats(request):
     leaves_supervisor = LeaveRequest.objects.filter(status='pending_supervisor').count()
     leaves_hr = LeaveRequest.objects.filter(status='pending_hr').count()
     leaves_superintendent = LeaveRequest.objects.filter(status='pending_superintendent').count()
-    pending_leaves = leaves_supervisor + leaves_hr + leaves_superintendent
+    leaves_checking = LeaveRequest.objects.filter(status='pending_checking').count()
+    leaves_records = LeaveRequest.objects.filter(status='pending_records').count()
+    pending_leaves = leaves_checking + leaves_supervisor + leaves_records + leaves_hr + leaves_superintendent
     
     active_applicants = Applicant.objects.exclude(status__in=['hired', 'rejected']).count()
     pending_ipcrf = Employee.objects.exclude(performance_reviews__isnull=False).count()
@@ -75,7 +77,9 @@ def dashboard_stats(request):
             "status": "Healthy Portfolio"
         },
         "action_items": [
+            f"{leaves_checking} leave request(s) awaiting Administrative Assistant II checking",
             f"{leaves_supervisor} leave request(s) awaiting School Principal recommendation",
+            f"{leaves_records} leave request(s) awaiting Records Unit receiving",
             f"{leaves_hr} leave request(s) awaiting HR certification",
             f"{leaves_superintendent} leave request(s) awaiting Superintendent final sign-off",
             f"{pending_loan_verification} Provident loan application(s) awaiting Accountant verification",
@@ -102,6 +106,8 @@ def dashboard_stats(request):
         "attendance_alerts": attendance_alerts,
         "geo_compliance_rate": geo_compliance_rate,
         "pending_leaves": pending_leaves,
+        "pending_leaves_checking": leaves_checking,
+        "pending_leaves_records": leaves_records,
         "pending_leaves_supervisor": leaves_supervisor,
         "pending_leaves_hr": leaves_hr,
         "pending_leaves_superintendent": leaves_superintendent,

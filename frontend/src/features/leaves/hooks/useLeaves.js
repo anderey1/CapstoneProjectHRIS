@@ -43,16 +43,23 @@ export function useLeaves() {
   const { data: leaves = [], isLoading: isLeavesLoading, isError, error } = useQuery({
     queryKey: [QUERY_KEYS.LEAVES],
     queryFn: async () => {
-      const res = await api.get('leaves/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
+      const leaves = [];
+      let page = 1;
+      while (true) {
+        const res = await api.get('leaves/', { params: { page } });
+        if (Array.isArray(res.data)) return res.data;
+        leaves.push(...(res.data.results || []));
+        if (!res.data.next) return leaves;
+        page += 1;
+      }
     },
   });
 
   // 3. Apply Leave Mutation
   const applyMutation = useMutation({
-    mutationFn: (formData) => api.post('leaves/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    mutationFn: ({ formData, id }) => id
+      ? api.patch(`leaves/${id}/`, formData)
+      : api.post('leaves/', formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
       queryClient.invalidateQueries({ queryKey: ['me'] });
@@ -76,11 +83,18 @@ export function useLeaves() {
 
   // 4. Approve Leave Mutation
   const approveMutation = useMutation({
-    mutationFn: (id) => api.post(`leaves/${id}/approve/`),
-    onSuccess: () => {
+    mutationFn: ({ id, signature, signatureConfirmed, recordsReference, expectedStatus }) => {
+      const data = new FormData();
+      if (signature) data.append('signature', signature);
+      data.append('signature_confirmed', String(!!signatureConfirmed));
+      if (expectedStatus) data.append('expected_status', expectedStatus);
+      if (recordsReference) data.append('records_reference', recordsReference);
+      return api.post(`leaves/${id}/approve/`, data);
+    },
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
       queryClient.invalidateQueries({ queryKey: ['me'] });
-      toast.success('Leave application approved.');
+      toast.success(response.data.message);
     },
     onError: (err) => {
       toast.error(err.response?.data?.detail || 'Approval failed.');
@@ -101,6 +115,15 @@ export function useLeaves() {
     },
   });
 
+  const returnMutation = useMutation({
+    mutationFn: ({ id, reason }) => api.post(`leaves/${id}/return-for-correction/`, { reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVES] });
+      toast.info('Application returned for correction.');
+    },
+    onError: err => toast.error(err.response?.data?.detail || 'Could not return application.'),
+  });
+
   // Filtered views
   const myLeaves = leaves.filter((l) => l.employee === employee?.id);
   const teamLeaves = leaves.filter((l) => l.employee !== employee?.id);
@@ -119,6 +142,8 @@ export function useLeaves() {
     isApproving: approveMutation.isPending,
     rejectLeave: rejectMutation.mutateAsync,
     isRejecting: rejectMutation.isPending,
+    returnLeave: returnMutation.mutateAsync,
+    isReturning: returnMutation.isPending,
     calculateWorkingDays,
   };
 }

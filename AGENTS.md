@@ -53,6 +53,10 @@ Playwright specs assume an `admin` / `admin` account on a running backend. `seed
 
 ## Backend architecture
 
+- Code ownership and package layout are documented in [docs/code-organization.md](docs/code-organization.md). Employee, leave, loan, and payroll views are packages with focused HTTP action mixins; their `__init__.py` files preserve the existing ViewSet imports.
+- Hiring creation is coordinated by `backend/core/services/onboarding.py`; PDS record and document copying live in `services/applicant_records.py`. `views/recruitment.py` retains applicant status changes and notifications.
+- Helpers live in focused files under `backend/core/utils/`; `core.utils` remains the public import location. Keep relative imports correct when moving code into a deeper package.
+
 - Single Django app `core`, split by feature into `models/`, `serializers/`, `views/`, `services/`, `utils/`. Each subpackage `__init__.py` re-exports its public names; import from `core.models`, not the leaf modules.
 - Custom user is `core.User` (`AUTH_USER_MODEL = 'core.User'`), subclassing `AbstractUser` with a `role` field. Six roles in `core/models/employee.py`: `HR`, `ACCOUNTANT`, `SUPERINTENDENT`, `TEACHING`, `NON_TEACHING`, `ADMINISTRATIVE`.
 - `MANAGEMENT_ROLES` is defined once in `backend/core/models/employee.py` and mirrors `IsManagement` in `backend/core/permissions.py` and `MANAGEMENT_ROLES` in `frontend/src/App.jsx`. **Changing role membership means editing all three.**
@@ -67,6 +71,8 @@ Playwright specs assume an `admin` / `admin` account on a running backend. `seed
 - Gemini-based PDS extraction lives in `backend/core/utils/__init__.py` alongside unrelated math helpers; `core/utils/pdf/` holds ReportLab generators exposed through `core/utils/pdf_generator.py`.
 
 ## Frontend architecture
+
+- Loan and payroll hooks compose separate query and mutation hooks; payroll downloads live in `usePayrollExports`. Preserve the public `useLoans` and `usePayroll` return values and query keys when reorganizing their internals.
 
 - Routes are declarative in `frontend/src/App.jsx`, nested under a `ProtectedRoute` + `MainLayout` shell, with role tiers as layout routes. `ProtectedRoute` accepts either children or acts as an `<Outlet />` parent.
 - Data lives in feature hooks under `frontend/src/features/<feature>/hooks/` using TanStack Query with keys from `frontend/src/api/queryKeys.js`. Add query keys there rather than inline strings.

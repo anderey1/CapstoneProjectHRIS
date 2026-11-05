@@ -5,6 +5,9 @@ import {
 import LeaveProcessingActions from './LeaveProcessingActions';
 import LeaveWorkflowDetails from './LeaveWorkflowDetails';
 import DocumentAttachmentCard, { CSC_DOCUMENT_SPECS } from './DocumentAttachmentCard';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { QUERY_KEYS } from '../../../api/queryKeys';
+import Pagination from '../../../components/common/Pagination';
 
 import { formatLeaveStatus as formatStatus, PENDING_LEAVE_STATUSES } from '../utils/leaveWorkflow';
 
@@ -33,7 +36,6 @@ const getStatusBadge = (status) => {
  * Institutional table docket for supervisors and managers to review and sign endorsements.
  */
 const SupervisorApprovalQueue = ({ 
-  teamLeaves, 
   onApprove, 
   onReject, 
   isApprovePending, 
@@ -45,22 +47,13 @@ const SupervisorApprovalQueue = ({
   const [selectedApproval, setSelectedApproval] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredTeamLeaves = teamLeaves.filter(l => {
-    let matchesTab = true;
-    if (approvalTab === 'pending') matchesTab = PENDING_LEAVE_STATUSES.includes(l.status);
-    else if (approvalTab === 'accepted') matchesTab = l.status === 'approved';
-    else if (approvalTab === 'rejected') matchesTab = l.status === 'rejected';
-
-    const matchesSearch = 
-      (l.employee_name && l.employee_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (l.leave_type && l.leave_type.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesTab && matchesSearch;
+  const { records: filteredTeamLeaves, summary, pagination } = usePaginatedList(QUERY_KEYS.LEAVES, 'leaves/', {
+    scope: 'team', status: approvalTab === 'accepted' ? 'approved' : approvalTab, search: searchTerm,
   });
-
-  const pendingActionRequiredCount = teamLeaves.filter(l => l.can_approve && PENDING_LEAVE_STATUSES.includes(l.status)).length;
-  const totalPendingCount = teamLeaves.filter(l => PENDING_LEAVE_STATUSES.includes(l.status)).length;
-  const approvedCount = teamLeaves.filter(l => l.status === 'approved').length;
-  const rejectedCount = teamLeaves.filter(l => l.status === 'rejected').length;
+  const pendingActionRequiredCount = summary.action_required || 0;
+  const totalPendingCount = summary.pending || 0;
+  const approvedCount = summary.statuses?.approved || 0;
+  const rejectedCount = summary.statuses?.rejected || 0;
 
   return (
     <div className="space-y-4">
@@ -199,6 +192,7 @@ const SupervisorApprovalQueue = ({
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="team leave applications" />
         </div>
       </div>
 

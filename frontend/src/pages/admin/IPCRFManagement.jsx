@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
 import {
@@ -17,6 +17,8 @@ import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal';
 import IPCRFDetailsModal from '../../components/features/performance/IPCRFDetailsModal';
 import { computeRPMSScore, getAdjectivalRating } from '../../utils/performance';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import Pagination from '../../components/common/Pagination';
 
 /**
  * Performance Ratings (RPMS / IPCRF Division Master Ledger)
@@ -39,12 +41,8 @@ const IPCRFManagement = () => {
   const canRate = can(PERMISSIONS.RATE_PERFORMANCE) || ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
 
   // Data Fetching
-  const { data: reviews = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.PERFORMANCE],
-    queryFn: async () => {
-      const res = await api.get('performance/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
+  const { records: filteredReviews, summary, pagination, isLoading } = usePaginatedList(QUERY_KEYS.PERFORMANCE, 'performance/', {
+    search: searchQuery, period: selectedPeriod, rating: selectedRatingFilter,
   });
 
   // Mutations
@@ -61,57 +59,8 @@ const IPCRFManagement = () => {
     }
   };
 
-  // Distinct Periods for filter dropdown
-  const uniquePeriods = useMemo(() => {
-    const periods = new Set();
-    reviews.forEach((r) => {
-      if (r.period) periods.add(r.period);
-    });
-    return Array.from(periods);
-  }, [reviews]);
-
-  // Filtered Reviews & Summary Computations
-  const filteredReviews = useMemo(() => {
-    return reviews.filter((r) => {
-      const finalScore = computeRPMSScore(r.quality_score, r.behavior_score, r.punctuality_score);
-      const adjectival = getAdjectivalRating(finalScore);
-
-      const matchesSearch =
-        !searchQuery ||
-        r.employee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.position?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.period?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesPeriod = selectedPeriod === 'ALL' || r.period === selectedPeriod;
-      const matchesRating = selectedRatingFilter === 'ALL' || adjectival.code === selectedRatingFilter;
-
-      return matchesSearch && matchesPeriod && matchesRating;
-    });
-  }, [reviews, searchQuery, selectedPeriod, selectedRatingFilter]);
-
-  // Operational Metrics
-  const metrics = useMemo(() => {
-    let outstandingCount = 0;
-    let verySatisfactoryCount = 0;
-    let eligibleCount = 0;
-
-    reviews.forEach((r) => {
-      const score = computeRPMSScore(r.quality_score, r.behavior_score, r.punctuality_score);
-      if (score !== null) {
-        if (score >= 4.5) outstandingCount += 1;
-        else if (score >= 3.5) verySatisfactoryCount += 1;
-      }
-      if (r.is_promotion_eligible) eligibleCount += 1;
-    });
-
-    return {
-      total: reviews.length,
-      outstanding: outstandingCount,
-      verySatisfactory: verySatisfactoryCount,
-      eligible: eligibleCount,
-    };
-  }, [reviews]);
+  const uniquePeriods = summary.periods || [];
+  const metrics = { total: 0, outstanding: 0, verySatisfactory: 0, eligible: 0, ...summary };
 
   if (isLoading) {
     return (
@@ -418,13 +367,14 @@ const IPCRFManagement = () => {
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="performance reviews" />
         </div>
 
         {/* Footer Ledger Metadata */}
         <div className="bg-slate-50 border-t border-slate-300 px-4 py-2.5 flex items-center justify-between text-[11px] text-slate-600">
           <span>
             Showing <strong className="font-semibold text-slate-800">{filteredReviews.length}</strong> of{' '}
-            <strong className="font-semibold text-slate-800">{reviews.length}</strong> evaluation records
+            <strong className="font-semibold text-slate-800">{pagination.count}</strong> matching evaluation records
           </span>
           <span className="font-mono text-slate-500">Official DepEd Lucena City Division Ledger</span>
         </div>

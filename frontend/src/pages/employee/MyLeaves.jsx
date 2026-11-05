@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { PENDING_LEAVE_STATUSES } from '../../features/leaves/utils/leaveWorkflow';
 import { 
   useLeaves, 
   LeaveBalanceCards, 
@@ -9,6 +8,8 @@ import {
   SupervisorApprovalQueue, 
   LeaveApplicationModal 
 } from '../../features/leaves';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import { QUERY_KEYS } from '../../api/queryKeys';
 
 /**
  * MyLeaves (Employee View)
@@ -16,10 +17,12 @@ import {
  */
 const MyLeaves = () => {
   const { user } = useAuth();
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyType, setHistoryType] = useState('all');
   const {
     employee,
     myLeaves,
-    teamLeaves,
+    pagination,
     isLoading,
     applyLeave,
     isApplying,
@@ -29,8 +32,8 @@ const MyLeaves = () => {
     isRejecting,
     returnLeave,
     isReturning,
-    calculateWorkingDays,
-  } = useLeaves();
+  } = useLeaves({ scope: 'mine', search: historySearch, leave_type: historyType });
+  const { summary: teamSummary } = usePaginatedList(QUERY_KEYS.LEAVES, 'leaves/', { scope: 'team', status: 'pending', search: '' });
 
   // Modal & Form States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,7 +46,6 @@ const MyLeaves = () => {
   // Tab State for Supervisors / Managers
   const [activeMainTab, setActiveMainTab] = useState('mine');
 
-  const durationDays = calculateWorkingDays(startDate, endDate);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,9 +62,9 @@ const MyLeaves = () => {
   };
 
   const isSupervisorOrManager = 
-    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor || !!employee?.leave_duty;
+    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor;
 
-  const pendingSubordinateCount = teamLeaves.filter(l => l.can_approve && PENDING_LEAVE_STATUSES.includes(l.status)).length;
+  const pendingSubordinateCount = teamSummary.action_required || 0;
 
   if (isLoading) {
     return (
@@ -149,7 +151,9 @@ const MyLeaves = () => {
       {activeMainTab === 'mine' && (
         <div className="space-y-6">
           <LeaveBalanceCards employee={employee} />
-          <LeaveHistorySection leaves={myLeaves} onCorrect={leave => {
+          <LeaveHistorySection leaves={myLeaves} pagination={pagination}
+            searchTerm={historySearch} setSearchTerm={setHistorySearch}
+            filterType={historyType} setFilterType={setHistoryType} onCorrect={leave => {
             setEditingLeave(leave);
             setLeaveType(leave.leave_type);
             setStartDate(leave.start_date);
@@ -163,7 +167,6 @@ const MyLeaves = () => {
       {/* 2. TEAM APPROVALS VIEW */}
       {activeMainTab === 'approvals' && (
         <SupervisorApprovalQueue 
-          teamLeaves={teamLeaves}
           onApprove={approveLeave}
           onReject={({ id, reason }) => rejectLeave({ id, reason })}
           isApprovePending={isApproving}
@@ -190,7 +193,6 @@ const MyLeaves = () => {
         setEndDate={setEndDate}
         isWithinPhilippines={isWithinPhilippines}
         setIsWithinPhilippines={setIsWithinPhilippines}
-        durationDays={durationDays}
       />
     </div>
   );

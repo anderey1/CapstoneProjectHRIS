@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { Buffer } from 'node:buffer';
+import calendar from '../../backend/core/data/leave_calendar/2026.json' with { type: 'json' };
 
 const signaturePng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jB1kAAAAASUVORK5CYII=', 'base64');
 
@@ -27,6 +28,9 @@ async function setup(page, actor, status) {
   await page.route(/http:\/\/(localhost|127\.0\.0\.1):8000\/api\//, async route => {
     const request = route.request();
     const pathname = new URL(request.url()).pathname;
+    if (pathname.endsWith('/leaves/calendar/')) {
+      return route.fulfill({ json: { ...calendar, today: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) } });
+    }
     if (request.method() !== 'GET') {
       requests.push({ path: pathname, body: request.postDataBuffer()?.toString() || '' });
       if (pathname.endsWith('/approve/')) {

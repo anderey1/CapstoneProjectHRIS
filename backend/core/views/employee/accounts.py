@@ -65,9 +65,8 @@ class EmployeeAccountActions:
 
     @action(detail=False, methods=['GET'], permission_classes=[IsAdminOrHRorSuperintendent], url_path='pending-registrations')
     def list_pending_registrations(self, request):
-        pending_employees = Employee.objects.filter(user__is_active=False)
-        serializer = self.get_serializer(pending_employees, many=True)
-        return Response(serializer.data)
+        pending_employees = self.get_queryset().filter(user__is_active=False)
+        return self.paginated_list(pending_employees)
 
     @action(detail=True, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent], url_path='approve-registration')
     def approve_registration(self, request, pk=None):

@@ -7,9 +7,8 @@ export default function LeaveWorkflowDetails({ leave }) {
       <p className="font-medium">{formatLeaveStatus(leave.status)}</p>
       {leave.workflow === 'teaching' && (
         <>
-          <p>Assistant II → Principal → Records Unit → HR</p>
+          <p>Principal approval and signature → HR completion</p>
           <dl className="grid gap-1 sm:grid-cols-2">
-            <div><dt className="text-slate-500">Assistant II checking</dt><dd>{leave.assigned_checker_name || 'School checking queue'}</dd></div>
             <div><dt className="text-slate-500">Assigned Principal</dt><dd>{leave.assigned_principal_name || 'Not assigned'}</dd></div>
           </dl>
         </>

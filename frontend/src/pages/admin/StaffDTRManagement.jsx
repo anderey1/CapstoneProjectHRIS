@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FileText, Download, AlertCircle, Calendar, Users, Search } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
+import { fetchAllPages } from '../../api/pagination';
 
 // Helper to format HH:MM:SS string to 12-hour AM/PM format
 const formatTime = (timeStr, fallback = '---') => {
@@ -31,24 +32,16 @@ const StaffDTRManagement = () => {
 
   // Fetch all division employees for selection
   const { data: employees = [], isLoading: employeesLoading } = useQuery({
-    queryKey: ['employees_for_staff_dtr'],
-    queryFn: async () => {
-      const response = await api.get('employees/');
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
+    queryKey: [QUERY_KEYS.EMPLOYEES, 'all'],
+    queryFn: ({ signal }) => fetchAllPages('employees/', {}, signal),
   });
 
   // Fetch attendance records for selected employee and month
   const { data: records = [], isLoading: recordsLoading } = useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth, selectedEmployeeId],
-    queryFn: async () => {
+    queryFn: ({ signal }) => {
       const [year, month] = selectedMonth.split('-');
-      const params = new URLSearchParams({ month, year });
-      if (selectedEmployeeId) {
-        params.append('employee_id', selectedEmployeeId);
-      }
-      const response = await api.get(`attendance/?${params.toString()}`);
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
+      return fetchAllPages('attendance/', { month, year, employee_id: selectedEmployeeId }, signal);
     },
     enabled: !!selectedEmployeeId,
   });

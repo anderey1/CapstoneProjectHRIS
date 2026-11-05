@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import api from '../../api/axios';
+import React, { useState } from 'react';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import Pagination from '../../components/common/Pagination';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import {
   ShieldCheck,
@@ -50,79 +50,10 @@ const AuditLogs = () => {
   const [selectedModule, setSelectedModule] = useState('ALL');
   const [selectedDateRange, setSelectedDateRange] = useState('ALL');
 
-  const { data: logs = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.AUDIT_LOGS || 'audit-logs'],
-    queryFn: async () => {
-      const res = await api.get('audit-logs/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
+  const { records: filteredLogs, summary, pagination, isLoading } = usePaginatedList(QUERY_KEYS.AUDIT_LOGS, 'audit-logs/', {
+    search: searchQuery, module: selectedModule, date_range: selectedDateRange,
   });
-
-  // Filtered Audit Logs
-  const filteredLogs = useMemo(() => {
-    const now = new Date();
-
-    return logs.filter((log) => {
-      const moduleInfo = resolveAuditModule(log.action);
-
-      // Search Query Filter
-      const matchesSearch =
-        !searchQuery ||
-        log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.id?.toString().includes(searchQuery) ||
-        moduleInfo.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Module Filter
-      const matchesModule =
-        selectedModule === 'ALL' || moduleInfo.name === selectedModule;
-
-      // Date Range Filter
-      let matchesDate = true;
-      if (selectedDateRange !== 'ALL' && log.timestamp) {
-        const logDate = new Date(log.timestamp);
-        const diffMs = now - logDate;
-        const diffHours = diffMs / (1000 * 60 * 60);
-
-        if (selectedDateRange === '24H') {
-          matchesDate = diffHours <= 24;
-        } else if (selectedDateRange === '7D') {
-          matchesDate = diffHours <= 24 * 7;
-        } else if (selectedDateRange === '30D') {
-          matchesDate = diffHours <= 24 * 30;
-        }
-      }
-
-      return matchesSearch && matchesModule && matchesDate;
-    });
-  }, [logs, searchQuery, selectedModule, selectedDateRange]);
-
-  // Operational Metrics
-  const metrics = useMemo(() => {
-    const uniqueActors = new Set();
-    let past24Hours = 0;
-    let criticalActions = 0;
-    const now = new Date();
-
-    logs.forEach((l) => {
-      if (l.user_name) uniqueActors.add(l.user_name);
-      if (l.timestamp) {
-        const diffHours = (now - new Date(l.timestamp)) / (1000 * 60 * 60);
-        if (diffHours <= 24) past24Hours += 1;
-      }
-      const act = (l.action || '').toLowerCase();
-      if (act.includes('delete') || act.includes('reject') || act.includes('cancel')) {
-        criticalActions += 1;
-      }
-    });
-
-    return {
-      total: logs.length,
-      operators: uniqueActors.size,
-      recent: past24Hours,
-      critical: criticalActions,
-    };
-  }, [logs]);
+  const metrics = { total: 0, operators: 0, recent: 0, critical: 0, ...summary };
 
   if (isLoading) {
     return (
@@ -351,13 +282,14 @@ const AuditLogs = () => {
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="audit records" />
         </div>
 
         {/* Footer Audit Ledger Information */}
         <div className="bg-slate-50 border-t border-slate-300 px-4 py-2.5 flex items-center justify-between text-[11px] text-slate-600">
           <span>
             Displaying <strong className="font-semibold text-slate-800">{filteredLogs.length}</strong> of{' '}
-            <strong className="font-semibold text-slate-800">{logs.length}</strong> system audit records
+            <strong className="font-semibold text-slate-800">{pagination.count}</strong> matching system audit records
           </span>
           <span className="font-mono text-slate-500">DepEd SDO Lucena City System Security Trail</span>
         </div>

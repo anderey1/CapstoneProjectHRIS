@@ -2,7 +2,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 from ...models import LeaveRequest, Role
-from ...utils import calculate_working_days
+from ...services.leave_calendar import count_leave_working_days
 
 
 class LeaveApplicationActions:
@@ -24,6 +24,9 @@ class LeaveApplicationActions:
         # 1. Basic Validation
         if start_date > end_date:
             raise ValidationError("Start date cannot be after end date.")
+
+        if start_date == today or end_date == today:
+            raise ValidationError("Today's date cannot be selected as the start or end date. Choose another date.")
 
         # Retrospective leaves (CSC Form 6: Sick, Calamity/Emergency, Rehabilitation)
         RETROSPECTIVE_LEAVES = ['sick', 'emergency', 'rehabilitation']
@@ -65,9 +68,9 @@ class LeaveApplicationActions:
         if leave_type in CALENDAR_DAY_LEAVES:
             duration = (end_date - start_date).days + 1
         else:
-            duration = calculate_working_days(start_date, end_date)
+            duration = count_leave_working_days(start_date, end_date)
             if duration == 0:
-                raise ValidationError("Leave duration cannot be 0 working days.")
+                raise ValidationError("Leave duration cannot be 0 working days. Weekends and public non-working holidays are excluded.")
 
         # Balance check: Only leaves that consume leave credits (Vacation, Forced, Sick)
         # CSC MC No. 41, s. 1998 / Omnibus Rules on Leave
@@ -127,17 +130,13 @@ class LeaveApplicationActions:
         assignments = {}
         initial_status = 'pending_hr'
         if workflow == 'teaching':
-            checker = employee.leave_checker
             principal = employee.supervisor
             if not principal or not principal.user_id or not principal.user.is_active:
                 raise ValidationError('Ask HR to assign a principal with an active account before filing.')
-            if checker and (checker.leave_duty != 'checker' or not checker.user_id or not checker.user.is_active
-                            or checker.pk in (employee.pk, principal.pk)):
-                checker = None
             if principal.pk == employee.pk:
                 raise ValidationError('The applicant cannot be their own principal.')
-            assignments = {'assigned_checker': checker, 'assigned_principal': principal}
-            initial_status = 'pending_checking'
+            assignments = {'assigned_checker': None, 'assigned_principal': principal}
+            initial_status = 'pending_supervisor'
 
         old_status = serializer.instance.status if serializer.instance else ''
         leave = serializer.save(employee=employee, working_days_applied=duration,

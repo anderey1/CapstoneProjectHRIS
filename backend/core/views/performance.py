@@ -3,10 +3,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from ..models import PerformanceReview, Role, AuditLog
 from ..serializers import PerformanceReviewSerializer
+from .listing import PaginatedListMixin
 from ..utils import generate_performance_summary
 
-class PerformanceReviewViewSet(viewsets.ModelViewSet):
-    queryset = PerformanceReview.objects.all().order_by('-date_evaluated')
+class PerformanceReviewViewSet(PaginatedListMixin, viewsets.ModelViewSet):
+    queryset = PerformanceReview.objects.all().order_by('-date_evaluated', '-pk')
     serializer_class = PerformanceReviewSerializer
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -23,8 +24,8 @@ class PerformanceReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
-            return PerformanceReview.objects.all().order_by('-date_evaluated')
-        return PerformanceReview.objects.filter(employee__user=user).order_by('-date_evaluated')
+            return PerformanceReview.objects.select_related('employee', 'employee__user').order_by('-date_evaluated', '-pk')
+        return PerformanceReview.objects.select_related('employee', 'employee__user').filter(employee__user=user).order_by('-date_evaluated', '-pk')
 
     def perform_create(self, serializer):
         user = self.request.user

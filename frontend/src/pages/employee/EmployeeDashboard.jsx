@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
+import { fetchPage } from '../../api/pagination';
 import {
   Wallet,
   CalendarCheck,
@@ -26,7 +27,7 @@ const EmployeeDashboard = () => {
   });
 
   const { data: attendance = [] } = useQuery({
-    queryKey: [QUERY_KEYS.ATTENDANCE],
+    queryKey: [QUERY_KEYS.ATTENDANCE, 'recent'],
     queryFn: () =>
       api.get('attendance/').then((res) => {
         const data = Array.isArray(res.data) ? res.data : res.data.results || [];
@@ -34,17 +35,13 @@ const EmployeeDashboard = () => {
       }),
   });
 
-  const { data: loans = [] } = useQuery({
-    queryKey: [QUERY_KEYS.LOANS],
-    queryFn: () =>
-      api.get('loans/').then((res) => {
-        const data = Array.isArray(res.data) ? res.data : res.data.results || [];
-        return data;
-      }),
+  const { data: loanPage } = useQuery({
+    queryKey: [QUERY_KEYS.LOANS, 'summary'],
+    queryFn: ({ signal }) => fetchPage('loans/', {}, signal),
   });
 
   const { data: payrolls = [] } = useQuery({
-    queryKey: [QUERY_KEYS.PAYROLL],
+    queryKey: [QUERY_KEYS.PAYROLL, 'latest'],
     queryFn: () =>
       api.get('payroll/').then((res) =>
         Array.isArray(res.data) ? res.data : res.data.results || []
@@ -56,9 +53,9 @@ const EmployeeDashboard = () => {
     return payrolls && payrolls.length > 0 ? payrolls[0] : null;
   }, [payrolls]);
 
-  const activeLoans = useMemo(() => {
-    return loans.filter((l) => ['released', 'approved', 'verified'].includes(l.status));
-  }, [loans]);
+  const activeLoanCount = ['released', 'approved', 'verified'].reduce(
+    (count, status) => count + (loanPage?.summary?.statuses?.[status] || 0), 0,
+  );
 
   if (meLoading) {
     return (
@@ -166,7 +163,7 @@ const EmployeeDashboard = () => {
           </div>
           <div className="flex items-baseline gap-1 mt-1">
             <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
-              {activeLoans.length}
+              {activeLoanCount}
             </span>
             <span className="text-xs text-slate-500">active/pending</span>
           </div>

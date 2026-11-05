@@ -40,8 +40,8 @@ def test_register_existing_employee_success_and_approval():
     # List pending
     response_pending = client.get('/api/employees/pending-registrations/')
     assert response_pending.status_code == 200
-    assert len(response_pending.data) == 1
-    assert response_pending.data[0]['id'] == employee.id
+    assert response_pending.data['count'] == 1
+    assert response_pending.data['results'][0]['id'] == employee.id
 
     # Approve
     response_approve = client.post(f'/api/employees/{employee.id}/approve-registration/')

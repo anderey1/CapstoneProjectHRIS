@@ -105,16 +105,8 @@ class LeaveRequest(models.Model):
             return False
         profile = getattr(user, 'employee_profile', None)
         if self.workflow == 'teaching':
-            if self.status == 'pending_checking':
-                if not profile or profile.leave_duty != 'checker' or profile.pk == self.assigned_principal_id:
-                    return False
-                if self.assigned_checker_id:
-                    return profile.pk == self.assigned_checker_id
-                return bool(profile.school_id and profile.school_id == self.employee.school_id)
             if self.status == 'pending_supervisor':
                 return bool(profile and profile.pk == self.assigned_principal_id)
-            if self.status == 'pending_records':
-                return bool(profile and profile.leave_duty == 'records')
             if self.status == 'pending_hr':
                 return user.role == Role.HR or user.is_superuser
             return False

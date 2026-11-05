@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Coins,
   PlusCircle,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLoans, ApplyLoanModal, SubsidiaryLedger } from '../../features/loans';
+import Pagination from '../../components/common/Pagination';
 
 const PURPOSE_LABELS = {
   general: 'General Purpose',
@@ -56,6 +57,8 @@ const MyLoans = () => {
 
   const {
     loans = [],
+    summary,
+    pagination,
     isLoading,
     applyLoan,
     isApplying,
@@ -83,36 +86,13 @@ const MyLoans = () => {
   };
 
   // Operational Metrics
-  const metrics = useMemo(() => {
-    let activeDisbursed = 0;
-    let monthlyAmortization = 0;
-    let pendingCount = 0;
-    let paidCount = 0;
-
-    loans.forEach((l) => {
-      const amount = parseFloat(l.loan_amount) || 0;
-      const monthly = parseFloat(l.monthly_payment) || 0;
-
-      if (['released', 'approved'].includes(l.status)) {
-        activeDisbursed += amount;
-        monthlyAmortization += monthly;
-      }
-      if (['pending', 'verified'].includes(l.status)) {
-        pendingCount += 1;
-      }
-      if (l.status === 'paid') {
-        paidCount += 1;
-      }
-    });
-
-    return {
-      activeDisbursed,
-      monthlyAmortization,
-      pendingCount,
-      paidCount,
-      totalCount: loans.length,
-    };
-  }, [loans]);
+  const metrics = {
+    activeDisbursed: Number(summary.active_disbursed || 0),
+    monthlyAmortization: Number(summary.monthly_amortization || 0),
+    pendingCount: (summary.statuses?.pending || 0) + (summary.statuses?.verified || 0),
+    paidCount: summary.statuses?.paid || 0,
+    totalCount: summary.total || 0,
+  };
 
   if (isLoading) {
     return (
@@ -227,7 +207,7 @@ const MyLoans = () => {
             </h2>
           </div>
           <span className="text-[11px] text-slate-500 font-mono">
-            {loans.length} Recorded Accounts
+            {pagination.count} Recorded Accounts
           </span>
         </div>
 
@@ -340,6 +320,7 @@ const MyLoans = () => {
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="loans" />
         </div>
 
         <div className="bg-slate-50 border-t border-slate-300 px-4 py-2 text-[11px] text-slate-500 flex justify-between">

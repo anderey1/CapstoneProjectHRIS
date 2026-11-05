@@ -8,7 +8,6 @@ from ...permissions import IsAdminOrHRorSuperintendent
 class SalaryGradeViewSet(viewsets.ModelViewSet):
     queryset = SalaryGrade.objects.all()
     serializer_class = SalaryGradeSerializer
-    pagination_class = None
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -17,9 +16,8 @@ class SalaryGradeViewSet(viewsets.ModelViewSet):
 
 
 class SchoolViewSet(viewsets.ModelViewSet):
-    queryset = School.objects.all()
+    queryset = School.objects.all().order_by('name', 'pk')
     serializer_class = SchoolSerializer
-    pagination_class = None
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:

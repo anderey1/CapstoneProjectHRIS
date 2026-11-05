@@ -66,8 +66,9 @@ class LoanDocumentActions:
         """List all uploaded documents for a loan."""
         loan = self.get_object()
         docs = LoanDocument.objects.filter(loan=loan)
-        serializer = LoanDocumentSerializer(docs, many=True, context={'request': request})
-        return Response(serializer.data)
+        page = self.paginate_queryset(docs.order_by('doc_type', '-uploaded_at', '-pk'))
+        serializer = LoanDocumentSerializer(page, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['get'])
     def checklist(self, request, pk=None):

@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import Pagination from '../../components/common/Pagination';
 import { useQuery } from '@tanstack/react-query';
+import { fetchPage } from '../../api/pagination';
 import { QUERY_KEYS } from '../../api/queryKeys';
-import api from '../../api/axios';
 import {
   Award,
   Plus,
@@ -23,19 +25,16 @@ const MyIPCRF = () => {
   const [selectedReview, setSelectedReview] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const { data: reviews = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.PERFORMANCE],
-    queryFn: async () => {
-      const res = await api.get('performance/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
+  const { records: reviews, pagination, isLoading } = usePaginatedList(QUERY_KEYS.PERFORMANCE, 'performance/');
+  const { data: latestPage } = useQuery({
+    queryKey: [QUERY_KEYS.PERFORMANCE, 'latest'],
+    queryFn: ({ signal }) => fetchPage('performance/', {}, signal),
   });
 
   // Latest Evaluation Record
   const latestReview = useMemo(() => {
-    if (!reviews || reviews.length === 0) return null;
-    return reviews[0];
-  }, [reviews]);
+    return latestPage?.results[0] || null;
+  }, [latestPage]);
 
   const latestScore = useMemo(() => {
     if (!latestReview) return null;
@@ -171,7 +170,7 @@ const MyIPCRF = () => {
             </h2>
           </div>
           <span className="text-[11px] text-slate-500">
-            Total Records: <strong className="font-semibold text-slate-800">{reviews.length}</strong>
+            Total Records: <strong className="font-semibold text-slate-800">{pagination.count}</strong>
           </span>
         </div>
 
@@ -303,6 +302,7 @@ const MyIPCRF = () => {
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="performance reviews" />
         </div>
       </div>
 

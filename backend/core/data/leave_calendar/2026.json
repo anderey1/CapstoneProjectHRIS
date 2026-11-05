@@ -1,0 +1,170 @@
+{
+  "year": 2026,
+  "version": "2026-11-05.1",
+  "reviewed_at": "2026-11-05",
+  "coverage": "reviewed",
+  "notes": "National and Lucena public holidays reviewed as of 2026-11-05. Excludes school breaks and work suspensions. Later declarations require a dataset update; existing applications are not recalculated.",
+  "holidays": [
+    {
+      "date": "2026-01-01",
+      "label": "New Year's Day",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-02-17",
+      "label": "Chinese New Year",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-02-25",
+      "label": "EDSA Anniversary",
+      "category": "special_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-03-20",
+      "label": "Eid'l Fitr",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://pco.gov.ph/news_releases/proclamation-no-1189-s-2026-declaring-friday-20-march-2026-a-regular-holiday-throughout-the-country-in-observance-of-eidl-fitr-feast-of-ramadhan/"
+    },
+    {
+      "date": "2026-04-02",
+      "label": "Maundy Thursday",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-04-03",
+      "label": "Good Friday",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-04-04",
+      "label": "Black Saturday",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-04-09",
+      "label": "Araw ng Kagitingan",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-05-01",
+      "label": "Labor Day",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-05-27",
+      "label": "Eid'l Adha",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://pco.gov.ph/news_releases/proclamation-no-1264-s-2026/"
+    },
+    {
+      "date": "2026-06-12",
+      "label": "Independence Day",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-08-19",
+      "label": "Quezon Day",
+      "category": "special_non_working",
+      "scope": "lucena",
+      "source": "https://prc.gov.ph/article/prc-lucena-regional-office-observes-%E2%80%9Cquezon-day-and-lucena-day%E2%80%9D/2524"
+    },
+    {
+      "date": "2026-08-20",
+      "label": "Araw ng Lucena",
+      "category": "special_non_working",
+      "scope": "lucena",
+      "source": "https://pco.gov.ph/news_releases/president-marcos-declares-special-non-working-days-in-four-municipalities-and-a-city/"
+    },
+    {
+      "date": "2026-08-21",
+      "label": "Ninoy Aquino Day",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-08-31",
+      "label": "National Heroes Day",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-11-01",
+      "label": "All Saints' Day",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-11-02",
+      "label": "All Souls' Day",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-11-30",
+      "label": "Bonifacio Day",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-12-08",
+      "label": "Immaculate Conception",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-12-24",
+      "label": "Christmas Eve",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-12-25",
+      "label": "Christmas Day",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-12-30",
+      "label": "Rizal Day",
+      "category": "regular",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    },
+    {
+      "date": "2026-12-31",
+      "label": "Last Day of the Year",
+      "category": "special_non_working",
+      "scope": "national",
+      "source": "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/7/99678"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from ...models import Payroll, AuditLog
 from ...serializers import PayrollSerializer
+from ..listing import PaginatedListMixin
 from ...permissions import IsAccountant, IsSuperintendent
 
 from .generation import PayrollGenerationActions
@@ -10,12 +11,13 @@ from .exports import PayrollExportActions
 
 
 class PayrollViewSet(
+    PaginatedListMixin,
     PayrollGenerationActions,
     PayrollProcessingActions,
     PayrollExportActions,
     viewsets.ModelViewSet,
 ):
-    queryset = Payroll.objects.all().order_by('-date_generated')
+    queryset = Payroll.objects.all().order_by('-date_generated', '-pk')
 
     serializer_class = PayrollSerializer
 
@@ -32,7 +34,7 @@ class PayrollViewSet(
             'employee',
             'employee__user',
             'employee__school'
-        ).order_by('-date_generated')
+        ).order_by('-date_generated', '-pk')
 
         if user.is_management:
             return base_qs.all()

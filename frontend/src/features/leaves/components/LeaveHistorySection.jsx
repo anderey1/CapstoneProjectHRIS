@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import LeaveWorkflowDetails from './LeaveWorkflowDetails';
 import { formatLeaveStatus as formatStatus } from '../utils/leaveWorkflow';
 import { Clock as ClockIcon, FileText, CheckCircle2, XCircle, Search, ExternalLink } from 'lucide-react';
+import Pagination from '../../../components/common/Pagination';
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -27,19 +28,9 @@ const getStatusBadge = (status) => {
  * LeaveHistorySection
  * High-density CSC Form No. 6 personal application history table.
  */
-const LeaveHistorySection = ({ leaves, onCorrect }) => {
+const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFilterType, searchTerm, setSearchTerm }) => {
   const [selectedLeave, setSelectedLeave] = useState(null);
-  const [filterType, setFilterType] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const filteredLeaves = leaves.filter((leave) => {
-    const matchesType = filterType === 'all' || leave.leave_type === filterType;
-    const matchesSearch =
-      (leave.leave_type && leave.leave_type.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (leave.location_details && leave.location_details.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (leave.illness_details && leave.illness_details.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesType && matchesSearch;
-  });
+  const filteredLeaves = leaves;
 
   return (
     <div className="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
@@ -202,6 +193,7 @@ const LeaveHistorySection = ({ leaves, onCorrect }) => {
             )}
           </tbody>
         </table>
+        <Pagination pagination={pagination} label="personal leave applications" />
       </div>
       {selectedLeave && (
         <div className="modal modal-open" role="dialog" aria-modal="true" aria-label={`Application #${selectedLeave.id} progress`}>

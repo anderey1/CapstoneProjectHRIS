@@ -7,6 +7,8 @@ import {
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import Pagination from '../../components/common/Pagination';
 
 // Helper to format HH:MM:SS string to 12-hour AM/PM format
 const formatTime = (timeStr, fallback = '--:--') => {
@@ -62,10 +64,7 @@ const Attendance = () => {
   });
 
   // 3. Fetch Recent Attendance History
-  const { data: records, isLoading: historyLoading } = useQuery({
-    queryKey: [QUERY_KEYS.ATTENDANCE],
-    queryFn: () => api.get('attendance/').then(res => res.data.results || res.data)
-  });
+  const { records, pagination, isLoading: historyLoading } = usePaginatedList(QUERY_KEYS.ATTENDANCE, 'attendance/');
 
   const workstation = me?.school_details;
   const distanceMeters = currentPos && workstation?.latitude && workstation?.longitude
@@ -324,7 +323,7 @@ const Attendance = () => {
               {historyLoading ? (
                 <tr><td colSpan="5" className="text-center py-20"><span className="loading loading-spinner text-primary" /></td></tr>
               ) : records?.length > 0 ? (
-                records.slice(0, 5).map(rec => (
+                records.map(rec => (
                   <tr key={rec.id} className="hover:bg-base-50/50 transition-colors">
                     <td className="font-bold text-xs px-6">{rec.date}</td>
                     <td className="text-center">
@@ -357,6 +356,7 @@ const Attendance = () => {
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="attendance records" />
         </div>
       </div>
 

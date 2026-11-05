@@ -35,7 +35,7 @@ class TestLeaveRules:
         
         assert response.status_code == 201
         assert response.data['leave_type'] == 'sick'
-        assert response.data['status'] == 'pending_checking'
+        assert response.data['status'] == 'pending_supervisor'
 
     def test_vacation_leave_in_past_raises_validation_error(self, teacher_employee):
         """Vacation leave cannot be filed for past dates."""

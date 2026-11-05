@@ -42,14 +42,30 @@ export function getLeaveDocuments(type, days, withinPhilippines) {
 
 export const localDateString = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-export function getMinimumLeaveDate(type) {
-  const date = new Date();
+export function isCalendarDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+export function nonWorkingReason(value, holidays) {
+  if (!isCalendarDate(value)) return '';
+  const holiday = holidays.find(day => day.date === value && day.category !== 'special_working');
+  return holiday?.label || ([0, 6].includes(new Date(`${value}T00:00:00Z`).getUTCDay()) ? 'Weekend' : '');
+}
+
+export function manilaToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+export function getMinimumLeaveDate(type, today = manilaToday()) {
+  const date = new Date(`${today}T00:00:00Z`);
   const offset = ['sick', 'emergency', 'rehabilitation'].includes(type) ? -30 : ['vacation', 'solo_parent'].includes(type) ? 5 : 0;
-  date.setDate(date.getDate() + offset);
-  return localDateString(date);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
 }
 
 export function calendarDaysBetween(start, end) {
-  if (!start || !end || start > end) return 0;
+  if (!isCalendarDate(start) || !isCalendarDate(end) || start > end) return 0;
   return Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000) + 1;
 }

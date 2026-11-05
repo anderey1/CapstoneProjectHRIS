@@ -12,6 +12,7 @@ import {
   DocumentAttachmentCard, 
   CSC_DOCUMENT_SPECS 
 } from '../../features/leaves';
+import Pagination from '../../components/common/Pagination';
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -46,6 +47,8 @@ const LeaveManagement = () => {
 
   const { 
     leaves, 
+    summary,
+    pagination,
     isLoading, 
     approveLeave, 
     isApproving, 
@@ -53,31 +56,12 @@ const LeaveManagement = () => {
     isRejecting,
     returnLeave,
     isReturning
-  } = useLeaves();
-
-  // Tab filtering
-  const tabLeaves = leaves.filter(l => {
-    if (activeTab === 'pending') return PENDING_LEAVE_STATUSES.includes(l.status);
-    if (activeTab === 'approved') return l.status === 'approved';
-    if (activeTab === 'rejected') return l.status === 'rejected';
-    return true;
-  });
-
-  // Search & Type filtering
-  const filteredLeaves = tabLeaves.filter(l => {
-    const matchesSearch = 
-      (l.employee_name && l.employee_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (l.department && l.department.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (l.leave_type && l.leave_type.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesType = filterType === 'all' || l.leave_type === filterType;
-    return matchesSearch && matchesType;
-  });
-
-  // Action counts
-  const pendingActionRequiredCount = leaves.filter(l => l.can_approve && PENDING_LEAVE_STATUSES.includes(l.status)).length;
-  const totalPendingCount = leaves.filter(l => PENDING_LEAVE_STATUSES.includes(l.status)).length;
-  const approvedCount = leaves.filter(l => l.status === 'approved').length;
-  const rejectedCount = leaves.filter(l => l.status === 'rejected').length;
+  } = useLeaves({ search: searchTerm, status: activeTab, leave_type: filterType });
+  const filteredLeaves = leaves;
+  const pendingActionRequiredCount = summary.action_required || 0;
+  const totalPendingCount = summary.pending || 0;
+  const approvedCount = summary.statuses?.approved || 0;
+  const rejectedCount = summary.statuses?.rejected || 0;
 
   if (isLoading) {
     return (
@@ -318,6 +302,7 @@ const LeaveManagement = () => {
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="leave applications" />
         </div>
       </div>
 

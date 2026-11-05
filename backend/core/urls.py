@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter    
+from .views.notification import NotificationViewSet
 from .views import (
     AttendanceViewSet, LoanViewSet, EmployeeViewSet, EmployeeDocumentViewSet,
     LeaveViewSet, PayrollViewSet, PerformanceReviewViewSet,
@@ -20,6 +21,7 @@ router.register(r'applicants', ApplicantViewSet)
 router.register(r'audit-logs', AuditLogViewSet)
 router.register(r'schools', SchoolViewSet)
 router.register(r'salary-grades', SalaryGradeViewSet)
+router.register(r'notifications', NotificationViewSet, basename='notification')
 
 
 urlpatterns = [

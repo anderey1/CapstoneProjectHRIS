@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Search, Calendar } from 'lucide-react';
 
 // Helper to format HH:MM:SS string to 12-hour AM/PM format
@@ -27,9 +27,10 @@ const AttendanceLogs = ({
   deptFilter, 
   setDeptFilter, 
   flaggedOnly, 
-  setFlaggedOnly 
+  setFlaggedOnly,
+  selectedMonth,
+  setSelectedMonth
 }) => {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const getStatusLabel = (status) => {
     if (status === 'late') return 'Late';

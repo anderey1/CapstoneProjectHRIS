@@ -1,5 +1,5 @@
 export const PENDING_LEAVE_STATUSES = [
-  'pending_checking', 'pending_supervisor', 'pending_records', 'pending_hr', 'pending_superintendent',
+  'pending_supervisor', 'pending_hr', 'pending_superintendent',
 ];
 
 export const formatLeaveStatus = (status) => ({
@@ -16,9 +16,7 @@ export const formatLeaveStatus = (status) => ({
 export const leaveActionLabel = (leave) => {
   if (leave.workflow === 'teaching') {
     return {
-      pending_checking: 'Check & forward to Principal',
       pending_supervisor: 'Approve & sign',
-      pending_records: 'Receive & forward to HR',
       pending_hr: 'Complete HR processing',
     }[leave.status];
   }

@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.db import transaction
 from ...models import LoanPayment, Payroll, AuditLog
 from ...permissions import IsAccountant, IsSuperintendent
+from ...services.notification_updates import notify_employee
 
 
 class PayrollProcessingActions:
@@ -35,6 +36,7 @@ class PayrollProcessingActions:
             payroll.status = 'released'
             payroll.date_released = timezone.now()
             payroll.save()
+            notify_employee(payroll.employee, request.user, 'Payslip available', 'payroll', payroll.pk)
 
             # Record Loan Repayment if deduction was part of this payroll
             if payroll.loans > 0:
@@ -100,6 +102,7 @@ class PayrollProcessingActions:
                 payroll.status = 'released'
                 payroll.date_released = timezone.now()
                 payroll.save()
+                notify_employee(payroll.employee, request.user, 'Payslip available', 'payroll', payroll.pk)
 
                 # Record Loan Repayment if deduction was part of this payroll
                 if payroll.loans > 0:

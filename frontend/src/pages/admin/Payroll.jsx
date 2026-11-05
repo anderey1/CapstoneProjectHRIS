@@ -3,6 +3,9 @@ import {
   Wallet, ShieldCheck, Loader2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import Pagination from '../../components/common/Pagination';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import { QUERY_KEYS } from '../../api/queryKeys';
 import {
   usePayroll,
   PayrollCutoffSelector,
@@ -87,10 +90,9 @@ const Payroll = () => {
     }
   };
 
-  const activePayrolls = cutoffPayrolls.filter((p) =>
-    (p.employee_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.department || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { records: activePayrolls, pagination } = usePaginatedList(QUERY_KEYS.PAYROLL, 'payroll/', {
+    cutoff_period: selectedCutoff, search: searchTerm,
+  });
 
   if (isLoading) {
     return (
@@ -230,6 +232,7 @@ const Payroll = () => {
         generateLoading={isGenerating}
       />
 
+      <Pagination pagination={pagination} label="payroll records" />
       {/* 4. General Payroll Sheet Table */}
       <PayrollBreakdownTable
         selectedCutoff={selectedCutoff}

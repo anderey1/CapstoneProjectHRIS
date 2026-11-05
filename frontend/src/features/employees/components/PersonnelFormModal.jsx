@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { X, User, Briefcase, ChevronRight, FileText, AlertCircle, BookOpen } from 'lucide-react';
 import api from '../../../api/axios';
+import { fetchAllPages } from '../../../api/pagination';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import { ROLES } from '../../../utils/constants';
 import PersonalFields from './PersonalFields';
@@ -76,13 +77,13 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
 
   const { data: salaryGrades } = useQuery({
     queryKey: ['salary-grades'],
-    queryFn: () => api.get('salary-grades/').then(res => Array.isArray(res.data) ? res.data : res.data.results || []),
+    queryFn: ({ signal }) => fetchAllPages('salary-grades/', {}, signal),
     enabled: isOpen // Only fetch when modal is open
   });
 
   const { data: leaveStaff = [], isError: isLeaveStaffError } = useQuery({
     queryKey: [QUERY_KEYS.LEAVE_STAFF],
-    queryFn: () => api.get('employees/leave-staff/').then(res => res.data),
+    queryFn: ({ signal }) => fetchAllPages('employees/leave-staff/', {}, signal),
     enabled: isOpen,
   });
 

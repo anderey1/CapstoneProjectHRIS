@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
-import api from '../../api/axios';
 import { History, ShieldCheck } from 'lucide-react';
 
 // Sub-components
 import AttendanceLogs from '../../components/features/attendance/AttendanceLogs';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import Pagination from '../../components/common/Pagination';
 
 /**
  * Division Attendance Monitoring Console (Admin/HR View)
@@ -15,28 +15,17 @@ const AttendanceManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('All');
   const [flaggedOnly, setFlaggedOnly] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
   // 1. Data Fetching
-  const { data: records, isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.ATTENDANCE],
-    queryFn: async () => {
-      const res = await api.get('attendance/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
+  const [year, month] = selectedMonth.split('-');
+  const { records: filteredRecords, summary, pagination, isLoading } = usePaginatedList(QUERY_KEYS.ATTENDANCE, 'attendance/', {
+    search: searchTerm, department: deptFilter, flagged: String(flaggedOnly), year, month,
   });
-
-  // 2. Filtering
-  const filteredRecords = (records || [])?.filter(rec => {
-    const matchesSearch = (rec.employee_name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDept = deptFilter === 'All' || rec.department === deptFilter;
-    const matchesFlag = !flaggedOnly || rec.is_geo_flagged;
-    return matchesSearch && matchesDept && matchesFlag;
-  });
-
-  const totalLogs = filteredRecords?.length || 0;
-  const presentCount = filteredRecords?.filter(r => r.status === 'present').length || 0;
-  const flaggedCount = filteredRecords?.filter(r => r.is_geo_flagged).length || 0;
-  const lateCount = filteredRecords?.filter(r => r.status === 'late').length || 0;
+  const totalLogs = pagination.count;
+  const presentCount = summary.present || 0;
+  const flaggedCount = summary.flagged || 0;
+  const lateCount = summary.late || 0;
 
   if (isLoading) return (
     <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
@@ -107,8 +96,11 @@ const AttendanceManagement = () => {
           deptFilter={deptFilter}
           setDeptFilter={setDeptFilter}
           flaggedOnly={flaggedOnly}
+          selectedMonth={selectedMonth}
+          setSelectedMonth={setSelectedMonth}
           setFlaggedOnly={setFlaggedOnly}
         />
+        <Pagination pagination={pagination} label="attendance records" />
       </div>
     </div>
   );

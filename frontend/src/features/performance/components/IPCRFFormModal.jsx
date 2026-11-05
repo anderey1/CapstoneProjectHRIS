@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/axios';
+import { fetchAllPages } from '../../../api/pagination';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import { X, Award, Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
@@ -17,11 +18,8 @@ const IPCRFFormModal = ({ onClose, review }) => {
   const isAdmin = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
 
   const { data: employees, isLoading: loadingEmployees } = useQuery({
-    queryKey: [QUERY_KEYS.EMPLOYEES],
-    queryFn: async () => {
-      const res = await api.get('employees/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
+    queryKey: [QUERY_KEYS.EMPLOYEES, 'all'],
+    queryFn: ({ signal }) => fetchAllPages('employees/', {}, signal),
     enabled: isAdmin && !review?.id,
   });
 

@@ -65,15 +65,15 @@ def test_complete_teaching_route_and_signature(client, teacher_employee, checker
     balance = teacher_employee.sick_leave_balance
     leave = file_leave(client, teacher_employee)
     assert leave.workflow == 'teaching'
-    assert leave.status == 'pending_checking'
-    assert leave.assigned_checker == checker
+    assert leave.status == 'pending_supervisor'
+    assert leave.assigned_checker is None
     assert leave.assigned_principal == supervisor_user.employee_profile
 
     assert process(client, hr_user, leave).status_code == 403
-    assert process(client, checker.user, leave).data['status'] == 'pending_supervisor'
+    assert process(client, checker.user, leave).status_code == 404
     response = process(client, supervisor_user, leave, signature=image_upload(), signature_confirmed='true')
     assert response.status_code == 200, response.data
-    assert response.data['status'] == 'pending_records'
+    assert response.data['status'] == 'pending_hr'
     leave.refresh_from_db()
     assert leave.principal_signature
     assert leave.principal_signed_by == supervisor_user
@@ -81,23 +81,21 @@ def test_complete_teaching_route_and_signature(client, teacher_employee, checker
     teacher_employee.refresh_from_db()
     assert teacher_employee.sick_leave_balance == balance
 
-    response = process(client, records.user, leave, records_reference='REC-001')
-    assert response.status_code == 200, response.data
-    assert response.data['status'] == 'pending_hr'
+    assert process(client, records.user, leave).status_code == 404
     assert process(client, hr_user, leave).data['status'] == 'approved'
     assert process(client, hr_user, leave).status_code == 400
     teacher_employee.refresh_from_db()
     leave.refresh_from_db()
     assert teacher_employee.sick_leave_balance == balance - 2
-    assert leave.records_reference == 'REC-001'
+    assert leave.records_reference == ''
     assert list(leave.actions.values_list('to_status', flat=True)) == [
-        'pending_checking', 'pending_supervisor', 'pending_records', 'pending_hr', 'approved',
+        'pending_supervisor', 'pending_hr', 'approved',
     ]
     client.force_authenticate(teacher_employee.user)
     result = client.get(f'/api/leaves/{leave.pk}/').data
     assert result['principal_signer_name'] == 'Juan Principal'
     assert result['principal_signature']
-    assert len(result['actions']) == 5
+    assert len(result['actions']) == 3
 
 
 @pytest.mark.parametrize('upload,consent', [
@@ -105,7 +103,6 @@ def test_complete_teaching_route_and_signature(client, teacher_employee, checker
 ])
 def test_principal_must_supply_valid_signature_and_consent(client, teacher_employee, checker, supervisor_user, upload, consent):
     leave = file_leave(client, teacher_employee)
-    process(client, checker.user, leave)
     data = {'signature_confirmed': str(consent).lower()}
     if upload == 'png':
         data['signature'] = image_upload()
@@ -120,20 +117,18 @@ def test_principal_must_supply_valid_signature_and_consent(client, teacher_emplo
     leave.refresh_from_db()
     assert leave.status == 'pending_supervisor'
     assert not leave.principal_signature
-    assert leave.actions.count() == 2
+    assert leave.actions.count() == 1
 
 
 def test_jpeg_signature_is_accepted(client, teacher_employee, checker, supervisor_user):
     leave = file_leave(client, teacher_employee)
-    process(client, checker.user, leave)
     assert process(client, supervisor_user, leave, signature=image_upload('JPEG'), signature_confirmed='true').status_code == 200
 
 
-def test_return_for_correction_and_resubmit(client, teacher_employee, checker, supervisor_user, records):
+def test_return_for_correction_and_resubmit(client, teacher_employee, supervisor_user, hr_user):
     leave = file_leave(client, teacher_employee)
-    process(client, checker.user, leave)
     process(client, supervisor_user, leave, signature=image_upload(), signature_confirmed='true')
-    client.force_authenticate(records.user)
+    client.force_authenticate(hr_user)
     response = client.post(f'/api/leaves/{leave.pk}/return-for-correction/', {'reason': 'Correct the illness details.'}, format='json')
     assert response.status_code == 200
     leave.refresh_from_db()
@@ -145,10 +140,10 @@ def test_return_for_correction_and_resubmit(client, teacher_employee, checker, s
     response = client.patch(f'/api/leaves/{leave.pk}/', {'illness_details': 'Corrected details'}, format='json')
     assert response.status_code == 200, response.data
     leave.refresh_from_db()
-    assert leave.status == 'pending_checking'
+    assert leave.status == 'pending_supervisor'
     assert leave.illness_details == 'Corrected details'
     assert leave.correction_reason == ''
-    assert leave.actions.count() == 5
+    assert leave.actions.count() == 4
 
 
 def test_filed_application_cannot_be_changed_or_deleted(client, teacher_employee, checker):
@@ -159,16 +154,17 @@ def test_filed_application_cannot_be_changed_or_deleted(client, teacher_employee
     assert leave.illness_details == 'Flu'
 
 
-def test_checking_and_records_staff_cannot_disapprove(client, teacher_employee, checker):
+def test_removed_processing_duties_cannot_access_application(client, teacher_employee, checker, records):
     leave = file_leave(client, teacher_employee)
-    client.force_authenticate(checker.user)
-    assert client.post(f'/api/leaves/{leave.pk}/reject/', {'disapproval_reason': 'No'}, format='json').status_code == 403
-    assert client.post(f'/api/leaves/{leave.pk}/return-for-correction/', {'reason': '  '}, format='json').status_code == 400
+    for user in (checker.user, records.user):
+        client.force_authenticate(user)
+        assert client.get(f'/api/leaves/{leave.pk}/').status_code == 404
+        assert client.post(f'/api/leaves/{leave.pk}/reject/', {'disapproval_reason': 'No'}, format='json').status_code == 404
+        assert client.post(f'/api/leaves/{leave.pk}/return-for-correction/', {'reason': 'Correct details'}, format='json').status_code == 404
 
 
 def test_principal_can_disapprove_with_reason(client, teacher_employee, checker, supervisor_user):
     leave = file_leave(client, teacher_employee)
-    process(client, checker.user, leave)
     client.force_authenticate(supervisor_user)
     assert client.post(f'/api/leaves/{leave.pk}/reject/', {}, format='json').status_code == 400
     assert client.post(f'/api/leaves/{leave.pk}/reject/', {'disapproval_reason': 'Staffing conflict'}, format='json').status_code == 200
@@ -179,18 +175,18 @@ def test_principal_can_disapprove_with_reason(client, teacher_employee, checker,
     assert teacher_employee.sick_leave_balance == 15
 
 
-def test_teacher_files_without_individual_checker_and_school_staff_process(client, teacher_employee, non_teaching_employee):
+def test_teacher_files_without_checker_and_school_staff_cannot_process(client, teacher_employee, non_teaching_employee):
     leave = file_leave(client, teacher_employee)
-    assert leave.status == 'pending_checking'
+    assert leave.status == 'pending_supervisor'
     assert leave.assigned_checker is None
     non_teaching_employee.leave_duty = 'checker'
     non_teaching_employee.save(update_fields=['leave_duty'])
     client.force_authenticate(non_teaching_employee.user)
-    assert client.get(f'/api/leaves/{leave.pk}/').data['can_approve'] is True
+    assert client.get(f'/api/leaves/{leave.pk}/').status_code == 404
     response = process(client, non_teaching_employee.user, leave)
-    assert response.status_code == 200
+    assert response.status_code == 404
     leave.refresh_from_db()
-    assert leave.assigned_checker == non_teaching_employee
+    assert leave.assigned_checker is None
     assert leave.status == 'pending_supervisor'
 
 
@@ -209,7 +205,6 @@ def test_request_scope_and_assignment_snapshot(client, teacher_employee, checker
     client.force_authenticate(records.user)
     assert client.get(f'/api/leaves/{leave.pk}/').status_code == 404
     assert client.get('/api/employees/leave-staff/').status_code == 403
-    process(client, checker.user, leave)
     # Reassigning a teacher does not move an already filed application to another principal.
     teacher_employee.supervisor = records
     teacher_employee.save(update_fields=['supervisor'])
@@ -217,7 +212,7 @@ def test_request_scope_and_assignment_snapshot(client, teacher_employee, checker
     assert client.get(f'/api/leaves/{leave.pk}/').status_code == 404
     assert process(client, supervisor_user, leave, signature=image_upload(), signature_confirmed='true').status_code == 200
     client.force_authenticate(records.user)
-    assert client.get(f'/api/leaves/{leave.pk}/').data['can_approve'] is True
+    assert client.get(f'/api/leaves/{leave.pk}/').status_code == 404
 
 
 def test_staff_cannot_assign_themselves_processing_duties(client, teacher_employee):
@@ -238,9 +233,7 @@ def test_non_teaching_keeps_existing_route(client, non_teaching_employee, hr_use
 
 def test_hr_completion_rolls_back_balance_on_failure(client, teacher_employee, checker, supervisor_user, records, hr_user, monkeypatch):
     leave = file_leave(client, teacher_employee)
-    process(client, checker.user, leave)
     process(client, supervisor_user, leave, signature=image_upload(), signature_confirmed='true')
-    process(client, records.user, leave)
     original_save = LeaveRequest.save
 
     def fail_save(instance, *args, **kwargs):
@@ -258,19 +251,20 @@ def test_hr_completion_rolls_back_balance_on_failure(client, teacher_employee, c
     assert not LeaveAction.objects.filter(leave=leave, to_status='approved').exists()
 
 
-def test_dashboard_counts_checking_and_records_queues(client, teacher_employee, checker, supervisor_user, hr_user):
+def test_dashboard_counts_principal_and_hr_queues(client, teacher_employee, supervisor_user, hr_user):
     leave = file_leave(client, teacher_employee)
     client.force_authenticate(hr_user)
     response = client.get('/api/dashboard/')
     assert response.status_code == 200
     assert response.data['pending_leaves'] == 1
-    assert response.data['pending_leaves_checking'] == 1
-    process(client, checker.user, leave)
+    assert response.data['pending_leaves_supervisor'] == 1
+    assert response.data['pending_leaves_checking'] == 0
     process(client, supervisor_user, leave, signature=image_upload(), signature_confirmed='true')
     client.force_authenticate(hr_user)
     response = client.get('/api/dashboard/')
     assert response.data['pending_leaves'] == 1
-    assert response.data['pending_leaves_records'] == 1
+    assert response.data['pending_leaves_hr'] == 1
+    assert response.data['pending_leaves_records'] == 0
 
 
 def test_hr_configures_processing_duties_without_changing_account_role(client, hr_user, non_teaching_employee):

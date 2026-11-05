@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Users, UserPlus, Search, Filter, FileDown } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import Pagination from '../../components/common/Pagination';
 import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import { 
   useEmployees, 
@@ -16,7 +16,6 @@ import { exportToCSV } from '../../utils/export';
  * Includes Active Personnel and Pending Registration Approvals tabs.
  */
 const Employees = () => {
-  const { user } = useAuth();
   const { can } = useRBAC();
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'pending'
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +29,10 @@ const Employees = () => {
 
   const {
     employees,
+    summary,
+    pagination,
+    pendingPagination,
+    exportEmployees,
     schools,
     pendingRegistrations,
     isLoading,
@@ -40,7 +43,7 @@ const Employees = () => {
     rejectRegistration,
     isApproving,
     isRejecting,
-  } = useEmployees();
+  } = useEmployees({ search: searchTerm, role: appliedRole, department: appliedArea, exclude_self: 'true' });
 
   const closeModal = () => {
     setActiveModal(null);
@@ -52,19 +55,8 @@ const Employees = () => {
     closeModal();
   };
 
-  const roleOptions = useMemo(() => {
-    const values = (employees || [])
-      .map((emp) => emp.user_details?.role || emp.role || '')
-      .filter(Boolean);
-    return Array.from(new Set(values)).sort();
-  }, [employees]);
-
-  const areaOptions = useMemo(() => {
-    const values = (employees || [])
-      .map((emp) => emp.department || '')
-      .filter(Boolean);
-    return Array.from(new Set(values)).sort();
-  }, [employees]);
+  const roleOptions = summary.roles || [];
+  const areaOptions = summary.departments || [];
 
   const applyFilters = () => {
     setAppliedRole(selectedRole);
@@ -80,32 +72,7 @@ const Employees = () => {
     setShowFilters(false);
   };
 
-  const filteredEmployees = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-
-    return (employees || []).filter((emp) => {
-      // Exclude currently logged-in user from the employee directory
-      const isCurrentUser = 
-        (user?.employee_id && String(emp.id) === String(user.employee_id)) ||
-        (user?.id && String(emp.user_details?.id) === String(user.id)) ||
-        (user?.username && emp.user_details?.username === user.username);
-      if (isCurrentUser) return false;
-
-      const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim().toLowerCase();
-      const department = (emp.department || '').toLowerCase();
-      const role = (emp.user_details?.role || emp.role || '').toUpperCase();
-      const area = (emp.department || '').toLowerCase();
-
-      const matchesSearch =
-        !normalizedSearch ||
-        fullName.includes(normalizedSearch) ||
-        department.includes(normalizedSearch);
-      const matchesRole = !appliedRole || role === appliedRole.toUpperCase();
-      const matchesArea = !appliedArea || area === appliedArea.toLowerCase();
-
-      return matchesSearch && matchesRole && matchesArea;
-    });
-  }, [employees, searchTerm, appliedRole, appliedArea, user]);
+  const filteredEmployees = employees;
 
   if (isLoading) {
     return (
@@ -117,15 +84,8 @@ const Employees = () => {
 
   const canManageRegistrations = can(PERMISSIONS.MANAGE_EMPLOYEES);
 
-  const teachingCount = (employees || []).filter(e => {
-    const role = e.user_details?.role || e.role;
-    return role === 'TEACHING';
-  }).length;
-
-  const nonTeachingCount = (employees || []).filter(e => {
-    const role = e.user_details?.role || e.role;
-    return role && role !== 'TEACHING';
-  }).length;
+  const teachingCount = summary.teaching || 0;
+  const nonTeachingCount = summary.non_teaching || 0;
 
   return (
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
@@ -164,7 +124,7 @@ const Employees = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Plantilla Roster</p>
-          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{(employees || []).length}</p>
+          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{summary.total || 0}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">All division records</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
@@ -179,7 +139,7 @@ const Employees = () => {
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pending Activations</p>
-          <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{(pendingRegistrations || []).length}</p>
+          <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{pendingPagination.count}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">Awaiting HR review</p>
         </div>
       </div>
@@ -196,7 +156,7 @@ const Employees = () => {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Active Personnel Directory ({filteredEmployees.length})
+            Active Personnel Directory ({pagination.count})
           </button>
           <button
             type="button"
@@ -210,7 +170,7 @@ const Employees = () => {
             Pending Account Activations
             {pendingRegistrations && pendingRegistrations.length > 0 && (
               <span className="ml-1.5 px-1.5 py-0.2 bg-amber-600 text-white text-[10px] font-bold rounded-full font-mono tabular-nums inline-flex items-center justify-center min-w-[16px] h-4">
-                {pendingRegistrations.length}
+                {pendingPagination.count}
               </span>
             )}
           </button>
@@ -283,7 +243,10 @@ const Employees = () => {
               </div>
 
               <button
-                onClick={() => exportToCSV(filteredEmployees, 'Plantilla_Ledger_DBM_Form_B')}
+                onClick={async () => {
+                  try { exportToCSV(await exportEmployees(), 'Plantilla_Ledger_DBM_Form_B'); }
+                  catch { window.alert('Could not export personnel. Please try again.'); }
+                }}
                 className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
                 title="Export DBM Form B / Plantilla Personnel CSV"
               >
@@ -293,6 +256,7 @@ const Employees = () => {
             </div>
           </div>
 
+          <Pagination pagination={pagination} label="employees" />
           {/* Data Section */}
           <div className="animate-in slide-in-from-bottom-4 duration-700">
             <EmployeeTable
@@ -379,6 +343,7 @@ const Employees = () => {
                 )}
               </tbody>
             </table>
+            <Pagination pagination={pendingPagination} label="pending registrations" />
           </div>
         </div>
       )}

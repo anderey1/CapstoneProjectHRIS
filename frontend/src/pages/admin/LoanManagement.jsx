@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import { useLoans, SubsidiaryLedger } from '../../features/loans';
+import Pagination from '../../components/common/Pagination';
 
 const PURPOSE_LABELS = {
   general: 'General Purpose',
@@ -58,12 +59,9 @@ const LoanManagement = () => {
     checklist,
     documents,
     isLoading,
-    pendingLoans,
-    verifiedLoans,
-    approvedLoans,
-    releasedLoans,
-    rejectedLoans,
-    paidLoans,
+    loans: filteredLoans,
+    summary,
+    pagination,
     totalReleasedValue,
     verifyLoan,
     isVerifying,
@@ -73,37 +71,8 @@ const LoanManagement = () => {
     isDisbursing,
     rejectLoan,
     isRejecting,
-  } = useLoans(selectedLoan?.id);
-
-  const allLoans = [
-    ...pendingLoans,
-    ...verifiedLoans,
-    ...approvedLoans,
-    ...releasedLoans,
-    ...paidLoans,
-    ...rejectedLoans
-  ];
-
-  const getFilteredLoans = () => {
-    let list;
-    if (activeTab === 'all') list = allLoans;
-    else if (activeTab === 'pending') list = pendingLoans;
-    else if (activeTab === 'verified') list = verifiedLoans;
-    else if (activeTab === 'approved') list = approvedLoans;
-    else if (activeTab === 'released') list = [...releasedLoans, ...paidLoans];
-    else if (activeTab === 'rejected') list = rejectedLoans;
-    else list = allLoans;
-
-    if (!searchTerm) return list;
-    const term = searchTerm.toLowerCase();
-    return list.filter(l => 
-      (l.employee_name || '').toLowerCase().includes(term) ||
-      (l.department || '').toLowerCase().includes(term) ||
-      String(l.id).includes(term)
-    );
-  };
-
-  const filteredLoans = getFilteredLoans();
+  } = useLoans(selectedLoan?.id, { search: searchTerm, status: activeTab === 'released' ? 'released,paid' : activeTab });
+  const counts = summary.statuses || {};
 
   if (isLoading) {
     return (
@@ -159,7 +128,7 @@ const LoanManagement = () => {
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-              {pendingLoans.length}
+              {counts.pending || 0}
             </span>
             <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
               Accountant Audit
@@ -173,7 +142,7 @@ const LoanManagement = () => {
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-              {verifiedLoans.length}
+              {counts.verified || 0}
             </span>
             <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
               Executive Review
@@ -187,7 +156,7 @@ const LoanManagement = () => {
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-              {approvedLoans.length}
+              {counts.approved || 0}
             </span>
             <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
               Cashier / ATM
@@ -214,12 +183,12 @@ const LoanManagement = () => {
       <div className="bg-white rounded-lg border border-slate-200 p-2 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1.5">
           {[
-            { key: 'all', label: 'All Applications', count: allLoans.length },
-            { key: 'pending', label: '1. To Verify', count: pendingLoans.length },
-            { key: 'verified', label: '2. To Approve', count: verifiedLoans.length },
-            { key: 'approved', label: '3. Wait Release', count: approvedLoans.length },
-            { key: 'released', label: '4. Active / Servicing', count: releasedLoans.length + paidLoans.length },
-            { key: 'rejected', label: 'Disapproved', count: rejectedLoans.length },
+            { key: 'all', label: 'All Applications', count: summary.total || 0 },
+            { key: 'pending', label: '1. To Verify', count: counts.pending || 0 },
+            { key: 'verified', label: '2. To Approve', count: counts.verified || 0 },
+            { key: 'approved', label: '3. Wait Release', count: counts.approved || 0 },
+            { key: 'released', label: '4. Active / Servicing', count: (counts.released || 0) + (counts.paid || 0) },
+            { key: 'rejected', label: 'Disapproved', count: counts.rejected || 0 },
           ].map(tab => {
             const isSelected = activeTab === tab.key;
             return (
@@ -364,6 +333,7 @@ const LoanManagement = () => {
               )}
             </tbody>
           </table>
+          <Pagination pagination={pagination} label="loans" />
         </div>
       </div>
 

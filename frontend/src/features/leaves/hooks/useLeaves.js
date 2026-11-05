@@ -1,32 +1,65 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/axios';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import { useToast } from '../../../context/ToastContext';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { manilaToday, isCalendarDate } from '../utils/leaveApplication';
 
 /**
  * Utility: Calculate working days (Mon-Fri) between two dates inclusive
  */
-export const calculateWorkingDays = (start, end) => {
-  if (!start || !end) return 0;
+export const calculateWorkingDays = (start, end, holidays = []) => {
+  if (!isCalendarDate(start) || !isCalendarDate(end)) return 0;
   const sDate = new Date(start);
   const eDate = new Date(end);
   if (sDate > eDate) return 0;
   let count = 0;
+  const excluded = new Set(holidays.filter(day => day.category !== 'special_working').map(day => day.date));
   let current = new Date(sDate);
   while (current <= eDate) {
-    const day = current.getDay();
-    if (day !== 0 && day !== 6) {
+    const day = current.getUTCDay();
+    if (day !== 0 && day !== 6 && !excluded.has(current.toISOString().slice(0, 10))) {
       count++;
     }
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
   return count;
 };
 
+export function useLeaveCalendar(start, end, enabled, usesCalendarDays) {
+  const currentYear = Number(manilaToday().slice(0, 4));
+  const years = new Set([currentYear]);
+  if (!usesCalendarDays && isCalendarDate(start) && isCalendarDate(end) && start <= end) {
+    for (let year = Number(start.slice(0, 4)); year <= Number(end.slice(0, 4)); year++) years.add(year);
+  }
+  const queries = useQueries({ queries: [...years].map(year => ({
+    queryKey: [QUERY_KEYS.LEAVE_CALENDAR, year],
+    queryFn: async () => {
+      const { data } = await api.get('leaves/calendar/', { params: { year } });
+      if (data.coverage !== 'reviewed' || !Array.isArray(data.holidays) || !data.today) {
+        throw new Error('The leave calendar has not been reviewed.');
+      }
+      return data;
+    },
+    enabled,
+    retry: false,
+    staleTime: 0,
+    refetchInterval: 60_000,
+  })) });
+  const failed = queries.find(query => query.isError);
+  return {
+    ready: queries.every(query => query.isSuccess),
+    error: failed ? 'Leave calendar unavailable. Ask HR to update the reviewed calendar or retry.' : '',
+    today: queries[0]?.data?.today || manilaToday(),
+    holidays: queries.flatMap(query => query.data?.holidays || []),
+    retry: () => queries.forEach(query => query.refetch()),
+  };
+}
+
 /**
  * Custom Domain Hook for Leaves Management & Self-Service Applications
  */
-export function useLeaves() {
+export function useLeaves(params = {}) {
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -40,20 +73,8 @@ export function useLeaves() {
   });
 
   // 2. Fetch All Leaves (or user-scoped leaves from DRF)
-  const { data: leaves = [], isLoading: isLeavesLoading, isError, error } = useQuery({
-    queryKey: [QUERY_KEYS.LEAVES],
-    queryFn: async () => {
-      const leaves = [];
-      let page = 1;
-      while (true) {
-        const res = await api.get('leaves/', { params: { page } });
-        if (Array.isArray(res.data)) return res.data;
-        leaves.push(...(res.data.results || []));
-        if (!res.data.next) return leaves;
-        page += 1;
-      }
-    },
-  });
+  const { records: leaves, summary, pagination, isLoading: isLeavesLoading, isError, error } =
+    usePaginatedList(QUERY_KEYS.LEAVES, 'leaves/', params);
 
   // 3. Apply Leave Mutation
   const applyMutation = useMutation({
@@ -83,12 +104,11 @@ export function useLeaves() {
 
   // 4. Approve Leave Mutation
   const approveMutation = useMutation({
-    mutationFn: ({ id, signature, signatureConfirmed, recordsReference, expectedStatus }) => {
+    mutationFn: ({ id, signature, signatureConfirmed, expectedStatus }) => {
       const data = new FormData();
       if (signature) data.append('signature', signature);
       data.append('signature_confirmed', String(!!signatureConfirmed));
       if (expectedStatus) data.append('expected_status', expectedStatus);
-      if (recordsReference) data.append('records_reference', recordsReference);
       return api.post(`leaves/${id}/approve/`, data);
     },
     onSuccess: (response) => {
@@ -130,6 +150,8 @@ export function useLeaves() {
 
   return {
     leaves,
+    summary,
+    pagination,
     employee,
     myLeaves,
     teamLeaves,

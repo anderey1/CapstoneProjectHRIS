@@ -1,20 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import api from '../../../api/axios';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
 
 /**
  * Custom hook to encapsulate applicant queries and administrative mutations.
  */
-export const useRecruitment = (selectedApplicantId = null) => {
+export const useRecruitment = (params = {}) => {
   const queryClient = useQueryClient();
 
-  const { data: applicants = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.APPLICANTS],
-    queryFn: async () => {
-      const res = await api.get('applicants/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
-  });
+  const { records: applicants, summary, pagination, isLoading } = usePaginatedList(QUERY_KEYS.APPLICANTS, 'applicants/', params);
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status, notes }) =>
@@ -42,6 +37,8 @@ export const useRecruitment = (selectedApplicantId = null) => {
 
   return {
     applicants,
+    summary,
+    pagination,
     isLoading,
     changeStatus: statusMutation.mutateAsync,
     isChangingStatus: statusMutation.isPending,

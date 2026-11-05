@@ -10,6 +10,7 @@ from decimal import Decimal, InvalidOperation
 from ..permissions import IsAdminOrHR, IsAccountant, IsAdminOrHRorSuperintendent
 from ..models import Attendance, Employee, Role, AuditLog
 from ..serializers import AttendanceSerializer
+from .listing import PaginatedListMixin
 from ..utils import (
     validate_attendance_geo,
     get_attendance_status,
@@ -20,7 +21,7 @@ from ..utils import (
 from ..utils.pdf_generator import generate_form_48
 from django.http import HttpResponse
 
-class AttendanceViewSet(viewsets.ModelViewSet):
+class AttendanceViewSet(PaginatedListMixin, viewsets.ModelViewSet):
     queryset = Attendance.objects.all()
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
@@ -33,8 +34,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_management:
-            return Attendance.objects.all()
-        return Attendance.objects.filter(employee__user=user)
+            return Attendance.objects.select_related('employee', 'employee__user').order_by('-date', '-pk')
+        return Attendance.objects.select_related('employee', 'employee__user').filter(employee__user=user).order_by('-date', '-pk')
 
     @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
 

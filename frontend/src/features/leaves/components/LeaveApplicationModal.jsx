@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef } from 'react';
 import { CalendarDays, X } from 'lucide-react';
 import LeaveDocumentUpload from './LeaveDocumentUpload';
-import { LEAVE_TYPES, getLeaveDocuments, getMinimumLeaveDate, calendarDaysBetween } from '../utils/leaveApplication';
+import LeaveDatePicker from './LeaveDatePicker';
+import { useLeaveCalendar, calculateWorkingDays } from '../hooks/useLeaves';
+import { LEAVE_TYPES, getLeaveDocuments, getMinimumLeaveDate, calendarDaysBetween, isCalendarDate, nonWorkingReason } from '../utils/leaveApplication';
 
 const fieldClass = 'input input-bordered w-full bg-white text-sm';
 
@@ -23,10 +25,12 @@ function keepFocusInDialog(event) {
 export default function LeaveApplicationModal({
   isOpen, onClose, onSubmit, isSubmitting, leaveType, setLeaveType,
   startDate, setStartDate, endDate, setEndDate,
-  isWithinPhilippines, setIsWithinPhilippines, durationDays, initialData, employee,
+  isWithinPhilippines, setIsWithinPhilippines, initialData, employee,
 }) {
   const dialog = useRef(null);
   const id = useId();
+  const usesCalendarDays = ['maternity', 'adoption'].includes(leaveType);
+  const calendar = useLeaveCalendar(startDate, endDate, isOpen, usesCalendarDays);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -45,23 +49,26 @@ export default function LeaveApplicationModal({
 
   if (!isOpen) return null;
 
-  const usesCalendarDays = ['maternity', 'adoption'].includes(leaveType);
-  const days = usesCalendarDays ? calendarDaysBetween(startDate, endDate) : durationDays;
-  const minDate = getMinimumLeaveDate(leaveType);
+  const days = usesCalendarDays ? calendarDaysBetween(startDate, endDate) : calculateWorkingDays(startDate, endDate, calendar.holidays);
+  const minDate = getMinimumLeaveDate(leaveType, calendar.today);
   const datesReversed = !!(startDate && endDate && endDate < startDate);
-  const noWorkingDays = !!(startDate && endDate && !datesReversed && !usesCalendarDays && days === 0);
+  const noWorkingDays = !!(calendar.ready && startDate && endDate && !datesReversed && !usesCalendarDays && days === 0);
   const documents = getLeaveDocuments(leaveType, days, isWithinPhilippines);
   const requiredCount = documents.filter(document => document.required).length;
   const selectedType = LEAVE_TYPES.find(([value]) => value === leaveType)?.[1];
   const needsLocation = ['vacation', 'special_privilege'].includes(leaveType);
   const needsMedicalDetails = ['sick', 'women_special', 'rehabilitation'].includes(leaveType);
-  const hasDates = !!(startDate && endDate);
-  const dateError = datesReversed ? 'End date must be on or after the start date.' : noWorkingDays ? 'These dates contain no working days. Choose dates that include a weekday.' : '';
+  const hasDates = isCalendarDate(startDate) && isCalendarDate(endDate);
+  const invalidFormat = (startDate && !isCalendarDate(startDate)) || (endDate && !isCalendarDate(endDate));
+  const beforeMinimum = (isCalendarDate(startDate) && startDate < minDate) || (isCalendarDate(endDate) && endDate < minDate);
+  const nonWorkingEndpoint = calendar.ready && !usesCalendarDays && (nonWorkingReason(startDate, calendar.holidays) || nonWorkingReason(endDate, calendar.holidays));
+  const includesTodayEndpoint = startDate === calendar.today || endDate === calendar.today;
+  const dateError = invalidFormat ? 'Enter a valid date in YYYY-MM-DD format.' : datesReversed ? 'End date must be on or after the start date.' : includesTodayEndpoint ? "Today's date cannot be selected as the start or end date. Choose another date." : beforeMinimum ? 'Choose dates within the filing rules for this leave type.' : noWorkingDays ? 'These dates contain no working days. Weekends and public non-working holidays are excluded.' : nonWorkingEndpoint ? 'Choose working days for the start and end dates. Weekends and non-working holidays are unavailable.' : '';
   const filingHint = ['vacation', 'solo_parent'].includes(leaveType)
     ? 'Choose a start date at least 5 days from today.'
     : ['sick', 'emergency', 'rehabilitation'].includes(leaveType)
-      ? 'You can file for past dates within the last 30 days.'
-      : 'Include the first and last day of your requested leave.';
+      ? 'Today is unavailable. Past dates within the last 30 days remain available.'
+      : 'Include the first and last day of your requested leave. Today is unavailable.';
 
   return (
     <dialog ref={dialog} className="modal z-[80]" style={{ '--color-primary': 'var(--color-deped-blue)' }} aria-labelledby={`${id}-title`} aria-describedby={`${id}-intro`} onKeyDown={keepFocusInDialog}
@@ -80,7 +87,7 @@ export default function LeaveApplicationModal({
           {initialData && <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <p className="font-semibold">Application #{initialData.id} needs a correction</p>
             <p>{initialData.correction_reason}</p>
-            <p className="text-xs">Existing attachments stay on file. Resubmitting starts the checking process again.</p>
+            <p className="text-xs">Existing attachments stay on file. Resubmitting sends the application back to the principal.</p>
           </div>}
           <p className="text-xs text-slate-500">Fields marked <span className="font-medium text-primary">Required</span> must be completed.</p>
 
@@ -133,22 +140,27 @@ export default function LeaveApplicationModal({
           <fieldset className="space-y-4 border-t border-slate-200 pt-5">
             <legend className="pr-3 text-base font-semibold text-slate-900">2. Dates and duration</legend>
             <p id={`${id}-date-help`} className="text-sm text-slate-600">{filingHint}</p>
+            {!calendar.ready && <div className="text-sm text-slate-800" role={calendar.error ? 'alert' : 'status'}>
+              <p>{calendar.error || 'Loading the reviewed leave calendar...'}</p>
+              {calendar.error && <button type="button" className="btn btn-outline btn-sm mt-2" onClick={calendar.retry}>Retry calendar</button>}
+            </div>}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor={`${id}-start`} className="mb-1.5 flex items-center justify-between text-sm font-medium text-slate-800">Start date <span className="text-xs text-primary">Required</span></label>
-                <input id={`${id}-start`} name="start_date" type="date" min={minDate} value={startDate} onChange={event => setStartDate(event.target.value)} required className={fieldClass} aria-describedby={`${id}-date-help`} />
+                <LeaveDatePicker id={`${id}-start`} name="start_date" label="Start date" min={minDate} today={calendar.today} value={startDate} onChange={setStartDate} usesCalendarDays={usesCalendarDays} invalid={!!dateError} describedBy={dateError ? `${id}-date-error` : `${id}-date-help`} />
               </div>
               <div>
                 <label htmlFor={`${id}-end`} className="mb-1.5 flex items-center justify-between text-sm font-medium text-slate-800">End date <span className="text-xs text-primary">Required</span></label>
-                <input id={`${id}-end`} name="end_date" type="date" min={startDate && startDate > minDate ? startDate : minDate} value={endDate} onChange={event => setEndDate(event.target.value)} required className={fieldClass} aria-invalid={!!dateError} aria-describedby={dateError ? `${id}-date-error` : `${id}-date-help`} />
+                <LeaveDatePicker id={`${id}-end`} name="end_date" label="End date" min={isCalendarDate(startDate) && startDate > minDate ? startDate : minDate} today={calendar.today} value={endDate} onChange={setEndDate} usesCalendarDays={usesCalendarDays} invalid={!!dateError} describedBy={dateError ? `${id}-date-error` : `${id}-date-help`} />
               </div>
             </div>
             {dateError && <p id={`${id}-date-error`} role="alert" className="text-sm text-error">{dateError}</p>}
             <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm" role="status">
               <CalendarDays className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
               <div>
-                <p className="font-semibold text-slate-900">{hasDates && !dateError ? `${days} ${usesCalendarDays ? 'calendar' : 'working'} day${days === 1 ? '' : 's'} requested` : 'Select your dates to calculate the duration'}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{usesCalendarDays ? 'Includes weekends. Both the start and end date are counted.' : 'Counts Monday to Friday, including holidays. Both the start and end date are counted.'}</p>
+                <p className="font-semibold text-slate-900">{calendar.ready && hasDates && !dateError ? `${days} ${usesCalendarDays ? 'calendar' : 'working'} day${days === 1 ? '' : 's'} requested` : 'Select your dates to calculate the duration'}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{usesCalendarDays ? 'Includes weekends and holidays. Both the start and end date are counted.' : 'Counts Monday to Friday, excluding public non-working holidays. Both the start and end date are counted.'}</p>
+                {calendar.ready && !usesCalendarDays && calendar.holidays.filter(day => day.category !== 'special_working' && day.date >= startDate && day.date <= endDate && ![0, 6].includes(new Date(`${day.date}T00:00:00Z`).getUTCDay())).map(day => <p key={`${day.date}-${day.label}`} className="mt-1 text-xs text-slate-700">{day.date}: {day.label}</p>)}
               </div>
             </div>
             {employee && ['vacation', 'forced', 'sick'].includes(leaveType) && <p className="text-xs text-slate-600">Available credits: {leaveType === 'sick' && employee.sick_leave_balance != null ? `Sick ${Number(employee.sick_leave_balance)} days ? ` : ''}{employee.vacation_leave_balance != null ? `Vacation ${Number(employee.vacation_leave_balance)} days` : ''}</p>}
@@ -172,11 +184,11 @@ export default function LeaveApplicationModal({
         <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
           <div className="min-w-0 text-xs text-slate-600">
             <p className="font-medium text-slate-800">{selectedType}</p>
-            <p>{hasDates && !dateError ? `${days} ${usesCalendarDays ? 'calendar' : 'working'} day${days === 1 ? '' : 's'}` : 'Complete the required fields to submit.'}</p>
+            <p>{calendar.ready && hasDates && !dateError ? `${days} ${usesCalendarDays ? 'calendar' : 'working'} day${days === 1 ? '' : 's'}` : 'Complete the required fields to submit.'}</p>
           </div>
           <div className="flex gap-2">
             <button type="button" className="btn btn-ghost btn-sm min-h-11" disabled={isSubmitting} onClick={onClose}>Cancel</button>
-            <button form={`${id}-form`} type="submit" className="btn btn-primary btn-sm min-h-11" disabled={isSubmitting || !!dateError}>{isSubmitting ? 'Submitting...' : initialData ? 'Resubmit application' : 'Submit application'}</button>
+            <button form={`${id}-form`} type="submit" className="btn btn-primary btn-sm min-h-11" disabled={isSubmitting || !!dateError || !calendar.ready}>{isSubmitting ? 'Submitting...' : initialData ? 'Resubmit application' : 'Submit application'}</button>
           </div>
         </footer>
       </div>

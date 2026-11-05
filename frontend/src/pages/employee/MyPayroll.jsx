@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import Pagination from '../../components/common/Pagination';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
 import {
@@ -19,13 +20,7 @@ const MyPayroll = () => {
   const [selectedPayroll, setSelectedPayroll] = useState(null);
 
   // 1. Data Fetching
-  const { data: payrolls = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.PAYROLL],
-    queryFn: async () => {
-      const res = await api.get('payroll/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
-  });
+  const { records: payrolls, pagination, isLoading } = usePaginatedList(QUERY_KEYS.PAYROLL, 'payroll/');
 
   // Default selection to latest released payroll
   const activePayroll = useMemo(() => {
@@ -101,6 +96,7 @@ const MyPayroll = () => {
         </div>
       </div>
 
+      <Pagination pagination={pagination} label="payslips" />
       {payrolls.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT: Semi-Monthly Payslip Ledger Table (7 cols) */}
@@ -110,7 +106,7 @@ const MyPayroll = () => {
                 Salary Release History
               </h2>
               <span className="text-[11px] text-slate-500 font-mono">
-                {payrolls.length} Recorded Cycles
+                {pagination.count} Recorded Cycles
               </span>
             </div>
 

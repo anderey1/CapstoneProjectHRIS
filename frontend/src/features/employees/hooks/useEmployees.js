@@ -3,32 +3,24 @@ import api from '../../../api/axios';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import { useToast } from '../../../context/ToastContext';
 import { buildEmployeePayload } from '../utils/employeePayload';
+import { usePaginatedList } from '../../../hooks/usePaginatedList';
+import { fetchAllPages } from '../../../api/pagination';
 
 /**
  * Custom Domain Hook for Personnel & Employee Management
  */
-export function useEmployees() {
+export function useEmployees(params = {}) {
   const queryClient = useQueryClient();
   const toast = useToast();
 
   // 1. Fetch Employees List
-  const { data: rawEmployees = [], isLoading: isEmployeesLoading, isError, error } = useQuery({
-    queryKey: [QUERY_KEYS.EMPLOYEES],
-    queryFn: async () => {
-      const response = await api.get('employees/');
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
-  });
-
-  const employees = Array.isArray(rawEmployees) ? rawEmployees : rawEmployees?.results || [];
+  const { records: employees, summary, pagination, isLoading: isEmployeesLoading, isError, error } =
+    usePaginatedList(QUERY_KEYS.EMPLOYEES, 'employees/', params);
 
   // 2. Fetch Schools Registry
   const { data: rawSchools = [], isLoading: isSchoolsLoading } = useQuery({
     queryKey: [QUERY_KEYS.SCHOOLS || 'schools'],
-    queryFn: async () => {
-      const res = await api.get('schools/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
+    queryFn: ({ signal }) => fetchAllPages('schools/', {}, signal),
   });
 
   const schools = Array.isArray(rawSchools) ? rawSchools : rawSchools?.results || [];
@@ -77,15 +69,8 @@ export function useEmployees() {
   });
 
   // 6. Pending Registrations Query
-  const { data: rawPending = [], isLoading: isPendingLoading } = useQuery({
-    queryKey: ['pendingRegistrations'],
-    queryFn: async () => {
-      const response = await api.get('employees/pending-registrations/');
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
-  });
-
-  const pendingRegistrations = Array.isArray(rawPending) ? rawPending : rawPending?.results || [];
+  const { records: pendingRegistrations, pagination: pendingPagination, isLoading: isPendingLoading } =
+    usePaginatedList(QUERY_KEYS.PENDING_REGISTRATIONS, 'employees/pending-registrations/');
 
   // 7. Approve Registration Mutation
   const approveMutation = useMutation({
@@ -123,6 +108,10 @@ export function useEmployees() {
 
   return {
     employees,
+    summary,
+    pagination,
+    pendingPagination,
+    exportEmployees: () => fetchAllPages('employees/', params),
     schools,
     pendingRegistrations,
     isLoading: isEmployeesLoading || isSchoolsLoading,

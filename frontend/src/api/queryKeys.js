@@ -1,9 +1,11 @@
 export const QUERY_KEYS = {
   EMPLOYEES: 'employees',
+  PENDING_REGISTRATIONS: 'pendingRegistrations',
   LOANS: 'loans',
   PAYROLL: 'payroll',
   ATTENDANCE: 'attendance',
   LEAVES: 'leaves',
+  LEAVE_CALENDAR: 'leave-calendar',
   LEAVE_STAFF: 'leave-staff',
   PERFORMANCE: 'performance',
   APPLICANTS: 'applicants',

@@ -6,12 +6,9 @@ export default function LeaveProcessingActions({ leave, onApprove, onReject, onR
   const [preview, setPreview] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [reason, setReason] = useState('');
-  const [reference, setReference] = useState('');
   const [error, setError] = useState('');
   const inputId = useId();
   const needsSignature = leave.workflow === 'teaching' && leave.status === 'pending_supervisor';
-  const isReceiving = leave.workflow === 'teaching' && leave.status === 'pending_records';
-  const canDisapprove = leave.workflow !== 'teaching' || !['pending_checking', 'pending_records'].includes(leave.status);
 
   useEffect(() => {
     return () => { if (preview) URL.revokeObjectURL(preview); };
@@ -33,7 +30,7 @@ export default function LeaveProcessingActions({ leave, onApprove, onReject, onR
     }
     try {
       if (action === 'approve') {
-        await onApprove({ id: leave.id, signature, signatureConfirmed: confirmed, recordsReference: reference, expectedStatus: leave.status });
+        await onApprove({ id: leave.id, signature, signatureConfirmed: confirmed, expectedStatus: leave.status });
       } else if (action === 'return') {
         await onReturn({ id: leave.id, reason: reason.trim() });
       } else {
@@ -71,12 +68,6 @@ export default function LeaveProcessingActions({ leave, onApprove, onReject, onR
           </label>
         </div>
       )}
-      {isReceiving && (
-        <div>
-          <label className="mb-1 block font-medium" htmlFor={`${inputId}-reference`}>Records reference (optional)</label>
-          <input id={`${inputId}-reference`} maxLength={100} className="input input-bordered input-sm w-full" value={reference} onChange={event => setReference(event.target.value)} />
-        </div>
-      )}
       <div>
         <label className="mb-1 block font-medium" htmlFor={`${inputId}-reason`}>Reason (required for correction or disapproval)</label>
         <textarea id={`${inputId}-reason`} className="textarea textarea-bordered w-full text-sm" rows={2} value={reason} onChange={event => setReason(event.target.value)} />
@@ -84,7 +75,7 @@ export default function LeaveProcessingActions({ leave, onApprove, onReject, onR
       {error && <p role="alert" className="text-red-800">{error}</p>}
       <div className="flex flex-wrap justify-end gap-2">
         {leave.workflow === 'teaching' && <button type="button" className="btn btn-sm btn-outline" disabled={pending} onClick={() => submit('return')}>Return for correction</button>}
-        {canDisapprove && <button type="button" className="btn btn-sm btn-outline btn-error" disabled={pending} onClick={() => submit('reject')}>Disapprove</button>}
+        <button type="button" className="btn btn-sm btn-outline btn-error" disabled={pending} onClick={() => submit('reject')}>Disapprove</button>
         <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => submit('approve')}>{pending ? 'Processing...' : leaveActionLabel(leave)}</button>
       </div>
     </section>

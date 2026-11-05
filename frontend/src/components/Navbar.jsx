@@ -1,43 +1,48 @@
-import React from 'react';
-import { Menu, User, LogOut, ChevronDown, Calendar, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useEffect, useRef } from 'react';
+import { Menu, UserCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
-const Navbar = ({ toggleDrawer, toggleCollapse, isCollapsed }) => {
-  const { user, logout } = useAuth();
+const Navbar = ({ toggleDrawer }) => {
+  const { logout } = useAuth();
+  const accountMenu = useRef(null);
+
+  useEffect(() => {
+    const closeOutside = (event) => {
+      if (accountMenu.current && !accountMenu.current.contains(event.target)) {
+        accountMenu.current.open = false;
+      }
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    return () => document.removeEventListener('pointerdown', closeOutside);
+  }, []);
+
+  const closeAccountMenu = () => {
+    if (accountMenu.current) accountMenu.current.open = false;
+  };
+
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 
   return (
-    <header className="navbar bg-white border-b border-slate-200/80 px-4 md:px-6 sticky top-0 z-30 h-16 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-
-      {/* Start Section: Drawer toggle + Branding */}
-      <div className="navbar-start flex items-center gap-2">
+    <header className="flex items-center justify-between gap-4 bg-white border-b border-slate-200/80 px-4 md:px-6 sticky top-0 z-30 h-16 shrink-0">
+      <div className="flex min-w-0 items-center gap-2">
         {toggleDrawer && (
           <button
-            onClick={toggleDrawer}
-            className="btn btn-ghost btn-sm btn-square lg:hidden text-slate-600 hover:text-slate-900"
-            aria-label="Open Navigation"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
-        {toggleCollapse && (
-          <button
             type="button"
-            onClick={toggleCollapse}
-            className="btn btn-ghost btn-sm btn-square hidden lg:flex text-slate-600 hover:text-slate-900 transition-colors"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={toggleDrawer}
+            className="btn btn-ghost btn-square min-h-11 min-w-11 lg:hidden text-slate-600 hover:text-slate-900"
+            aria-label="Open navigation"
           >
-            {isCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+            <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
         )}
-        <Link to="/" className="flex flex-col ml-1 hover:opacity-90 transition-opacity min-w-0">
+        <Link to="/" className="flex min-w-0 flex-col hover:opacity-90 transition-opacity">
           <span className="text-[10px] sm:text-[11px] font-bold text-[#0038A8] uppercase tracking-wider leading-none truncate">
             <span className="inline sm:hidden">SDO Lucena City</span>
             <span className="hidden sm:inline">DepEd Schools Division of Lucena City</span>
@@ -48,60 +53,43 @@ const Navbar = ({ toggleDrawer, toggleCollapse, isCollapsed }) => {
           </span>
         </Link>
       </div>
-
-      {/* Center Section: Official Calendar Date */}
-      <div className="navbar-center hidden md:flex">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100/70 border border-slate-200/60 px-3 py-1.5 rounded-full">
-          <Calendar className="w-3.5 h-3.5 text-[#0038A8]" />
-          <span>{currentDate}</span>
-        </div>
-      </div>
-
-      {/* End Section: Profile & Actions */}
-      <div className="navbar-end gap-3">
-
-        {/* User Profile Dropdown */}
-        <div className="dropdown dropdown-end">
-          <div
-            tabIndex={0}
-            role="button"
-            className="flex items-center gap-2.5 p-1.5 pl-3 hover:bg-slate-100 rounded-full transition-colors cursor-pointer group border border-transparent hover:border-slate-200"
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="hidden text-xs text-slate-600 md:block">{currentDate}</span>
+        <NotificationBell />
+        <details
+          ref={accountMenu}
+          className="relative"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape' && accountMenu.current?.open) {
+              event.preventDefault();
+              closeAccountMenu();
+              accountMenu.current.querySelector('summary').focus();
+            }
+          }}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) closeAccountMenu();
+          }}
+        >
+          <summary
+            className="btn btn-ghost btn-square min-h-11 min-w-11 list-none text-slate-600 hover:text-slate-900 [&::-webkit-details-marker]:hidden"
+            aria-label="Account options"
+            title="Account options"
           >
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-xs font-bold text-slate-800 leading-tight">{user?.username || 'User'}</span>
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{user?.role?.replace('_', ' ') || 'Staff'}</span>
-            </div>
-            <div className="avatar">
-              <div className="w-8 h-8 rounded-full bg-[#0038A8] text-white flex items-center justify-center font-bold text-xs ring-2 ring-slate-100 shadow-sm">
-                {user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
-              </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-          </div>
-
-          <ul tabIndex={0} className="dropdown-content z-[40] mt-3 p-2 shadow-md menu menu-sm bg-white rounded-lg w-52 border border-slate-200">
-            <li className="menu-title px-4 py-2 uppercase text-xs font-semibold tracking-wider text-slate-500 border-b border-slate-100 mb-1">
-              My Account
-            </li>
+            <UserCircle className="h-5 w-5" aria-hidden="true" />
+          </summary>
+          <ul className="absolute right-0 top-full z-40 mt-2 w-44 rounded border border-slate-200 bg-white p-1 shadow-md">
             <li>
-              <Link to="/profile" className="py-2.5 px-4 flex items-center gap-3">
-                <User className="w-4 h-4 opacity-50" />
-                <span className="font-semibold">My Profile</span>
+              <Link to="/profile" onClick={closeAccountMenu} className="flex min-h-11 items-center rounded px-3 text-sm text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-primary">
+                View profile
               </Link>
             </li>
-            <div className="divider my-1 opacity-50"></div>
             <li>
-              <button 
-                onClick={logout}
-                className="py-2.5 px-4 flex items-center gap-3 text-error hover:bg-error/5"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="font-bold">Logout</span>
+              <button type="button" onClick={() => { closeAccountMenu(); logout(); }} className="flex min-h-11 w-full items-center rounded px-3 text-sm text-error hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-primary">
+                Logout
               </button>
             </li>
           </ul>
-        </div>
-
+        </details>
       </div>
     </header>
   );

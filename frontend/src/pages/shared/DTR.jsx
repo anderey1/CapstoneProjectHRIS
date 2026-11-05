@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Clock, Download, FileText, MapPin, AlertCircle, CheckCircle2, Calendar } from 'lucide-react';
 import api from '../../api/axios';
+import { fetchAllPages } from '../../api/pagination';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 // Helper to format HH:MM:SS string to 12-hour AM/PM format
@@ -30,10 +31,9 @@ const DTR = () => {
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth],
-    queryFn: async () => {
+    queryFn: ({ signal }) => {
       const [year, month] = selectedMonth.split('-');
-      const response = await api.get(`attendance/?month=${month}&year=${year}`);
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
+      return fetchAllPages('attendance/', { month, year }, signal);
     },
   });
 

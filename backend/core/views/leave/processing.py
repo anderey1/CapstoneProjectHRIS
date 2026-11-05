@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
-from ...models import LeaveRequest, LeaveAction, AuditLog, Employee
+from ...models import LeaveRequest, LeaveAction, AuditLog, Employee, Notification
 from ...serializers import LeaveApprovalSerializer
 
 
@@ -15,9 +15,15 @@ class LeaveProcessingActions:
         LeaveAction.objects.create(
             leave=leave, actor=user, actor_name=user.get_full_name() or user.username,
             from_status=old_status, to_status=leave.status, note=note,
-            signature=leave.principal_signature.name if old_status == 'pending_supervisor' and leave.workflow == 'teaching' and leave.status == 'pending_records' else None,
+            signature=leave.principal_signature.name if old_status == 'pending_supervisor' and leave.workflow == 'teaching' and leave.status == 'pending_hr' else None,
         )
         AuditLog.objects.create(user=user, action=f'Leave #{leave.pk}: {note} ({old_status or "new"} -> {leave.status})')
+        if old_status and leave.employee.user_id and leave.employee.user_id != user.pk:
+            Notification.objects.create(
+                recipient_id=leave.employee.user_id,
+                title=f'Leave application #{leave.pk}: {leave.get_status_display()}',
+                source_type='leave', source_id=leave.pk,
+            )
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     @transaction.atomic
@@ -36,23 +42,15 @@ class LeaveProcessingActions:
         days_deducted = None
 
         if leave.workflow == 'teaching':
-            if old_status == 'pending_checking':
-                leave.assigned_checker = request.user.employee_profile
-                leave.status = 'pending_supervisor'
-                message = 'Checked and forwarded to principal'
-            elif old_status == 'pending_supervisor':
+            if old_status == 'pending_supervisor':
                 signature = payload.validated_data.get('signature')
                 if not signature or not payload.validated_data['signature_confirmed']:
                     raise ValidationError('Upload your signature image and confirm that you approve this application.')
                 leave.principal_signature = signature
                 leave.principal_signed_by = request.user
                 leave.principal_signed_at = timezone.now()
-                leave.status = 'pending_records'
-                message = 'Approved and signed by principal; forwarded to Records Unit'
-            elif old_status == 'pending_records':
-                leave.records_reference = payload.validated_data.get('records_reference', '')
                 leave.status = 'pending_hr'
-                message = 'Received by Records Unit and forwarded to HR'
+                message = 'Approved and signed by principal; forwarded to HR'
             elif old_status == 'pending_hr':
                 days_deducted = self._deduct_balance(leave)
                 leave.status = 'approved'
@@ -95,8 +93,6 @@ class LeaveProcessingActions:
             return Response({'detail': 'This request has already been processed.'}, status=400)
         if not leave.can_process(request.user):
             raise PermissionDenied('You cannot disapprove this request at its current stage.')
-        if leave.workflow == 'teaching' and leave.status in ('pending_checking', 'pending_records'):
-            raise PermissionDenied('Checking and receiving staff can return an application for correction, rather than disapprove it.')
         reason = str(request.data.get('disapproval_reason', '')).strip()
         if not reason:
             raise ValidationError('A disapproval reason is required.')

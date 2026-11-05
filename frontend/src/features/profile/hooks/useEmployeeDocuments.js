@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/axios';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import { useToast } from '../../../context/ToastContext';
+import { fetchAllPages } from '../../../api/pagination';
 
 /**
  * Custom Domain Hook for the 201-file document checklist.
@@ -17,10 +18,7 @@ export function useEmployeeDocuments(employeeId) {
 
   const { data: documents = [] } = useQuery({
     queryKey,
-    queryFn: async () => {
-      const response = await api.get('employee-documents/', { params: { employee: employeeId } });
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
+    queryFn: ({ signal }) => fetchAllPages('employee-documents/', { employee: employeeId }, signal),
     enabled: !!employeeId,
   });
 

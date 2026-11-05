@@ -4,13 +4,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from ..models import Applicant, ApplicantDocument, AuditLog
 from ..serializers import ApplicantSerializer
+from .listing import PaginatedListMixin
 from ..permissions import IsAdminOrHRorSuperintendent
 from ..notifications import send_applicant_notification
 from ..utils import extract_pds_data
 from ..services import onboard_applicant
 
-class ApplicantViewSet(viewsets.ModelViewSet):
-    queryset = Applicant.objects.all().order_by('-date_applied')
+class ApplicantViewSet(PaginatedListMixin, viewsets.ModelViewSet):
+    queryset = Applicant.objects.all().order_by('-date_applied', '-pk')
     serializer_class = ApplicantSerializer
 
     def get_permissions(self):

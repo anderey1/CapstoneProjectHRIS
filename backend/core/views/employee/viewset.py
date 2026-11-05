@@ -6,12 +6,14 @@ from django.db.models import Exists, OuterRef
 from ...models import Employee, Role, AuditLog
 from ...serializers import EmployeeSerializer
 from ...permissions import IsAdminOrHRorSuperintendent
+from ..listing import PaginatedListMixin
 
 from .accounts import EmployeeAccountActions
 from .leave_credits import EmployeeLeaveCreditActions
 
 
 class EmployeeViewSet(
+    PaginatedListMixin,
     EmployeeAccountActions,
     EmployeeLeaveCreditActions,
     viewsets.ModelViewSet,
@@ -34,7 +36,7 @@ class EmployeeViewSet(
         supervisor_subquery = Employee.objects.filter(supervisor=OuterRef('pk'))
         base_qs = Employee.objects.select_related(
             'user', 'school', 'salary_grade'
-        ).annotate(
+        ).order_by('last_name', 'first_name', 'pk').annotate(
             annotated_is_supervisor=Exists(supervisor_subquery)
         )
 
@@ -56,12 +58,14 @@ class EmployeeViewSet(
 
     @action(detail=False, methods=['get'], url_path='leave-staff')
     def leave_staff(self, request):
-        staff = Employee.objects.select_related('user').filter(user__is_active=True).order_by('last_name', 'first_name')
-        return Response([
+        staff = Employee.objects.select_related('user').filter(user__is_active=True).order_by('last_name', 'first_name', 'pk')
+        page = self.paginate_queryset(staff)
+        data = [
             {'id': person.pk, 'name': str(person), 'leave_duty': person.leave_duty,
              'school': person.school_id, 'position': person.position}
-            for person in staff
-        ])
+            for person in page
+        ]
+        return self.get_paginated_response(data)
 
     @action(detail=False, methods=['GET', 'PATCH'], permission_classes=[IsAuthenticated])
     def me(self, request):

@@ -77,9 +77,7 @@ def dashboard_stats(request):
             "status": "Healthy Portfolio"
         },
         "action_items": [
-            f"{leaves_checking} leave request(s) awaiting Administrative Assistant II checking",
             f"{leaves_supervisor} leave request(s) awaiting School Principal recommendation",
-            f"{leaves_records} leave request(s) awaiting Records Unit receiving",
             f"{leaves_hr} leave request(s) awaiting HR certification",
             f"{leaves_superintendent} leave request(s) awaiting Superintendent final sign-off",
             f"{pending_loan_verification} Provident loan application(s) awaiting Accountant verification",

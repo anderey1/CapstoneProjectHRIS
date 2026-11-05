@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
 import { Plus, User, Mail, Phone, Trash2, ChevronRight, Layout, Search, Star, FileText, CheckCircle2, XCircle, Info, MessageSquare } from 'lucide-react';
 import AddApplicantModal from '../../components/features/recruitment/AddApplicantModal';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
+import Pagination from '../../components/common/Pagination';
 
 /**
  * DepEd Recruitment Board
@@ -45,6 +47,7 @@ const Recruitment = () => {
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [statusNote, setStatusNote] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeStage, setActiveStage] = useState('all');
   
   const [isEditingScores, setIsEditingScores] = useState(false);
   const [scores, setScores] = useState({
@@ -57,12 +60,8 @@ const Recruitment = () => {
   });
 
   // 1. Data Fetching
-  const { data: applicants = [], isLoading } = useQuery({
-    queryKey: [QUERY_KEYS.APPLICANTS],
-    queryFn: async () => {
-      const res = await api.get('applicants/');
-      return Array.isArray(res.data) ? res.data : res.data.results || [];
-    },
+  const { records: filteredApplicants, summary, pagination, isLoading } = usePaginatedList(QUERY_KEYS.APPLICANTS, 'applicants/', {
+    search: searchTerm, status: activeStage,
   });
 
   // 2. Mutations
@@ -99,20 +98,7 @@ const Recruitment = () => {
     if (window.confirm('Remove this applicant record?')) deleteMutation.mutate(id);
   };
 
-  const [activeStage, setActiveStage] = useState('all');
-
-  const filteredApplicants = applicants.filter(a => {
-    const fullName = `${a.first_name} ${a.middle_name || ''} ${a.last_name}`.toLowerCase();
-    const position = (a.position_applied || '').toLowerCase();
-    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) || position.includes(searchTerm.toLowerCase());
-    const matchesStage = activeStage === 'all' || a.status === activeStage;
-    return matchesSearch && matchesStage;
-  });
-
-  const stageCounts = COLUMNS.reduce((acc, col) => {
-    acc[col.id] = applicants.filter(a => a.status === col.id).length;
-    return acc;
-  }, {});
+  const stageCounts = Object.fromEntries(COLUMNS.map(col => [col.id, summary.statuses?.[col.id] || 0]));
 
   return (
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
@@ -149,7 +135,7 @@ const Recruitment = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Applicants</p>
-          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{applicants.length}</p>
+          <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{summary.total || 0}</p>
           <p className="text-[10px] text-slate-400 mt-0.5">All candidate records</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
@@ -188,7 +174,7 @@ const Recruitment = () => {
             />
           </div>
           <div className="text-xs text-slate-500 shrink-0 font-medium">
-            Showing <span className="font-mono tabular-nums font-semibold text-slate-800">{filteredApplicants.length}</span> of <span className="font-mono tabular-nums text-slate-800">{applicants.length}</span> candidates
+            Showing <span className="font-mono tabular-nums font-semibold text-slate-800">{filteredApplicants.length}</span> of <span className="font-mono tabular-nums text-slate-800">{pagination.count}</span> matching candidates
           </div>
         </div>
 
@@ -202,7 +188,7 @@ const Recruitment = () => {
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            All Stages ({applicants.length})
+            All Stages ({summary.total || 0})
           </button>
           {COLUMNS.map(col => (
             <button
@@ -337,6 +323,7 @@ const Recruitment = () => {
                 )}
               </tbody>
             </table>
+            <Pagination pagination={pagination} label="applicants" />
           </div>
         )}
       </div>

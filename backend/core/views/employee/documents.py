@@ -26,7 +26,7 @@ class EmployeeDocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = EmployeeDocument.objects.all().select_related('employee', 'verified_by')
+        qs = EmployeeDocument.objects.all().select_related('employee', 'verified_by').order_by('-uploaded_at', '-pk')
 
         emp_id = self.request.query_params.get('employee')
         is_management = user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]

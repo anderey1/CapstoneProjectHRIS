@@ -4,11 +4,11 @@ import { useLoansMutations } from './useLoansMutations';
 /**
  * Custom Domain Hook for Provident Fund Loans
  */
-export function useLoans(selectedLoanId = null) {
+export function useLoans(selectedLoanId = null, params = {}) {
   const {
-    loans, checklist, documents, isLoansLoading,
+    loans, summary, pagination, checklist, documents, isLoansLoading,
     isChecklistLoading, isDocumentsLoading, isError, error,
-  } = useLoansQueries(selectedLoanId);
+  } = useLoansQueries(selectedLoanId, params);
 
   const {
     applyMutation, resubmitMutation, verifyMutation,
@@ -23,13 +23,12 @@ export function useLoans(selectedLoanId = null) {
   const rejectedLoans = loans.filter((l) => l.status === 'rejected');
   const paidLoans = loans.filter((l) => l.status === 'paid');
 
-  const totalReleasedValue = [...releasedLoans, ...paidLoans].reduce(
-    (acc, l) => acc + parseFloat(l.loan_amount || 0),
-    0
-  );
+  const totalReleasedValue = Number(summary.released_value || 0);
 
   return {
     loans,
+    summary,
+    pagination,
     checklist,
     documents,
     isLoading: isLoansLoading,

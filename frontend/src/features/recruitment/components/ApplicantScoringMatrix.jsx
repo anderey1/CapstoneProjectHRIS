@@ -27,7 +27,7 @@ const ApplicantScoringMatrix = ({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+        <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
           <Star className="w-3 h-3" /> Applicant Assessment Scores
         </h4>
         {!isEditingScores ? (
@@ -44,7 +44,7 @@ const ApplicantScoringMatrix = ({
               });
               setIsEditingScores(true);
             }}
-            className="btn btn-xs btn-ghost text-primary font-black uppercase tracking-widest"
+            className="btn btn-xs btn-ghost text-primary font-semibold uppercase tracking-wide"
           >
             Edit Scores
           </button>
@@ -53,14 +53,14 @@ const ApplicantScoringMatrix = ({
             <button
               type="button"
               onClick={() => setIsEditingScores(false)}
-              className="btn btn-xs btn-ghost text-error font-black uppercase tracking-widest"
+              className="btn btn-xs btn-ghost text-error font-semibold uppercase tracking-wide"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={onSaveScores}
-              className="btn btn-xs btn-primary font-black uppercase tracking-widest"
+              className="btn btn-xs btn-primary font-semibold uppercase tracking-wide"
               disabled={isSaving}
             >
               {isSaving ? 'Saving...' : 'Save Points'}
@@ -76,10 +76,10 @@ const ApplicantScoringMatrix = ({
             className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-center group"
           >
             <div className="flex items-center justify-center gap-1 mb-1">
-              <p className="text-[9px] font-black opacity-40 uppercase tracking-tighter">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-tighter">
                 {s.label}
               </p>
-              <span className="text-[8px] font-bold text-primary/40 uppercase">
+              <span className="text-xs font-bold text-primary/40 uppercase">
                 (Max {s.max})
               </span>
             </div>
@@ -100,15 +100,15 @@ const ApplicantScoringMatrix = ({
                 }}
               />
             ) : (
-              <p className="text-xl font-black text-primary">{applicant[s.key] ?? 0}</p>
+              <p className="text-xl font-semibold text-primary">{applicant[s.key] ?? 0}</p>
             )}
           </div>
         ))}
         <div className="bg-primary border-2 border-primary rounded-xl p-4 text-center shadow-lg shadow-primary/20">
-          <p className="text-[9px] font-black text-white/60 uppercase tracking-tighter mb-1">
+          <p className="text-xs font-semibold text-white/60 uppercase tracking-tighter mb-1">
             Total Points
           </p>
-          <p className="text-xl font-black text-white">
+          <p className="text-xl font-semibold text-white">
             {isEditingScores
               ? Object.values(scores)
                   .reduce((a, b) => Number(a) + Number(b), 0)

@@ -85,8 +85,6 @@ class PaginatedListMixin:
             for param, maximum in (('month', 12), ('year', 9999)):
                 if params.get(param):
                     queryset = queryset.filter(**{f'date__{param}': integer_param(params, param, maximum=maximum)})
-            if params.get('flagged') == 'true':
-                queryset = queryset.filter(is_geo_flagged=True)
         if resource == 'auditlog':
             days = {'24H': 1, '7D': 7, '30D': 30}.get(params.get('date_range'))
             if days:

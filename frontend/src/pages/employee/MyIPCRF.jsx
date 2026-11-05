@@ -53,7 +53,7 @@ const MyIPCRF = () => {
     return (
       <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
         <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Loading Personal RPMS Portfolio...
         </p>
       </div>
@@ -65,16 +65,13 @@ const MyIPCRF = () => {
       {/* DepEd Institutional Header */}
       <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
-            Department of Education • SDO Lucena City
-          </span>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <Award className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                My RPMS / IPCRF Portfolio
+                My RPMS / IPCRF records
               </h1>
             </div>
           </div>
@@ -96,13 +93,13 @@ const MyIPCRF = () => {
       {latestReview && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
               Latest Period
             </span>
             <span className="text-lg font-bold font-mono text-slate-900 block mt-1">
               {latestReview.period}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5">
+            <span className="text-xs text-slate-500 block mt-0.5">
               Evaluated:{' '}
               {latestReview.date_evaluated
                 ? new Date(latestReview.date_evaluated).toLocaleDateString()
@@ -111,7 +108,7 @@ const MyIPCRF = () => {
           </div>
 
           <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
               Composite Rating
             </span>
             <div className="flex items-baseline gap-1 mt-1">
@@ -120,11 +117,11 @@ const MyIPCRF = () => {
               </span>
               <span className="text-xs text-slate-500">/ 5.000</span>
             </div>
-            <span className="text-[11px] text-slate-500 block mt-0.5">RPMS Weighted score</span>
+            <span className="text-xs text-slate-500 block mt-0.5">RPMS Weighted score</span>
           </div>
 
           <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
               Adjectival Rating
             </span>
             <div className="mt-1">
@@ -134,13 +131,13 @@ const MyIPCRF = () => {
                 {latestAdjectival.label} ({latestAdjectival.code})
               </span>
             </div>
-            <span className="text-[11px] text-slate-500 block mt-1 truncate">
+            <span className="text-xs text-slate-500 block mt-1 truncate">
               {latestAdjectival.description}
             </span>
           </div>
 
           <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
               Promotion Standing
             </span>
             <div className="mt-1">
@@ -155,7 +152,7 @@ const MyIPCRF = () => {
                 {latestReview.is_promotion_eligible ? 'Endorsed Eligible' : 'Standard Rating'}
               </span>
             </div>
-            <span className="text-[11px] text-slate-500 block mt-1">CSC Minimum ≥ 4.000</span>
+            <span className="text-xs text-slate-500 block mt-1">CSC Minimum ≥ 4.000</span>
           </div>
         </div>
       )}
@@ -165,11 +162,11 @@ const MyIPCRF = () => {
         <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-slate-500" />
-            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-slate-800 tracking-wider">
               Chronological IPCRF Rating History
             </h2>
           </div>
-          <span className="text-[11px] text-slate-500">
+          <span className="text-xs text-slate-500">
             Total Records: <strong className="font-semibold text-slate-800">{pagination.count}</strong>
           </span>
         </div>
@@ -177,7 +174,7 @@ const MyIPCRF = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-[11px] uppercase tracking-wider">
+              <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-xs uppercase tracking-wider">
                 <th className="py-3 px-4 font-bold">Evaluation Period</th>
                 <th className="py-3 px-4 font-bold">Date Evaluated</th>
                 <th className="py-3 px-3 font-bold text-center">Quality (40%)</th>
@@ -275,7 +272,7 @@ const MyIPCRF = () => {
                             File
                           </a>
                         ) : (
-                          <span className="text-[11px] text-slate-400 font-mono">None</span>
+                          <span className="text-xs text-slate-400 font-mono">None</span>
                         )}
                       </td>
 

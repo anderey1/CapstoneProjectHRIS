@@ -26,7 +26,7 @@ const CivilServiceEligibilityTab = ({ me, onAdd, onEdit, onDelete, canEdit = tru
               <div className="flex justify-between items-start gap-3">
                 <div>
                   <p className="font-semibold text-sm text-slate-900 pr-6">{el.service}</p>
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded text-[11px] font-semibold mt-1 inline-block">
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded text-xs font-semibold mt-1 inline-block">
                     Rating: {el.rating || 'Passed'}%
                   </span>
                 </div>

@@ -104,7 +104,8 @@ Playwright specs assume an `admin` / `admin` account on a running backend. `seed
 
 ## Working conventions
 
-- **Scoped Testing**: When fixing bugs or adding new features, execute only the targeted test suite or test cases within the scope of the changes/fixes (e.g. `venv\Scripts\python.exe -m pytest core/tests/test_<feature>.py` or `-k <test_name>`). Do not run the full 5.5-minute suite unless explicitly requested.
+- **Test Only When Needed**: Do not add or run automated tests for simple UI, layout, styling, copy, documentation, or other low-impact changes unless the user explicitly asks. Do not automatically run builds, lint, browser automation, or extra verification workflows for these simple tasks. Reserve testing for complex behavior, data processing, permissions, database writes, payroll calculations, and critical workflows. This rule takes precedence over skill recommendations to test every change.
+- **Scoped Testing**: When a complex change needs testing, execute only the targeted test suite or test cases within its scope (e.g. `venv\Scripts\python.exe -m pytest core/tests/test_<feature>.py` or `-k <test_name>`). Stop once the relevant checks pass; repeat or broaden testing only for new failures or meaningful changes. Do not run the full 5.5-minute suite unless explicitly requested.
 - **Installed Skills Usage**: Proactively load and use relevant installed skills for every task:
   - Bug fixes and narrow patches: load `surgical-patch` or `diagnosing-bugs`.
   - Feature implementation & product slices: load `lean-build` and `tdd`.
@@ -113,7 +114,7 @@ Playwright specs assume an `admin` / `admin` account on a running backend. `seed
 - Work in the layer that owns the change: backend for API and model logic, frontend for UI and data display.
 - Keep serializer output and frontend consumption aligned when changing either side; both halves usually need edits in one change.
 - New backend tests go in `backend/core/tests/` as `test_<feature>.py`. Reuse fixtures from `backend/core/tests/conftest.py` (`hr_user`, `teacher_employee`, `supervisor_user`, `mock_school`, `salary_grade_11`) instead of constructing records inline.
-- Preserve existing folder and naming organization before adding new abstractions. There is no CI; local `npm run build` plus targeted pytest is the verification path.
+- Preserve existing folder and naming organization before adding new abstractions. There is no CI; when a complex change needs verification, use the relevant frontend build and/or targeted pytest checks. Follow **Test Only When Needed** for simple changes.
 - Do not commit secrets. `backend/.env` and `backend/db.sqlite3` are gitignored; `.env.example` is tracked.
 - The working tree is currently dirty: form PDFs and `revision.txt` moved from the repo root into `docs/`, images into `assets/`, `test_api.py` into `scripts/`, and tracked `anti-slop/` audits are deleted. Confirm intended state before staging.
 

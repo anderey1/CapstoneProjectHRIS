@@ -92,7 +92,7 @@ const LoanRegistryTable = ({
           <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
             Provident Fund Loans ({filteredLoans.length} Records)
           </span>
-          <span className="text-[11px] text-slate-500 font-medium">
+          <span className="text-xs text-slate-500 font-medium">
             Semi-monthly amortizations automatically deducted via General Payroll
           </span>
         </div>
@@ -100,7 +100,7 @@ const LoanRegistryTable = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50/90 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+              <tr className="bg-slate-50/90 text-xs font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-4 py-3">Loan Ref</th>
                 <th className="px-4 py-3">Borrower & Station</th>
                 <th className="px-3 py-3 text-right">Principal</th>
@@ -126,7 +126,7 @@ const LoanRegistryTable = ({
                         <div className="font-semibold text-slate-900 leading-tight">
                           {loan.employee_name}
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
+                        <div className="text-xs text-slate-500 mt-0.5">
                           {loan.department || 'Division Office'}
                         </div>
                       </td>

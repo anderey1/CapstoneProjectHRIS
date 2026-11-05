@@ -30,7 +30,7 @@ const LeaveReviewModal = ({
         <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                 CSC Form No. 6
               </span>
               <span className="text-xs font-mono text-slate-500">Application #{leave.id}</span>
@@ -52,12 +52,12 @@ const LeaveReviewModal = ({
         <div className="p-6 space-y-6 overflow-y-auto flex-1 bg-white text-slate-800 text-xs">
           {/* Section 6: Details of Application */}
           <div className="border border-slate-200 rounded">
-            <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-[11px] uppercase tracking-wide text-slate-700">
+            <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-xs uppercase tracking-wide text-slate-700">
               6. Details of Application
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/40">
               <div>
-                <span className="text-[10px] uppercase font-semibold text-slate-500 block">
+                <span className="text-xs uppercase font-semibold text-slate-500 block">
                   6.A Type of Leave
                 </span>
                 <span className="font-bold text-slate-900 capitalize text-sm">
@@ -70,19 +70,19 @@ const LeaveReviewModal = ({
                 )}
               </div>
               <div>
-                <span className="text-[10px] uppercase font-semibold text-slate-500 block">
+                <span className="text-xs uppercase font-semibold text-slate-500 block">
                   6.C Inclusive Dates
                 </span>
                 <span className="font-mono tabular-nums font-semibold text-slate-900 text-xs">
                   {new Date(leave.start_date).toLocaleDateString()} —{' '}
                   {new Date(leave.end_date).toLocaleDateString()}
                 </span>
-                <span className="text-slate-500 block font-mono text-[11px] mt-0.5">
+                <span className="text-slate-500 block font-mono text-xs mt-0.5">
                   <strong>{leave.working_days_applied}</strong> working day(s) applied
                 </span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-semibold text-slate-500 block">
+                <span className="text-xs uppercase font-semibold text-slate-500 block">
                   6.D Commutation
                 </span>
                 <span className="font-semibold text-slate-800 capitalize">
@@ -96,7 +96,7 @@ const LeaveReviewModal = ({
               <div className="px-4 py-3 border-t border-slate-200 bg-white grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                 {leave.location_details && (
                   <div>
-                    <span className="text-[10px] uppercase font-semibold text-slate-500 block">
+                    <span className="text-xs uppercase font-semibold text-slate-500 block">
                       Where leave will be spent
                     </span>
                     <span className="font-medium text-slate-800">
@@ -107,7 +107,7 @@ const LeaveReviewModal = ({
                 )}
                 {leave.illness_details && (
                   <div>
-                    <span className="text-[10px] uppercase font-semibold text-slate-500 block">
+                    <span className="text-xs uppercase font-semibold text-slate-500 block">
                       Illness / Hospitalization
                     </span>
                     <span className="font-medium text-slate-800">
@@ -117,7 +117,7 @@ const LeaveReviewModal = ({
                 )}
                 {leave.study_type && (
                   <div>
-                    <span className="text-[10px] uppercase font-semibold text-slate-500 block">
+                    <span className="text-xs uppercase font-semibold text-slate-500 block">
                       Study Leave Purpose
                     </span>
                     <span className="font-medium text-slate-800 uppercase">
@@ -131,15 +131,15 @@ const LeaveReviewModal = ({
 
           {/* Section 7.B: Certification of Leave Credits */}
           <div className="border border-slate-200 rounded">
-            <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-[11px] uppercase tracking-wide text-slate-700 flex justify-between items-center">
+            <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-xs uppercase tracking-wide text-slate-700 flex justify-between items-center">
               <span>7.B Certification of Leave Credits</span>
-              <span className="text-[10px] font-normal lowercase text-slate-500">
+              <span className="text-xs font-normal lowercase text-slate-500">
                 certified by personnel officer
               </span>
             </div>
             <div className="p-4 grid grid-cols-2 gap-4 bg-slate-50/50">
               <div className="bg-white border border-slate-200 p-3 rounded">
-                <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                <span className="text-xs uppercase font-bold text-slate-500 block">
                   Vacation Leave Balance
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
@@ -150,7 +150,7 @@ const LeaveReviewModal = ({
                 </div>
               </div>
               <div className="bg-white border border-slate-200 p-3 rounded">
-                <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                <span className="text-xs uppercase font-bold text-slate-500 block">
                   Sick Leave Balance
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
@@ -165,7 +165,7 @@ const LeaveReviewModal = ({
 
           {/* Documentary Attachments */}
           <div className="border border-slate-200 rounded">
-            <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-[11px] uppercase tracking-wide text-slate-700">
+            <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-xs uppercase tracking-wide text-slate-700">
               Documentary Attachments
             </div>
             <div className="p-3 space-y-2">
@@ -193,12 +193,12 @@ const LeaveReviewModal = ({
           {/* Current Action / Processing Pipeline */}
           {isPendingStatus ? (
             <div className="border border-slate-200 rounded p-4 bg-slate-50 space-y-3">
-              <div className="font-bold text-[11px] uppercase tracking-wide text-slate-700">
+              <div className="font-bold text-xs uppercase tracking-wide text-slate-700">
                 7. Action on Application
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-600 block">
+                <label className="text-xs font-semibold text-slate-600 block">
                   Disapproval / Recommendation Reason (Required if disapproving)
                 </label>
                 <textarea
@@ -273,7 +273,7 @@ const LeaveReviewModal = ({
               </div>
               {leave.disapproval_reason && (
                 <div className="mt-2 text-xs bg-white border border-slate-200 p-2.5 rounded">
-                  <span className="font-semibold text-slate-500 block uppercase text-[10px]">
+                  <span className="font-semibold text-slate-500 block uppercase text-xs">
                     Official Reason:
                   </span>
                   <p className="text-slate-700 italic mt-0.5">"{leave.disapproval_reason}"</p>

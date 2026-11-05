@@ -97,8 +97,8 @@ const Employees = () => {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
-                Division Personnel Master Ledger
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 ">
+                Personnel directory
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
                 Official DepEd Plantilla & Personnel Directory • Schools Division of Lucena City
@@ -123,24 +123,24 @@ const Employees = () => {
       {/* 4-Metric Portfolio Status Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Plantilla Roster</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Plantilla Roster</p>
           <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{summary.total || 0}</p>
-          <p className="text-[10px] text-slate-500 mt-0.5">All division records</p>
+          <p className="text-xs text-slate-500 mt-0.5">All division records</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Teaching Personnel</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Teaching Personnel</p>
           <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{teachingCount}</p>
-          <p className="text-[10px] text-slate-500 mt-0.5">Instructional cadre</p>
+          <p className="text-xs text-slate-500 mt-0.5">Instructional cadre</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Non-Teaching Staff</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Non-Teaching Staff</p>
           <p className="text-xl font-bold text-slate-700 font-mono tabular-nums mt-1">{nonTeachingCount}</p>
-          <p className="text-[10px] text-slate-500 mt-0.5">Admin & support</p>
+          <p className="text-xs text-slate-500 mt-0.5">Admin & support</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pending Activations</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Pending Activations</p>
           <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{pendingPagination.count}</p>
-          <p className="text-[10px] text-slate-500 mt-0.5">Awaiting HR review</p>
+          <p className="text-xs text-slate-500 mt-0.5">Awaiting HR review</p>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ const Employees = () => {
           >
             Pending Account Activations
             {pendingRegistrations && pendingRegistrations.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.2 bg-amber-600 text-white text-[10px] font-bold rounded-full font-mono tabular-nums inline-flex items-center justify-center min-w-[16px] h-4">
+              <span className="ml-1.5 px-1.5 py-0.2 bg-amber-600 text-white text-xs font-bold rounded-full font-mono tabular-nums inline-flex items-center justify-center min-w-[16px] h-4">
                 {pendingPagination.count}
               </span>
             )}
@@ -185,6 +185,7 @@ const Employees = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
+                aria-label="Search personnel by name, position, or station"
                 placeholder="Search by personnel name, plantilla position, or station..."
                 className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
                 value={searchTerm}
@@ -209,8 +210,9 @@ const Employees = () => {
                 {showFilters && (
                   <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-lg border border-slate-300 bg-white p-4 shadow-lg space-y-3">
                     <div>
-                      <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">Personnel Classification</label>
+                      <label htmlFor="personnel-selectedRole" className="text-xs font-semibold uppercase text-slate-700 block mb-1">Personnel Classification</label>
                       <select
+                        id="personnel-selectedRole"
                         value={selectedRole}
                         onChange={(e) => setSelectedRole(e.target.value)}
                         className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
@@ -222,8 +224,9 @@ const Employees = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold uppercase text-slate-700 block mb-1">Department / Station</label>
+                      <label htmlFor="personnel-selectedArea" className="text-xs font-semibold uppercase text-slate-700 block mb-1">Department / Station</label>
                       <select
+                        id="personnel-selectedArea"
                         value={selectedArea}
                         onChange={(e) => setSelectedArea(e.target.value)}
                         className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
@@ -280,11 +283,11 @@ const Employees = () => {
             <table className="table table-md w-full">
               <thead>
                 <tr className="bg-slate-50/75 border-b border-slate-200 text-slate-500">
-                  <th className="text-[11px] font-semibold uppercase tracking-wider pl-6">Employee</th>
-                  <th className="text-[11px] font-semibold uppercase tracking-wider">Employee ID</th>
-                  <th className="text-[11px] font-semibold uppercase tracking-wider">Credentials Requested</th>
-                  <th className="text-[11px] font-semibold uppercase tracking-wider">Position / Dept</th>
-                  <th className="text-[11px] font-semibold uppercase tracking-wider text-right pr-6">Actions</th>
+                  <th className="text-xs font-semibold uppercase tracking-wider pl-6">Employee</th>
+                  <th className="text-xs font-semibold uppercase tracking-wider">Employee ID</th>
+                  <th className="text-xs font-semibold uppercase tracking-wider">Credentials Requested</th>
+                  <th className="text-xs font-semibold uppercase tracking-wider">Position / Dept</th>
+                  <th className="text-xs font-semibold uppercase tracking-wider text-right pr-6">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -299,16 +302,16 @@ const Employees = () => {
                     <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
                       <td className="pl-6 py-4">
                         <div className="font-semibold text-xs text-slate-900">{emp.first_name} {emp.last_name}</div>
-                        <div className="text-[11px] text-slate-400">{emp.email || 'No email'}</div>
+                        <div className="text-xs text-slate-400">{emp.email || 'No email'}</div>
                       </td>
                       <td className="font-semibold text-xs text-[#0038A8]">{emp.agency_employee_no}</td>
                       <td>
                         <div className="text-xs font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded inline-block">@{emp.user_details?.username}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">{emp.user_details?.email}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{emp.user_details?.email}</div>
                       </td>
                       <td>
                         <div className="text-xs text-slate-800">{emp.position || 'Unassigned'}</div>
-                        <div className="text-[11px] text-slate-400">{emp.department || 'Operations'}</div>
+                        <div className="text-xs text-slate-400">{emp.department || 'Operations'}</div>
                       </td>
                       <td className="text-right pr-6">
                         <div className="flex gap-2 justify-end">
@@ -320,7 +323,7 @@ const Employees = () => {
                               }
                             }}
                             disabled={isApproving}
-                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider border-none"
+                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-xs font-bold uppercase tracking-wider border-none"
                           >
                             {isApproving ? 'Approving...' : 'Approve'}
                           </button>
@@ -332,7 +335,7 @@ const Employees = () => {
                               }
                             }}
                             disabled={isRejecting}
-                            className="btn bg-rose-600 hover:bg-rose-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-[10px] font-bold uppercase tracking-wider border-none"
+                            className="btn bg-rose-600 hover:bg-rose-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-xs font-bold uppercase tracking-wider border-none"
                           >
                             {isRejecting ? 'Rejecting...' : 'Reject'}
                           </button>

@@ -1,3 +1,4 @@
+from .views.dashboard_operations import operations, insight
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter    
 from .views.notification import NotificationViewSet
@@ -32,6 +33,8 @@ urlpatterns = [
     path('pds/extract/', PDSExtractionView.as_view(), name='pds_extract'),
 
     # Dashboard & AI
+    path('dashboard/operations/', operations, name='dashboard_operations'),
+    path('dashboard/operations/insight/<str:metric>/', insight, name='dashboard_operations_insight'),
     path('dashboard/', dashboard_stats, name='dashboard_stats'),
     path('dashboard/summary/', dashboard_ai_summary, name='dashboard_ai_summary'),
 

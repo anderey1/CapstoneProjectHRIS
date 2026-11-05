@@ -35,8 +35,8 @@ class User(AbstractUser):
 
 class School(models.Model):
     name = models.CharField(max_length=100)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     radius_meters = models.IntegerField(default=100) # Geofencing radius
 
     def __str__(self):
@@ -113,7 +113,7 @@ class Employee(models.Model):
     # Work Information
     position = models.CharField(max_length=100, null=True, blank=True)
     department = models.CharField(max_length=100, null=True, blank=True)
-    school = models.ForeignKey(School, on_delete=models.SET_NULL, null=True, blank=True, related_name='personnel')
+    school = models.ForeignKey(School, on_delete=models.PROTECT, null=True, blank=True, related_name='personnel')
     supervisor = models.ForeignKey(
         'self', 
         on_delete=models.SET_NULL, 

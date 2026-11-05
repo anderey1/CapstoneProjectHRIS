@@ -23,11 +23,11 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
       aria-labelledby="ipcrf-details-title"
       className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
     >
-      <div className="bg-white rounded-lg border border-slate-300 shadow-xl w-full max-w-2xl overflow-hidden my-8">
+      <div className="bg-white rounded-lg border border-slate-300 shadow-xl w-full max-w-2xl overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Institutional DepEd Header */}
-        <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-start justify-between">
+        <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-4 flex shrink-0 items-start justify-between gap-3">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide block">
               Republic of the Philippines • Department of Education • SDO Lucena City
             </span>
             <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded-md transition-colors"
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 rounded-md focus-visible:outline-2 focus-visible:outline-primary"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -51,12 +51,12 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
         </div>
 
         {/* Modal Docket Body */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-6 min-h-0 overflow-y-auto">
           {/* Ratee Information Ledger */}
           <div className="bg-slate-50/70 border border-slate-200 rounded-md p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+                <span className="text-xs uppercase font-bold text-slate-500 tracking-wider block">
                   Employee Evaluated
                 </span>
                 <span className="text-sm font-bold text-slate-900 block mt-0.5">
@@ -71,7 +71,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
               </div>
 
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+                <span className="text-xs uppercase font-bold text-slate-500 tracking-wider block">
                   Rating Period &amp; Date
                 </span>
                 <span className="text-sm font-bold text-[#0038A8] font-mono tabular-nums block mt-0.5">
@@ -95,14 +95,14 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
 
           {/* RPMS Dimension Scoring Matrix */}
           <div className="space-y-2">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-slate-900 tracking-wider">
               RPMS Dimensions &amp; Weighted Computations
             </h3>
 
-            <div className="border border-slate-200 rounded-md overflow-hidden">
+            <div className="border border-slate-200 rounded-md overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                  <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs uppercase tracking-wider">
                     <th className="py-2.5 px-3 font-bold">Dimension</th>
                     <th className="py-2.5 px-3 font-bold text-center">Weight</th>
                     <th className="py-2.5 px-3 font-bold text-center">Rating (1–5)</th>
@@ -112,7 +112,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                 <tbody className="divide-y divide-slate-200 bg-white">
                   <tr>
                     <td className="py-2 px-3 font-medium text-slate-800">
-                      Quality <span className="text-slate-500 text-[11px]">(Effectiveness &amp; Accuracy)</span>
+                      Quality <span className="text-slate-500 text-xs">(Effectiveness &amp; Accuracy)</span>
                     </td>
                     <td className="py-2 px-3 text-center font-mono tabular-nums text-slate-600">40%</td>
                     <td className="py-2 px-3 text-center font-mono tabular-nums font-semibold text-slate-900">
@@ -129,7 +129,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
 
                   <tr>
                     <td className="py-2 px-3 font-medium text-slate-800">
-                      Efficiency <span className="text-slate-500 text-[11px]">(Resource Management &amp; Output)</span>
+                      Efficiency <span className="text-slate-500 text-xs">(Resource Management &amp; Output)</span>
                     </td>
                     <td className="py-2 px-3 text-center font-mono tabular-nums text-slate-600">30%</td>
                     <td className="py-2 px-3 text-center font-mono tabular-nums font-semibold text-slate-900">
@@ -146,7 +146,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
 
                   <tr>
                     <td className="py-2 px-3 font-medium text-slate-800">
-                      Timeliness <span className="text-slate-500 text-[11px]">(Punctuality &amp; Deadlines)</span>
+                      Timeliness <span className="text-slate-500 text-xs">(Punctuality &amp; Deadlines)</span>
                     </td>
                     <td className="py-2 px-3 text-center font-mono tabular-nums text-slate-600">30%</td>
                     <td className="py-2 px-3 text-center font-mono tabular-nums font-semibold text-slate-900">
@@ -178,7 +178,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           {/* Adjectival Rating & Promotion Endorsement Banner */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div className="border border-slate-200 rounded-md p-3 bg-white space-y-1">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 Official Adjectival Rating
               </span>
               <div className="flex items-center gap-2 mt-1">
@@ -188,11 +188,11 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                   {adjectival.label} ({adjectival.code})
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">{adjectival.description}</p>
+              <p className="text-xs text-slate-500 mt-1">{adjectival.description}</p>
             </div>
 
             <div className="border border-slate-200 rounded-md p-3 bg-white space-y-1">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 Promotion Rating Indicator
               </span>
               <div className="flex items-center gap-2 mt-1">
@@ -207,7 +207,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                   {review.is_promotion_eligible ? 'Meets configured rating threshold' : 'Regular Rating Recorded'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Configured rating threshold: 4.000. This indicator does not confirm promotion approval.
               </p>
             </div>
@@ -215,7 +215,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
 
           {/* Evaluation Remarks */}
           <div className="border border-slate-200 rounded-md p-3.5 bg-slate-50 text-xs space-y-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
               Performance Remarks &amp; Division Assessment
             </span>
             <p className="text-slate-800 italic leading-relaxed">
@@ -245,14 +245,14 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           )}
 
           <div className="text-center pt-2">
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">
+            <p className="text-xs text-slate-400 uppercase tracking-wide font-mono">
               Electronic Record • DepEd Division of Lucena City HRIS
             </p>
           </div>
         </div>
 
         {/* Action Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex items-center justify-end gap-3">
+        <div className="bg-slate-50 border-t border-slate-200 px-4 sm:px-6 py-3.5 flex shrink-0 items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}

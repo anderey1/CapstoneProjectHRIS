@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
  * Supports wrapping children or acting as a layout route (<Outlet />).
  * Optionally enforces specific user roles.
  */
-const ProtectedRoute = ({ children, roles }) => {
+const ProtectedRoute = ({ children, roles, superuserOnly = false }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -23,6 +23,10 @@ const ProtectedRoute = ({ children, roles }) => {
     return <Navigate to="/login" replace />;
   }
   
+  if (superuserOnly && !user.is_superuser) {
+    return <Navigate to="/" replace />;
+  }
+
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }

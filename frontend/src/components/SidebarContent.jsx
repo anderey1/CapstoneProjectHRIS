@@ -54,7 +54,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
     {
       title: 'Employee Self-Service',
       links: [
-        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Daily Time Clock', roles: ROLE_GROUPS.ALL },
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'My Attendance', roles: ROLE_GROUPS.ALL },
         { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'My DTR (Form 48)', roles: ROLE_GROUPS.ALL },
         { to: '/my-leaves', icon: <Clock className="w-4 h-4" />, label: 'My Leave Applications', roles: ROLE_GROUPS.ALL },
         { to: '/my-payslips', icon: <Wallet className="w-4 h-4" />, label: 'My Payslips & W-2', roles: ROLE_GROUPS.ALL },
@@ -65,6 +65,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
     {
       title: 'System & Security',
       links: [
+        { to: '/schools', icon: <School className="w-4 h-4" />, label: 'Schools', superuserOnly: true },
         { to: '/profile', icon: <UserCircle className="w-4 h-4" />, label: 'My Account & PDS', roles: ROLE_GROUPS.ALL },
         { to: '/audit-logs', icon: <ShieldAlert className="w-4 h-4" />, label: 'Activity Logs', roles: ROLE_GROUPS.MANAGEMENT },
       ]
@@ -130,7 +131,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
       }`}>
         {menuGroups.map((group, idx) => {
           const visibleLinks = group.links.filter(link => 
-            !link.roles || (user && link.roles.includes(user.role))
+            (!link.superuserOnly || user?.is_superuser) && (!link.roles || (user && link.roles.includes(user.role)))
           );
 
           if (visibleLinks.length === 0) return null;

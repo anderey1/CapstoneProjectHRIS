@@ -15,7 +15,7 @@ const DocumentPreviewModal = ({ previewFile, onClose, me }) => {
           <button 
             onClick={onClose} 
             className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
-          >
+           aria-label="Close dialog">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -43,28 +43,28 @@ const DocumentPreviewModal = ({ previewFile, onClose, me }) => {
                 <div className="flex items-center gap-2.5">
                   <img src="/Deped2.png" className="w-8 h-8 object-contain" alt="DepEd Logo" />
                   <div>
-                    <h4 className="font-bold text-xs uppercase tracking-wide">Republic of the Philippines</h4>
+                    <h4 className="font-bold text-xs tracking-wide">Republic of the Philippines</h4>
                     <h5 className="font-semibold text-xs text-[#FCD116]">Department of Education</h5>
-                    <p className="text-[10px] text-blue-200">SDO Lucena City</p>
+                    <p className="text-xs text-blue-200">SDO Lucena City</p>
                   </div>
                 </div>
-                <div className="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-medium">
+                <div className="px-2 py-0.5 bg-emerald-600 text-white rounded text-xs font-medium">
                   Verified
                 </div>
               </div>
 
               <div className="space-y-0.5">
-                <p className="text-[10px] text-blue-200 uppercase tracking-wide">Card Type</p>
+                <p className="text-xs text-blue-200 uppercase tracking-wide">Card Type</p>
                 <p className="font-semibold text-xs text-[#FCD116]">{previewFile.title}</p>
               </div>
 
               <div className="flex justify-between items-end border-t border-blue-800/80 pt-3">
                 <div>
-                  <p className="text-[10px] text-blue-200 uppercase tracking-wide">Cardholder Name</p>
+                  <p className="text-xs text-blue-200 uppercase tracking-wide">Cardholder Name</p>
                   <p className="font-semibold text-xs mt-0.5">{me?.first_name} {me?.last_name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-blue-200 uppercase tracking-wide">ID Number</p>
+                  <p className="text-xs text-blue-200 uppercase tracking-wide">ID Number</p>
                   <p className="font-mono font-semibold text-xs mt-0.5 text-[#FCD116]">{previewFile.number || 'N/A'}</p>
                 </div>
               </div>

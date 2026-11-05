@@ -5,184 +5,34 @@ from rest_framework.response import Response
 from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from datetime import datetime, timedelta
-from decimal import Decimal, InvalidOperation
-from ..permissions import IsAdminOrHR, IsAccountant, IsAdminOrHRorSuperintendent
-from ..models import Attendance, Employee, Role, AuditLog
+from datetime import time
+from ..permissions import IsAdminOrHR, IsAdminOrHRorSuperintendent
+from ..models import Attendance, Employee, AuditLog
 from ..serializers import AttendanceSerializer
 from .listing import PaginatedListMixin
-from ..utils import (
-    validate_attendance_geo,
-    get_attendance_status,
-    generate_daily_qr_token,
-    resolve_attendance_slot,
-    AttendanceSlotError,
-)
 from ..utils.pdf_generator import generate_form_48
 from django.http import HttpResponse
 
 class AttendanceViewSet(PaginatedListMixin, viewsets.ModelViewSet):
+    lookup_value_regex = r'\d+'
     queryset = Attendance.objects.all()
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method in ['GET'] or self.action == 'scan':
+        if self.action in ('import_preview', 'import_commit', 'import_template', 'biometric_mappings'):
+            return [IsAdminOrHR()]
+        if self.action == 'approve_dtr':
+            return [IsAdminOrHRorSuperintendent()]
+        if self.request.method == 'GET':
             return [IsAuthenticated()]
         return [IsAdminOrHR()]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_management:
+        if user.is_management and self.request.query_params.get('scope') != 'mine':
             return Attendance.objects.select_related('employee', 'employee__user').order_by('-date', '-pk')
         return Attendance.objects.select_related('employee', 'employee__user').filter(employee__user=user).order_by('-date', '-pk')
-
-    @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
-
-    def get_daily_qr(self, request):
-        try:
-            token = generate_daily_qr_token()
-            return Response({"token": token, "date": timezone.localdate()})
-        except Exception as e:
-            print(f"ERROR generating QR: {e}")
-            return Response({"detail": "Failed to generate QR code."}, status=400)
-
-    @action(detail=False, methods=['POST'], permission_classes=[IsAuthenticated])
-    def scan(self, request):
-        """Processes a QR scan, flagging accepted scans outside the school geofence."""
-        user = request.user
-        if not hasattr(user, 'employee_profile'):
-            return Response({"detail": "User account is not registered as an employee."}, status=400)
-        
-        employee = user.employee_profile
-        token = request.data.get('qr_token')
-        raw_lat = request.data.get('lat')
-        raw_lng = request.data.get('lng')
-
-        if raw_lat is None or raw_lng is None:
-            return Response({"detail": "GPS coordinates are required."}, status=400)
-
-        try:
-            if isinstance(raw_lat, bool) or isinstance(raw_lng, bool):
-                raise InvalidOperation
-            lat = Decimal(str(raw_lat))
-            lng = Decimal(str(raw_lng))
-        except (InvalidOperation, TypeError, ValueError):
-            return Response(
-                {"detail": "GPS coordinates must be numeric and within valid ranges."},
-                status=400,
-            )
-
-        if (
-            not lat.is_finite()
-            or not lng.is_finite()
-            or not Decimal("-90") <= lat <= Decimal("90")
-            or not Decimal("-180") <= lng <= Decimal("180")
-        ):
-            return Response(
-                {"detail": "GPS coordinates must be numeric and within valid ranges."},
-                status=400,
-            )
-
-        # 1. Validate QR Token
-        if token != generate_daily_qr_token():
-            return Response({"detail": "Invalid or expired QR code."}, status=400)
-
-        if not employee.school:
-            return Response({"detail": "Profile has no assigned school workstation."}, status=400)
-
-        # 2. Strict Geo-validation: reject out-of-zone scans
-        raw_accuracy = request.data.get('accuracy')
-        accuracy = 0
-        if raw_accuracy is not None:
-            try:
-                accuracy = max(0.0, float(raw_accuracy))
-            except (TypeError, ValueError):
-                accuracy = 0.0
-
-        is_in_zone, distance = validate_attendance_geo(
-            lat,
-            lng,
-            employee.school.latitude,
-            employee.school.longitude,
-            radius=employee.school.radius_meters,
-            accuracy=accuracy,
-        )
-
-        if not is_in_zone:
-            return Response(
-                {
-                    "detail": (
-                        f"Geofence validation failed: You are {round(distance, 1)}m away from "
-                        f"{employee.school.name} (allowed radius: {employee.school.radius_meters}m)."
-                    ),
-                    "distance": round(distance, 2),
-                    "allowed_radius": employee.school.radius_meters,
-                },
-                status=400,
-            )
-
-        # 3. Slot-Based Logic
-        now = timezone.localtime(timezone.now())
-        today = now.date()
-        current_time = now.time()
-        
-        with transaction.atomic():
-            attendance, created = Attendance.objects.select_for_update().get_or_create(
-                employee=employee, 
-                date=today
-            )
-
-            # Anti-spam logic: enforce a minimum 2-minute cooldown between logs
-            times = [t for t in [attendance.am_in, attendance.am_out, attendance.pm_in, attendance.pm_out, attendance.ot_in, attendance.ot_out] if t is not None]
-            if times:
-                latest_time = max(times)
-                latest_dt = datetime.combine(today, latest_time)
-                current_dt = datetime.combine(today, current_time)
-                time_diff = current_dt - latest_dt
-                if timedelta(0) <= time_diff < timedelta(minutes=2):
-                    diff = timedelta(minutes=2) - time_diff
-                    remaining_sec = int(diff.total_seconds())
-                    remaining_min = (remaining_sec // 60) + 1
-                    return Response({
-                        "detail": f"Please wait {remaining_min} minute(s) before logging attendance again to prevent duplicate logs."
-                    }, status=400)
-
-            try:
-                slot_mapped, message = resolve_attendance_slot(
-                    attendance=attendance,
-                    current_time=current_time,
-                    is_ot=request.data.get('is_ot', False)
-                )
-            except AttendanceSlotError as e:
-                err_payload = {"detail": e.detail}
-                if e.requires_ot_confirmation:
-                    err_payload["requires_ot_confirmation"] = True
-                return Response(err_payload, status=400)
-
-            # Update punctuality status only on entry slots:
-            # - am_in: check against 8:00 AM PST cutoff (present vs late)
-            # - pm_in without prior morning presence: half-day afternoon arrival is late
-            if slot_mapped == 'am_in':
-                attendance.status = get_attendance_status(now)
-            elif slot_mapped == 'pm_in' and not attendance.am_in:
-                attendance.status = 'late'
-
-            # Update Geo data
-            attendance.latitude = lat
-            attendance.longitude = lng
-            attendance.is_geo_flagged = False
-            
-            attendance.save()
-
-        return Response({
-            "message": message,
-            "slot": slot_mapped,
-            "time": current_time,
-            "status": attendance.status,
-            "is_geo_flagged": False,
-            "distance": round(distance, 2)
-        })
 
     @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
     def approve_dtr(self, request):
@@ -273,3 +123,107 @@ class AttendanceViewSet(PaginatedListMixin, viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         return response
+
+
+    @action(detail=False, methods=['get'])
+    def import_template(self, request):
+        from io import BytesIO
+        from openpyxl import Workbook
+        from ..services.attendance_import import HEADERS
+        file_type = request.query_params.get('file_type', 'xlsx')
+        if file_type == 'csv':
+            import csv
+            from io import StringIO
+            output = StringIO(newline='')
+            csv.writer(output).writerow(HEADERS)
+            response = HttpResponse(output.getvalue().encode('utf-8-sig'), content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="attendance-template.csv"'
+            return response
+        if file_type != 'xlsx':
+            return Response({'detail': 'Template type must be xlsx or csv.'}, status=400)
+        book = Workbook()
+        sheet = book.active
+        sheet.title = 'Attendance'
+        sheet.append(HEADERS)
+        sheet.freeze_panes = 'A2'
+        for column in sheet.columns:
+            sheet.column_dimensions[column[0].column_letter].width = 25
+        output = BytesIO()
+        book.save(output)
+        response = HttpResponse(output.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="attendance-template.xlsx"'
+        return response
+
+    @action(detail=False, methods=['get', 'post'])
+    def biometric_mappings(self, request):
+        from ..models import BiometricEmployeeMapping
+        from rest_framework.exceptions import ValidationError
+        if request.method == 'GET':
+            return Response(list(BiometricEmployeeMapping.objects.select_related('employee').order_by('source_id', 'biometric_id').values('id', 'source_id', 'biometric_id', 'employee_id', 'employee__first_name', 'employee__last_name')))
+        source = str(request.data.get('source_id', '')).strip()
+        external = str(request.data.get('biometric_id', '')).strip()
+        if not source or not external or len(source) > 100 or len(external) > 100:
+            raise ValidationError({'detail': 'Source and biometric ID are required (maximum 100 characters). All IDs are text.'})
+        from rest_framework import serializers
+        employee_id = serializers.IntegerField(min_value=1).run_validation(request.data.get('employee_id'))
+        employee = get_object_or_404(Employee, pk=employee_id)
+        from django.db import IntegrityError
+        try:
+            with transaction.atomic():
+                mapping, created = BiometricEmployeeMapping.objects.get_or_create(source_id=source, biometric_id=external, defaults={'employee': employee})
+                if mapping.employee_id != employee.pk:
+                    raise ValidationError({'detail': 'This source/biometric ID already belongs to another employee.'})
+                if created:
+                    AuditLog.objects.create(user=request.user, action=f'Attendance biometric mapping {mapping.pk} linked to employee #{employee.pk}')
+        except IntegrityError:
+            raise ValidationError({'detail': 'Mapping changed concurrently. Refresh and retry.'})
+        return Response({'id': mapping.pk, 'created': created})
+
+    @action(detail=False, methods=['post'])
+    def import_preview(self, request):
+        from django.core import signing
+        from ..services.attendance_import import read_upload, preview_rows
+        checksum, rows = read_upload(request.FILES.get('file'))
+        result, _ = preview_rows(rows)
+        result['checksum'] = checksum
+        result['preview_token'] = signing.dumps({'checksum': checksum, 'user': request.user.pk}, salt='attendance-import')
+        return Response(result)
+
+    @action(detail=False, methods=['post'])
+    def import_commit(self, request):
+        from django.core import signing
+        from django.db import IntegrityError
+        from rest_framework.exceptions import ValidationError
+        from ..services.attendance_import import read_upload, preview_rows
+        from ..models import AttendanceImportBatch
+        checksum, rows = read_upload(request.FILES.get('file'))
+        try:
+            preview = signing.loads(request.data.get('preview_token', ''), salt='attendance-import', max_age=1800)
+        except signing.BadSignature:
+            raise ValidationError({'detail': 'Preview expired or invalid. Preview the file again.'})
+        if preview != {'checksum': checksum, 'user': request.user.pk}:
+            raise ValidationError({'detail': 'The file changed. Preview it again.'})
+        try:
+            with transaction.atomic():
+                if AttendanceImportBatch.objects.filter(checksum=checksum).exists():
+                    return Response({'imported': 0, 'already_imported': True})
+                result, groups = preview_rows(rows, lock=True)
+                if not result['can_import']:
+                    return Response(result, status=400)
+                for group in groups.values():
+                    if not group['changes']:
+                        continue
+                    record = group['current'] or Attendance(employee=group['employee'], date=group['date'])
+                    for slot, stamp in group['changes'].items():
+                        setattr(record, slot, stamp)
+                    record.status = ('present' if record.am_in <= time(8) else 'late') if record.am_in else ('late' if record.pm_in else 'incomplete')
+                    record.is_dtr_approved = False
+                    record.dtr_approved_by = None
+                    record.dtr_approved_at = None
+                    record.save()
+                dates = [group['date'] for group in groups.values()]
+                batch = AttendanceImportBatch.objects.create(checksum=checksum, uploaded_by=request.user, imported_rows=result['new_punches'], duplicate_rows=result['duplicates'], start_date=min(dates), end_date=max(dates))
+                AuditLog.objects.create(user=request.user, action=f'Attendance import #{batch.pk}: {batch.imported_rows} new punches, {batch.duplicate_rows} duplicates, rejected=0, period={batch.start_date}..{batch.end_date}, sha256={checksum}')
+        except IntegrityError:
+            raise ValidationError({'detail': 'Attendance changed concurrently. Preview again.'})
+        return Response({'imported': batch.imported_rows, 'duplicates': batch.duplicate_rows, 'warnings': result['warnings']})

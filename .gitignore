@@ -38,14 +38,14 @@ frontend/test-results/
 /.modularization-*.xml
 /.modularization-api-*.json
 
-# Local databases & uploads
-*.sqlite3
-*.sqlite3-journal
-*.sqlite3-wal
-*.sqlite3-shm
-backend/db.sqlite3
-backend/media/
-media/
+# # Local databases & uploads
+# *.sqlite3
+# *.sqlite3-journal
+# *.sqlite3-wal
+# *.sqlite3-shm
+# backend/db.sqlite3
+# backend/media/
+# media/
 
 # AI agent & IDE artifacts
 .gemini/

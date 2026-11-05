@@ -45,11 +45,13 @@ const MainLayout = () => {
         onChange={toggleDrawer}
       />
 
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-white focus:p-3 focus:text-primary focus:outline-2">Skip to main content</a>
+
       {/* Page Content Shell */}
       <div className="drawer-content flex flex-col min-h-screen bg-base-200/50 min-w-0">
         <Navbar toggleDrawer={toggleDrawer} />
 
-        <main className="flex-1 pb-24 lg:pb-8">
+        <main id="main-content" tabIndex={-1} className="flex-1 pb-24 lg:pb-8">
           <Outlet />
         </main>
 

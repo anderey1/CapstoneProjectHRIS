@@ -45,11 +45,11 @@ const Login = () => {
             <img src="/Deped logo.png" alt="Department of Education" className="h-8 object-contain" />
             <div className="hidden sm:block ml-2 text-white">
               <p className="text-xs font-bold uppercase tracking-wide leading-none">Republic of the Philippines</p>
-              <p className="text-[11px] font-semibold text-blue-100 uppercase tracking-tight mt-0.5">Department of Education • Division of Lucena City</p>
+              <p className="text-xs font-semibold text-blue-100 uppercase tracking-tight mt-0.5">Department of Education • Division of Lucena City</p>
             </div>
           </div>
           <div className="text-right">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-900/60 border border-blue-400/30 rounded text-[11px] font-mono text-blue-100">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-900/60 border border-blue-400/30 rounded text-xs font-mono text-blue-100">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
               PORTAL SECURE
             </span>
@@ -62,7 +62,7 @@ const Login = () => {
         <div className="w-full max-w-md bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
           {/* Card Header Strip */}
           <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
-            <h1 className="text-base font-bold uppercase tracking-tight text-slate-900">
+            <h1 className="text-base font-bold tracking-tight text-slate-900">
               HRIS Administrative Portal
             </h1>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -82,7 +82,7 @@ const Login = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700 mb-1.5">
+                <label htmlFor="login-username" className="block text-xs font-semibold uppercase text-slate-700 mb-1.5">
                   Account Username
                 </label>
                 <div className="relative">
@@ -90,6 +90,7 @@ const Login = () => {
                     <User className="w-4 h-4" />
                   </div>
                   <input
+                    id="login-username"
                     name="username"
                     type="text"
                     autoComplete="username"
@@ -103,16 +104,17 @@ const Login = () => {
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-xs font-semibold uppercase text-slate-700">
+                  <label htmlFor="login-password" className="text-xs font-semibold uppercase text-slate-700">
                     Password
                   </label>
-                  <span className="text-[11px] text-slate-500">Contact HR if forgotten</span>
+                  <span className="text-xs text-slate-500">Contact HR if forgotten</span>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
+                    id="login-password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
@@ -123,9 +125,8 @@ const Login = () => {
                   />
                   <button
                     type="button"
-                    tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                    className="absolute inset-y-0 right-0 w-11 justify-center flex items-center text-slate-600 hover:text-slate-900 rounded focus-visible:outline-2 focus-visible:outline-primary"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
                   >
@@ -161,7 +162,7 @@ const Login = () => {
             </div>
 
             {/* Legal Advisory Notice */}
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-600 leading-relaxed">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded text-xs text-slate-600 leading-relaxed">
               <strong className="font-semibold text-slate-800">Notice:</strong> This is an official Republic of the Philippines information system. Unauthorized access or misuse is punishable under Republic Act No. 10173 (Data Privacy Act of 2012) and Republic Act No. 10175 (Cybercrime Prevention Act of 2012).
             </div>
           </div>

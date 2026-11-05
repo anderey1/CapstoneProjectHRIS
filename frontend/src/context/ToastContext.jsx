@@ -59,11 +59,11 @@ export const ToastProvider = ({ children }) => {
   const getToastClass = (type) => {
     switch (type) {
       case 'success':
-        return 'bg-emerald-600 text-white';
+        return 'bg-[#15803d] text-white';
       case 'error':
-        return 'bg-rose-600 text-white';
+        return 'bg-[#b91c1c] text-white';
       case 'warning':
-        return 'bg-amber-500 text-white';
+        return 'bg-[#b45309] text-white';
       default:
         return 'bg-[#0038A8] text-white';
     }
@@ -73,21 +73,22 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={toast}>
       {children}
       {toasts.length > 0 && (
-        <div className="toast toast-top toast-end z-[9999] mt-16 p-4 space-y-2 pointer-events-none">
+        <div className="toast toast-top toast-end z-[9999] mt-16 w-full max-w-md p-4 space-y-2 pointer-events-none">
           {toasts.map((t) => (
             <div
               key={t.id}
               data-exiting={exitingToastIds.has(t.id)}
-              className={`toast-item alert ${getToastClass(t.type)} shadow-xl border-none rounded-xl flex items-center justify-between gap-3 py-3 px-4 min-w-[280px] max-w-md pointer-events-auto`}
+              className={`toast-item alert ${getToastClass(t.type)} shadow-xl border-none rounded-xl flex items-center justify-between gap-3 py-3 px-4 w-full min-w-0 pointer-events-auto`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex min-w-0 items-center gap-2.5">
                 {getToastIcon(t.type)}
-                <span className="text-xs font-semibold tracking-wide">{t.message}</span>
+                <span role={t.type === 'error' ? 'alert' : 'status'} className="min-w-0 break-words text-sm font-medium">{t.message}</span>
               </div>
               <button
                 type="button"
+                aria-label="Dismiss notification"
                 onClick={() => removeToast(t.id)}
-                className="btn btn-ghost btn-xs btn-circle text-white/80 hover:text-white hover:bg-white/15"
+                className="btn btn-ghost btn-sm btn-circle shrink-0 text-white hover:text-white hover:bg-white/15"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

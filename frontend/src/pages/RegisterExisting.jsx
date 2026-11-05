@@ -196,7 +196,7 @@ const RegisterExisting = () => {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-lg font-bold uppercase tracking-tight text-slate-900">
+              <h1 className="text-lg font-bold tracking-tight text-slate-900">
                 Activation Request Submitted
               </h1>
               <p className="text-xs text-slate-600 mt-1">
@@ -239,7 +239,7 @@ const RegisterExisting = () => {
             <img src="/Deped logo.png" alt="Department of Education" className="h-8 object-contain" />
             <div className="text-white">
               <p className="text-xs font-bold uppercase tracking-wide leading-none">Republic of the Philippines</p>
-              <p className="text-[11px] font-semibold text-blue-100 uppercase tracking-tight mt-0.5">Department of Education • Division of Lucena City</p>
+              <p className="text-xs font-semibold text-blue-100 uppercase tracking-tight mt-0.5">Department of Education • Division of Lucena City</p>
             </div>
           </div>
           <Link to="/login" className="text-xs text-blue-100 hover:text-white flex items-center gap-1">
@@ -253,7 +253,7 @@ const RegisterExisting = () => {
         <div className="w-full max-w-2xl bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
           {/* Header Title */}
           <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
-            <h1 className="text-base font-bold uppercase tracking-tight text-slate-900">
+            <h1 className="text-base font-bold tracking-tight text-slate-900">
               Personnel Portal Account Activation
             </h1>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -273,19 +273,21 @@ const RegisterExisting = () => {
               {/* Section 1: Official Plantilla Identity */}
               <div>
                 <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
-                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-[10px] font-bold flex items-center justify-center font-mono">1</span>
-                  <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">
+                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-xs font-bold flex items-center justify-center font-mono">1</span>
+                  <h2 className="text-xs font-bold tracking-wide text-slate-800">
                     Official Plantilla Identity & Assignment
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-first_name" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       First Name <span className="text-red-600">*</span>
                     </label>
                     <input
+                      id="activation-first_name"
                       name="first_name"
+                      autoComplete="given-name"
                       value={formData.first_name}
                       onChange={handleChange}
                       type="text"
@@ -295,11 +297,13 @@ const RegisterExisting = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-last_name" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       Last Name <span className="text-red-600">*</span>
                     </label>
                     <input
+                      id="activation-last_name"
                       name="last_name"
+                      autoComplete="family-name"
                       value={formData.last_name}
                       onChange={handleChange}
                       type="text"
@@ -311,10 +315,11 @@ const RegisterExisting = () => {
                 </div>
 
                 <div className="mt-4">
-                  <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                  <label htmlFor="activation-role" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                     Staff Classification <span className="text-red-600">*</span>
                   </label>
                   <select
+                    id="activation-role"
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
@@ -329,10 +334,11 @@ const RegisterExisting = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-department" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       Department / Area <span className="text-red-600">*</span>
                     </label>
                     <select
+                      id="activation-department"
                       name="department"
                       value={formData.department}
                       onChange={handleChange}
@@ -346,10 +352,11 @@ const RegisterExisting = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-position" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       Plantilla Position <span className="text-red-600">*</span>
                     </label>
                     <select
+                      id="activation-position"
                       name="position"
                       value={formData.position}
                       onChange={handleChange}
@@ -371,19 +378,21 @@ const RegisterExisting = () => {
               {/* Section 2: Portal Credentials */}
               <div>
                 <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
-                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-[10px] font-bold flex items-center justify-center font-mono">2</span>
-                  <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">
+                  <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-xs font-bold flex items-center justify-center font-mono">2</span>
+                  <h2 className="text-xs font-bold tracking-wide text-slate-800">
                     Portal Security & Login Credentials
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-username" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       Preferred Username <span className="text-red-600">*</span>
                     </label>
                     <input
+                      id="activation-username"
                       name="username"
+                      autoComplete="username"
                       value={formData.username}
                       onChange={handleChange}
                       type="text"
@@ -393,11 +402,13 @@ const RegisterExisting = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-email" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       Official / DepEd Email <span className="text-red-600">*</span>
                     </label>
                     <input
+                      id="activation-email"
                       name="email"
+                      autoComplete="email"
                       value={formData.email}
                       onChange={handleChange}
                       type="email"
@@ -410,12 +421,14 @@ const RegisterExisting = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-password" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       Account Password <span className="text-red-600">*</span>
                     </label>
                     <div className="relative">
                       <input
+                        id="activation-password"
                         name="password"
+                        autoComplete="new-password"
                         value={formData.password}
                         onChange={handleChange}
                         type={showPassword ? 'text' : 'password'}
@@ -425,9 +438,8 @@ const RegisterExisting = () => {
                       />
                       <button
                         type="button"
-                        tabIndex={-1}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                        className="absolute inset-y-0 right-0 w-11 justify-center flex items-center text-slate-600 hover:text-slate-900 rounded focus-visible:outline-2 focus-visible:outline-primary"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -435,12 +447,14 @@ const RegisterExisting = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-slate-700 mb-1">
+                    <label htmlFor="activation-confirm_password" className="block text-xs font-semibold uppercase text-slate-700 mb-1">
                       Confirm Password <span className="text-red-600">*</span>
                     </label>
                     <div className="relative">
                       <input
+                        id="activation-confirm_password"
                         name="confirm_password"
+                        autoComplete="new-password"
                         value={formData.confirm_password}
                         onChange={handleChange}
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -450,9 +464,8 @@ const RegisterExisting = () => {
                       />
                       <button
                         type="button"
-                        tabIndex={-1}
-                        aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                        aria-label={showConfirmPassword ? 'Hide confirmation password' : 'Show confirmation password'}
+                        className="absolute inset-y-0 right-0 w-11 justify-center flex items-center text-slate-600 hover:text-slate-900 rounded focus-visible:outline-2 focus-visible:outline-primary"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

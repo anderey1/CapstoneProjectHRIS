@@ -35,7 +35,7 @@ const LeaveDocketTable = ({ filteredLeaves = [], onSelectLeave }) => {
       <div className="overflow-x-auto">
         <table className="table table-xs w-full">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-[11px] uppercase tracking-wider">
+            <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs uppercase tracking-wider">
               <th className="py-2.5 px-3">Application ID</th>
               <th className="py-2.5 px-3">Applicant Name</th>
               <th className="py-2.5 px-3">Office / Station</th>
@@ -61,14 +61,14 @@ const LeaveDocketTable = ({ filteredLeaves = [], onSelectLeave }) => {
                       isActionRequired ? 'bg-amber-50/30' : ''
                     }`}
                   >
-                    <td className="py-2 px-3 font-mono text-[11px] font-medium text-slate-500">
+                    <td className="py-2 px-3 font-mono text-xs font-medium text-slate-500">
                       #{leave.id}
                     </td>
                     <td className="py-2 px-3">
                       <div className="font-semibold text-slate-900 text-xs">
                         {leave.employee_name}
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">
+                      <div className="text-xs text-slate-400 font-mono">
                         Filing Date: {new Date(leave.date_applied).toLocaleDateString()}
                       </div>
                     </td>
@@ -80,7 +80,7 @@ const LeaveDocketTable = ({ filteredLeaves = [], onSelectLeave }) => {
                         {leave.leave_type.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="py-2 px-3 font-mono text-[11px] tabular-nums text-slate-600">
+                    <td className="py-2 px-3 font-mono text-xs tabular-nums text-slate-600">
                       {new Date(leave.start_date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -106,7 +106,7 @@ const LeaveDocketTable = ({ filteredLeaves = [], onSelectLeave }) => {
                           {formatStatus(leave.status)}
                         </span>
                         {isActionRequired && (
-                          <span className="text-[9px] font-bold text-amber-700 uppercase tracking-tight">
+                          <span className="text-xs font-bold text-amber-700 uppercase tracking-tight">
                             ● Action Required
                           </span>
                         )}

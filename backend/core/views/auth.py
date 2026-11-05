@@ -9,6 +9,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Add custom claims
         token['user_id'] = user.id
         token['role'] = user.role
+        token['is_superuser'] = user.is_superuser
         token['username'] = user.username
         if hasattr(user, 'employee_profile'):
             token['employee_id'] = user.employee_profile.id
@@ -28,6 +29,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data['id'] = self.user.id
         data['role'] = self.user.role
+        data['is_superuser'] = self.user.is_superuser
         data['username'] = self.user.username
         if hasattr(self.user, 'employee_profile'):
             data['employee_id'] = self.user.employee_profile.id

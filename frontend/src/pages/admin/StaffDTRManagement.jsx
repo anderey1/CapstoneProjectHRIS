@@ -1,6 +1,7 @@
+import { useSearchParams } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { FileText, Download, AlertCircle, Calendar, Users, Search } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FileText, Download, AlertCircle, Users, Search } from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { fetchAllPages } from '../../api/pagination';
@@ -24,8 +25,15 @@ const formatTime = (timeStr, fallback = '---') => {
  * and export CSC Form 48 DTR records for any employee across the division.
  */
 const StaffDTRManagement = () => {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [params] = useSearchParams();
+  const client = useQueryClient();
+  const approve = useMutation({
+    mutationFn: () => api.post('attendance/approve_dtr/', { employee_id: selectedEmployeeId, month: selectedMonth }),
+    onSuccess: () => { client.invalidateQueries({ queryKey: [QUERY_KEYS.ATTENDANCE] }); client.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD_STATS] }); },
+    onError: error => setErrorMessage(error.response?.data?.detail || 'DTR approval failed.'),
+  });
+  const [selectedMonth, setSelectedMonth] = useState(() => /^\d{4}-(0[1-9]|1[0-2])$/.test(params.get('month') || '') ? params.get('month') : new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(() => /^\d+$/.test(params.get('employee_id') || '') ? params.get('employee_id') : '');
   const [searchTerm, setSearchTerm] = useState('');
   const [downloading, setDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -106,7 +114,7 @@ const StaffDTRManagement = () => {
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Staff DTR Directory</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Staff daily time records</h1>
               <p className="text-xs text-slate-500">Civil Service Commission Form No. 48 Division Management & Export</p>
             </div>
           </div>
@@ -118,20 +126,22 @@ const StaffDTRManagement = () => {
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
+            aria-label="DTR month"
             className="input input-sm input-bordered text-xs bg-white text-slate-700"
           />
 
+      <button type="button" className="btn btn-primary btn-sm" disabled={!records.length || approve.isPending || records.every(row => row.is_dtr_approved)} onClick={() => approve.mutate()}>Approve monthly DTR</button>
           <div className="dropdown dropdown-end">
             <button
               tabIndex={0}
               disabled={!selectedEmployeeId || downloading}
-              className={`btn btn-primary btn-sm bg-[#0038A8] hover:bg-[#002b80] text-white border-none rounded-md px-4 text-xs font-semibold ${downloading ? 'loading' : ''}`}
+              className={`btn btn-outline btn-sm border-slate-300 rounded-md px-4 text-xs font-semibold ${downloading ? 'loading' : ''}`}
             >
               <Download className="w-3.5 h-3.5 mr-1.5" />
               Export Form 48 PDF
             </button>
             <ul tabIndex={0} className="dropdown-content z-[20] menu p-2 shadow-xl bg-base-100 border border-base-200 rounded-xl w-52 mt-2">
-              <li className="menu-title font-black text-[9px] uppercase tracking-widest opacity-40">Choose Cutoff</li>
+              <li className="menu-title font-semibold text-xs uppercase tracking-wide text-slate-600">Choose Cutoff</li>
               <li><button type="button" onClick={() => handleDownload('1')} className="font-bold text-xs uppercase py-2.5">1st Cutoff (1-15)</button></li>
               <li><button type="button" onClick={() => handleDownload('2')} className="font-bold text-xs uppercase py-2.5">2nd Cutoff (16-31)</button></li>
               <li><button type="button" onClick={() => handleDownload('split')} className="font-bold text-xs uppercase py-2.5">Split (Both Cards)</button></li>
@@ -144,7 +154,7 @@ const StaffDTRManagement = () => {
       {errorMessage && (
         <div className="alert alert-error rounded-xl shadow-sm">
           <AlertCircle className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-widest">{errorMessage}</span>
+          <span className="text-xs font-bold uppercase tracking-wide">{errorMessage}</span>
         </div>
       )}
 
@@ -188,7 +198,7 @@ const StaffDTRManagement = () => {
                   }`}
                 >
                   <span className="font-semibold">{emp.first_name} {emp.last_name}</span>
-                  <span className="text-[10px] text-slate-400 truncate">{emp.position || 'Staff'} • {emp.department}</span>
+                  <span className="text-xs text-slate-400 truncate">{emp.position || 'Staff'} • {emp.department}</span>
                 </button>
               ))
             )}
@@ -210,7 +220,7 @@ const StaffDTRManagement = () => {
             <div className="bg-white rounded-lg shadow-sm border border-slate-300 overflow-hidden">
               <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase">
+                  <h3 className="text-sm font-bold text-slate-900 ">
                     {selectedEmployee?.first_name} {selectedEmployee?.last_name}
                   </h3>
                   <p className="text-xs text-slate-500 font-mono">
@@ -225,14 +235,14 @@ const StaffDTRManagement = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-xs tracking-wider">
                       <th className="px-4 py-3">Calendar Date</th>
                       <th className="px-4 py-3 text-center">A.M. Arrival</th>
                       <th className="px-4 py-3 text-center">A.M. Departure</th>
                       <th className="px-4 py-3 text-center">P.M. Arrival</th>
                       <th className="px-4 py-3 text-center">P.M. Departure</th>
-                      <th className="px-4 py-3 text-center">Undertime (Mins)</th>
-                      <th className="px-4 py-3 text-right">Verification Status</th>
+                      <th className="px-4 py-3 text-center">Attendance</th>
+                      <th className="px-4 py-3 text-right">DTR review</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -242,16 +252,16 @@ const StaffDTRManagement = () => {
                           <td className="px-4 py-3 font-semibold text-slate-900">
                             {row.date ? new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' }) : '---'}
                           </td>
-                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.time_in)}</td>
-                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.lunch_out)}</td>
-                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.lunch_in)}</td>
-                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.time_out)}</td>
-                          <td className="px-4 py-3 text-center text-slate-400 font-mono">{row.undertime_minutes ? `${row.undertime_minutes}m` : '---'}</td>
+                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.am_in)}</td>
+                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.am_out)}</td>
+                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.pm_in)}</td>
+                          <td className="px-4 py-3 text-center font-mono">{formatTime(row.pm_out)}</td>
+                          <td className="px-4 py-3 text-center text-slate-400 font-mono">{row.status}</td>
                           <td className="px-4 py-3 text-right">
                             <span className={`badge badge-xs text-[10px] font-bold uppercase ${
-                              row.status === 'present' ? 'badge-success text-white' : 'badge-ghost'
+                              row.is_dtr_approved ? 'badge-success text-white' : 'badge-ghost'
                             }`}>
-                              {row.status || 'present'}
+                              {row.is_dtr_approved ? 'Approved' : 'Pending review'}
                             </span>
                           </td>
                         </tr>

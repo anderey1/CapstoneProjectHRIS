@@ -66,7 +66,7 @@ const IPCRFManagement = () => {
     return (
       <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
         <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Loading RPMS Division Master Ledger...
         </p>
       </div>
@@ -78,16 +78,13 @@ const IPCRFManagement = () => {
       {/* DepEd Institutional Header */}
       <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
-            Republic of the Philippines • Department of Education • SDO Lucena City
-          </span>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <Award className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                RPMS / IPCRF Performance Ledger
+                Performance reviews (RPMS / IPCRF)
               </h1>
             </div>
           </div>
@@ -113,7 +110,7 @@ const IPCRFManagement = () => {
       {/* 4-Metric Institutional Status Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
             Evaluations Recorded
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -122,11 +119,11 @@ const IPCRFManagement = () => {
             </span>
             <span className="text-xs text-slate-500">records</span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-0.5">Division personnel</span>
+          <span className="text-xs text-slate-500 block mt-0.5">Division personnel</span>
         </div>
 
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
             Outstanding (O)
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -135,11 +132,11 @@ const IPCRFManagement = () => {
             </span>
             <span className="text-xs text-slate-500">personnel</span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-0.5">Score: 4.500 – 5.000</span>
+          <span className="text-xs text-slate-500 block mt-0.5">Score: 4.500 – 5.000</span>
         </div>
 
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
             Very Satisfactory (VS)
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -148,11 +145,11 @@ const IPCRFManagement = () => {
             </span>
             <span className="text-xs text-slate-500">personnel</span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-0.5">Score: 3.500 – 4.499</span>
+          <span className="text-xs text-slate-500 block mt-0.5">Score: 3.500 – 4.499</span>
         </div>
 
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
             Promotion Eligible
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -161,7 +158,7 @@ const IPCRFManagement = () => {
             </span>
             <span className="text-xs text-slate-500">qualified</span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-0.5">Meets CSC rating threshold</span>
+          <span className="text-xs text-slate-500 block mt-0.5">Meets CSC rating threshold</span>
         </div>
       </div>
 
@@ -171,7 +168,8 @@ const IPCRFManagement = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search employee, plantilla, or period..."
+            aria-label="Search performance reviews"
+              placeholder="Search employee, plantilla, or period..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full text-xs bg-slate-50 border border-slate-300 rounded-md pl-9 pr-3 py-1.5 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
@@ -183,6 +181,7 @@ const IPCRFManagement = () => {
           <div className="flex items-center gap-1.5 text-xs text-slate-600">
             <Filter className="w-3.5 h-3.5 text-slate-500" />
             <select
+              aria-label="Filter by review period"
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
@@ -198,7 +197,8 @@ const IPCRFManagement = () => {
 
           {/* Adjectival Rating Filter */}
           <select
-            value={selectedRatingFilter}
+            aria-label="Filter by rating"
+              value={selectedRatingFilter}
             onChange={(e) => setSelectedRatingFilter(e.target.value)}
             className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
           >
@@ -217,7 +217,7 @@ const IPCRFManagement = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-[11px] uppercase tracking-wider">
+              <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-xs uppercase tracking-wider">
                 <th className="py-3 px-4 font-bold">Ratee Personnel</th>
                 <th className="py-3 px-4 font-bold">Plantilla Position</th>
                 <th className="py-3 px-4 font-bold">Rating Period</th>
@@ -246,7 +246,7 @@ const IPCRFManagement = () => {
                         <div className="font-semibold text-slate-900 text-xs">
                           {r.employee_name || 'Plantilla Employee'}
                         </div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-xs text-slate-500">
                           {r.department || 'SDO Lucena City'}
                         </div>
                       </td>
@@ -263,7 +263,7 @@ const IPCRFManagement = () => {
 
                       {/* RPMS Breakdown (Q: 40%, E: 30%, T: 30%) */}
                       <td className="py-3 px-3 text-center">
-                        <div className="inline-flex items-center gap-1 font-mono tabular-nums text-[11px]">
+                        <div className="inline-flex items-center gap-1 font-mono tabular-nums text-xs">
                           <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200" title="Quality (40%)">
                             Q:{r.quality_score ?? '—'}
                           </span>
@@ -317,7 +317,7 @@ const IPCRFManagement = () => {
                             PDF/File
                           </a>
                         ) : (
-                          <span className="text-[11px] text-slate-400 font-mono">None</span>
+                          <span className="text-xs text-slate-400 font-mono">None</span>
                         )}
                       </td>
 
@@ -371,7 +371,7 @@ const IPCRFManagement = () => {
         </div>
 
         {/* Footer Ledger Metadata */}
-        <div className="bg-slate-50 border-t border-slate-300 px-4 py-2.5 flex items-center justify-between text-[11px] text-slate-600">
+        <div className="bg-slate-50 border-t border-slate-300 px-4 py-2.5 flex items-center justify-between text-xs text-slate-600">
           <span>
             Showing <strong className="font-semibold text-slate-800">{filteredReviews.length}</strong> of{' '}
             <strong className="font-semibold text-slate-800">{pagination.count}</strong> matching evaluation records

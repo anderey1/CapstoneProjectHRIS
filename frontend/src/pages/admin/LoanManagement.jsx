@@ -97,9 +97,9 @@ const LoanManagement = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Provident Fund Credit Administration
+                  Provident loan management
                 </h1>
-                <span className="badge badge-sm bg-slate-100 text-slate-700 border-slate-200 font-semibold text-[10px]">
+                <span className="badge badge-sm bg-slate-100 text-slate-700 border-slate-200 font-semibold text-xs">
                   DepEd Order No. 37, s. 2018
                 </span>
               </div>
@@ -123,56 +123,56 @@ const LoanManagement = () => {
       {/* Portfolio Operational Metrics Strip (4 Columns) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Awaiting Verification
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
               {counts.pending || 0}
             </span>
-            <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+            <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
               Accountant Audit
             </span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Superintendent Endorsement
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
               {counts.verified || 0}
             </span>
-            <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
               Executive Review
             </span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Ready for Disbursement
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
               {counts.approved || 0}
             </span>
-            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
               Cashier / ATM
             </span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Active Portfolio Disbursed
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl font-bold text-[#0038A8] font-mono tabular-nums">
               {formatCurrency(totalReleasedValue)}
             </span>
-            <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+            <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
               Servicing
             </span>
           </div>
@@ -231,7 +231,7 @@ const LoanManagement = () => {
           <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
             Provident Fund Credit Ledger ({filteredLoans.length} Records)
           </span>
-          <span className="text-[11px] text-slate-500 font-medium">
+          <span className="text-xs text-slate-500 font-medium">
             Semi-monthly amortizations automatically deducted via General Payroll
           </span>
         </div>
@@ -239,7 +239,7 @@ const LoanManagement = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50/90 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+              <tr className="bg-slate-50/90 text-xs font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                 <th className="px-4 py-3">Loan Ref</th>
                 <th className="px-4 py-3">Borrower & Station</th>
                 <th className="px-3 py-3 text-right">Principal</th>
@@ -265,7 +265,7 @@ const LoanManagement = () => {
                         <div className="font-semibold text-slate-900 leading-tight">
                           {loan.employee_name}
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
+                        <div className="text-xs text-slate-500 mt-0.5">
                           {loan.department || 'Division Office'}
                         </div>
                       </td>
@@ -352,7 +352,7 @@ const LoanManagement = () => {
                     [Ref #PF-{selectedLoan.id.toString().padStart(4, '0')}]
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Borrower: <strong className="text-slate-800">{selectedLoan.employee_name}</strong> • Applied: {new Date(selectedLoan.date_applied).toLocaleDateString()}
                 </p>
               </div>
@@ -378,43 +378,43 @@ const LoanManagement = () => {
                   {/* Financial Parameters Strip */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Principal Amount</span>
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Principal Amount</span>
                       <span className="text-base font-bold text-slate-900 font-mono">{formatCurrency(selectedLoan.loan_amount)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Monthly Amortization</span>
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Monthly Amortization</span>
                       <span className="text-base font-bold text-[#0038A8] font-mono">{formatCurrency(selectedLoan.monthly_payment)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Total Repayment</span>
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Repayment</span>
                       <span className="text-base font-bold text-slate-900 font-mono">{formatCurrency(selectedLoan.total_amount)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Term & Rate</span>
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Term & Rate</span>
                       <span className="text-base font-bold text-slate-800 font-mono">{selectedLoan.term_months} mos @ {selectedLoan.interest_rate}%</span>
                     </div>
                   </div>
 
                   {/* Application Particulars */}
                   <div className="space-y-2">
-                    <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                    <h4 className="text-xs font-bold text-slate-700 tracking-wide">
                       Borrower Application Particulars
                     </h4>
                     <div className="bg-white p-3 rounded-md border border-slate-200 space-y-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
-                          <span className="text-[10px] text-slate-500 block">Designated Co-Maker:</span>
+                          <span className="text-xs text-slate-500 block">Designated Co-Maker:</span>
                           <span className="font-semibold text-slate-800">{selectedLoan.co_maker_name_display || selectedLoan.co_maker_name || 'None Declared'}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 block">Loan Classification / Purpose:</span>
+                          <span className="text-xs text-slate-500 block">Loan Classification / Purpose:</span>
                           <span className="font-semibold text-slate-800">{PURPOSE_LABELS[selectedLoan.purpose] || selectedLoan.purpose}</span>
                         </div>
                       </div>
 
                       {selectedLoan.letter_request && (
                         <div className="pt-2 border-t border-slate-100">
-                          <span className="text-[10px] text-slate-500 block mb-0.5">Letter of Intent / Request Note:</span>
+                          <span className="text-xs text-slate-500 block mb-0.5">Letter of Intent / Request Note:</span>
                           <p className="text-xs text-slate-600 italic bg-slate-50 p-2.5 rounded border border-slate-100">
                             "{selectedLoan.letter_request}"
                           </p>
@@ -427,7 +427,7 @@ const LoanManagement = () => {
                   {checklist && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                        <h4 className="text-xs font-bold text-slate-700 tracking-wide">
                           Supporting Document Compliance
                         </h4>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
@@ -464,7 +464,7 @@ const LoanManagement = () => {
                                   </a>
                                 )}
                                 {!doc.required && (
-                                  <span className="text-[9px] text-slate-400 font-semibold">Optional</span>
+                                  <span className="text-xs text-slate-400 font-semibold">Optional</span>
                                 )}
                               </div>
                             </div>
@@ -479,10 +479,10 @@ const LoanManagement = () => {
                     <div className="p-3 bg-amber-50/70 rounded-md border border-amber-200 flex items-start gap-2.5">
                       <MessageSquare className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">Executive Audit Remarks</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-800 block">Executive Audit Remarks</span>
                         <p className="text-xs text-amber-900 mt-0.5">{selectedLoan.remarks}</p>
                         {selectedLoan.reviewed_by_name && (
-                          <span className="text-[10px] text-amber-700 font-medium block mt-1">
+                          <span className="text-xs text-amber-700 font-medium block mt-1">
                             Audited by: {selectedLoan.reviewed_by_name} ({selectedLoan.reviewed_at ? new Date(selectedLoan.reviewed_at).toLocaleDateString() : ''})
                           </span>
                         )}
@@ -493,7 +493,7 @@ const LoanManagement = () => {
                   {/* Operational Audit Actions */}
                   {selectedLoan.status === 'pending' && (
                     <div className="space-y-3 pt-3 border-t border-slate-200">
-                      <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                      <h4 className="text-xs font-bold text-slate-700 tracking-wide">
                         Audit Actions (Step 1: Document Verification)
                       </h4>
 
@@ -532,7 +532,7 @@ const LoanManagement = () => {
 
                           {/* Reject Drawer */}
                           <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
-                            <label className="text-[11px] font-semibold text-slate-700 block">
+                            <label className="text-xs font-semibold text-slate-700 block">
                               Disapprove / Return Application (Specify COA audit justification):
                             </label>
                             <textarea
@@ -566,7 +566,7 @@ const LoanManagement = () => {
 
                   {selectedLoan.status === 'verified' && (
                     <div className="space-y-3 pt-3 border-t border-slate-200">
-                      <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                      <h4 className="text-xs font-bold text-slate-700 tracking-wide">
                         Executive Approval (Step 2: Superintendent Certification)
                       </h4>
 
@@ -626,7 +626,7 @@ const LoanManagement = () => {
 
                   {selectedLoan.status === 'approved' && (
                     <div className="space-y-3 pt-3 border-t border-slate-200">
-                      <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                      <h4 className="text-xs font-bold text-slate-700 tracking-wide">
                         Disbursement & Release (Step 3: ATM / Check Payout)
                       </h4>
 

@@ -1,149 +1,52 @@
 import React from 'react';
-import { Upload, FileText, Trash2, Plus, AlertCircle } from 'lucide-react';
+import { FileText, Trash2, AlertCircle } from 'lucide-react';
 
 const DocumentUploadCard = ({ field, value, error, onFileChange, onFileRemove }) => {
   const fileInputId = `file-input-${field.key}`;
+  const files = field.multiple ? value || [] : value ? [value] : [];
 
   return (
-    <div className="p-4 bg-base-50/30 border border-base-200 rounded-xl space-y-3 hover:shadow-sm transition-shadow">
-      <div className="flex justify-between items-start gap-4">
-        <div>
-          <h5 className="text-[11px] font-black text-base-content/85 flex items-center gap-1">
-            {field.name}
-            {field.mandatory && <span className="text-error font-extrabold">*</span>}
-          </h5>
-          <p className="text-[10px] font-bold text-base-content/50 leading-relaxed mt-0.5">
-            {field.description}
-          </p>
-          {field.extraInfo && (
-            <p className="text-[9px] font-medium text-primary/75 italic mt-0.5">
-              {field.extraInfo}
-            </p>
-          )}
-          {field.key === 'letter_of_intent' && (
-            <div className="mt-1.5 p-2.5 bg-primary/5 rounded-lg border border-primary/10 text-[9px] text-[#0038A8] font-bold leading-normal">
-              <span className="font-extrabold block text-[8px] uppercase tracking-wider mb-0.5 opacity-70">Addressed To:</span>
-              SUSAN D. ORBIANA<br />
-              Schools Division Superintendent<br />
-              Division of Lucena City
-            </div>
-          )}
-        </div>
-        
-        <div className="text-right shrink-0">
-          <span className="inline-block px-2 py-0.5 bg-base-200 text-base-content/60 rounded-md text-[8px] font-black uppercase tracking-wider">
-            PDF, JPG, PNG (Max 10MB)
-          </span>
-        </div>
-      </div>
-
+    <div className="bg-white py-5 space-y-3">
       <div>
-        {error && (
-          <div className="flex items-center gap-1.5 p-2 mb-2 bg-error/5 border border-error/15 rounded-lg text-[9px] font-bold text-error">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {(!value || (field.multiple && value.length === 0)) ? (
-          <div>
-            <label 
-              htmlFor={fileInputId}
-              className="flex flex-col items-center justify-center py-4 border-2 border-dashed border-base-300 hover:border-primary/50 bg-white hover:bg-primary/5 cursor-pointer rounded-xl transition-all group"
-            >
-              <Upload className="w-5 h-5 text-base-content/30 group-hover:text-primary group-hover:scale-105 transition-all mb-1" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#0038A8]">
-                {field.multiple ? "Upload Files" : "Upload Document"}
-              </span>
-              <input 
-                id={fileInputId}
-                type="file"
-                multiple={field.multiple}
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => onFileChange(field.key, e, field.multiple)}
-                className="hidden"
-              />
-            </label>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            {field.multiple ? (
-              value.map((file, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-base-200 rounded-lg shadow-inner">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="w-4 h-4 text-primary shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold truncate pr-3 text-base-content/85">{file.name}</p>
-                      <p className="text-[8px] font-black text-base-content/30 uppercase">
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onFileRemove(field.key, true, idx)}
-                    className="btn btn-ghost btn-xs text-error font-extrabold uppercase hover:bg-error/10 min-h-0 h-6 px-1.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="flex items-center justify-between p-2.5 bg-white border border-base-200 rounded-lg shadow-inner">
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-4 h-4 text-primary shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold truncate pr-3 text-base-content/85">{value.name}</p>
-                    <p className="text-[8px] font-black text-base-content/30 uppercase">
-                      {(value.size / (1024 * 1024)).toFixed(2)} MB
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <label 
-                    htmlFor={fileInputId}
-                    className="btn bg-[#0038A8] hover:bg-[#002d86] text-white border-none btn-xs text-[8px] font-black uppercase tracking-wider rounded-md h-6 px-2.5 flex items-center justify-center cursor-pointer"
-                  >
-                    Replace
-                  </label>
-                  <input 
-                    id={fileInputId}
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => onFileChange(field.key, e, false)}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onFileRemove(field.key, false)}
-                    className="btn btn-ghost btn-xs text-error font-extrabold uppercase hover:bg-error/10 min-h-0 h-6 px-1.5"
-                  >
-                    Remove
-                  </button>
-                </div>
+        <h5 id={`${fileInputId}-title`} className="text-sm font-semibold text-slate-900">
+          {field.name} <span className="font-normal text-slate-600">({field.mandatory ? 'Required' : 'Optional'})</span>
+        </h5>
+        <p id={`${fileInputId}-description`} className="mt-1 text-sm leading-relaxed text-slate-600">{field.description}</p>
+        {field.extraInfo && <p className="mt-1 text-xs text-slate-600">{field.extraInfo}</p>}
+      </div>
+      {error && (
+        <div id={`${fileInputId}-error`} role="alert" className="flex items-start gap-2 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="min-w-0 break-words">{error}</span>
+        </div>
+      )}
+      {files.length > 0 && (
+        <ul className="space-y-2" aria-label={`${field.name} selected files`}>
+          {files.map((file, index) => (
+            <li key={`${file.name}-${index}`} className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 p-2">
+              <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-sm text-slate-900">{file.name}</p>
+                <p className="text-xs text-slate-600">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
               </div>
-            )}
-
-            {field.multiple && (
-              <div className="flex justify-end pt-0.5">
-                <label 
-                  htmlFor={`${fileInputId}-more`}
-                  className="btn btn-outline btn-primary btn-xs text-[8px] font-black uppercase tracking-wider rounded-md h-6 flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" /> Add More
-                </label>
-                <input 
-                  id={`${fileInputId}-more`}
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => onFileChange(field.key, e, true)}
-                  className="hidden"
-                />
-              </div>
-            )}
-          </div>
-        )}
+              <button type="button" aria-label={`Remove ${file.name}`} onClick={() => onFileRemove(field.key, !!field.multiple, field.multiple ? index : null)} className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded text-error hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-primary">
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div>
+        <label htmlFor={fileInputId} className="mb-1.5 block text-sm font-medium text-primary">
+          {files.length ? field.multiple ? 'Add files' : 'Replace file' : field.multiple ? 'Choose files' : 'Choose file'}
+        </label>
+        <input id={fileInputId} type="file" multiple={field.multiple} accept=".pdf,.jpg,.jpeg,.png"
+          aria-labelledby={`${fileInputId}-title`}
+          aria-invalid={!!error}
+          aria-describedby={`${fileInputId}-description ${fileInputId}-formats${error ? ` ${fileInputId}-error` : ''}`}
+          onChange={(event) => onFileChange(field.key, event, !!field.multiple)}
+          className="block min-h-11 w-full min-w-0 rounded border border-slate-300 bg-white text-sm text-slate-700 file:mr-3 file:min-h-11 file:cursor-pointer file:border-0 file:bg-slate-100 file:px-3 file:text-sm file:font-medium file:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" />
+        <p id={`${fileInputId}-formats`} className="mt-1.5 text-xs text-slate-600">PDF, JPG or PNG. Maximum 10 MB per file.</p>
       </div>
     </div>
   );

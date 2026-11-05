@@ -25,10 +25,10 @@ def dashboard_stats(request):
     pending_loan_approval = ProvidentLoan.objects.filter(status='verified').count()
     active_loans_count = ProvidentLoan.objects.filter(status='released').count()
     
-    attendance_alerts = Attendance.objects.filter(is_geo_flagged=True).count()
+    attendance_alerts = Attendance.objects.filter(is_dtr_approved=False).count()
     total_attendance_records = Attendance.objects.count()
-    clean_attendance_records = Attendance.objects.filter(is_geo_flagged=False).count()
-    geo_compliance_rate = round((clean_attendance_records / total_attendance_records * 100), 1) if total_attendance_records > 0 else 100.0
+    approved_attendance_records = Attendance.objects.filter(is_dtr_approved=True).count()
+    dtr_approval_rate = round((approved_attendance_records / total_attendance_records * 100), 1) if total_attendance_records > 0 else 0.0
 
     leaves_supervisor = LeaveRequest.objects.filter(status='pending_supervisor').count()
     leaves_hr = LeaveRequest.objects.filter(status='pending_hr').count()
@@ -67,8 +67,8 @@ def dashboard_stats(request):
             "status": "Optimal Deployment" if teaching_pct >= 50 else "Review Deployment"
         },
         "attendance": {
-            "title": "Attendance & Geofencing Integrity",
-            "summary": f"Geofence compliance stands at {geo_compliance_rate}%. {attendance_alerts} records were flagged for out-of-boundary time stamps and require school principal/supervisor validation.",
+            "title": "DTR Review and Approval",
+            "summary": f"DTR approval stands at {dtr_approval_rate}%. {attendance_alerts} daily records are awaiting HR review.",
             "status": "Attention Needed" if attendance_alerts > 0 else "Compliant"
         },
         "finance": {
@@ -102,7 +102,7 @@ def dashboard_stats(request):
         "pending_loan_approvals": pending_loan_approval,
         "pending_loan_verification": pending_loan_verification,
         "attendance_alerts": attendance_alerts,
-        "geo_compliance_rate": geo_compliance_rate,
+        "dtr_approval_rate": dtr_approval_rate,
         "pending_leaves": pending_leaves,
         "pending_leaves_checking": leaves_checking,
         "pending_leaves_records": leaves_records,

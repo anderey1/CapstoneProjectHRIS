@@ -1,6 +1,6 @@
 import React from 'react';
 import { Signature, Loader2, MapPin } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 
 const ProfileSidebar = ({ 
   me, 
@@ -55,20 +55,20 @@ const ProfileSidebar = ({
               >
                 {me?.e_signature ? 'Update Signature' : 'Upload Signature'}
               </button>
-              <p className="text-[11px] text-slate-400 text-center">PNG or JPG with clean signature on white background</p>
+              <p className="text-xs text-slate-400 text-center">PNG or JPG with clean signature on white background</p>
             </div>
           ) : (
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
               <p className="text-xs font-semibold text-slate-700">
                 {me?.e_signature ? 'Official Signature on File' : 'No Signature Registered'}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Signature upload is restricted to the account owner</p>
+              <p className="text-xs text-slate-400 mt-0.5">Signature upload is restricted to the account owner</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Work Location Geofence Map */}
+      {/* Assigned Work Location */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col min-h-[360px] shadow-sm z-0">
         <div className="p-4 border-b border-slate-100 bg-white">
           <span className="text-xs font-medium text-slate-400 block">Assigned Workstation</span>
@@ -85,14 +85,13 @@ const ProfileSidebar = ({
             dragging={false}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Circle center={[pos.lat, pos.lng]} radius={100} pathOptions={{ color: '#0038A8', fillColor: '#0038A8' }} />
             <Marker position={[pos.lat, pos.lng]} />
           </MapContainer>
         </div>
         <div className="p-3 bg-slate-50 flex items-center gap-2 border-t border-slate-200">
           <MapPin className="text-[#0038A8] w-4 h-4 shrink-0" />
           <span className="text-xs font-mono text-slate-500">
-            {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Geofenced (100m)
+            {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Assigned school location
           </span>
         </div>
       </div>

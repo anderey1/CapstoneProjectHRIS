@@ -1,5 +1,5 @@
 from .employee import Role, User, School, Employee, SalaryGrade, EmployeeDocument
-from .attendance import Attendance
+from .attendance import Attendance, BiometricEmployeeMapping, AttendanceImportBatch
 from .leave import LeaveRequest, LeaveAction
 from .loan import ProvidentLoan, LoanPayment, LoanDocument
 from .payroll import Payroll
@@ -18,6 +18,8 @@ __all__ = [
     'EmployeeDocument',
     'SalaryGrade',
     'Attendance',
+    'AttendanceImportBatch',
+    'BiometricEmployeeMapping',
     'LeaveRequest',
     'LeaveAction',
     'ProvidentLoan',

@@ -34,7 +34,7 @@ Attendance, performance, authentication, analytics, audit, and PDS endpoint modu
 
 ## Utilities
 
-`core.utils` remains the public import location. Its implementation now lives in `attendance.py` (time slots and QR tokens), `geofencing.py` (distance and boundary checks), `dates.py` (working days and payroll cutoffs), `pds.py` (extraction), and `summaries.py` (AI summaries). Existing PDF modules retain their locations.
+`core.utils` remains the public import location. Its implementation now lives in `attendance.py` (attendance status), `dates.py` (working days and payroll cutoffs), `pds.py` (extraction), and `summaries.py` (AI summaries). Existing PDF modules retain their locations.
 
 ## Frontend ownership
 
@@ -57,3 +57,5 @@ Keep transaction decorators and row locking with the operations they protect. Pa
 Keep policy changes separate from file organization. Existing access checks and workflow exceptions are preserved, including the current loan screen permission issue documented in the verification report.
 
 Run the targeted tests for an operation and its connected workflows. Use `scripts/verify_modularization.py` to compare the extracted functions and router against the original revision, as documented in [the verification report](reviews/modularization-verification.md).
+
+Biometric Excel/CSV decoding lives in `backend/core/services/attendance_files.py`; DTR slot validation lives in `backend/core/services/attendance_import.py`. Attendance import actions and employee ID mappings remain on `AttendanceViewSet`. See [attendance integration](attendance-integration.md) for the template contract and HR workflow.

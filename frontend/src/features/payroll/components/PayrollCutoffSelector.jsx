@@ -22,7 +22,7 @@ const PayrollCutoffSelector = ({ selectedCutoff, onSelectCutoff, allPayrolls }) 
         <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
           Payroll Cutoff Schedule
         </span>
-        <span className="text-[11px] text-slate-500 font-medium">
+        <span className="text-xs text-slate-500 font-medium">
           Select semi-monthly pay cycle to review and process
         </span>
       </div>

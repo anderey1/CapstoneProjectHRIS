@@ -143,8 +143,8 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
           {/* Staff selector (Admin/HR) or info banner */}
           {['HR'].includes(user?.role) && employees && employees.length > 0 ? (
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Select Staff</label>
-              <select name="employee" className="select select-sm w-full bg-base-50 border-base-100 focus:border-secondary rounded-lg text-[10px] font-black uppercase tracking-widest" required onChange={handleInputChange}>
+              <label htmlFor="loan-employee" className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Select Staff</label>
+              <select id="loan-employee" name="employee" className="select select-sm w-full bg-base-50 border-base-100 focus:border-secondary rounded-lg text-xs font-semibold uppercase tracking-wide" required onChange={handleInputChange}>
                 <option value="">Choose Staff Member...</option>
                 {employees.map(emp => (
                   <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} ({emp.position})</option>
@@ -154,7 +154,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
           ) : (
             <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg flex items-start gap-3">
               <Info className="w-4 h-4 mt-0.5 text-primary opacity-60" />
-              <p className="text-[10px] font-bold text-primary/80 uppercase leading-relaxed tracking-tight">
+              <p className="text-xs font-bold text-primary/80 uppercase leading-relaxed tracking-tight">
                 Applying as <strong>{user?.username}</strong>. Ensure your salary can cover monthly deductions.
               </p>
             </div>
@@ -162,9 +162,9 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
           {/* Purpose */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 block">Loan Purpose</label>
+            <label htmlFor="loan-purpose" className="text-xs font-semibold text-slate-700 block">Loan Purpose</label>
             <select
-              name="purpose"
+              id="loan-purpose" name="purpose"
               value={formData.purpose}
               onChange={handleInputChange}
               className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
@@ -178,11 +178,11 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
           {/* Amount */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 block">Principal Amount (₱)</label>
+            <label htmlFor="loan-loan_amount" className="text-xs font-semibold text-slate-700 block">Principal Amount (₱)</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-slate-400">₱</span>
               <input
-                name="loan_amount"
+                id="loan-loan_amount" name="loan_amount"
                 type="number"
                 step="0.01"
                 value={formData.loan_amount}
@@ -197,9 +197,9 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
           {/* Rate + Term */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 block">Annual Interest Rate (%)</label>
+              <label htmlFor="loan-interest_rate" className="text-xs font-semibold text-slate-700 block">Annual Interest Rate (%)</label>
               <input
-                name="interest_rate"
+                id="loan-interest_rate" name="interest_rate"
                 type="number"
                 step="0.1"
                 value={formData.interest_rate}
@@ -209,9 +209,9 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 block">Repayment Term</label>
+              <label htmlFor="loan-term_months" className="text-xs font-semibold text-slate-700 block">Repayment Term</label>
               <select
-                name="term_months"
+                id="loan-term_months" name="term_months"
                 value={formData.term_months}
                 onChange={handleInputChange}
                 className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
@@ -227,9 +227,9 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
           {/* Co-Maker */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 block">Co-Maker Name (Plantilla Employee)</label>
+            <label htmlFor="loan-co_maker_name" className="text-xs font-semibold text-slate-700 block">Co-Maker Name (Plantilla Employee)</label>
             <input
-              name="co_maker_name"
+              id="loan-co_maker_name" name="co_maker_name"
               type="text"
               value={formData.co_maker_name}
               onChange={handleInputChange}
@@ -240,9 +240,9 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
           {/* Letter Request */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 block">Letter Request / Purpose Justification</label>
+            <label htmlFor="loan-letter_request" className="text-xs font-semibold text-slate-700 block">Letter Request / Purpose Justification</label>
             <textarea
-              name="letter_request"
+              id="loan-letter_request" name="letter_request"
               value={formData.letter_request}
               onChange={handleInputChange}
               placeholder="State the purpose of your loan application..."
@@ -256,17 +256,17 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
             <div className="bg-slate-50 border border-slate-200 rounded-md p-4 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-800 uppercase tracking-wider">
                 <span className="flex items-center gap-1.5"><Calculator className="w-3.5 h-3.5 text-[#0038A8]" /> Computation Summary</span>
-                <span className="font-mono text-[11px] text-slate-500">DepEd Order No. 37, s. 2018</span>
+                <span className="font-mono text-xs text-slate-500">DepEd Order No. 37, s. 2018</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-xs pt-1">
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Estimated Monthly Amortization</span>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block">Estimated Monthly Amortization</span>
                   <span className="text-base font-bold font-mono tabular-nums text-[#0038A8] block mt-0.5">
                     ₱{monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Total Repayable (Principal + Interest)</span>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block">Total Repayable (Principal + Interest)</span>
                   <span className="text-base font-bold font-mono tabular-nums text-slate-900 block mt-0.5">
                     ₱{totalRepayable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
@@ -277,7 +277,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
 
           {/* Document Uploads */}
           <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Attach Documents</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Attach Documents</label>
             <div className="space-y-2">
               {DOC_TYPES.slice(0, 6).map(doc => {
                 const attached = files.find(f => f.doc_type === doc.value);
@@ -285,17 +285,17 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
                   <div key={doc.value} className="flex items-center justify-between p-3 bg-base-50 border border-base-100 rounded-lg">
                     <div className="flex items-center gap-2">
                       <FileCheck className={`w-3.5 h-3.5 ${attached ? 'text-success' : 'opacity-20'}`} />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">{doc.label}</span>
+                      <span className="text-xs font-bold uppercase tracking-wide">{doc.label}</span>
                     </div>
                     {attached ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-success uppercase">{attached.file.name.slice(0, 20)}</span>
+                        <span className="text-xs font-bold text-success uppercase">{attached.file.name.slice(0, 20)}</span>
                         <button type="button" onClick={() => handleRemoveFile(doc.value)} className="btn btn-ghost btn-xs btn-circle opacity-40 hover:opacity-100">
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     ) : (
-                      <button type="button" onClick={() => handleAddFile(doc.value)} className="btn btn-ghost btn-xs text-[9px] font-black uppercase tracking-widest opacity-40 hover:opacity-100">
+                      <button type="button" onClick={() => handleAddFile(doc.value)} className="btn btn-ghost btn-xs text-xs font-semibold uppercase tracking-wide text-slate-600 hover:opacity-100">
                         <Upload className="w-3 h-3 mr-1" /> Upload
                       </button>
                     )}

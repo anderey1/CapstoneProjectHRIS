@@ -47,43 +47,43 @@ const AddApplicantModal = ({ onClose }) => {
   };
 
   return (
-    <div className="modal-overlay fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100]">
-      <div className="modal-panel bg-white rounded-lg w-full max-w-xl shadow-lg border border-slate-200 overflow-hidden">
+    <div className="modal-overlay fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      <div className="modal-panel bg-white rounded-lg w-full max-w-xl shadow-lg border border-slate-200 overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
         
         {/* Header */}
-        <div className="bg-base-50/50 border-b border-base-100 p-8 flex items-center justify-between">
+        <div className="bg-base-50/50 border-b border-base-100 p-4 sm:p-6 shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-4">
              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-inner border border-primary/5">
                 <UserPlus className="w-6 h-6" />
              </div>
              <div>
-                <h2 className="text-lg font-black uppercase tracking-tight text-base-content leading-none">Register Applicant</h2>
-                <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] mt-2">New Recruitment Entry</p>
+                <h2 className="text-lg font-semibold uppercase tracking-tight text-base-content leading-none">Register Applicant</h2>
+                <p className="text-xs font-semibold opacity-30 uppercase tracking-[0.2em] mt-2">New Recruitment Entry</p>
              </div>
           </div>
-          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100">
+          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle text-slate-600 hover:text-slate-900" aria-label="Close dialog">
              <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-6 min-h-0 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">First Name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">First Name</label>
               <input 
                 className="input input-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
                 {...register('first_name', { required: true })} 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Middle Name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Middle Name</label>
               <input 
                 className="input input-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
                 {...register('middle_name')} 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Last Name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Last Name</label>
               <input 
                 className="input input-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
                 {...register('last_name', { required: true })} 
@@ -91,9 +91,9 @@ const AddApplicantModal = ({ onClose }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Position Applied</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Position Applied</label>
               <select 
                 className="select select-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
                 {...register('position_applied', { required: true })} 
@@ -119,7 +119,7 @@ const AddApplicantModal = ({ onClose }) => {
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Division</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Division</label>
               <input 
                 className="input input-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold h-11" 
                 defaultValue="Lucena City"
@@ -128,9 +128,9 @@ const AddApplicantModal = ({ onClose }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Email Address</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Email Address</label>
               <input 
                 type="email" 
                 className="input input-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
@@ -138,7 +138,7 @@ const AddApplicantModal = ({ onClose }) => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Mobile Phone</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Mobile Phone</label>
               <input 
                 className="input input-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-lg text-xs font-bold h-11" 
                 {...register('phone', { required: true })} 
@@ -148,7 +148,7 @@ const AddApplicantModal = ({ onClose }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Attach Resume / CV</label>
+               <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Attach Resume / CV</label>
                <div className={`relative group cursor-pointer border-2 border-dashed rounded-xl p-4 transition-all h-24 flex items-center justify-center ${resumeFile?.[0] ? 'border-success/30 bg-success/5' : 'border-base-200 hover:border-primary/40 bg-base-50'}`}>
                   <input 
                     type="file" 
@@ -159,12 +159,12 @@ const AddApplicantModal = ({ onClose }) => {
                     {resumeFile?.[0] ? (
                         <>
                            <FileText className="w-5 h-5 text-success" />
-                           <span className="text-[9px] font-black text-success uppercase truncate max-w-[150px]">{resumeFile[0].name}</span>
+                           <span className="text-xs font-semibold text-success uppercase truncate max-w-[150px]">{resumeFile[0].name}</span>
                         </>
                     ) : (
                         <>
                            <Upload className="w-5 h-5 text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
-                           <span className="text-[9px] font-black opacity-30 uppercase tracking-widest group-hover:opacity-100">Upload PDF</span>
+                           <span className="text-xs font-semibold opacity-30 uppercase tracking-wide group-hover:opacity-100">Upload PDF</span>
                         </>
                     )}
                   </div>
@@ -172,8 +172,8 @@ const AddApplicantModal = ({ onClose }) => {
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Initial Pipeline Stage</label>
-              <select className="select select-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-xl text-[10px] font-black uppercase tracking-widest h-24" {...register('status')}>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Initial Pipeline Stage</label>
+              <select className="select select-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-xl text-xs font-semibold uppercase tracking-wide h-24" {...register('status')}>
                 <option value="applied">Applied / Submitted</option>
                 <option value="initial_evaluation">Initial QS Evaluation</option>
                 <option value="comparative_assessment">Comparative Assessment</option>
@@ -182,8 +182,8 @@ const AddApplicantModal = ({ onClose }) => {
           </div>
 
           <div className="flex gap-4 pt-6 border-t border-base-100">
-            <button type="button" className="btn btn-ghost flex-1 text-xs font-black uppercase tracking-widest opacity-40 h-12" onClick={onClose}>Discard</button>
-            <button type="submit" className="btn btn-primary flex-[2] rounded-xl font-black uppercase tracking-[0.2em] text-xs h-12 shadow-lg shadow-primary/20" disabled={mutation.isPending}>
+            <button type="button" className="btn btn-ghost flex-1 text-xs font-semibold uppercase tracking-wide text-slate-600 h-12" onClick={onClose}>Discard</button>
+            <button type="submit" className="btn btn-primary flex-[2] rounded-xl font-semibold uppercase tracking-[0.2em] text-xs h-12 shadow-lg shadow-primary/20" disabled={mutation.isPending}>
               {mutation.isPending ? 'Processing Record...' : 'Confirm Registration'}
             </button>
           </div>

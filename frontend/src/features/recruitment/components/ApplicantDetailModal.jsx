@@ -57,17 +57,17 @@ const ApplicantDetailModal = ({
         {/* Header */}
         <div className="bg-base-50/50 border-b border-base-200 p-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-black uppercase shadow-sm">
+            <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-semibold uppercase shadow-sm">
               {applicant.first_name[0]}
               {applicant.last_name[0]}
             </div>
             <div>
-              <h3 className="font-black text-2xl text-base-content uppercase tracking-tight leading-none">
+              <h3 className="font-semibold text-2xl text-base-content tracking-tight leading-none">
                 {applicant.first_name}{' '}
                 {applicant.middle_name ? applicant.middle_name + ' ' : ''}
                 {applicant.last_name}
               </h3>
-              <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] mt-2">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mt-2">
                 Applied for: {applicant.position_applied}
               </p>
             </div>
@@ -87,7 +87,7 @@ const ApplicantDetailModal = ({
             {/* Left Column: Info & Documents */}
             <div className="space-y-6">
               <section className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+                <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
                   <Info className="w-3 h-3" /> Basic Info
                 </h4>
                 <div className="bg-base-50 p-4 rounded-xl border border-base-200 space-y-4">
@@ -101,7 +101,7 @@ const ApplicantDetailModal = ({
                   </div>
                   <div className="pt-2 border-t border-base-200 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-primary" />
-                    <p className="text-[10px] font-black uppercase opacity-40">
+                    <p className="text-xs font-semibold uppercase text-slate-600">
                       Division: {applicant.school_division}
                     </p>
                   </div>
@@ -109,7 +109,7 @@ const ApplicantDetailModal = ({
               </section>
 
               <section className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+                <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
                   <FileText className="w-3 h-3" /> Documents
                 </h4>
                 <div className="space-y-3">
@@ -121,8 +121,8 @@ const ApplicantDetailModal = ({
                       className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group"
                     >
                       <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-primary opacity-40" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">
+                        <FileText className="w-5 h-5 text-primary text-slate-600" />
+                        <span className="text-xs font-semibold uppercase tracking-wide">
                           Resume / CV
                         </span>
                       </div>
@@ -138,8 +138,8 @@ const ApplicantDetailModal = ({
                       className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group"
                     >
                       <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-primary opacity-40" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">
+                        <FileText className="w-5 h-5 text-primary text-slate-600" />
+                        <span className="text-xs font-semibold uppercase tracking-wide">
                           Personal Data Sheet (PDS)
                         </span>
                       </div>
@@ -161,12 +161,12 @@ const ApplicantDetailModal = ({
                           className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <FileText className="w-5 h-5 text-primary opacity-40 shrink-0" />
+                            <FileText className="w-5 h-5 text-primary text-slate-600 shrink-0" />
                             <div className="min-w-0">
-                              <span className="text-[10px] font-black uppercase tracking-widest block">
+                              <span className="text-xs font-semibold uppercase tracking-wide block">
                                 {formatDocType(doc.document_type)}
                               </span>
-                              <span className="text-[8px] opacity-40 font-bold block truncate max-w-[180px]">
+                              <span className="text-xs text-slate-600 font-bold block truncate max-w-[180px]">
                                 {doc.filename}
                               </span>
                             </div>
@@ -178,7 +178,7 @@ const ApplicantDetailModal = ({
                   {!applicant.resume &&
                     !applicant.pds_file &&
                     (!applicant.documents || applicant.documents.length === 0) && (
-                      <p className="text-[10px] italic opacity-20 text-center">
+                      <p className="text-xs italic text-slate-600 text-center">
                         No documents uploaded
                       </p>
                     )}
@@ -199,7 +199,7 @@ const ApplicantDetailModal = ({
               />
 
               <section className="space-y-4 pt-4 border-t border-base-100">
-                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+                <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
                   <MessageSquare className="w-3 h-3" /> Status Timeline & Notes
                 </h4>
                 <div className="bg-base-50 rounded-xl p-6">
@@ -208,7 +208,7 @@ const ApplicantDetailModal = ({
                       {applicant.notes}
                     </p>
                   ) : (
-                    <p className="text-xs font-bold opacity-20 uppercase text-center py-4 tracking-widest italic">
+                    <p className="text-xs font-bold text-slate-600 uppercase text-center py-4 tracking-wide italic">
                       No history recorded yet
                     </p>
                   )}
@@ -218,17 +218,17 @@ const ApplicantDetailModal = ({
               {/* Status Change Section */}
               <section className="bg-white border-2 border-primary/20 rounded-2xl p-8 space-y-6 shadow-xl shadow-primary/5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <h4 className="text-xs font-semibold tracking-wide text-primary flex items-center gap-2">
                     Update Application Status
                   </h4>
-                  <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest">
+                  <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold uppercase tracking-wide">
                     Current: {RECRUITMENT_COLUMNS.find((c) => c.id === applicant.status)?.label}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
                       New Stage
                     </label>
                     <select
@@ -245,7 +245,7 @@ const ApplicantDetailModal = ({
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
                       Internal Remarks
                     </label>
                     <textarea
@@ -260,7 +260,7 @@ const ApplicantDetailModal = ({
                 <div className="flex gap-4">
                   <button
                     type="button"
-                    className="btn btn-primary btn-block rounded-xl font-black uppercase tracking-[0.2em] text-xs h-14 shadow-lg shadow-primary/20"
+                    className="btn btn-primary btn-block rounded-xl font-semibold uppercase tracking-wide text-xs h-14 shadow-lg shadow-primary/20"
                     onClick={() => {
                       const select = document.getElementById('status-select');
                       onChangeStatus({
@@ -276,7 +276,7 @@ const ApplicantDetailModal = ({
                       : 'Confirm Status Update & Notify Applicant'}
                   </button>
                 </div>
-                <p className="text-[9px] text-center opacity-40 font-bold uppercase tracking-tight italic">
+                <p className="text-xs text-center text-slate-600 font-bold uppercase tracking-tight italic">
                   Applicant will receive an automatic status update via their registered email.
                 </p>
               </section>

@@ -99,7 +99,7 @@ const RecruitmentTable = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-xs tracking-wider">
                   <th className="px-4 py-3">Candidate</th>
                   <th className="px-4 py-3">Position Applied</th>
                   <th className="px-4 py-3 text-right">Education</th>
@@ -126,13 +126,13 @@ const RecruitmentTable = ({
                           {applicant.middle_name ? `${applicant.middle_name} ` : ''}
                           {applicant.last_name}
                         </div>
-                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        <div className="text-xs text-slate-500 font-mono mt-0.5">
                           {applicant.email}
                         </div>
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-800">
                         {applicant.position_applied}
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-xs text-slate-500">
                           Applied:{' '}
                           {new Date(applicant.date_applied).toLocaleDateString('en-US', {
                             year: 'numeric',

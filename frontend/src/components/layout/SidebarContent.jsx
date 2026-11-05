@@ -54,7 +54,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
     {
       title: 'Employee Self-Service',
       links: [
-        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'Record Attendance', roles: ROLE_GROUPS.ALL },
+        { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'My Attendance', roles: ROLE_GROUPS.ALL },
         { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'My DTR (Form 48)', roles: ROLE_GROUPS.ALL },
         { to: '/my-leaves', icon: <Clock className="w-4 h-4" />, label: 'My Leave Applications', roles: ROLE_GROUPS.ALL },
         { to: '/my-payslips', icon: <Wallet className="w-4 h-4" />, label: 'My Payslips', roles: ROLE_GROUPS.ALL },

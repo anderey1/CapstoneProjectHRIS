@@ -33,10 +33,10 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
     <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-xs">
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
         <div>
-          <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+          <h2 className="text-xs font-bold text-slate-800 tracking-wide">
             Division Payroll Processing Pipeline
           </h2>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             Civil Service Commission & Commission on Audit (COA) compliance chain
           </p>
         </div>
@@ -57,7 +57,7 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
           } else if (step.isCurrent) {
             badgeBorder = 'border-[#0038A8] bg-blue-50/70 text-slate-900 ring-1 ring-[#0038A8]';
             icon = (
-              <span className="w-4 h-4 rounded-full bg-[#0038A8] text-white flex items-center justify-center text-[10px] font-bold">
+              <span className="w-4 h-4 rounded-full bg-[#0038A8] text-white flex items-center justify-center text-xs font-bold">
                 {step.num}
               </span>
             );
@@ -75,15 +75,15 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
                     <span className="text-xs font-bold">{step.name}</span>
                   </div>
                 </div>
-                <div className="text-[11px] font-semibold text-slate-600 mb-1">
+                <div className="text-xs font-semibold text-slate-600 mb-1">
                   Responsible: <span className="font-bold text-slate-800">{step.actor}</span>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-normal">
+                <p className="text-xs text-slate-500 leading-normal">
                   {step.desc}
                 </p>
               </div>
 
-              <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px] font-semibold">
+              <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-400 uppercase tracking-wider">Status</span>
                 <span className={step.isComplete ? 'text-emerald-700' : step.isCurrent ? 'text-[#0038A8]' : 'text-slate-500'}>
                   {step.isComplete ? 'Completed' : step.isCurrent ? 'Active In Progress' : 'Pending Previous Step'}

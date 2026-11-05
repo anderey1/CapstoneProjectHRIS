@@ -1,218 +1,26 @@
-import React from 'react';
-import { Search, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-// Helper to format HH:MM:SS string to 12-hour AM/PM format
-const formatTime = (timeStr, fallback = '--:--') => {
-  if (!timeStr) return fallback;
-  const parts = timeStr.split(':');
-  if (parts.length < 2) return timeStr;
-  let hours = parseInt(parts[0], 10);
-  const minutes = parts[1];
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  return `${hours}:${minutes.padStart(2, '0')} ${ampm}`;
-};
+const formatTime = value => value ? value.slice(0, 5) : '--:--';
 
-/**
- * Attendance Logs List (Table & Card View)
- * 
- * High-density design for monitoring staff daily records.
- */
-const AttendanceLogs = ({ 
-  records, 
-  isLoading, 
-  searchTerm, 
-  setSearchTerm, 
-  deptFilter, 
-  setDeptFilter, 
-  flaggedOnly, 
-  setFlaggedOnly,
-  selectedMonth,
-  setSelectedMonth
-}) => {
-
-  const getStatusLabel = (status) => {
-    if (status === 'late') return 'Late';
-    return 'Present';
-  };
-
-  const getStatusClass = (status) => {
-    return status === 'late'
-      ? 'bg-warning/10 text-warning border-warning/20'
-      : 'bg-success/10 text-success border-success/20';
-  };
-
-  return (
-    <div className="flex flex-col h-full gap-6">
-      
-      {/* Search & Global Actions */}
-      <div className="bg-white border border-base-200 rounded-xl p-4 shadow-sm flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex flex-wrap gap-4 items-center flex-1">
-          <div className="relative min-w-[200px] flex-1 lg:flex-none">
-            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 opacity-30 text-primary" />
-            <input 
-              type="text" 
-              placeholder="Search staff..." 
-              className="input input-sm w-full pl-10 bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center gap-2 bg-base-50 px-3 py-1 rounded-lg border border-base-100 h-8">
-              <Calendar className="w-3.5 h-3.5 opacity-30" />
-              <input 
-                  type="month" 
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none"
-              />
-          </div>
-          
-          <select 
-            className="select select-sm bg-base-50 border-base-100 rounded-lg text-[11px] font-black uppercase tracking-widest"
-            value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value)}
-          >
-            <option value="All">All Areas</option>
-            <option value="Instructional">Instructional</option>
-            <option value="Administrative">Administrative</option>
-            <option value="Finance">Finance</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-4 border-l border-base-200 pl-4">
-         <label className="flex items-center gap-2 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              className="checkbox checkbox-xs checkbox-primary rounded-md" 
-              checked={flaggedOnly}
-              onChange={(e) => setFlaggedOnly(e.target.checked)}
-            />
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Location Warnings Only</span>
-         </label>
-        </div>
+export default function AttendanceLogs({ records = [], isLoading, searchTerm, setSearchTerm, deptFilter, setDeptFilter, selectedMonth, setSelectedMonth, departments = [] }) {
+  return <section className="bg-white border border-slate-300 rounded-lg overflow-hidden" aria-label="Attendance records">
+    <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-end gap-4">
+      <label className="text-xs font-medium text-slate-600 flex-1 min-w-48">Find personnel<input className="input input-bordered w-full block mt-1 text-sm bg-white" type="search" placeholder="Search name or department" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></label>
+      <div>
+        <label className="text-xs font-medium text-slate-600">Attendance month<input type="month" className="input input-bordered block mt-1 text-sm bg-white" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} /></label>
+        {selectedMonth ? <button type="button" className="text-xs text-[#0038a8] underline underline-offset-2 mt-1" onClick={() => setSelectedMonth('')}>Show all months</button> : <p className="text-xs text-slate-500 mt-1">Showing all months</p>}
       </div>
-
-      {/* Mobile Card View (< lg) */}
-      <div className="lg:hidden space-y-4">
-        {isLoading ? (
-          <div className="py-20 flex justify-center"><span className="loading loading-spinner text-primary" /></div>
-        ) : records?.length > 0 ? (
-          records.map(rec => (
-            <div key={rec.id} className={`bg-white border ${rec.is_geo_flagged ? 'border-error/30' : 'border-base-200'} rounded-xl p-5 shadow-sm space-y-4 relative overflow-hidden`}>
-              {rec.is_geo_flagged && <div className="absolute top-0 right-0 bg-error text-white text-[7px] font-black px-2 py-0.5 uppercase tracking-[0.2em] rounded-bl-lg">Location Warning</div>}
-              
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-base-100 rounded-lg flex items-center justify-center text-xs font-black text-primary uppercase">
-                   {rec.employee_name.charAt(0)}
-                </div>
-                <div>
-                  <p className="font-black text-xs text-base-content uppercase tracking-tight">{rec.employee_name}</p>
-                  <p className="text-[9px] font-black opacity-30 uppercase tracking-widest">{rec.date}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-base-50 p-2 rounded-lg border border-base-100">
-                  <p className="text-[7px] font-black uppercase opacity-40 mb-1">Morning</p>
-                  <div className="flex flex-col">
-                    <span className="text-success font-black text-[9px]">{formatTime(rec.am_in)}</span>
-                    <span className="text-error font-black text-[9px]">{formatTime(rec.am_out)}</span>
-                  </div>
-                </div>
-                <div className="bg-base-50 p-2 rounded-lg border border-base-100">
-                  <p className="text-[7px] font-black uppercase opacity-40 mb-1">Afternoon</p>
-                  <div className="flex flex-col">
-                    <span className="text-success font-black text-[9px]">{formatTime(rec.pm_in)}</span>
-                    <span className="text-error font-black text-[9px]">{formatTime(rec.pm_out)}</span>
-                  </div>
-                </div>
-                <div className="bg-base-50 p-2 rounded-lg border border-base-100">
-                  <p className="text-[7px] font-black uppercase opacity-40 mb-1">Overtime</p>
-                  <div className="flex flex-col">
-                    <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_in)}</span>
-                    <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_out)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-base-100">
-                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${getStatusClass(rec.status)}`}>
-                  {getStatusLabel(rec.status)}
-                </span>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="py-20 text-center opacity-30 italic font-black uppercase tracking-widest text-xs">No records found</div>
-        )}
-      </div>
-
-      {/* Desktop Table View (>= lg) */}
-      <div className="hidden lg:block bg-white border border-base-200 rounded-xl shadow-sm overflow-hidden overflow-x-auto">
-        <table className="table table-sm w-full">
-            <thead>
-              <tr className="bg-base-50/50 border-b border-base-100 text-[9px] font-black uppercase tracking-[0.1em] opacity-40">
-                <th className="py-5 px-8 text-primary">Staff Member</th>
-                <th>Date</th>
-                <th className="text-center">AM In/Out</th>
-                <th className="text-center">PM In/Out</th>
-                <th className="text-center">OT In/Out</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-base-50">
-              {isLoading ? (
-                <tr><td colSpan="4" className="text-center py-20"><span className="loading loading-spinner text-primary" /></td></tr>
-              ) : records?.length > 0 ? (
-                records.map(rec => (
-                  <tr key={rec.id} className={`hover:bg-base-50/50 transition-colors ${rec.is_geo_flagged ? 'bg-error/5' : ''}`}>
-                    <td className="py-5 px-8">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-base-100 rounded-lg flex items-center justify-center text-[10px] font-black text-primary uppercase">
-                           {rec.employee_name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-black text-[11px] text-base-content uppercase tracking-tight">{rec.employee_name}</p>
-                          <p className="text-[8px] font-black opacity-30 uppercase tracking-widest">{rec.department}</p>
-                        </div>
-                        <span className={`ml-2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${getStatusClass(rec.status)}`}>
-                          {getStatusLabel(rec.status)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="text-[10px] font-bold opacity-60 uppercase">{rec.date}</td>
-                    <td className="text-center">
-                        <div className="flex flex-col gap-0.5">
-                            <span className="text-success font-black text-[9px]">{formatTime(rec.am_in)}</span>
-                            <span className="text-error font-black text-[9px]">{formatTime(rec.am_out)}</span>
-                        </div>
-                    </td>
-                    <td className="text-center">
-                        <div className="flex flex-col gap-0.5">
-                            <span className="text-success font-black text-[9px]">{formatTime(rec.pm_in)}</span>
-                            <span className="text-error font-black text-[9px]">{formatTime(rec.pm_out)}</span>
-                        </div>
-                    </td>
-                    <td className="text-center">
-                        <div className="flex flex-col gap-0.5">
-                            <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_in)}</span>
-                            <span className="text-primary font-black text-[9px]">{formatTime(rec.ot_out)}</span>
-                        </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="text-center py-40 opacity-30 italic font-black uppercase tracking-widest">No records found</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-      </div>
+      <label className="text-xs font-medium text-slate-600">Department<select className="select select-bordered block mt-1 text-sm bg-white" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}><option value="All">All departments</option>{departments.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
     </div>
-  );
-};
-
-export default AttendanceLogs;
+    <div className="overflow-x-auto"><table className="w-full text-left text-sm">
+      <thead className="bg-slate-50 text-xs text-slate-600 border-b border-slate-200"><tr><th className="p-4 font-medium">Personnel</th><th className="p-4 font-medium">Date</th><th className="p-4 font-medium">Morning<br /><span className="font-normal">In / Out</span></th><th className="p-4 font-medium">Afternoon<br /><span className="font-normal">In / Out</span></th><th className="p-4 font-medium">Overtime<br /><span className="font-normal">In / Out</span></th><th className="p-4 font-medium">Attendance</th><th className="p-4 font-medium">DTR review</th></tr></thead>
+      <tbody className="divide-y divide-slate-100">{isLoading ? <tr><td colSpan={7} className="p-12 text-center text-slate-500" role="status">Loading attendance records...</td></tr> : records.length ? records.map(record => <tr key={record.id} className="hover:bg-slate-50">
+        <td className="p-4"><Link className="font-medium text-[#0038a8] whitespace-nowrap hover:underline focus-visible:underline" to={`/staff-dtr?employee_id=${record.employee}&month=${record.date.slice(0, 7)}`}>{record.employee_name}</Link><div className="text-xs text-slate-500 mt-1">{record.department || 'Department not assigned'}</div></td>
+        <td className="p-4 text-slate-600 tabular-nums whitespace-nowrap">{record.date}</td>
+        {[['am_in', 'am_out'], ['pm_in', 'pm_out'], ['ot_in', 'ot_out']].map(([arrival, departure]) => <td key={arrival} className="p-4 font-mono text-xs whitespace-nowrap text-slate-700">{formatTime(record[arrival])} / {formatTime(record[departure])}</td>)}
+        <td className="p-4"><span className={`inline-block px-2 py-1 rounded text-xs font-medium capitalize ${record.status === 'present' ? 'bg-green-50 text-green-800' : record.status === 'late' ? 'bg-amber-50 text-amber-900' : 'bg-slate-100 text-slate-700'}`}>{record.status}</span></td>
+        <td className="p-4 text-xs whitespace-nowrap text-slate-600">{record.is_dtr_approved ? 'Approved' : 'Pending review'}</td>
+      </tr>) : <tr><td colSpan={7} className="py-16 px-6 text-center"><p className="font-medium text-slate-900">No attendance records for these filters</p><p className="text-sm text-slate-500 mt-2">Choose another month or import a school file to get started.</p></td></tr>}</tbody>
+    </table></div>
+  </section>;
+}

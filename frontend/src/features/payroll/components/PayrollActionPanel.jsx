@@ -47,7 +47,7 @@ const PayrollActionPanel = ({
               {cutoffStatus === 'released' && 'Cutoff Completed & Disbursed'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             {cutoffStatus === 'unprepared' && 'Calculate semi-monthly draft gross pay, statutory withholdings, and loan amortizations.'}
             {cutoffStatus === 'draft' && 'Draft payroll sheets generated. Superintendent signature required on General Payroll Sheet (Form 7).'}
             {cutoffStatus === 'approved' && 'Executive sign-off complete. Export Disbursement Voucher and credit funds to LandBank ATM accounts.'}
@@ -118,7 +118,7 @@ const PayrollActionPanel = ({
               tabIndex={0}
               className="dropdown-content z-20 menu p-1.5 shadow-md bg-white border border-slate-200 rounded-md w-60 mt-1"
             >
-              <li className="menu-title text-[10px] font-bold uppercase text-slate-400 px-2 py-1">
+              <li className="menu-title text-xs font-bold uppercase text-slate-400 px-2 py-1">
                 Official Commission on Audit Reports
               </li>
               <li>
@@ -152,7 +152,7 @@ const PayrollActionPanel = ({
           <div className="flex items-center gap-2 text-slate-600">
             <Users className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="font-medium">Single Staff Recalculation:</span>
-            <span className="text-slate-400 text-[11px] hidden md:inline">
+            <span className="text-slate-400 text-xs hidden md:inline">
               Re-run calculation for an individual personnel after DTR update
             </span>
           </div>

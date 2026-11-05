@@ -81,7 +81,7 @@ const ProfileHeader = ({
             <div className="flex flex-wrap justify-center md:justify-start gap-x-5 gap-y-1.5 text-xs text-slate-500 pt-1">
               <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-slate-400" /> {me?.email || me?.user_details?.email}</span>
               {me?.mobile_no && <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-slate-400" /> {me.mobile_no}</span>}
-              <span className="flex items-center gap-1.5 font-mono text-[11px] text-slate-400"><Fingerprint className="w-3.5 h-3.5 text-slate-400" /> ID #{me?.id?.toString().padStart(5, '0')}</span>
+              <span className="flex items-center gap-1.5 font-mono text-xs text-slate-400"><Fingerprint className="w-3.5 h-3.5 text-slate-400" /> ID #{me?.id?.toString().padStart(5, '0')}</span>
             </div>
           </div>
 
@@ -124,7 +124,7 @@ const ProfileHeader = ({
                 style={{ width: `${completion}%` }}
               />
             </div>
-            <span className="text-[11px] text-slate-400 mt-2 block">PDS core fields verified</span>
+            <span className="text-xs text-slate-400 mt-2 block">PDS core fields verified</span>
           </div>
         </div>
 

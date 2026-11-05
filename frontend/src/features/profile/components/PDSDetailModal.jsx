@@ -22,7 +22,7 @@ const PDSDetailModal = ({
           <button 
             onClick={onClose} 
             className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
-          >
+           aria-label="Close dialog">
             <X className="w-5 h-5" />
           </button>
         </div>

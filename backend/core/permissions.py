@@ -59,3 +59,8 @@ class IsEmployeeOrAdminOrHR(BaseRolePermission):
         elif hasattr(obj, 'user'):
             return obj.user == request.user
         return False
+
+class IsSuperuser(permissions.BasePermission):
+    """School configuration is restricted to authenticated system superusers."""
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)

@@ -75,7 +75,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
       </fieldset>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Role</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Role</label>
           <select 
             {...register("role", { required: "Role is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.role ? 'border-error' : ''}`}
@@ -87,10 +87,10 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             <option value={ROLES.HR}>HR Staff</option>
             <option value={ROLES.ACCOUNTANT}>Accountant</option>
           </select>
-          {errors.role && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.role.message}</span>}
+          {errors.role && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.role.message}</span>}
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Position</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Position</label>
           <select 
             {...register("position", { required: "Position is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.position ? 'border-error' : ''}`}
@@ -98,13 +98,13 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             <option value="">Select Position</option>
             {filteredPositions.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
-          {errors.position && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.position.message}</span>}
+          {errors.position && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.position.message}</span>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Area</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Area</label>
           <select 
             {...register("department", { required: "Department is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.department ? 'border-error' : ''}`}
@@ -116,13 +116,13 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             <option value="ICT">ICT Section</option>
             <option value="Division Office">Division Office</option>
           </select>
-          {errors.department && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.department.message}</span>}
+          {errors.department && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.department.message}</span>}
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Workplace</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Workplace</label>
           <select 
             {...register("school")}
-            className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest"
+            className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
           >
             <option value="">Select Workplace</option>
             {schools?.map(s => (
@@ -134,12 +134,12 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-            Salary Grade {currentSGDetails && <span className="text-primary font-black ml-1">(SG {currentSGDetails.grade})</span>}
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
+            Salary Grade {currentSGDetails && <span className="text-primary font-semibold ml-1">(SG {currentSGDetails.grade})</span>}
           </label>
           <select 
             {...register("salary_grade")}
-            className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest"
+            className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
           >
             <option value="">Select SG</option>
             {salaryGrades?.map(sg => (
@@ -148,9 +148,9 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
           </select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Monthly Salary</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Monthly Salary</label>
           <div className="relative">
-             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-30">₱</span>
+             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-600">₱</span>
              <input 
                {...register("salary", { required: "Salary is required" })}
                type="number" 
@@ -159,19 +159,19 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
                className={`input input-sm w-full pl-7 bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.salary ? 'border-error' : ''}`} 
              />
           </div>
-          {errors.salary && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.salary.message}</span>}
+          {errors.salary && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.salary.message}</span>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Joined Date</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Joined Date</label>
           <input 
             {...register("date_hired", { required: "Date is required" })}
             type="date" 
             className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.date_hired ? 'border-error' : ''}`} 
           />
-          {errors.date_hired && <span className="text-[9px] font-bold text-error uppercase tracking-tight ml-1">{errors.date_hired.message}</span>}
+          {errors.date_hired && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.date_hired.message}</span>}
         </div>
       </div>
     </div>

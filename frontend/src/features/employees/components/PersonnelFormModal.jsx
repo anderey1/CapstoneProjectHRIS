@@ -274,16 +274,16 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
         {showPDSImport ? (
           <div className="p-8 space-y-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">PDS Auto-Fill</h4>
+              <h4 className="text-xs font-semibold tracking-wide text-primary">PDS Auto-Fill</h4>
               <button 
                 onClick={() => setShowPDSImport(false)}
-                className="text-[9px] font-black uppercase tracking-widest opacity-40 hover:opacity-100"
+                className="text-xs font-semibold uppercase tracking-wide text-slate-600 hover:opacity-100"
               >
                 Back to Manual Form
               </button>
             </div>
             <PDSUploadForm onExtractionComplete={handlePDSExtraction} />
-            <div className="alert bg-info/5 border-info/10 text-[9px] font-bold text-info/70 rounded-lg py-2">
+            <div className="alert bg-info/5 border-info/10 text-xs font-bold text-info/70 rounded-lg py-2">
               <AlertCircle className="w-3 h-3" />
               <span>Extracted data will be pre-filled into the form fields.</span>
             </div>
@@ -337,7 +337,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                   <div className="mb-6 bg-error/10 border border-error/20 p-4 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
                     <AlertCircle className="w-5 h-5 text-error shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-error mb-1">Save Failure</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-error mb-1">Save Failure</p>
                       <p className="text-xs font-bold text-error/80 leading-relaxed uppercase">{backendError}</p>
                     </div>
                     <button onClick={() => setBackendError(null)} className="btn btn-ghost btn-xs btn-circle text-error">×</button>
@@ -379,7 +379,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
               <div className="p-6 bg-base-50/50 border-t border-base-100 flex items-center justify-end gap-3">
                 <button 
                   type="button" 
-                  className="btn btn-ghost text-xs font-black uppercase tracking-widest opacity-40" 
+                  className="btn btn-ghost text-xs font-semibold uppercase tracking-wide text-slate-600" 
                   onClick={onClose}
                 >
                   Cancel
@@ -388,7 +388,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                 {activeTab === 'personal' ? (
                   <button 
                     type="button" 
-                    className="btn btn-primary rounded-lg text-xs font-black uppercase tracking-widest px-8 shadow-md shadow-primary/20"
+                    className="btn btn-primary rounded-lg text-xs font-semibold uppercase tracking-wide px-8 shadow-md shadow-primary/20"
                     onClick={() => setActiveTab('employment')}
                   >
                     Next Step
@@ -397,7 +397,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                 ) : activeTab === 'employment' ? (
                   <button 
                     type="button" 
-                    className="btn btn-primary rounded-lg text-xs font-black uppercase tracking-widest px-8 shadow-md shadow-primary/20"
+                    className="btn btn-primary rounded-lg text-xs font-semibold uppercase tracking-wide px-8 shadow-md shadow-primary/20"
                     onClick={() => setActiveTab('history')}
                   >
                     Next Step

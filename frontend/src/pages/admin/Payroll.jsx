@@ -117,9 +117,9 @@ const Payroll = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Payroll & Disbursement Center
+                  Payroll management
                 </h1>
-                <span className="badge badge-sm bg-slate-100 text-slate-700 border-slate-200 font-semibold text-[10px]">
+                <span className="badge badge-sm bg-slate-100 text-slate-700 border-slate-200 font-semibold text-xs">
                   General Payroll (Form 7)
                 </span>
               </div>
@@ -143,56 +143,56 @@ const Payroll = () => {
       {/* Financial Executive Summary Cards (4 Columns) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Gross Compensation
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl font-bold text-slate-900 font-mono tabular-nums">
               {formatCurrency(totalGross)}
             </span>
-            <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
               Pre-deduction
             </span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Mandatory Withholdings
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl font-bold text-rose-700 font-mono tabular-nums">
               {formatCurrency(totalDeductions)}
             </span>
-            <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
+            <span className="text-xs font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
               Statutory & Loans
             </span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Net Cash Payable
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl font-bold text-[#0038A8] font-mono tabular-nums">
               {formatCurrency(totalNet)}
             </span>
-            <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
               LandBank ATM
             </span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Active Payroll Staff
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl font-bold text-slate-900 font-mono tabular-nums">
               {cutoffPayrolls.length} <span className="text-xs font-normal text-slate-500">Personnel</span>
             </span>
-            <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+            <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
               Period Cycle
             </span>
           </div>

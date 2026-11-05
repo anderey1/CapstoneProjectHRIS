@@ -13,9 +13,11 @@ export const QUERY_KEYS = {
   SCHOOLS: 'schools',
   ME: 'me',
   EMPLOYEE_DOCUMENTS: 'employee-documents',
-  DAILY_QR: 'daily-qr',
+  BIOMETRIC_MAPPINGS: 'biometric-mappings',
   SALARY_GRADES: 'salary-grades',
   DASHBOARD_STATS: 'dashboard_stats',
+  DASHBOARD_OPERATIONS: 'dashboard_operations',
+  DASHBOARD_INSIGHT: 'dashboard_insight',
   AI_SUMMARY: 'ai_summary',
   CHARTS: {
     LOAN_STATUS: 'loan_status_chart',

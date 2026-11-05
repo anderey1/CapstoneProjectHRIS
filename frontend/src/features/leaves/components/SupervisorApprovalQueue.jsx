@@ -64,7 +64,7 @@ const SupervisorApprovalQueue = ({
             <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
             <span>You have <strong>{pendingActionRequiredCount}</strong> application(s) awaiting your action.</span>
           </div>
-          <span className="font-mono text-[11px] text-amber-700 uppercase font-semibold">Immediate Action</span>
+          <span className="font-mono text-xs text-amber-700 uppercase font-semibold">Immediate Action</span>
         </div>
       )}
 
@@ -123,7 +123,7 @@ const SupervisorApprovalQueue = ({
         <div className="overflow-x-auto">
           <table className="table table-xs w-full">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-[11px] uppercase tracking-wider">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs uppercase tracking-wider">
                 <th className="py-2.5 px-3">Docket ID</th>
                 <th className="py-2.5 px-3">Applicant Name</th>
                 <th className="py-2.5 px-3">Leave Classification</th>
@@ -142,19 +142,19 @@ const SupervisorApprovalQueue = ({
                       key={leave.id} 
                       className={`hover:bg-slate-50/80 transition-colors ${isActionRequired ? 'bg-amber-50/30' : ''}`}
                     >
-                      <td className="py-2 px-3 font-mono text-[11px] font-medium text-slate-500">
+                      <td className="py-2 px-3 font-mono text-xs font-medium text-slate-500">
                         #{leave.id}
                       </td>
                       <td className="py-2 px-3">
                         <div className="font-semibold text-slate-900 text-xs">{leave.employee_name}</div>
-                        <div className="text-[10px] text-slate-400">{leave.department || 'School / Section'}</div>
+                        <div className="text-xs text-slate-400">{leave.department || 'School / Section'}</div>
                       </td>
                       <td className="py-2 px-3">
                         <span className="font-semibold text-xs text-slate-800 capitalize">
                           {leave.leave_type.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="py-2 px-3 font-mono text-[11px] tabular-nums text-slate-600">
+                      <td className="py-2 px-3 font-mono text-xs tabular-nums text-slate-600">
                         {new Date(leave.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         <span className="mx-1 text-slate-400">→</span>
                         {new Date(leave.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -203,7 +203,7 @@ const SupervisorApprovalQueue = ({
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                     CSC Form No. 6 Endorsement
                   </span>
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedApproval.id}</span>
@@ -225,17 +225,17 @@ const SupervisorApprovalQueue = ({
               {/* Application Details Summary */}
               <div className="border border-slate-200 rounded p-4 bg-slate-50/50 grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-500 block">Leave Classification</span>
+                  <span className="text-xs uppercase font-semibold text-slate-500 block">Leave Classification</span>
                   <span className="font-bold text-slate-900 capitalize text-sm">{selectedApproval.leave_type.replace('_', ' ')}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-500 block">Inclusive Dates</span>
+                  <span className="text-xs uppercase font-semibold text-slate-500 block">Inclusive Dates</span>
                   <span className="font-mono tabular-nums font-semibold text-slate-900 text-xs">
                     {new Date(selectedApproval.start_date).toLocaleDateString()} — {new Date(selectedApproval.end_date).toLocaleDateString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-500 block">Work Days Count</span>
+                  <span className="text-xs uppercase font-semibold text-slate-500 block">Work Days Count</span>
                   <span className="font-bold font-mono text-slate-900 text-sm">{selectedApproval.working_days_applied} Days</span>
                 </div>
               </div>
@@ -243,7 +243,7 @@ const SupervisorApprovalQueue = ({
               {/* Specifics */}
               {(selectedApproval.location_details || selectedApproval.illness_details) && (
                 <div className="border border-slate-200 rounded p-3 bg-white space-y-1.5">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Application Specification</span>
+                  <span className="text-xs uppercase font-bold text-slate-500 block">Application Specification</span>
                   {selectedApproval.location_details && (
                     <p className="text-xs text-slate-700">
                       <strong>Location:</strong> {selectedApproval.is_within_philippines ? 'Philippines' : 'Abroad'} — {selectedApproval.location_details}
@@ -259,7 +259,7 @@ const SupervisorApprovalQueue = ({
 
               {/* Documentary Attachments */}
               <div className="border border-slate-200 rounded">
-                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-[11px] uppercase tracking-wide text-slate-700">
+                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-xs uppercase tracking-wide text-slate-700">
                   Supporting Documentation
                 </div>
                 <div className="p-3 space-y-2">

@@ -33,7 +33,8 @@ export const AuthProvider = ({ children }) => {
             loggedIn: true, 
             id: payload.user_id,
             employee_id: payload.employee_id,
-            role: payload.role || 'TEACHING', 
+            role: payload.role || 'TEACHING',
+            is_superuser: payload.is_superuser === true,
             username: payload.username || localStorage.getItem('username') 
           });
         } else {
@@ -67,7 +68,8 @@ export const AuthProvider = ({ children }) => {
       loggedIn: true, 
       id: verifiedId, 
       employee_id: verifiedEmployeeId, 
-      role: verifiedRole, 
+      role: verifiedRole,
+      is_superuser: payload?.is_superuser === true,
       username: verifiedUsername 
     });
     return response.data;

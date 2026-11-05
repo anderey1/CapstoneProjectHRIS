@@ -46,7 +46,7 @@ export const DocumentAttachmentCard = ({ title, subtitle, fileUrl, color = 'prim
         </div>
         <div>
           <p className={`text-[10px] font-black uppercase tracking-widest ${style.label}`}>{title}</p>
-          <p className="text-[9px] font-bold opacity-40 uppercase">{subtitle}</p>
+          <p className="text-xs font-bold text-slate-600 uppercase">{subtitle}</p>
         </div>
       </div>
       <a

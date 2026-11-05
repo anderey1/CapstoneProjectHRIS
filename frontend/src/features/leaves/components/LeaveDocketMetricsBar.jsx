@@ -13,7 +13,7 @@ const LeaveDocketMetricsBar = ({
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Pending Review
         </p>
         <div className="flex items-baseline justify-between mt-1">
@@ -25,7 +25,7 @@ const LeaveDocketMetricsBar = ({
       </div>
 
       <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Awaiting Your Action
         </p>
         <div className="flex items-baseline justify-between mt-1">
@@ -37,7 +37,7 @@ const LeaveDocketMetricsBar = ({
       </div>
 
       <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Approved Records
         </p>
         <div className="flex items-baseline justify-between mt-1">
@@ -49,7 +49,7 @@ const LeaveDocketMetricsBar = ({
       </div>
 
       <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Disapproved
         </p>
         <div className="flex items-baseline justify-between mt-1">

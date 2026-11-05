@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, Download, FileText, MapPin, AlertCircle, CheckCircle2, Calendar } from 'lucide-react';
+import { Download, FileText, AlertCircle } from 'lucide-react';
 import api from '../../api/axios';
 import { fetchAllPages } from '../../api/pagination';
 import { QUERY_KEYS } from '../../api/queryKeys';
-import { useAuth } from '../../context/AuthContext';
 // Helper to format HH:MM:SS string to 12-hour AM/PM format
 const formatTime = (timeStr, fallback = '---') => {
   if (!timeStr) return fallback;
@@ -24,7 +23,6 @@ const formatTime = (timeStr, fallback = '---') => {
  * Redesigned for viewing detailed slots and exporting Form 48 compliant PDFs.
  */
 const DTR = () => {
-  const { user } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [downloading, setDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -33,7 +31,7 @@ const DTR = () => {
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth],
     queryFn: ({ signal }) => {
       const [year, month] = selectedMonth.split('-');
-      return fetchAllPages('attendance/', { month, year }, signal);
+      return fetchAllPages('attendance/', { month, year, scope: 'mine' }, signal);
     },
   });
 
@@ -91,7 +89,7 @@ const DTR = () => {
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 ">
                 Daily Time Record (CSC Form No. 48)
               </h1>
               <p className="text-xs text-slate-500">
@@ -103,7 +101,8 @@ const DTR = () => {
 
         <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
           <input
-            type="month"
+            aria-label="Attendance month"
+              type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-800 focus:outline-none focus:border-[#0038A8]"
@@ -119,7 +118,7 @@ const DTR = () => {
               {downloading ? 'Generating PDF...' : 'Export Form 48 PDF'}
             </button>
             <ul tabIndex={0} className="dropdown-content z-20 menu p-2 shadow-lg bg-white border border-slate-300 rounded-lg w-56 mt-1 text-xs">
-              <li className="menu-title font-bold text-[10px] uppercase text-slate-400">Select Form Cutoff Period</li>
+              <li className="menu-title font-bold text-xs uppercase text-slate-400">Select Form Cutoff Period</li>
               <li><button type="button" onClick={() => handleDownload('1')} className="py-2 text-slate-700 hover:bg-slate-50">1st Cutoff (1st - 15th Day)</button></li>
               <li><button type="button" onClick={() => handleDownload('2')} className="py-2 text-slate-700 hover:bg-slate-50">2nd Cutoff (16th - End of Month)</button></li>
               <li><button type="button" onClick={() => handleDownload('split')} className="py-2 text-slate-700 hover:bg-slate-50">Split Cards (Full Month)</button></li>
@@ -141,14 +140,14 @@ const DTR = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-xs tracking-wider">
                 <th className="px-6 py-3 text-center">Date</th>
                 <th className="px-6 py-3 text-center" colSpan={2}>Morning (A.M.)</th>
                 <th className="px-6 py-3 text-center" colSpan={2}>Afternoon (P.M.)</th>
                 <th className="px-6 py-3 text-center" colSpan={2}>Overtime (O.T.)</th>
                 <th className="px-6 py-3 text-right">DTR Status</th>
               </tr>
-              <tr className="bg-slate-100/70 border-b border-slate-200 uppercase text-[10px] font-semibold text-slate-500">
+              <tr className="bg-slate-100/70 border-b border-slate-200 uppercase text-xs font-semibold text-slate-500">
                 <th></th>
                 <th className="text-center py-1.5 font-mono">Arrival</th>
                 <th className="text-center py-1.5 font-mono border-r border-slate-200">Departure</th>
@@ -203,18 +202,14 @@ const DTR = () => {
                           }`}>
                             {rec.is_dtr_approved ? 'Approved' : 'Pending Review'}
                           </span>
-                          {rec.is_geo_flagged && (
-                             <span className="text-xs font-medium text-red-600 flex items-center gap-0.5">
-                                <AlertCircle className="w-3 h-3" /> Outside Geofence
-                             </span>
-                          )}
+
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-20 opacity-30 italic text-xs uppercase tracking-widest">No records for this period</td>
+                  <td colSpan="8" className="text-center py-20 text-slate-600 italic text-xs uppercase tracking-wide">No records for this period</td>
                 </tr>
               )}
             </tbody>

@@ -98,7 +98,7 @@ const MyLoans = () => {
     return (
       <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
         <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Loading Personal Provident Loan Portfolio...
         </p>
       </div>
@@ -110,16 +110,13 @@ const MyLoans = () => {
       {/* DepEd Institutional Header */}
       <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
-            Republic of the Philippines • Department of Education • SDO Lucena City
-          </span>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
               <Coins className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Personal Provident Fund Loan Portfolio
+                My provident loans
               </h1>
             </div>
           </div>
@@ -141,10 +138,10 @@ const MyLoans = () => {
       </div>
 
       {/* 4-Metric Personal Loan Summary Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         {/* Active Disbursed Principal */}
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
             Active Disbursed Principal
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -152,12 +149,12 @@ const MyLoans = () => {
               ₱{metrics.activeDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">Active loan capital</span>
+          <span className="text-xs text-slate-500 block mt-1">Active loan capital</span>
         </div>
 
         {/* Monthly Payroll Deduction */}
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             Monthly Amortization
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -165,12 +162,12 @@ const MyLoans = () => {
               ₱{metrics.monthlyAmortization.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">Payroll deduction total</span>
+          <span className="text-xs text-slate-500 block mt-1">Payroll deduction total</span>
         </div>
 
         {/* Pending Review */}
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             Applications Under Review
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -179,12 +176,12 @@ const MyLoans = () => {
             </span>
             <span className="text-xs text-slate-500">applications</span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">HR &amp; SDS endorsement</span>
+          <span className="text-xs text-slate-500 block mt-1">HR &amp; SDS endorsement</span>
         </div>
 
         {/* Settled / Paid */}
         <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             Fully Settled Accounts
           </span>
           <div className="flex items-baseline gap-1 mt-1">
@@ -193,7 +190,7 @@ const MyLoans = () => {
             </span>
             <span className="text-xs text-slate-500">accounts</span>
           </div>
-          <span className="text-[11px] text-slate-500 block mt-1">Historical paid loans</span>
+          <span className="text-xs text-slate-500 block mt-1">Historical paid loans</span>
         </div>
       </div>
 
@@ -202,11 +199,11 @@ const MyLoans = () => {
         <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="w-4 h-4 text-[#0038A8]" />
-            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            <h2 className="text-xs font-bold text-slate-800 tracking-wider">
               Provident Fund Personal Loan Ledger
             </h2>
           </div>
-          <span className="text-[11px] text-slate-500 font-mono">
+          <span className="text-xs text-slate-500 font-mono">
             {pagination.count} Recorded Accounts
           </span>
         </div>
@@ -214,7 +211,7 @@ const MyLoans = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-[11px] uppercase tracking-wider">
+              <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-xs uppercase tracking-wider">
                 <th className="py-2.5 px-4 font-bold">Reference ID</th>
                 <th className="py-2.5 px-3 font-bold">Filing Date</th>
                 <th className="py-2.5 px-3 font-bold">Purpose</th>
@@ -323,7 +320,7 @@ const MyLoans = () => {
           <Pagination pagination={pagination} label="loans" />
         </div>
 
-        <div className="bg-slate-50 border-t border-slate-300 px-4 py-2 text-[11px] text-slate-500 flex justify-between">
+        <div className="bg-slate-50 border-t border-slate-300 px-4 py-2 text-xs text-slate-500 flex justify-between">
           <span>DepEd SDO Lucena City • Provident Fund Operational System</span>
           <span className="font-mono">DO 37, s. 2018 Standards</span>
         </div>
@@ -340,9 +337,6 @@ const MyLoans = () => {
             {/* Modal Header */}
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-start justify-between">
               <div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
-                  Department of Education • SDO Lucena City
-                </span>
                 <h2 className="text-base font-bold text-slate-900">
                   Provident Fund Subsidiary Ledger Docket
                 </h2>
@@ -364,7 +358,7 @@ const MyLoans = () => {
               {/* Metadata Card */}
               <div className="bg-slate-50 border border-slate-200 rounded-md p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block font-bold">
                     Principal Amount
                   </span>
                   <strong className="text-slate-900 text-sm font-mono block mt-0.5">
@@ -372,7 +366,7 @@ const MyLoans = () => {
                   </strong>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block font-bold">
                     Monthly Deduction
                   </span>
                   <strong className="text-[#0038A8] text-sm font-mono block mt-0.5">
@@ -380,7 +374,7 @@ const MyLoans = () => {
                   </strong>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block font-bold">
                     Interest &amp; Term
                   </span>
                   <span className="text-slate-800 text-xs font-mono block mt-0.5">
@@ -388,7 +382,7 @@ const MyLoans = () => {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block font-bold">
                     Approval Standing
                   </span>
                   <span
@@ -404,7 +398,7 @@ const MyLoans = () => {
               {/* Review Remarks if any */}
               {inspectingLoan.remarks && (
                 <div className="p-3 bg-amber-50/60 border border-amber-200 rounded text-xs space-y-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
                     Review / Endorsement Remarks
                   </span>
                   <p className="text-slate-800 italic">{inspectingLoan.remarks}</p>

@@ -77,10 +77,10 @@ const LeaveManagement = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+            <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
               DepEd SDO Lucena City
             </span>
-            <span className="text-[11px] font-mono text-slate-500">CSC Form No. 6 (Revised 2020)</span>
+            <span className="text-xs font-mono text-slate-500">CSC Form No. 6 (Revised 2020)</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Division Leave Processing Docket
@@ -101,28 +101,28 @@ const LeaveManagement = () => {
       {/* Metric Summary Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Pending Review</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pending Review</p>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">{totalPendingCount}</span>
             <ClockIcon className="w-4 h-4 text-slate-400" />
           </div>
         </div>
         <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Awaiting Your Action</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Awaiting Your Action</p>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono tabular-nums text-amber-700">{pendingActionRequiredCount}</span>
             <UserCheck className="w-4 h-4 text-amber-600" />
           </div>
         </div>
         <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Approved Records</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Approved Records</p>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono tabular-nums text-emerald-700">{approvedCount}</span>
             <FileCheck className="w-4 h-4 text-emerald-600" />
           </div>
         </div>
         <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Disapproved</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Disapproved</p>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono tabular-nums text-slate-600">{rejectedCount}</span>
             <ShieldAlert className="w-4 h-4 text-slate-400" />
@@ -222,7 +222,7 @@ const LeaveManagement = () => {
         <div className="overflow-x-auto">
           <table className="table table-xs w-full">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-[11px] uppercase tracking-wider">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs uppercase tracking-wider">
                 <th className="py-2.5 px-3">Docket ID</th>
                 <th className="py-2.5 px-3">Applicant Name</th>
                 <th className="py-2.5 px-3">Office / Station</th>
@@ -242,12 +242,12 @@ const LeaveManagement = () => {
                       key={leave.id} 
                       className={`hover:bg-slate-50/80 transition-colors ${isActionRequired ? 'bg-amber-50/30' : ''}`}
                     >
-                      <td className="py-2 px-3 font-mono text-[11px] font-medium text-slate-500">
+                      <td className="py-2 px-3 font-mono text-xs font-medium text-slate-500">
                         #{leave.id}
                       </td>
                       <td className="py-2 px-3">
                         <div className="font-semibold text-slate-900 text-xs">{leave.employee_name}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">Filing Date: {new Date(leave.date_applied).toLocaleDateString()}</div>
+                        <div className="text-xs text-slate-400 font-mono">Filing Date: {new Date(leave.date_applied).toLocaleDateString()}</div>
                       </td>
                       <td className="py-2 px-3 text-xs text-slate-600">
                         {leave.department || 'Division Office'}
@@ -257,7 +257,7 @@ const LeaveManagement = () => {
                           {leave.leave_type.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="py-2 px-3 font-mono text-[11px] tabular-nums text-slate-600">
+                      <td className="py-2 px-3 font-mono text-xs tabular-nums text-slate-600">
                         {new Date(leave.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         <span className="mx-1 text-slate-400">→</span>
                         {new Date(leave.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -271,7 +271,7 @@ const LeaveManagement = () => {
                             {formatStatus(leave.status)}
                           </span>
                           {isActionRequired && (
-                            <span className="text-[9px] font-bold text-amber-700 uppercase tracking-tight">
+                            <span className="text-xs font-bold text-amber-700 uppercase tracking-tight">
                               ● Action Required
                             </span>
                           )}
@@ -314,7 +314,7 @@ const LeaveManagement = () => {
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                     CSC Form No. 6
                   </span>
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedLeave.id}</span>
@@ -337,28 +337,28 @@ const LeaveManagement = () => {
               
               {/* Section 6: Details of Application */}
               <div className="border border-slate-200 rounded">
-                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-[11px] uppercase tracking-wide text-slate-700">
+                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-xs uppercase tracking-wide text-slate-700">
                   6. Details of Application
                 </div>
                 <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/40">
                   <div>
-                    <span className="text-[10px] uppercase font-semibold text-slate-500 block">6.A Type of Leave</span>
+                    <span className="text-xs uppercase font-semibold text-slate-500 block">6.A Type of Leave</span>
                     <span className="font-bold text-slate-900 capitalize text-sm">{selectedLeave.leave_type.replace('_', ' ')}</span>
                     {selectedLeave.other_type_details && (
                       <span className="text-xs text-slate-600 block mt-0.5 italic">({selectedLeave.other_type_details})</span>
                     )}
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-semibold text-slate-500 block">6.C Inclusive Dates</span>
+                    <span className="text-xs uppercase font-semibold text-slate-500 block">6.C Inclusive Dates</span>
                     <span className="font-mono tabular-nums font-semibold text-slate-900 text-xs">
                       {new Date(selectedLeave.start_date).toLocaleDateString()} — {new Date(selectedLeave.end_date).toLocaleDateString()}
                     </span>
-                    <span className="text-slate-500 block font-mono text-[11px] mt-0.5">
+                    <span className="text-slate-500 block font-mono text-xs mt-0.5">
                       <strong>{selectedLeave.working_days_applied}</strong> working day(s) applied
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-semibold text-slate-500 block">6.D Commutation</span>
+                    <span className="text-xs uppercase font-semibold text-slate-500 block">6.D Commutation</span>
                     <span className="font-semibold text-slate-800 capitalize">
                       {selectedLeave.commutation?.replace('_', ' ') || 'Not Requested'}
                     </span>
@@ -370,7 +370,7 @@ const LeaveManagement = () => {
                   <div className="px-4 py-3 border-t border-slate-200 bg-white grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                     {selectedLeave.location_details && (
                       <div>
-                        <span className="text-[10px] uppercase font-semibold text-slate-500 block">Where leave will be spent</span>
+                        <span className="text-xs uppercase font-semibold text-slate-500 block">Where leave will be spent</span>
                         <span className="font-medium text-slate-800">
                           {selectedLeave.is_within_philippines ? 'Within Philippines' : 'Abroad'}: {selectedLeave.location_details}
                         </span>
@@ -378,7 +378,7 @@ const LeaveManagement = () => {
                     )}
                     {selectedLeave.illness_details && (
                       <div>
-                        <span className="text-[10px] uppercase font-semibold text-slate-500 block">Illness / Hospitalization</span>
+                        <span className="text-xs uppercase font-semibold text-slate-500 block">Illness / Hospitalization</span>
                         <span className="font-medium text-slate-800">
                           {selectedLeave.is_in_hospital ? 'In-Hospital' : 'Out-Patient'}: {selectedLeave.illness_details}
                         </span>
@@ -386,7 +386,7 @@ const LeaveManagement = () => {
                     )}
                     {selectedLeave.study_type && (
                       <div>
-                        <span className="text-[10px] uppercase font-semibold text-slate-500 block">Study Leave Purpose</span>
+                        <span className="text-xs uppercase font-semibold text-slate-500 block">Study Leave Purpose</span>
                         <span className="font-medium text-slate-800 uppercase">
                           {selectedLeave.study_type.replace('_', ' ')}
                         </span>
@@ -398,13 +398,13 @@ const LeaveManagement = () => {
 
               {/* Section 7.B: Certification of Leave Credits */}
               <div className="border border-slate-200 rounded">
-                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-[11px] uppercase tracking-wide text-slate-700 flex justify-between items-center">
+                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-xs uppercase tracking-wide text-slate-700 flex justify-between items-center">
                   <span>7.B Certification of Leave Credits</span>
-                  <span className="text-[10px] font-normal lowercase text-slate-500">certified by personnel officer</span>
+                  <span className="text-xs font-normal lowercase text-slate-500">certified by personnel officer</span>
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-4 bg-slate-50/50">
                   <div className="bg-white border border-slate-200 p-3 rounded">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Vacation Leave Balance</span>
+                    <span className="text-xs uppercase font-bold text-slate-500 block">Vacation Leave Balance</span>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
                         {selectedLeave.vacation_balance ?? 0}
@@ -413,7 +413,7 @@ const LeaveManagement = () => {
                     </div>
                   </div>
                   <div className="bg-white border border-slate-200 p-3 rounded">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Sick Leave Balance</span>
+                    <span className="text-xs uppercase font-bold text-slate-500 block">Sick Leave Balance</span>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
                         {selectedLeave.sick_balance ?? 0}
@@ -426,7 +426,7 @@ const LeaveManagement = () => {
 
               {/* Documentary Attachments */}
               <div className="border border-slate-200 rounded">
-                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-[11px] uppercase tracking-wide text-slate-700">
+                <div className="bg-slate-100 px-3 py-1.5 border-b border-slate-200 font-bold text-xs uppercase tracking-wide text-slate-700">
                   Documentary Attachments
                 </div>
                 <div className="p-3 space-y-2">

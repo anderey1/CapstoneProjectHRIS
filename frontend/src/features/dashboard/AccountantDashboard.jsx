@@ -195,7 +195,7 @@ const AccountantDashboard = ({ stats }) => {
             ) : formattedLoans.length > 0 ? (
               <>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</span>
                   <span className="text-2xl font-bold text-slate-900 tabular-nums">
                     {formattedLoans.reduce((acc, curr) => acc + curr.value, 0)}
                   </span>

@@ -39,11 +39,11 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
         <div>
           <div className="flex items-center gap-2">
             <ClockIcon className="w-4 h-4 text-[#0038a8]" />
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+            <h3 className="text-xs font-bold text-slate-900 tracking-wide">
               Personal CSC Form No. 6 Application Ledger
             </h3>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Historical audit log of all filed leave applications and certifying actions.
           </p>
         </div>
@@ -81,7 +81,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
       <div className="overflow-x-auto">
         <table className="table table-xs w-full">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-[11px] uppercase tracking-wider">
+            <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs uppercase tracking-wider">
               <th className="py-2.5 px-3">Docket ID</th>
               <th className="py-2.5 px-3">Filing Date</th>
               <th className="py-2.5 px-3">Leave Classification</th>
@@ -96,10 +96,10 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
             {filteredLeaves.length > 0 ? (
               filteredLeaves.map((leave) => (
                 <tr key={leave.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-2 px-3 font-mono text-[11px] font-medium text-slate-500">
+                  <td className="py-2 px-3 font-mono text-xs font-medium text-slate-500">
                     #{leave.id}
                   </td>
-                  <td className="py-2 px-3 font-mono text-[11px] tabular-nums text-slate-600">
+                  <td className="py-2 px-3 font-mono text-xs tabular-nums text-slate-600">
                     {new Date(leave.date_applied).toLocaleDateString()}
                   </td>
                   <td className="py-2 px-3">
@@ -107,7 +107,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
                       {leave.leave_type.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="py-2 px-3 font-mono text-[11px] tabular-nums text-slate-600">
+                  <td className="py-2 px-3 font-mono text-xs tabular-nums text-slate-600">
                     {new Date(leave.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     <span className="mx-1 text-slate-400">→</span>
                     {new Date(leave.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -118,29 +118,29 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
                   <td className="py-2 px-3 text-xs max-w-xs">
                     {leave.location_details && (
                       <div className="truncate text-slate-600">
-                        <span className="text-[10px] text-slate-400 uppercase font-semibold">Location: </span>
+                        <span className="text-xs text-slate-400 uppercase font-semibold">Location: </span>
                         {leave.location_details}
                       </div>
                     )}
                     {leave.illness_details && (
                       <div className="truncate text-slate-600">
-                        <span className="text-[10px] text-slate-400 uppercase font-semibold">Medical: </span>
+                        <span className="text-xs text-slate-400 uppercase font-semibold">Medical: </span>
                         {leave.illness_details}
                       </div>
                     )}
                     {leave.other_type_details && (
                       <div className="truncate text-slate-600">
-                        <span className="text-[10px] text-slate-400 uppercase font-semibold">Note: </span>
+                        <span className="text-xs text-slate-400 uppercase font-semibold">Note: </span>
                         {leave.other_type_details}
                       </div>
                     )}
                     {leave.disapproval_reason && leave.status === 'rejected' && (
-                      <div className="text-rose-700 font-medium text-[11px] mt-0.5">
+                      <div className="text-rose-700 font-medium text-xs mt-0.5">
                         Disapproval: "{leave.disapproval_reason}"
                       </div>
                     )}
                     {!leave.location_details && !leave.illness_details && !leave.other_type_details && !leave.disapproval_reason && (
-                      <span className="text-slate-400 text-[11px]">—</span>
+                      <span className="text-slate-400 text-xs">—</span>
                     )}
                   </td>
                   <td className="py-2 px-3">
@@ -158,7 +158,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
                           href={leave.supporting_document}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-ghost btn-xs text-[#0038a8] hover:bg-blue-50 px-1.5 h-6 text-[10px] font-semibold flex items-center gap-1 border border-blue-200"
+                          className="btn btn-ghost btn-xs text-[#0038a8] hover:bg-blue-50 px-1.5 h-6 text-xs font-semibold flex items-center gap-1 border border-blue-200"
                           title="View Supporting Document"
                         >
                           <FileText className="w-3 h-3" />
@@ -170,7 +170,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
                           href={leave.travel_authority_document}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-ghost btn-xs text-slate-700 hover:bg-slate-100 px-1.5 h-6 text-[10px] font-semibold flex items-center gap-1 border border-slate-200"
+                          className="btn btn-ghost btn-xs text-slate-700 hover:bg-slate-100 px-1.5 h-6 text-xs font-semibold flex items-center gap-1 border border-slate-200"
                           title="View Travel Authority"
                         >
                           <ExternalLink className="w-3 h-3" />
@@ -178,7 +178,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
                         </a>
                       )}
                       {!leave.supporting_document && !leave.travel_authority_document && (
-                        <span className="text-slate-300 text-[10px]">—</span>
+                        <span className="text-slate-300 text-xs">—</span>
                       )}
                     </div>
                   </td>

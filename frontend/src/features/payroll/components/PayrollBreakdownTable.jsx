@@ -30,11 +30,11 @@ const PayrollBreakdownTable = ({
         <div>
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="w-4 h-4 text-[#0038A8]" />
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+            <h3 className="text-xs font-bold text-slate-900 tracking-wide">
               General Payroll Sheet (Form 7)
             </h3>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Semi-monthly compensation and statutory deduction breakdown • {selectedCutoff}
           </p>
         </div>
@@ -55,7 +55,7 @@ const PayrollBreakdownTable = ({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-50/90 text-[10px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+            <tr className="bg-slate-50/90 text-xs font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
               <th className="px-4 py-3">Personnel</th>
               <th className="px-3 py-3">Station / Position</th>
               <th className="px-3 py-3 text-center">Days Worked</th>
@@ -79,11 +79,11 @@ const PayrollBreakdownTable = ({
                   <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-4 py-3 font-semibold text-slate-900">
                       <div>{p.employee_name}</div>
-                      <span className="text-[10px] font-mono text-slate-400">ID #{p.employee || p.id}</span>
+                      <span className="text-xs font-mono text-slate-400">ID #{p.employee || p.id}</span>
                     </td>
                     <td className="px-3 py-3 text-slate-600">
                       <div className="font-medium text-slate-800">{p.position || 'Staff'}</div>
-                      <div className="text-[10px] text-slate-500">{p.department || 'Division Office'}</div>
+                      <div className="text-xs text-slate-500">{p.department || 'Division Office'}</div>
                     </td>
                     <td className="px-3 py-3 text-center font-mono font-medium text-slate-700">
                       {p.days_worked || '11.0'}
@@ -140,7 +140,7 @@ const PayrollBreakdownTable = ({
                           </button>
                         )}
                         {p.status === 'released' && (
-                          <span className="text-[10px] font-medium text-slate-400">Locked</span>
+                          <span className="text-xs font-medium text-slate-400">Locked</span>
                         )}
                       </div>
                     </td>
@@ -160,7 +160,7 @@ const PayrollBreakdownTable = ({
           {activePayrolls.length > 0 && (
             <tfoot>
               <tr className="bg-slate-50 border-t-2 border-slate-200 font-bold text-slate-800">
-                <td colSpan="3" className="px-4 py-3 uppercase tracking-wider text-[10px]">
+                <td colSpan="3" className="px-4 py-3 uppercase tracking-wider text-xs">
                   Batch Totals ({activePayrolls.length} Personnel)
                 </td>
                 <td className="px-3 py-3 text-right font-mono text-slate-900">

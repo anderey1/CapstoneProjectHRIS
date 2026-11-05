@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AccountantDashboardPage from './pages/admin/AccountantDashboardPage';
 import SuperintendentDashboardPage from './pages/admin/SuperintendentDashboardPage';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
+import Schools from './pages/admin/Schools';
 import Employees from './pages/admin/Employees';
 import LoanManagement from './pages/admin/LoanManagement';
 import MyLoans from './pages/employee/MyLoans';
@@ -73,6 +74,10 @@ function App() {
           <Route path="my-leaves" element={<MyLeaves />} />
           <Route path="my-payslips" element={<MyPayroll />} />
           <Route path="my-performance" element={<MyIPCRF />} />
+
+          <Route element={<ProtectedRoute superuserOnly />}>
+            <Route path="schools" element={<Schools />} />
+          </Route>
 
           {/* Management Tier (HR, Accountant, Superintendent, Admin) */}
           <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>

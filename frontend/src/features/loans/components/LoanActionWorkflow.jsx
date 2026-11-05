@@ -29,7 +29,7 @@ const LoanActionWorkflow = ({
       {/* Step 1: Document Verification */}
       {loan.status === 'pending' && (
         <div className="space-y-3 pt-3 border-t border-slate-200">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+          <h4 className="text-xs font-bold text-slate-700 tracking-wide">
             Step 1: Verify Documents
           </h4>
 
@@ -68,7 +68,7 @@ const LoanActionWorkflow = ({
 
               {/* Reject Drawer */}
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
-                <label className="text-[11px] font-semibold text-slate-700 block">
+                <label className="text-xs font-semibold text-slate-700 block">
                   Reason for Disapproval
                 </label>
                 <textarea
@@ -103,7 +103,7 @@ const LoanActionWorkflow = ({
       {/* Step 2: Superintendent Certification */}
       {loan.status === 'verified' && (
         <div className="space-y-3 pt-3 border-t border-slate-200">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+          <h4 className="text-xs font-bold text-slate-700 tracking-wide">
             Step 2: Superintendent Approval
           </h4>
 
@@ -164,7 +164,7 @@ const LoanActionWorkflow = ({
       {/* Step 3: Cashier / Payout Release */}
       {loan.status === 'approved' && (
         <div className="space-y-3 pt-3 border-t border-slate-200">
-          <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+          <h4 className="text-xs font-bold text-slate-700 tracking-wide">
             Disbursement & Release (Step 3: ATM / Check Payout)
           </h4>
 

@@ -24,8 +24,18 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 @admin.register(School)
 class SchoolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'latitude', 'longitude', 'radius_meters')
+    list_display = ('name',)
+    fields = ('name',)
     search_fields = ('name',)
+
+    def has_add_permission(self, request):
+        return request.user.is_active and request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_superuser
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):

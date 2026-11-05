@@ -92,7 +92,7 @@ const SuperintendentDashboard = ({ stats }) => {
         {/* Card 4: Attendance Policy Alerts */}
         <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Attendance Alerts</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pending DTR Review</span>
             <span className="p-2 bg-red-50 rounded-md text-red-700">
               <AlertCircle className="w-4 h-4" />
             </span>
@@ -134,7 +134,7 @@ const SuperintendentDashboard = ({ stats }) => {
             ) : formattedPerf.length > 0 ? (
               <>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Rated</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rated</span>
                   <span className="text-2xl font-bold text-slate-900 tabular-nums">
                     {formattedPerf.reduce((acc, curr) => acc + curr.value, 0)}
                   </span>
@@ -182,7 +182,7 @@ const SuperintendentDashboard = ({ stats }) => {
           <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-[#0038A8]" />
-              <h3 className="text-sm font-semibold text-slate-900">Today's Attendance Status</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Attendance Status Distribution</h3>
             </div>
             <span className="text-xs text-slate-500">Live Scans</span>
           </div>
@@ -213,13 +213,13 @@ const SuperintendentDashboard = ({ stats }) => {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-slate-500 text-xs">
-                No attendance logs recorded for the current shift.
+                No attendance logs recorded for the selected records.
               </div>
             )}
           </div>
 
           <div className="mt-4 p-3 bg-slate-50 rounded border border-slate-100 text-xs text-slate-600">
-            <span className="font-semibold text-slate-800">Operational Continuity:</span> Real-time aggregate count of biometric/QR scans logged today.
+            <span className="font-semibold text-slate-800">Operational Continuity:</span> Attendance status distribution from imported DTR records.
           </div>
         </div>
       </div>

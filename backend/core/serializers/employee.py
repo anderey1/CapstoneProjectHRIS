@@ -14,6 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name']
 
 class SchoolSerializer(serializers.ModelSerializer):
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6, min_value=-90, max_value=90, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6, min_value=-180, max_value=180, required=False, allow_null=True)
+    radius_meters = serializers.IntegerField(min_value=1, default=100)
+
     class Meta:
         model = School
         fields = '__all__'

@@ -80,10 +80,10 @@ const MyLeaves = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+            <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
               DepEd SDO Lucena City
             </span>
-            <span className="text-[11px] font-mono text-slate-500">CSC Form No. 6 (Revised 2020)</span>
+            <span className="text-xs font-mono text-slate-500">CSC Form No. 6 (Revised 2020)</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             {activeMainTab === 'mine' ? 'Application for Leave Portal' : 'Subordinate Leave Endorsements'}
@@ -139,7 +139,7 @@ const MyLeaves = () => {
           >
             <span>Leave Processing Queue</span>
             {pendingSubordinateCount > 0 && (
-              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-1.5 py-0.2 rounded font-mono">
+              <span className="bg-amber-100 text-amber-900 text-xs font-bold px-1.5 py-0.2 rounded font-mono">
                 {pendingSubordinateCount}
               </span>
             )}

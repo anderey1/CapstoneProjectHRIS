@@ -28,7 +28,7 @@ const FamilyBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) =>
                   <p className="font-semibold text-sm text-slate-900">
                     {f.relationship === 'CHILD' ? f.full_name : `${f.first_name} ${f.surname}`}
                   </p>
-                  <span className="px-2 py-0.5 bg-blue-50 text-[#0038A8] border border-blue-100 rounded text-[11px] font-semibold mt-1 inline-block">
+                  <span className="px-2 py-0.5 bg-blue-50 text-[#0038A8] border border-blue-100 rounded text-xs font-semibold mt-1 inline-block">
                     {f.relationship}
                   </span>
                 </div>

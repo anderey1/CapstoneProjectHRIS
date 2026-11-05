@@ -110,7 +110,7 @@ const Recruitment = () => {
               <Layout className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 ">
                 Comparative Assessment Result (CAR) Ledger
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -134,29 +134,29 @@ const Recruitment = () => {
       {/* 5-Metric Portfolio Summary Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Applicants</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Applicants</p>
           <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{summary.total || 0}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">All candidate records</p>
+          <p className="text-xs text-slate-400 mt-0.5">All candidate records</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Initial Review</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Initial Review</p>
           <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{stageCounts.initial_evaluation || 0}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Document screening</p>
+          <p className="text-xs text-slate-400 mt-0.5">Document screening</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Comparative Assessment</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Comparative Assessment</p>
           <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{stageCounts.comparative_assessment || 0}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Rubric points evaluation</p>
+          <p className="text-xs text-slate-400 mt-0.5">Rubric points evaluation</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Ready for Hiring</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Ready for Hiring</p>
           <p className="text-xl font-bold text-blue-700 font-mono tabular-nums mt-1">{stageCounts.appointment_proposed || 0}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Endorsed to SDS</p>
+          <p className="text-xs text-slate-400 mt-0.5">Endorsed to SDS</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hired / Appointed</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Hired / Appointed</p>
           <p className="text-xl font-bold text-emerald-700 font-mono tabular-nums mt-1">{stageCounts.hired || 0}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Plantilla deployed</p>
+          <p className="text-xs text-slate-400 mt-0.5">Plantilla deployed</p>
         </div>
       </div>
 
@@ -167,6 +167,7 @@ const Recruitment = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
+              aria-label="Search applicants"
               placeholder="Search candidate by name or position applied..." 
               className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
               value={searchTerm}
@@ -221,7 +222,7 @@ const Recruitment = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[11px] tracking-wider">
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold text-xs tracking-wider">
                   <th className="px-4 py-3">Candidate</th>
                   <th className="px-4 py-3">Position Applied</th>
                   <th className="px-4 py-3 text-right">Education</th>
@@ -249,13 +250,13 @@ const Recruitment = () => {
                         <div className="font-semibold text-slate-900 leading-tight">
                           {applicant.first_name} {applicant.middle_name ? `${applicant.middle_name} ` : ''}{applicant.last_name}
                         </div>
-                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        <div className="text-xs text-slate-500 font-mono mt-0.5">
                           {applicant.email}
                         </div>
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-800">
                         {applicant.position_applied}
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-xs text-slate-500">
                           Applied: {new Date(applicant.date_applied).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                         </div>
                       </td>
@@ -337,12 +338,12 @@ const Recruitment = () => {
             <div className="modal-box rounded-lg max-w-4xl p-0 overflow-hidden shadow-lg border border-slate-200 bg-white h-[85vh] flex flex-col">     
                <div className="bg-base-50/50 border-b border-base-200 p-8 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-4">
-                     <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-black uppercase shadow-sm">
+                     <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-semibold uppercase shadow-sm">
                         {selectedApplicant.first_name[0]}{selectedApplicant.last_name[0]}
                      </div>
                      <div>
-                        <h3 className="font-black text-2xl text-base-content uppercase tracking-tight leading-none">{selectedApplicant.first_name} {selectedApplicant.middle_name ? selectedApplicant.middle_name + ' ' : ''}{selectedApplicant.last_name}</h3>
-                        <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] mt-2">Applied for: {selectedApplicant.position_applied}</p>
+                        <h3 className="font-semibold text-2xl text-base-content tracking-tight leading-none">{selectedApplicant.first_name} {selectedApplicant.middle_name ? selectedApplicant.middle_name + ' ' : ''}{selectedApplicant.last_name}</h3>
+                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mt-2">Applied for: {selectedApplicant.position_applied}</p>
                      </div>
                   </div>
                   <button onClick={() => setSelectedApplicant(null)} className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100"><XCircle className="w-6 h-6" /></button>
@@ -354,7 +355,7 @@ const Recruitment = () => {
                      {/* Left: Info & Contact */}
                      <div className="space-y-6">
                         <section className="space-y-4">
-                           <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+                           <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
                               <Info className="w-3 h-3" /> Basic Info
                            </h4>
                            <div className="bg-base-50 p-4 rounded-xl border border-base-200 space-y-4">
@@ -368,21 +369,21 @@ const Recruitment = () => {
                               </div>
                               <div className="pt-2 border-t border-base-200 flex items-center gap-2">
                                  <div className="w-2 h-2 rounded-full bg-primary" />
-                                 <p className="text-[10px] font-black uppercase opacity-40">Division: {selectedApplicant.school_division}</p>
+                                 <p className="text-xs font-semibold uppercase text-slate-600">Division: {selectedApplicant.school_division}</p>
                               </div>
                            </div>
                         </section>
 
                         <section className="space-y-4">
-                           <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+                           <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
                               <FileText className="w-3 h-3" /> Documents
                            </h4>
                             <div className="space-y-3">
                                {selectedApplicant.resume ? (
                                   <a href={selectedApplicant.resume} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
                                      <div className="flex items-center gap-3">
-                                        <FileText className="w-5 h-5 text-primary opacity-40" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Resume / CV</span>
+                                        <FileText className="w-5 h-5 text-primary text-slate-600" />
+                                        <span className="text-xs font-semibold uppercase tracking-wide">Resume / CV</span>
                                      </div>
                                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                   </a>
@@ -391,8 +392,8 @@ const Recruitment = () => {
                                {selectedApplicant.pds_file ? (
                                   <a href={selectedApplicant.pds_file} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
                                      <div className="flex items-center gap-3">
-                                        <FileText className="w-5 h-5 text-primary opacity-40" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Personal Data Sheet (PDS)</span>
+                                        <FileText className="w-5 h-5 text-primary text-slate-600" />
+                                        <span className="text-xs font-semibold uppercase tracking-wide">Personal Data Sheet (PDS)</span>
                                      </div>
                                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                   </a>
@@ -403,10 +404,10 @@ const Recruitment = () => {
                                   .map(doc => (
                                      <a key={doc.id} href={doc.file} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white border border-base-200 rounded-xl hover:border-primary/30 transition-colors shadow-sm group">
                                         <div className="flex items-center gap-3 min-w-0">
-                                           <FileText className="w-5 h-5 text-primary opacity-40 shrink-0" />
+                                           <FileText className="w-5 h-5 text-primary text-slate-600 shrink-0" />
                                            <div className="min-w-0">
-                                              <span className="text-[10px] font-black uppercase tracking-widest block">{formatDocType(doc.document_type)}</span>
-                                              <span className="text-[8px] opacity-40 font-bold block truncate max-w-[180px]">{doc.filename}</span>
+                                              <span className="text-xs font-semibold uppercase tracking-wide block">{formatDocType(doc.document_type)}</span>
+                                              <span className="text-xs text-slate-600 font-bold block truncate max-w-[180px]">{doc.filename}</span>
                                            </div>
                                         </div>
                                         <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -415,7 +416,7 @@ const Recruitment = () => {
                                 }
 
                                 {!selectedApplicant.resume && !selectedApplicant.pds_file && (!selectedApplicant.documents || selectedApplicant.documents.length === 0) && (
-                                   <p className="text-[10px] italic opacity-20 text-center">No documents uploaded</p>
+                                   <p className="text-xs italic text-slate-600 text-center">No documents uploaded</p>
                                 )}
                             </div>
                         </section>
@@ -425,7 +426,7 @@ const Recruitment = () => {
                      <div className="md:col-span-2 space-y-6">
                         <section className="space-y-4">
                            <div className="flex items-center justify-between">
-                              <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+                              <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
                                  <Star className="w-3 h-3" /> Staff Evaluation Scores
                               </h4>
                               {!isEditingScores ? (
@@ -441,7 +442,7 @@ const Recruitment = () => {
                                     });
                                     setIsEditingScores(true);
                                   }}
-                                  className="btn btn-xs btn-ghost text-primary font-black uppercase tracking-widest"
+                                  className="btn btn-xs btn-ghost text-primary font-semibold uppercase tracking-wide"
                                 >
                                   Edit Scores
                                 </button>
@@ -449,13 +450,13 @@ const Recruitment = () => {
                                 <div className="flex gap-2">
                                   <button 
                                     onClick={() => setIsEditingScores(false)}
-                                    className="btn btn-xs btn-ghost text-error font-black uppercase tracking-widest"
+                                    className="btn btn-xs btn-ghost text-error font-semibold uppercase tracking-wide"
                                   >
                                     Cancel
                                   </button>
                                   <button 
                                     onClick={() => updateScoresMutation.mutate({ id: selectedApplicant.id, scores })}
-                                    className="btn btn-xs btn-primary font-black uppercase tracking-widest"
+                                    className="btn btn-xs btn-primary font-semibold uppercase tracking-wide"
                                     disabled={updateScoresMutation.isPending}
                                   >
                                     Save Points
@@ -475,8 +476,8 @@ const Recruitment = () => {
                               ].map(s => (
                                  <div key={s.key} className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-center group">
                                     <div className="flex items-center justify-center gap-1 mb-1">
-                                       <p className="text-[9px] font-black opacity-40 uppercase tracking-tighter">{s.label}</p>
-                                       <span className="text-[8px] font-bold text-primary/40 uppercase">(Max {s.max})</span>
+                                       <p className="text-xs font-semibold text-slate-600 uppercase tracking-tighter">{s.label}</p>
+                                       <span className="text-xs font-bold text-primary/40 uppercase">(Max {s.max})</span>
                                     </div>
                                     {isEditingScores ? (
                                       <input 
@@ -491,13 +492,13 @@ const Recruitment = () => {
                                         }}
                                       />
                                     ) : (
-                                      <p className="text-xl font-black text-primary">{selectedApplicant[s.key]}</p>
+                                      <p className="text-xl font-semibold text-primary">{selectedApplicant[s.key]}</p>
                                     )}
                                  </div>
                               ))}
                               <div className="bg-primary border-2 border-primary rounded-xl p-4 text-center shadow-lg shadow-primary/20">
-                                 <p className="text-[9px] font-black text-white/60 uppercase tracking-tighter mb-1">Total Points</p>
-                                 <p className="text-xl font-black text-white">
+                                 <p className="text-xs font-semibold text-white/60 uppercase tracking-tighter mb-1">Total Points</p>
+                                 <p className="text-xl font-semibold text-white">
                                     {isEditingScores 
                                       ? (Object.values(scores).reduce((a, b) => Number(a) + Number(b), 0)).toFixed(2)
                                       : selectedApplicant.total_score}
@@ -507,14 +508,14 @@ const Recruitment = () => {
                         </section>
 
                         <section className="space-y-4 pt-4 border-t border-base-100">
-                           <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
+                           <h4 className="text-xs font-semibold tracking-wide text-slate-600 flex items-center gap-2">
                               <MessageSquare className="w-3 h-3" /> Status Timeline & Notes
                            </h4>
                            <div className="bg-base-50 rounded-xl p-6">
                               {selectedApplicant.notes ? (
                                  <p className="text-xs font-medium leading-relaxed italic text-base-content/60 whitespace-pre-wrap">{selectedApplicant.notes}</p>
                               ) : (
-                                 <p className="text-xs font-bold opacity-20 uppercase text-center py-4 tracking-widest italic">No history recorded yet</p>
+                                 <p className="text-xs font-bold text-slate-600 uppercase text-center py-4 tracking-wide italic">No history recorded yet</p>
                               )}
                            </div>
                         </section>
@@ -522,17 +523,17 @@ const Recruitment = () => {
                         {/* Status Change Section */}
                         <section className="bg-white border-2 border-primary/20 rounded-2xl p-8 space-y-6 shadow-xl shadow-primary/5">
                            <div className="flex items-center justify-between">
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                              <h4 className="text-xs font-semibold tracking-wide text-primary flex items-center gap-2">
                                  Update Pipeline Status
                               </h4>
-                              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest">      
+                              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold uppercase tracking-wide">      
                                  Current: {COLUMNS.find(c => c.id === selectedApplicant.status)?.label}
                               </div>
                            </div>
 
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="space-y-2">
-                                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">New Stage</label>
+                                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">New Stage</label>
                                  <select 
                                     id="status-select"
                                     className="select select-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold"
@@ -543,7 +544,7 @@ const Recruitment = () => {
                                  </select>
                               </div>
                               <div className="space-y-2">
-                                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-1">Internal Remarks</label>
+                                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Internal Remarks</label>
                                  <textarea 
                                     className="textarea textarea-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-medium h-12"       
                                     placeholder="Add reason for status change..."
@@ -555,7 +556,7 @@ const Recruitment = () => {
 
                            <div className="flex gap-4">
                               <button 
-                                 className="btn btn-primary btn-block rounded-xl font-black uppercase tracking-[0.2em] text-xs h-14 shadow-lg shadow-primary/20"
+                                 className="btn btn-primary btn-block rounded-xl font-semibold uppercase tracking-wide text-xs h-14 shadow-lg shadow-primary/20"
                                  onClick={() => {
                                     const select = document.getElementById('status-select');
                                     statusMutation.mutate({ 
@@ -569,7 +570,7 @@ const Recruitment = () => {
                                  {statusMutation.isPending ? 'Processing...' : 'Confirm Status Update & Notify Applicant'}
                               </button>
                            </div>
-                           <p className="text-[9px] text-center opacity-40 font-bold uppercase tracking-tight italic">
+                           <p className="text-xs text-center text-slate-600 font-bold uppercase tracking-tight italic">
                               Applicant will receive an automatic status update via their registered email.
                            </p>
                         </section>

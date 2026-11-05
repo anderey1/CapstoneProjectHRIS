@@ -89,11 +89,11 @@ const IPCRFFormModal = ({ onClose, review }) => {
       aria-labelledby="ipcrf-modal-title"
       className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
     >
-      <div className="bg-white rounded-lg border border-slate-300 shadow-xl w-full max-w-xl overflow-hidden my-8">
+      <div className="bg-white rounded-lg border border-slate-300 shadow-xl w-full max-w-xl overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Institutional Header */}
-        <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-start justify-between">
+        <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-4 flex shrink-0 items-start justify-between gap-3">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide block">
               Department of Education • SDO Lucena City
             </span>
             <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ const IPCRFFormModal = ({ onClose, review }) => {
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded-md transition-colors"
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 rounded-md focus-visible:outline-2 focus-visible:outline-primary"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -121,7 +121,7 @@ const IPCRFFormModal = ({ onClose, review }) => {
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-5 min-h-0 overflow-y-auto">
           {/* Staff Member Selection (Admin Only) */}
           {isAdmin && !review?.id && (
             <div className="space-y-1.5">
@@ -183,13 +183,13 @@ const IPCRFFormModal = ({ onClose, review }) => {
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                   RPMS Numerical Score Breakdown (Scale 1.0 – 5.0)
                 </span>
-                <span className="text-[11px] text-slate-500 font-medium">DepEd Order No. 2, s. 2015</span>
+                <span className="text-xs text-slate-500 font-medium">DepEd Order No. 2, s. 2015</span>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 {/* Quality 40% */}
                 <div className="space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
-                  <div className="flex justify-between items-center text-[11px] font-semibold text-slate-700">
+                  <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
                     <span>Quality</span>
                     <span className="text-slate-500 font-mono">40%</span>
                   </div>
@@ -206,7 +206,7 @@ const IPCRFFormModal = ({ onClose, review }) => {
 
                 {/* Efficiency / Behavior 30% */}
                 <div className="space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
-                  <div className="flex justify-between items-center text-[11px] font-semibold text-slate-700">
+                  <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
                     <span>Efficiency</span>
                     <span className="text-slate-500 font-mono">30%</span>
                   </div>
@@ -223,7 +223,7 @@ const IPCRFFormModal = ({ onClose, review }) => {
 
                 {/* Timeliness / Punctuality 30% */}
                 <div className="space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
-                  <div className="flex justify-between items-center text-[11px] font-semibold text-slate-700">
+                  <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
                     <span>Timeliness</span>
                     <span className="text-slate-500 font-mono">30%</span>
                   </div>
@@ -242,13 +242,13 @@ const IPCRFFormModal = ({ onClose, review }) => {
               {/* Dynamic Composite Score Summary Strip */}
               <div className="bg-slate-50 border border-slate-200 rounded-md p-3 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
+                  <span className="text-xs uppercase font-bold text-slate-500 tracking-wider block">
                     Composite RPMS Rating
                   </span>
                   <span className="font-mono tabular-nums font-bold text-base text-slate-900">
                     {calculatedRating.score !== null ? calculatedRating.score.toFixed(3) : '—'}
                   </span>
-                  <span className="text-slate-500 text-[11px] ml-1">/ 5.000</span>
+                  <span className="text-slate-500 text-xs ml-1">/ 5.000</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -292,7 +292,7 @@ const IPCRFFormModal = ({ onClose, review }) => {
                   className="sr-only"
                   {...register('ipcrf_file')}
                 />
-                <span className="text-[11px] text-slate-500 mt-0.5">
+                <span className="text-xs text-slate-500 mt-0.5">
                   Supported formats: PDF, XLSX, XLS (Maximum 10 MB)
                 </span>
               </div>

@@ -8,6 +8,7 @@ class Attendance(models.Model):
         ('present', 'Present'),
         ('late', 'Late'),
         ('absent', 'Absent'),
+        ('incomplete', 'Incomplete'),
     ]
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_records')
@@ -38,4 +39,23 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.date} ({self.status})"
+
+
+class BiometricEmployeeMapping(models.Model):
+    source_id = models.CharField(max_length=100)
+    biometric_id = models.CharField(max_length=100)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='biometric_mappings')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['source_id', 'biometric_id'], name='unique_biometric_source_identity')]
+
+
+class AttendanceImportBatch(models.Model):
+    checksum = models.CharField(max_length=64, unique=True)
+    uploaded_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+    imported_at = models.DateTimeField(auto_now_add=True)
+    imported_rows = models.PositiveIntegerField(default=0)
+    duplicate_rows = models.PositiveIntegerField(default=0)
+    start_date = models.DateField()
+    end_date = models.DateField()
 

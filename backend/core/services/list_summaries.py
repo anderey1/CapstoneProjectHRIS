@@ -36,7 +36,8 @@ def list_summary(resource, queryset, user):
         elif resource == 'attendance':
             summary.update(present=queryset.filter(status='present').count(),
                            late=queryset.filter(status='late').count(),
-                           flagged=queryset.filter(is_geo_flagged=True).count())
+                           pending=queryset.filter(is_dtr_approved=False).count(),
+                           departments=list(queryset.exclude(employee__department__isnull=True).exclude(employee__department='').order_by('employee__department').values_list('employee__department', flat=True).distinct()))
     elif resource == 'performancereview':
         scored = queryset.annotate(score=F('quality_score') * 0.4 + F('behavior_score') * 0.3 + F('punctuality_score') * 0.3)
         summary.update(

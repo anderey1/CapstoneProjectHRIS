@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 
 // Pages
 import Login from './pages/Login';
+import PasswordSetup from './pages/PasswordSetup';
 import Apply from './pages/Apply';
 import RegisterExisting from './pages/RegisterExisting';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -25,7 +26,6 @@ import MyPayroll from './pages/employee/MyPayroll';
 import AttendanceManagement from './pages/admin/AttendanceManagement';
 import StaffDTRManagement from './pages/admin/StaffDTRManagement';
 import Attendance from './pages/shared/Attendance';
-import DTR from './pages/shared/DTR';
 import Profile from './pages/shared/Profile';
 import AuditLogs from './pages/admin/AuditLogs';
 
@@ -34,6 +34,7 @@ import { ROLE_GROUPS } from './utils/rbac';
 // Role Groups (canonical from rbac.js)
 const MANAGEMENT_ROLES = ROLE_GROUPS.MANAGEMENT;
 const HR_SUPERINTENDENT_ADMIN = ROLE_GROUPS.OPERATIONS;
+const DIRECTORY_ROLES = [...MANAGEMENT_ROLES, 'PRINCIPAL'];
 
 /**
  * App Component
@@ -56,6 +57,7 @@ function App() {
     <div className="min-h-screen bg-base-200">
       <Routes>
         {/* Public Routes */}
+        <Route path="/setup-password" element={<PasswordSetup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/apply" element={<Apply />} />
         <Route path="/register-existing" element={<RegisterExisting />} />
@@ -67,7 +69,7 @@ function App() {
 
           {/* Shared / Self-Service Routes */}
           <Route path="attendance" element={<Attendance />} />
-          <Route path="dtr" element={<DTR />} />
+          <Route path="dtr" element={<Navigate to="/attendance" replace />} />
           <Route path="profile" element={<Profile />} />
           <Route path="employees/:id" element={<Profile />} />
           <Route path="my-loans" element={<MyLoans />} />
@@ -75,13 +77,16 @@ function App() {
           <Route path="my-payslips" element={<MyPayroll />} />
           <Route path="my-performance" element={<MyIPCRF />} />
 
+          <Route element={<ProtectedRoute roles={DIRECTORY_ROLES} />}>
+            <Route path="employees" element={<Employees />} />
+          </Route>
+
           <Route element={<ProtectedRoute superuserOnly />}>
             <Route path="schools" element={<Schools />} />
           </Route>
 
           {/* Management Tier (HR, Accountant, Superintendent, Admin) */}
           <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>
-            <Route path="employees" element={<Employees />} />
             <Route path="loan-management" element={<LoanManagement />} />
             <Route path="payroll-management" element={<Payroll />} />
           </Route>

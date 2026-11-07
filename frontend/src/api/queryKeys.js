@@ -1,4 +1,6 @@
 export const QUERY_KEYS = {
+  REJECTED_REGISTRATIONS: 'rejectedRegistrations',
+  NOTIFICATIONS: 'notifications',
   EMPLOYEES: 'employees',
   PENDING_REGISTRATIONS: 'pendingRegistrations',
   LOANS: 'loans',

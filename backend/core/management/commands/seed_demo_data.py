@@ -114,7 +114,7 @@ class Command(BaseCommand):
 
             # School Principals / Supervisors (for approving school teacher leaves)
             {
-                "username": "principal_lcnhs", "email": "principal.lcnhs@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "username": "principal_lcnhs", "email": "principal.lcnhs@deped.gov.ph", "role": Role.PRINCIPAL,
                 "emp": {
                     "first_name": "Eduardo", "last_name": "Santos", "middle_name": "Luna",
                     "position": "School Principal II", "department": "School Administration",
@@ -124,7 +124,7 @@ class Command(BaseCommand):
                 }
             },
             {
-                "username": "principal_west1", "email": "principal.west1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "username": "principal_west1", "email": "principal.west1@deped.gov.ph", "role": Role.PRINCIPAL,
                 "emp": {
                     "first_name": "Teresa", "last_name": "Mendoza", "middle_name": "Bautista",
                     "position": "School Principal I", "department": "School Administration",
@@ -134,7 +134,7 @@ class Command(BaseCommand):
                 }
             },
             {
-                "username": "principal_east1", "email": "principal.east1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "username": "principal_east1", "email": "principal.east1@deped.gov.ph", "role": Role.PRINCIPAL,
                 "emp": {
                     "first_name": "Danilo", "last_name": "Reyes", "middle_name": "Cruz",
                     "position": "School Principal I", "department": "School Administration",
@@ -144,7 +144,7 @@ class Command(BaseCommand):
                 }
             },
             {
-                "username": "principal_north1", "email": "principal.north1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "username": "principal_north1", "email": "principal.north1@deped.gov.ph", "role": Role.PRINCIPAL,
                 "emp": {
                     "first_name": "Lourdes", "last_name": "Garcia", "middle_name": "Aquino",
                     "position": "School Principal I", "department": "School Administration",
@@ -154,7 +154,7 @@ class Command(BaseCommand):
                 }
             },
             {
-                "username": "principal_south1", "email": "principal.south1@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "username": "principal_south1", "email": "principal.south1@deped.gov.ph", "role": Role.PRINCIPAL,
                 "emp": {
                     "first_name": "Rogelio", "last_name": "Bautista", "middle_name": "Navarro",
                     "position": "School Principal I", "department": "School Administration",

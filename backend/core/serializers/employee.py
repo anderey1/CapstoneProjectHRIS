@@ -75,6 +75,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=Role.choices, default=Role.TEACHING, write_only=True, required=False)
 
+    send_setup_email = serializers.BooleanField(write_only=True, default=False)
+    setup_pending = serializers.SerializerMethodField()
+
+    def get_setup_pending(self, obj):
+        return bool(obj.user_id and obj.user.is_active and not obj.user.has_usable_password())
+
     class Meta:
         model = Employee
         fields = (
@@ -89,18 +95,38 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'e_signature',
             'family', 'education', 'eligibilities', 'work_experience',
             'username', 'email', 'password', 'role',
-            'is_supervisor'
+            'is_supervisor', 'send_setup_email', 'setup_pending', 'registration_status',
+            'rejection_reason', 'reviewed_by', 'reviewed_at'
         )
-        read_only_fields = ('user',)
+        read_only_fields = ('user', 'registration_status', 'rejection_reason', 'reviewed_by', 'reviewed_at')
 
     def validate(self, attrs):
         instance = self.instance
+        role = attrs.get('role', instance.user.role if instance and instance.user_id else Role.TEACHING)
+        school = attrs.get('school', instance.school if instance else None)
+        if role == Role.PRINCIPAL and not school:
+            raise serializers.ValidationError({'school': 'Assign a school to the principal.'})
+        if attrs.get('send_setup_email'):
+            if instance:
+                raise serializers.ValidationError({'send_setup_email': 'Use resend setup for existing accounts.'})
+            if not attrs.get('username') or not attrs.get('email'):
+                raise serializers.ValidationError('Username and email are required for account setup.')
+            if User.objects.filter(username=attrs['username']).exists():
+                raise serializers.ValidationError({'username': 'Username is already taken.'})
+            if User.objects.filter(email__iexact=attrs['email']).exists():
+                raise serializers.ValidationError({'email': 'Email is already registered.'})
         for field in ('leave_checker', 'supervisor'):
             person = attrs.get(field)
             if person and instance and person.pk == instance.pk:
                 raise serializers.ValidationError({field: 'An employee cannot be their own leave processor.'})
             if person and (not person.user_id or not person.user.is_active):
                 raise serializers.ValidationError({field: 'Select an employee with an active account.'})
+        supervisor = attrs.get('supervisor', instance.supervisor if instance else None)
+        if role == Role.TEACHING and supervisor:
+            if not supervisor.user_id or supervisor.user.role != Role.PRINCIPAL:
+                raise serializers.ValidationError({'supervisor': 'Select a school principal.'})
+            if not school or supervisor.school_id != school.pk:
+                raise serializers.ValidationError({'supervisor': 'Select a principal assigned to the same school.'})
         checker = attrs.get('leave_checker')
         if checker and checker.leave_duty != 'checker':
             raise serializers.ValidationError({'leave_checker': 'Select staff assigned to Administrative Assistant II checking.'})
@@ -166,6 +192,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         eligibility_data = validated_data.pop('eligibilities', [])
         work_data = validated_data.pop('work_experience', [])
         
+        setup = validated_data.pop('send_setup_email', False)
         user_keys = ['username', 'email', 'password', 'role']
         user_data = {k: validated_data.pop(k, None) for k in user_keys}
 
@@ -173,7 +200,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 # Create employee (and user if enough data provided)
                 # Ensure username and password are present and not empty strings (already None via clean_nested)
-                if user_data.get('username') and user_data.get('password'):
+                if user_data.get('username') and (user_data.get('password') or setup):
+                    if setup:
+                        user_data['password'] = None
+                    validated_data['email'] = user_data.get('email')
+                    validated_data['registration_status'] = 'approved'
                     employee = Employee.objects.create_with_user(user_data, validated_data)
                 else:
                     employee = Employee.objects.create(**validated_data)
@@ -188,6 +219,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Updates Employee and nested PDS sections."""
+        validated_data.pop("send_setup_email", None)
         from django.db import transaction
         import logging
         logger = logging.getLogger(__name__)

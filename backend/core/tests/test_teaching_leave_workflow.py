@@ -272,6 +272,6 @@ def test_hr_configures_processing_duties_without_changing_account_role(client, h
     response = client.patch(f'/api/employees/{non_teaching_employee.pk}/', {'leave_duty': 'checker'}, format='json')
     assert response.status_code == 200, response.data
     response = client.get('/api/employees/leave-staff/')
-    assert any(person['id'] == non_teaching_employee.pk and person['leave_duty'] == 'checker' for person in response.data)
+    assert any(person['id'] == non_teaching_employee.pk and person['leave_duty'] == 'checker' for person in response.data['results'])
     non_teaching_employee.refresh_from_db()
     assert non_teaching_employee.user.role == Role.NON_TEACHING

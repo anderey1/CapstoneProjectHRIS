@@ -6,7 +6,8 @@ from core.models import Employee, AuditLog, Role
 User = get_user_model()
 
 @pytest.mark.django_db
-def test_register_existing_employee_success_and_approval():
+def test_register_existing_employee_success_and_approval(hr_user, settings):
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     client = APIClient()
 
     data = {
@@ -34,7 +35,6 @@ def test_register_existing_employee_success_and_approval():
     assert employee.last_name == "Doe"
 
     # HR User for approval
-    hr_user = User.objects.create_user(username="hr_staff", password="password123", role=Role.HR)
     client.force_authenticate(user=hr_user)
 
     # List pending
@@ -46,14 +46,15 @@ def test_register_existing_employee_success_and_approval():
     # Approve
     response_approve = client.post(f'/api/employees/{employee.id}/approve-registration/')
     assert response_approve.status_code == 200
-    assert "Successfully approved" in response_approve.data["message"]
+    assert "approved" in response_approve.data["message"]
 
     # Verify active
     user.refresh_from_db()
     assert user.is_active is True
 
 @pytest.mark.django_db
-def test_register_existing_employee_rejection():
+def test_register_existing_employee_rejection(hr_user, settings):
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     client = APIClient()
 
     data = {
@@ -75,17 +76,19 @@ def test_register_existing_employee_rejection():
     employee = Employee.objects.get(user=user)
 
     # HR User for rejection
-    hr_user = User.objects.create_user(username="hr_staff_2", password="password123", role=Role.HR)
     client.force_authenticate(user=hr_user)
 
     # Reject
-    response_reject = client.post(f'/api/employees/{employee.id}/reject-registration/')
+    response_reject = client.post(f'/api/employees/{employee.id}/reject-registration/', {'reason': 'Unable to verify employment'}, format='json')
     assert response_reject.status_code == 200
-    assert "Successfully rejected" in response_reject.data["message"]
+    assert "rejected" in response_reject.data["message"]
 
-    # Verify deleted user and employee
-    assert not User.objects.filter(username="bobjones").exists()
-    assert not Employee.objects.filter(id=employee.id).exists()
+    # Verify retained inactive user and rejected employee.
+    user.refresh_from_db()
+    employee.refresh_from_db()
+    assert not user.is_active
+    assert employee.registration_status == 'rejected'
+    assert employee.rejection_reason == 'Unable to verify employment'
 
 @pytest.mark.django_db
 def test_register_existing_employee_failures():

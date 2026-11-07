@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Users, UserPlus, Search, Filter, FileDown } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
-import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
+import { useRBAC } from '../../hooks/useRBAC';
 import { 
   useEmployees, 
   EmployeeTable, 
@@ -16,8 +17,16 @@ import { exportToCSV } from '../../utils/export';
  * Includes Active Personnel and Pending Registration Approvals tabs.
  */
 const Employees = () => {
-  const { can } = useRBAC();
-  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'pending'
+  const { can, isPrincipal } = useRBAC();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // 'active' | 'pending' | 'rejected'
+  const activeTab = can('MANAGE_REGISTRATIONS') && ['pending', 'rejected'].includes(searchParams.get('tab')) ? searchParams.get('tab') : 'active';
+  const setActiveTab = tab => setSearchParams(tab === 'active' ? {} : { tab });
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const rejectionDialog = useRef(null);
+  useEffect(() => { if (rejectTarget) rejectionDialog.current?.showModal(); }, [rejectTarget]);
+  const [rejectReason, setRejectReason] = useState('');
+  const [reviewError, setReviewError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeModal, setActiveModal] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -34,7 +43,7 @@ const Employees = () => {
     pendingPagination,
     exportEmployees,
     schools,
-    pendingRegistrations,
+    pendingRegistrations, rejectedRegistrations, rejectedPagination, resendSetup, isResending,
     isLoading,
     isSaving,
     saveEmployee,
@@ -43,7 +52,7 @@ const Employees = () => {
     rejectRegistration,
     isApproving,
     isRejecting,
-  } = useEmployees({ search: searchTerm, role: appliedRole, department: appliedArea, exclude_self: 'true' });
+  } = useEmployees({ directory: 'active', search: searchTerm, role: appliedRole, department: appliedArea, exclude_self: 'true' });
 
   const closeModal = () => {
     setActiveModal(null);
@@ -82,7 +91,7 @@ const Employees = () => {
     );
   }
 
-  const canManageRegistrations = can(PERMISSIONS.MANAGE_EMPLOYEES);
+  const canManageRegistrations = can('MANAGE_EMPLOYEES');
 
   const teachingCount = summary.teaching || 0;
   const nonTeachingCount = summary.non_teaching || 0;
@@ -98,41 +107,41 @@ const Employees = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 ">
-                Personnel directory
+                {isPrincipal ? 'School teachers' : 'Personnel directory'}
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Official DepEd Plantilla & Personnel Directory • Schools Division of Lucena City
+                {isPrincipal ? 'View teachers assigned to your school. HR maintains employment details.' : 'Official DepEd Plantilla & Personnel Directory • Schools Division of Lucena City'}
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {can(PERMISSIONS.MANAGE_EMPLOYEES) && activeTab === 'active' && (
+          {can('MANAGE_EMPLOYEES') && activeTab === 'active' && (
             <button
               onClick={() => setActiveModal('form')}
               className="px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center gap-1.5 transition-colors"
             >
               <UserPlus className="w-4 h-4" />
-              Add Plantilla Employee
+              Add Existing Employee
             </button>
           )}
         </div>
       </div>
 
       {/* 4-Metric Portfolio Status Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className={`grid grid-cols-2 gap-3 ${isPrincipal ? '' : 'md:grid-cols-4'}`}>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Plantilla Roster</p>
           <p className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">{summary.total || 0}</p>
-          <p className="text-xs text-slate-500 mt-0.5">All division records</p>
+          <p className="text-xs text-slate-500 mt-0.5">{isPrincipal ? 'Your assigned school' : 'All division records'}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Teaching Personnel</p>
           <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{teachingCount}</p>
           <p className="text-xs text-slate-500 mt-0.5">Instructional cadre</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
+        {!isPrincipal && <><div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Non-Teaching Staff</p>
           <p className="text-xl font-bold text-slate-700 font-mono tabular-nums mt-1">{nonTeachingCount}</p>
           <p className="text-xs text-slate-500 mt-0.5">Admin & support</p>
@@ -141,9 +150,15 @@ const Employees = () => {
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Pending Activations</p>
           <p className="text-xl font-bold text-amber-700 font-mono tabular-nums mt-1">{pendingPagination.count}</p>
           <p className="text-xs text-slate-500 mt-0.5">Awaiting HR review</p>
-        </div>
+        </div></>}
       </div>
 
+      {canManageRegistrations && employees.filter(emp => emp.setup_pending).map(emp => (
+        <div key={emp.id} className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
+          <span>Password setup pending: {emp.first_name} {emp.last_name}</span>
+          <button type="button" className="btn btn-sm btn-outline" disabled={isResending} onClick={() => resendSetup(emp.id).catch(() => {})}>Resend setup email</button>
+        </div>
+      ))}
       {/* Institutional Tab Navigation */}
       {canManageRegistrations && (
         <div className="flex border-b border-slate-200 gap-6">
@@ -174,6 +189,7 @@ const Employees = () => {
               </span>
             )}
           </button>
+          <button type="button" className={`min-h-11 pb-2 border-b-2 text-xs font-semibold ${activeTab === 'rejected' ? 'border-primary text-primary' : 'border-transparent text-slate-600'}`} onClick={() => setActiveTab('rejected')}>Rejected Registrations ({rejectedPagination.count})</button>
         </div>
       )}
 
@@ -291,18 +307,18 @@ const Employees = () => {
                 </tr>
               </thead>
               <tbody>
-                {!pendingRegistrations || pendingRegistrations.length === 0 ? (
+                {(activeTab === 'rejected' ? rejectedRegistrations : pendingRegistrations).length === 0 ? (
                   <tr>
                     <td colSpan="5" className="text-center py-12">
-                      <p className="text-xs font-medium text-slate-400">No pending registration requests found</p>
+                      <p className="text-xs font-medium text-slate-400">No registration requests found</p>
                     </td>
                   </tr>
                 ) : (
-                  pendingRegistrations.map((emp) => (
+                  (activeTab === 'rejected' ? rejectedRegistrations : pendingRegistrations).map((emp) => (
                     <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
                       <td className="pl-6 py-4">
                         <div className="font-semibold text-xs text-slate-900">{emp.first_name} {emp.last_name}</div>
-                        <div className="text-xs text-slate-400">{emp.email || 'No email'}</div>
+                        <div className="text-xs text-slate-400">{emp.user_details?.email || 'No email'}</div>
                       </td>
                       <td className="font-semibold text-xs text-[#0038A8]">{emp.agency_employee_no}</td>
                       <td>
@@ -314,12 +330,12 @@ const Employees = () => {
                         <div className="text-xs text-slate-400">{emp.department || 'Operations'}</div>
                       </td>
                       <td className="text-right pr-6">
-                        <div className="flex gap-2 justify-end">
+                        {activeTab === 'rejected' ? <div className="max-w-sm text-left text-sm text-slate-700"><p>{emp.rejection_reason}</p><p className="text-xs">Reviewed {emp.reviewed_at ? new Date(emp.reviewed_at).toLocaleString() : ''}</p></div> : <div className="flex gap-2 justify-end">
                           <button
                             type="button"
                             onClick={async () => {
                               if (window.confirm(`Approve registration for ${emp.first_name} ${emp.last_name}?`)) {
-                                await approveRegistration(emp.id);
+                                await approveRegistration(emp.id).catch(() => {});
                               }
                             }}
                             disabled={isApproving}
@@ -330,27 +346,38 @@ const Employees = () => {
                           <button
                             type="button"
                             onClick={async () => {
-                              if (window.confirm(`Reject and delete registration request for ${emp.first_name} ${emp.last_name}?`)) {
-                                await rejectRegistration(emp.id);
-                              }
+                              setRejectTarget(emp); setRejectReason(''); setReviewError('');
                             }}
                             disabled={isRejecting}
                             className="btn bg-rose-600 hover:bg-rose-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-xs font-bold uppercase tracking-wider border-none"
                           >
                             {isRejecting ? 'Rejecting...' : 'Reject'}
                           </button>
-                        </div>
+                        </div>}
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
-            <Pagination pagination={pendingPagination} label="pending registrations" />
+            <Pagination pagination={activeTab === 'rejected' ? rejectedPagination : pendingPagination} label="registrations" />
           </div>
         </div>
       )}
 
+      {rejectTarget && <dialog ref={rejectionDialog} className="modal" aria-labelledby="reject-title" onCancel={event => { event.preventDefault(); if (!isRejecting) setRejectTarget(null); }}>
+        <form className="modal-box" onSubmit={async event => {
+          event.preventDefault(); setReviewError('');
+          try { await rejectRegistration({ id: rejectTarget.id, reason: rejectReason.trim() }); setRejectTarget(null); }
+          catch { setReviewError('Could not reject registration. Try again.'); }
+        }}>
+          <h2 id="reject-title" className="text-lg font-semibold">Reject registration for {rejectTarget.first_name} {rejectTarget.last_name}</h2>
+          <label htmlFor="rejection-reason" className="block mt-4 mb-2 text-sm">Reason (sent to the employee)</label>
+          <textarea id="rejection-reason" autoFocus required maxLength={2000} value={rejectReason} onChange={event => setRejectReason(event.target.value)} className="textarea textarea-bordered w-full" />
+          {reviewError && <p role="alert" className="text-error">{reviewError}</p>}
+          <div className="modal-action"><button type="button" className="btn" disabled={isRejecting} onClick={() => setRejectTarget(null)}>Cancel</button><button className="btn btn-error" disabled={isRejecting || !rejectReason.trim()}>Reject registration</button></div>
+        </form>
+      </dialog>}
       {/* Modal Overlay */}
       {activeModal === 'form' && (
         <PersonnelFormModal

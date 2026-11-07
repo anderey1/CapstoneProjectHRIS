@@ -5,13 +5,23 @@ import { useToast } from '../../../context/ToastContext';
 import { buildEmployeePayload } from '../utils/employeePayload';
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { fetchAllPages } from '../../../api/pagination';
+import { useRBAC } from '../../../hooks/useRBAC';
 
 /**
  * Custom Domain Hook for Personnel & Employee Management
  */
 export function useEmployees(params = {}) {
+  const { can } = useRBAC();
+  const canManageRegistrations = can('MANAGE_REGISTRATIONS');
   const queryClient = useQueryClient();
   const toast = useToast();
+
+  const deliveryMessage = (res, message) => {
+    const delivery = res.data?.email_delivery;
+    if (delivery === 'failed') toast.info(`${message} Email delivery failed. Contact HR or resend the setup link.`);
+    else if (delivery === 'console') toast.info(`${message} Email was printed to the server console; it was not delivered.`);
+    else toast.success(message);
+  };
 
   // 1. Fetch Employees List
   const { records: employees, summary, pagination, isLoading: isEmployeesLoading, isError, error } =
@@ -26,6 +36,9 @@ export function useEmployees(params = {}) {
   const schools = Array.isArray(rawSchools) ? rawSchools : rawSchools?.results || [];
 
   const invalidateEmployees = () => {
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.PENDING_REGISTRATIONS] });
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REJECTED_REGISTRATIONS] });
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.NOTIFICATIONS] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMPLOYEES] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.LEAVE_STAFF] });
   };
@@ -33,9 +46,9 @@ export function useEmployees(params = {}) {
   // 3. Add Mutation
   const addMutation = useMutation({
     mutationFn: (newEmployee) => api.post('employees/', newEmployee),
-    onSuccess: () => {
+    onSuccess: (res) => {
       invalidateEmployees();
-      toast.success('Employee added successfully!');
+      deliveryMessage(res, 'Employee added successfully!');
     },
     onError: (err) => {
       const detail = err.response?.data?.detail || 'Failed to add employee.';
@@ -70,15 +83,14 @@ export function useEmployees(params = {}) {
 
   // 6. Pending Registrations Query
   const { records: pendingRegistrations, pagination: pendingPagination, isLoading: isPendingLoading } =
-    usePaginatedList(QUERY_KEYS.PENDING_REGISTRATIONS, 'employees/pending-registrations/');
+    usePaginatedList(QUERY_KEYS.PENDING_REGISTRATIONS, 'employees/pending-registrations/', {}, canManageRegistrations);
 
   // 7. Approve Registration Mutation
   const approveMutation = useMutation({
     mutationFn: (id) => api.post(`employees/${id}/approve-registration/`),
     onSuccess: (res) => {
       invalidateEmployees();
-      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
-      toast.success(res.data?.message || 'Registration approved.');
+      deliveryMessage(res, res.data?.message || 'Registration approved.');
     },
     onError: (err) => {
       toast.error(err.response?.data?.error || err.response?.data?.detail || 'Failed to approve registration.');
@@ -87,19 +99,26 @@ export function useEmployees(params = {}) {
 
   // 8. Reject Registration Mutation
   const rejectMutation = useMutation({
-    mutationFn: (id) => api.post(`employees/${id}/reject-registration/`),
+    mutationFn: ({ id, reason }) => api.post(`employees/${id}/reject-registration/`, { reason }),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingRegistrations'] });
-      toast.info(res.data?.message || 'Registration request rejected.');
+      invalidateEmployees();
+      deliveryMessage(res, res.data?.message || 'Registration request rejected.');
     },
     onError: (err) => {
       toast.error(err.response?.data?.error || err.response?.data?.detail || 'Failed to reject registration.');
     }
   });
 
+  const { records: rejectedRegistrations, pagination: rejectedPagination } = usePaginatedList(QUERY_KEYS.REJECTED_REGISTRATIONS, 'employees/rejected-registrations/', {}, canManageRegistrations);
+  const resendMutation = useMutation({
+    mutationFn: id => api.post(`employees/${id}/resend-setup/`),
+    onSuccess: res => deliveryMessage(res, res.data.message),
+    onError: err => toast.error(err.response?.data?.error || 'Could not resend setup email.'),
+  });
+
   // 9. Unified Save Handler (Handles FormData vs JSON building)
   const saveEmployee = async (formData, employeeId = null) => {
-    const payload = buildEmployeePayload(formData);
+    const payload = buildEmployeePayload(employeeId ? formData : { ...formData, send_setup_email: true });
     if (employeeId) {
       return await updateMutation.mutateAsync({ id: employeeId, data: payload });
     }
@@ -108,6 +127,8 @@ export function useEmployees(params = {}) {
 
   return {
     employees,
+    rejectedRegistrations, rejectedPagination,
+    resendSetup: resendMutation.mutateAsync, isResending: resendMutation.isPending,
     summary,
     pagination,
     pendingPagination,

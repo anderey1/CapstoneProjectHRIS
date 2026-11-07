@@ -24,7 +24,7 @@ class IsAccountant(BaseRolePermission):
     allowed_roles = [Role.ACCOUNTANT]
 
 class IsEmployee(BaseRolePermission):
-    allowed_roles = [Role.TEACHING, Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT]
+    allowed_roles = [Role.TEACHING, Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.PRINCIPAL]
     
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser or request.user.role in [Role.HR]:
@@ -49,7 +49,7 @@ class IsManagement(BaseRolePermission):
     allowed_roles = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
 
 class IsEmployeeOrAdminOrHR(BaseRolePermission):
-    allowed_roles = [Role.TEACHING, Role.HR, Role.NON_TEACHING, Role.ADMINISTRATIVE]
+    allowed_roles = [Role.TEACHING, Role.HR, Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.PRINCIPAL]
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser or request.user.role in [Role.HR]:

@@ -47,6 +47,12 @@ class LeaveViewSet(
         role = user.role
         employee_profile = getattr(user, 'employee_profile', None)
 
+        if role == Role.PRINCIPAL:
+            scope = Q(employee__user=user)
+            if employee_profile and employee_profile.school_id:
+                scope |= Q(employee__school_id=employee_profile.school_id, employee__user__role=Role.TEACHING)
+            return base_qs.filter(scope)
+
         if role == Role.HR:
             # HR sees all leaves to validate and manage the queue
             return base_qs.all()

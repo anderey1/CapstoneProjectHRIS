@@ -152,7 +152,7 @@ def test_pending_registrations_and_reference_lists_are_paginated(client, mock_sc
     users = get_user_model().objects.bulk_create([
         get_user_model()(username=f'pagination_pending_{i}', is_active=False) for i in range(13)
     ])
-    Employee.objects.bulk_create([Employee(user=user, first_name='Pending', last_name=str(i)) for i, user in enumerate(users)])
+    Employee.objects.bulk_create([Employee(user=user, first_name='Pending', last_name=str(i), registration_status='pending') for i, user in enumerate(users)])
     School.objects.bulk_create([School(name=f'Pagination School {i}', latitude=mock_school.latitude,
                                       longitude=mock_school.longitude) for i in range(12)])
     SalaryGrade.objects.bulk_create([SalaryGrade(grade=i, amount=Decimal('10000')) for i in range(1, 14)])

@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -25,6 +25,9 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
   const { user, logout } = useAuth();
   const { roleLabel } = useRBAC();
   const role = user?.role;
+  const { search } = useLocation();
+  const approvalsOpen = new URLSearchParams(search).get('tab') === 'approvals';
+  const matchesLeaveTab = link => !link.to.startsWith('/my-leaves') || approvalsOpen === link.to.includes('tab=approvals');
 
   const menuGroups = [
     {
@@ -36,11 +39,12 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
     {
       title: 'Human Resources & Staffing',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: 'Employee Directory', roles: ROLE_GROUPS.MANAGEMENT },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: role === 'PRINCIPAL' ? 'School Teachers' : 'Employee Directory', roles: [...ROLE_GROUPS.MANAGEMENT, 'PRINCIPAL'] },
         { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Recruitment', roles: ROLE_GROUPS.OPERATIONS },
         { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance Monitor', roles: ROLE_GROUPS.OPERATIONS },
         { to: '/staff-dtr', icon: <FileText className="w-4 h-4" />, label: 'Staff Form 48 (DTR)', roles: ROLE_GROUPS.OPERATIONS },
         { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals (Form 6)', roles: ROLE_GROUPS.OPERATIONS },
+        { to: '/my-leaves?tab=approvals', icon: <Clock className="w-4 h-4" />, label: 'Teacher Leave Approvals', roles: ['PRINCIPAL'] },
         { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ROLE_GROUPS.OPERATIONS },
       ]
     },
@@ -55,7 +59,6 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
       title: 'Employee Self-Service',
       links: [
         { to: '/attendance', icon: <CalendarCheck className="w-4 h-4" />, label: 'My Attendance', roles: ROLE_GROUPS.ALL },
-        { to: '/dtr', icon: <FileText className="w-4 h-4" />, label: 'My DTR (Form 48)', roles: ROLE_GROUPS.ALL },
         { to: '/my-leaves', icon: <Clock className="w-4 h-4" />, label: 'My Leave Applications', roles: ROLE_GROUPS.ALL },
         { to: '/my-payslips', icon: <Wallet className="w-4 h-4" />, label: 'My Payslips', roles: ROLE_GROUPS.ALL },
         { to: '/my-loans', icon: <FileText className="w-4 h-4" />, label: 'My Provident Loans', roles: ROLE_GROUPS.ALL },
@@ -151,6 +154,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
                   <NavLink
                     key={link.to}
                     to={link.to}
+                    aria-current={matchesLeaveTab(link) ? 'page' : null}
                     onClick={closeDrawer}
                     title={link.label}
                     className={({ isActive }) => `
@@ -158,7 +162,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
                       ${isCollapsed 
                         ? 'px-2.5 lg:px-0 lg:justify-center justify-between' 
                         : 'px-2.5 justify-between'}
-                      ${isActive 
+                      ${isActive && matchesLeaveTab(link)
                         ? 'bg-white/15 text-white font-semibold ring-1 ring-white/25 shadow-sm' 
                         : 'text-slate-200 hover:bg-white/10 hover:text-white font-medium'}
                     `}

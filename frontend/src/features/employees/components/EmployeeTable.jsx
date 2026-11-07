@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Edit, Trash2, MoreVertical, Briefcase, Building2, Calendar, User } from 'lucide-react';
 import EmployeeRow from './EmployeeRow';
-import { useRBAC, PERMISSIONS } from '../../../hooks/useRBAC';
+import { useRBAC } from '../../../hooks/useRBAC';
 
 /**
  * Employee Table (Staff Directory)
@@ -12,7 +12,7 @@ import { useRBAC, PERMISSIONS } from '../../../hooks/useRBAC';
 const EmployeeTable = ({ employees, onDelete, onEdit }) => {
   const { can } = useRBAC();
   const navigate = useNavigate();
-  const canEdit = can(PERMISSIONS.MANAGE_EMPLOYEES);
+  const canEdit = can('MANAGE_EMPLOYEES');
 
   return (
     <div className="space-y-6">

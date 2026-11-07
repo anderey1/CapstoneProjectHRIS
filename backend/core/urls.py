@@ -1,3 +1,4 @@
+from .views.password_setup import PasswordSetupView
 from .views.dashboard_operations import operations, insight
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter    
@@ -26,6 +27,7 @@ router.register(r'notifications', NotificationViewSet, basename='notification')
 
 
 urlpatterns = [
+    path('password-setup/', PasswordSetupView.as_view(), name='password-setup'),
     # CRUD endpoints via ViewSets
     path('', include(router.urls)),
 

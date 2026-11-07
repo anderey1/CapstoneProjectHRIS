@@ -8,6 +8,7 @@ export const ROLES = {
   ACCOUNTANT: 'ACCOUNTANT',
   SUPERINTENDENT: 'SUPERINTENDENT',
   ADMINISTRATIVE: 'ADMINISTRATIVE',
+  PRINCIPAL: 'PRINCIPAL',
   TEACHING: 'TEACHING',
   NON_TEACHING: 'NON_TEACHING',
 };
@@ -31,6 +32,7 @@ export const ROLE_GROUPS = {
     ROLES.ADMINISTRATIVE,
   ],
   STAFF: [
+    ROLES.PRINCIPAL,
     ROLES.TEACHING,
     ROLES.NON_TEACHING,
     ROLES.ADMINISTRATIVE,
@@ -44,6 +46,7 @@ export const ROLE_LABELS = {
   [ROLES.ACCOUNTANT]: 'Division Accountant',
   [ROLES.SUPERINTENDENT]: 'Schools Division Superintendent',
   [ROLES.ADMINISTRATIVE]: 'Administrative Staff',
+  [ROLES.PRINCIPAL]: 'School Principal',
   [ROLES.TEACHING]: 'Teaching Staff',
   [ROLES.NON_TEACHING]: 'Non-Teaching Staff',
 };
@@ -54,6 +57,7 @@ export const ROLE_BADGE_STYLES = {
   [ROLES.ACCOUNTANT]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [ROLES.SUPERINTENDENT]: 'bg-amber-50 text-amber-800 border-amber-300',
   [ROLES.ADMINISTRATIVE]: 'bg-blue-50 text-[#0038A8] border-blue-200',
+  [ROLES.PRINCIPAL]: 'bg-blue-50 text-[#0038A8] border-blue-200',
   [ROLES.TEACHING]: 'bg-teal-50 text-teal-700 border-teal-200',
   [ROLES.NON_TEACHING]: 'bg-slate-100 text-slate-700 border-slate-200',
 };

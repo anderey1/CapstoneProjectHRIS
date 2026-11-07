@@ -1,10 +1,11 @@
-from django.db.models import Count, Q
+from django.db.models import CharField, Count, Q, Value
+from django.db.models.functions import Cast, Concat
 
-from ..models import Applicant, Employee, EmployeeDocument, LeaveRequest, Payroll, ProvidentLoan, Role
+from ..models import Applicant, Employee, EmployeeDocument, LeaveRequest, NotificationTaskDismissal, Payroll, ProvidentLoan, Role
 from ..views.leave.viewset import LeaveViewSet
 
 
-def task_sources(request):
+def task_sources(request, include_dismissed=False):
     user = request.user
     profile = getattr(user, 'employee_profile', None)
     leave_view = LeaveViewSet()
@@ -21,7 +22,7 @@ def task_sources(request):
     if user.is_superuser or user.role == Role.SUPERINTENDENT:
         eligible |= Q(workflow='standard', status='pending_superintendent')
     leaves = visible.filter(eligible).exclude(~Q(status='returned') & Q(employee__user=user)).order_by('pk')
-    sources = [('leave', leaves, '/my-leaves')]
+    sources = [('leave', leaves, '/my-leaves?tab=approvals' if user.role == Role.PRINCIPAL else '/my-leaves')]
     manager = user.is_superuser or user.role in (Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE)
     finance = manager or user.role == Role.ACCOUNTANT
     if finance:
@@ -32,11 +33,19 @@ def task_sources(request):
         sources.append(('payroll_release', Payroll.objects.filter(status='approved').order_by().values('cutoff_period').annotate(total=Count('pk')).order_by('cutoff_period'), '/payroll-management'))
     if manager:
         sources.extend([
-            ('registration', Employee.objects.filter(user__is_active=False).order_by('pk'), '/employees'),
+            ('registration', Employee.objects.filter(registration_status='pending', user__is_active=False).order_by('pk'), '/employees?tab=pending'),
             ('document', EmployeeDocument.objects.filter(verified=False).order_by('pk'), '/employees'),
             ('recruitment', Applicant.objects.exclude(status__in=['hired', 'disqualified', 'rejected']).order_by('pk'), '/recruitment'),
         ])
-    return sources
+    dismissed = NotificationTaskDismissal.objects.filter(recipient=user).values('task_key')
+    visible_sources = []
+    for module, queryset, path in sources:
+        field = 'cutoff_period' if module.startswith('payroll_') else 'pk'
+        queryset = queryset.alias(notification_key=Concat(Value(f'{module}:'), Cast(field, CharField())))
+        if not include_dismissed:
+            queryset = queryset.exclude(notification_key__in=dismissed)
+        visible_sources.append((module, queryset, path))
+    return visible_sources
 
 
 def render_task(module, row, path):

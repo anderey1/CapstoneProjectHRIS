@@ -173,3 +173,6 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', f"DepEd Recruitment <{
 # For development: if credentials missing, print to console instead of failing
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Public portal address used in account emails.
+PORTAL_URL = os.getenv('PORTAL_URL', 'http://localhost:5173').rstrip('/')

@@ -42,16 +42,6 @@ const Navbar = ({ toggleDrawer }) => {
             <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
         )}
-        <Link to="/" className="flex min-w-0 flex-col hover:opacity-90 transition-opacity">
-          <span className="text-[10px] sm:text-[11px] font-bold text-[#0038A8] uppercase tracking-wider leading-none truncate">
-            <span className="inline sm:hidden">SDO Lucena City</span>
-            <span className="hidden sm:inline">DepEd Schools Division of Lucena City</span>
-          </span>
-          <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight mt-0.5 truncate">
-            <span className="inline sm:hidden">HRIS Portal</span>
-            <span className="hidden sm:inline">Human Resource Information System</span>
-          </span>
-        </Link>
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <span className="hidden text-xs text-slate-600 md:block">{currentDate}</span>

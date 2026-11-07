@@ -6,7 +6,7 @@ from .payroll import Payroll
 from .recruitment import Applicant, ApplicantDocument
 from .performance import PerformanceReview
 from .audit import AuditLog
-from .notification import Notification
+from .notification import Notification, NotificationTaskDismissal
 from .pds import PDSUpload
 from .pds_details import FamilyMember, Education, Eligibility, WorkExperience
 
@@ -30,6 +30,8 @@ __all__ = [
     'ApplicantDocument',
     'PerformanceReview',
     'AuditLog',
+    'Notification',
+    'NotificationTaskDismissal',
     'PDSUpload',
     'FamilyMember',
     'Education',

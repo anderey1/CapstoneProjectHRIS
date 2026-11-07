@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -44,7 +45,9 @@ const MyLeaves = () => {
   const [isWithinPhilippines, setIsWithinPhilippines] = useState(true);
 
   // Tab State for Supervisors / Managers
-  const [activeMainTab, setActiveMainTab] = useState('mine');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeMainTab = searchParams.get('tab') === 'approvals' ? 'approvals' : 'mine';
+  const setActiveMainTab = tab => setSearchParams(tab === 'approvals' ? { tab } : {});
 
 
   const handleSubmit = async (e) => {
@@ -62,7 +65,7 @@ const MyLeaves = () => {
   };
 
   const isSupervisorOrManager = 
-    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role) || employee?.is_supervisor;
+    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE', 'PRINCIPAL'].includes(user?.role) || employee?.is_supervisor;
 
   const pendingSubordinateCount = teamSummary.action_required || 0;
 

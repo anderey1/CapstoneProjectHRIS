@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreVertical, Briefcase, Building2, Trash2, Edit, Calendar, Heart, Plane } from 'lucide-react';
-import { useRBAC, PERMISSIONS } from '../../../hooks/useRBAC';
+import { useRBAC } from '../../../hooks/useRBAC';
 
 /**
  * Employee Row (Table Row)
@@ -11,7 +11,7 @@ import { useRBAC, PERMISSIONS } from '../../../hooks/useRBAC';
 const EmployeeRow = ({ emp, onDelete, onEdit }) => {
   const { can } = useRBAC();
   const navigate = useNavigate();
-  const canEdit = can(PERMISSIONS.MANAGE_EMPLOYEES);
+  const canEdit = can('MANAGE_EMPLOYEES');
 
   const handleRowClick = () => {
     navigate(`/employees/${emp.id}`);

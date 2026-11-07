@@ -135,6 +135,10 @@ class LeaveApplicationActions:
                 raise ValidationError('Ask HR to assign a principal with an active account before filing.')
             if principal.pk == employee.pk:
                 raise ValidationError('The applicant cannot be their own principal.')
+            if principal.user.role != Role.PRINCIPAL:
+                raise ValidationError('Ask HR to assign a school principal before filing.')
+            if not employee.school_id or principal.school_id != employee.school_id:
+                raise ValidationError('The assigned principal must belong to your school. Ask HR to correct the assignment.')
             assignments = {'assigned_checker': None, 'assigned_principal': principal}
             initial_status = 'pending_supervisor'
 

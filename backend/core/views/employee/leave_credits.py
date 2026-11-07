@@ -13,7 +13,7 @@ class EmployeeLeaveCreditActions:
         # In DepEd, only non-teaching/administrative personnel accrue 15/15 VL/SL
         # Teaching personnel earn Service Credits/PVP during summer vacation
         non_teaching = Employee.objects.filter(
-            user__role__in=[Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.HR, Role.ACCOUNTANT]
+            user__role__in=[Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.PRINCIPAL, Role.HR, Role.ACCOUNTANT]
         )
         count = non_teaching.count()
         non_teaching.update(

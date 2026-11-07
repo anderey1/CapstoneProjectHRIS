@@ -1,8 +1,10 @@
+from django.db import transaction
+from ...services.employee_accounts import rotate_setup, email_employee
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from ...models import Employee, Role, AuditLog
 from ...serializers import EmployeeSerializer
 from ...permissions import IsAdminOrHRorSuperintendent
@@ -42,10 +44,36 @@ class EmployeeViewSet(
 
         if user.is_management:
             return base_qs.all()
+        if user.role == Role.PRINCIPAL:
+            profile = getattr(user, 'employee_profile', None)
+            teachers = Q(pk__in=[])
+            if profile and profile.school_id:
+                teachers = Q(school_id=profile.school_id, user__role=Role.TEACHING)
+            if self.action == 'list':
+                return base_qs.filter(teachers)
+            return base_qs.filter(Q(user=user) | teachers)
         return base_qs.filter(user=user)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        if request.query_params.get('directory') == 'active':
+            queryset = queryset.exclude(registration_status__in=['pending', 'rejected'])
+        return self.paginated_list(queryset)
+
+    def create(self, request, *args, **kwargs):
+        self.setup_email = None
+        with transaction.atomic():
+            response = super().create(request, *args, **kwargs)
+        if self.setup_email:
+            employee, token = self.setup_email
+            response.data['email_delivery'] = email_employee(employee, 'setup', token)
+        return response
+
     def perform_create(self, serializer):
+        setup = serializer.validated_data.get('send_setup_email', False)
         instance = serializer.save()
+        if setup:
+            self.setup_email = (instance, rotate_setup(instance))
         AuditLog.objects.create(user=self.request.user, action=f"Created employee record: {instance}")
 
     def perform_update(self, serializer):
@@ -62,7 +90,7 @@ class EmployeeViewSet(
         page = self.paginate_queryset(staff)
         data = [
             {'id': person.pk, 'name': str(person), 'leave_duty': person.leave_duty,
-             'school': person.school_id, 'position': person.position}
+             'school': person.school_id, 'position': person.position, 'role': person.user.role}
             for person in page
         ]
         return self.get_paginated_response(data)

@@ -38,6 +38,7 @@ export function useRBAC() {
     // Role Checks
     isManagement: hasAnyRole(user, ROLE_GROUPS.MANAGEMENT),
     isAdmin: role === ROLES.ADMINISTRATIVE,
+    isPrincipal: role === ROLES.PRINCIPAL,
     isHR: role === ROLES.HR,
     isSuperintendent: role === ROLES.SUPERINTENDENT,
     isAccountant: role === ROLES.ACCOUNTANT,

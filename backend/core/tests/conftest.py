@@ -56,7 +56,7 @@ def supervisor_user(db, mock_school):
     user = User.objects.create_user(
         username="principal_juan",
         password="password123",
-        role=Role.ADMINISTRATIVE,
+        role=Role.PRINCIPAL,
         first_name="Juan",
         last_name="Principal"
     )

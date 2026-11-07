@@ -104,6 +104,12 @@ class LeaveRequest(models.Model):
         if not user or not user.is_authenticated or self.employee.user_id == user.pk:
             return False
         profile = getattr(user, 'employee_profile', None)
+        if user.role == Role.PRINCIPAL and (
+            not profile or not profile.school_id or
+            self.employee.school_id != profile.school_id or
+            not self.employee.user_id or self.employee.user.role != Role.TEACHING
+        ):
+            return False
         if self.workflow == 'teaching':
             if self.status == 'pending_supervisor':
                 return bool(profile and profile.pk == self.assigned_principal_id)

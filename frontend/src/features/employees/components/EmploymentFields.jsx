@@ -10,11 +10,12 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
   const selectedPosition = watch('position');
   const selectedSG = watch('salary_grade');
   const selectedRole = watch('role');
+  const selectedSchool = watch('school');
 
   // Auto-set Salary & SG and sync Role when position changes
   useEffect(() => {
     if (selectedPosition) {
-      const match = salaryGrades?.find(sg => 
+      const match = salaryGrades?.find(sg =>
         sg.label?.toLowerCase().includes(selectedPosition.trim().toLowerCase())
       );
       if (match) {
@@ -23,7 +24,9 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
       }
 
       // Sync staff category (Role) when picking a position
-      if (DEPED_POSITIONS.NON_TEACHING.includes(selectedPosition)) {
+      if (DEPED_POSITIONS.PRINCIPAL.includes(selectedPosition)) {
+        if (selectedRole !== ROLES.PRINCIPAL) setValue('role', ROLES.PRINCIPAL);
+      } else if (DEPED_POSITIONS.NON_TEACHING.includes(selectedPosition)) {
         if (![ROLES.NON_TEACHING, ROLES.HR, ROLES.ACCOUNTANT].includes(selectedRole)) {
           setValue('role', ROLES.NON_TEACHING);
         }
@@ -42,14 +45,16 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
   // Filter positions based on role
   const getFilteredPositions = () => {
     if (selectedRole === ROLES.TEACHING) return DEPED_POSITIONS.TEACHING;
+    if (selectedRole === ROLES.PRINCIPAL) return DEPED_POSITIONS.PRINCIPAL;
     if (selectedRole === ROLES.ADMINISTRATIVE) return DEPED_POSITIONS.ADMINISTRATIVE;
     if (selectedRole === ROLES.NON_TEACHING) return DEPED_POSITIONS.NON_TEACHING;
     if (selectedRole === ROLES.HR) return DEPED_POSITIONS.NON_TEACHING;
     if (selectedRole === ROLES.ACCOUNTANT) return DEPED_POSITIONS.NON_TEACHING;
-    
+
     // Fallback for unselected
     return [
       ...DEPED_POSITIONS.TEACHING,
+      ...DEPED_POSITIONS.PRINCIPAL,
       ...DEPED_POSITIONS.ADMINISTRATIVE,
       ...DEPED_POSITIONS.NON_TEACHING
     ];
@@ -68,21 +73,22 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
           <span>Principal / Immediate Supervisor</span>
           <select {...register('supervisor')} className="select select-bordered select-sm w-full">
             <option value="">Not assigned</option>
-            {leaveStaff.filter(person => person.id !== currentEmployeeId).map(person => <option key={person.id} value={person.id}>{person.name}{person.position ? ` (${person.position})` : ''}</option>)}
+            {leaveStaff.filter(person => person.id !== currentEmployeeId && (selectedRole !== ROLES.TEACHING || (person.role === ROLES.PRINCIPAL && selectedSchool && String(person.school) === String(selectedSchool)))).map(person => <option key={person.id} value={person.id}>{person.name}{person.position ? ` (${person.position})` : ''}</option>)}
           </select>
         </label>
-        <p className="text-xs text-slate-600 md:col-span-2">Teaching leave applications go to the assigned Principal / Immediate Supervisor for approval and signature, then to HR for completion.</p>
+        <p className="text-xs text-slate-600 md:col-span-2">Select the teacher's workplace to choose a principal from the same school. Teaching leave applications go to that principal for approval and signature, then to HR for completion.</p>
       </fieldset>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Role</label>
-          <select 
+          <select
             {...register("role", { required: "Role is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.role ? 'border-error' : ''}`}
           >
             <option value="">Select Role</option>
             <option value={ROLES.TEACHING}>Teaching Staff</option>
             <option value={ROLES.ADMINISTRATIVE}>Administrative Staff</option>
+            <option value={ROLES.PRINCIPAL}>School Principal</option>
             <option value={ROLES.NON_TEACHING}>Non-Teaching Staff</option>
             <option value={ROLES.HR}>HR Staff</option>
             <option value={ROLES.ACCOUNTANT}>Accountant</option>
@@ -91,7 +97,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
         </div>
         <div className="space-y-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Position</label>
-          <select 
+          <select
             {...register("position", { required: "Position is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.position ? 'border-error' : ''}`}
           >
@@ -105,7 +111,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Area</label>
-          <select 
+          <select
             {...register("department", { required: "Department is required" })}
             className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.department ? 'border-error' : ''}`}
           >
@@ -113,15 +119,14 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             <option value="Instructional">Instructional</option>
             <option value="Administrative">Administrative</option>
             <option value="Finance">Finance</option>
-            <option value="ICT">ICT Section</option>
             <option value="Division Office">Division Office</option>
           </select>
           {errors.department && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.department.message}</span>}
         </div>
         <div className="space-y-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Workplace</label>
-          <select 
-            {...register("school")}
+          <select
+            {...register("school", { required: selectedRole === ROLES.PRINCIPAL ? 'Assign a school to the principal.' : false })}
             className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
           >
             <option value="">Select Workplace</option>
@@ -129,6 +134,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          {errors.school && <span className="text-xs text-error">{errors.school.message}</span>}
         </div>
       </div>
 
@@ -137,7 +143,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
             Salary Grade {currentSGDetails && <span className="text-primary font-semibold ml-1">(SG {currentSGDetails.grade})</span>}
           </label>
-          <select 
+          <select
             {...register("salary_grade")}
             className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
           >
@@ -150,14 +156,14 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
         <div className="space-y-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Monthly Salary</label>
           <div className="relative">
-             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-600">₱</span>
-             <input 
-               {...register("salary", { required: "Salary is required" })}
-               type="number" 
-               step="0.01" 
-               placeholder="0.00" 
-               className={`input input-sm w-full pl-7 bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.salary ? 'border-error' : ''}`} 
-             />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-600">₱</span>
+            <input
+              {...register("salary", { required: "Salary is required" })}
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              className={`input input-sm w-full pl-7 bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.salary ? 'border-error' : ''}`}
+            />
           </div>
           {errors.salary && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.salary.message}</span>}
         </div>
@@ -166,10 +172,10 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
       <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <div className="space-y-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Joined Date</label>
-          <input 
+          <input
             {...register("date_hired", { required: "Date is required" })}
-            type="date" 
-            className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.date_hired ? 'border-error' : ''}`} 
+            type="date"
+            className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.date_hired ? 'border-error' : ''}`}
           />
           {errors.date_hired && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.date_hired.message}</span>}
         </div>

@@ -203,16 +203,7 @@ const PersonalFields = ({ isEdit, register, errors, watch }) => {
               />
               {errors.email && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.email.message}</span>}
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Password</label>
-              <input 
-                {...register("password", { required: !isEdit ? "Password is required" : false })}
-                type="password" 
-                placeholder="••••••••" 
-                className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.password ? 'border-error' : ''}`} 
-              />
-              {errors.password && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.password.message}</span>}
-            </div>
+            <p className="text-sm text-slate-600">The employee will receive an email with a link to choose their password. The link expires after 24 hours.</p>
           </div>
         </div>
       )}

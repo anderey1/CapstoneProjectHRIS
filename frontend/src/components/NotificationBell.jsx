@@ -1,22 +1,46 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
+import { QUERY_KEYS } from '../api/queryKeys';
 import { useAuth } from '../context/AuthContext';
+
+const notificationPath = item => item.path || ({ registration: '/employees?tab=pending', leave: '/my-leaves', loan: '/my-loans', payroll: '/my-payslips' }[item.source_type]);
 
 export default function NotificationBell() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const client = useQueryClient();
   const container = useRef(null);
   const button = useRef(null);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('tasks');
   const [page, setPage] = useState(1);
-  const key = ['notifications', user?.id];
+  const key = [QUERY_KEYS.NOTIFICATIONS, user?.id];
   const summary = useQuery({ queryKey: [...key, 'summary'], queryFn: ({ signal }) => api.get('notifications/summary/', { signal }).then(r => r.data), enabled: !!user?.id, refetchInterval: 60000, refetchIntervalInBackground: false });
   const list = useQuery({ queryKey: [...key, tab, page], queryFn: ({ signal }) => api.get(tab === 'tasks' ? 'notifications/tasks/' : 'notifications/', { params: { page }, signal }).then(r => r.data), enabled: open && !!user?.id });
-  const read = useMutation({ mutationFn: id => api.post(`notifications/${id}/read/`), onSuccess: () => client.invalidateQueries({ queryKey: key }) });
+  const dismiss = useMutation({
+    mutationFn: item => api.post('notifications/dismiss/', item.id ? { notification_id: item.id } : { task_key: item.key }),
+    onSuccess: (_, item) => {
+      const dismissedTab = item.id ? 'updates' : 'tasks';
+      client.setQueriesData({ queryKey: [...key, dismissedTab] }, data => data && ({
+        ...data,
+        count: Math.max(0, data.count - 1),
+        results: data.results.filter(row => item.id ? row.id !== item.id : row.key !== item.key),
+      }));
+      client.setQueryData([...key, 'summary'], data => data && ({
+        ...data,
+        unread_updates: Math.max(0, data.unread_updates - (item.id && !item.read_at ? 1 : 0)),
+        action_required: Math.max(0, data.action_required - (item.id ? 0 : 1)),
+      }));
+      setPage(1);
+      setOpen(false);
+      client.invalidateQueries({ queryKey: key });
+      const path = notificationPath(item);
+      if (path) navigate(path);
+    },
+  });
   useEffect(() => {
     const close = event => { if (container.current && !container.current.contains(event.target)) setOpen(false); };
     document.addEventListener('pointerdown', close);
@@ -41,13 +65,13 @@ export default function NotificationBell() {
       <div className="max-h-[min(55vh,28rem)] overflow-y-auto">
         {list.isLoading && <p className="px-4 py-8 text-center text-sm text-slate-600">Loading notifications…</p>}
         {list.isError && <button type="button" className="min-h-11 px-4 text-sm text-error underline" onClick={() => list.refetch()}>Could not load notifications. Retry</button>}
-        {list.data?.results?.length === 0 && <p className="px-4 py-8 text-center text-sm text-slate-600">{tab === 'tasks' ? 'No actions required.' : 'No updates.'}</p>}
-        {list.data?.results?.map(item => <div key={item.key || item.id} className={`border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 ${item.id && !item.read_at ? 'bg-blue-50/40' : ''}`}>
-          <div className="flex items-start gap-2.5"><span aria-hidden="true" className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tab === 'tasks' ? 'bg-amber-600' : item.read_at ? 'bg-slate-300' : 'bg-primary'}`} /><div className="min-w-0"><div className="break-words font-medium leading-5 text-slate-900">{item.title}</div>
-          {item.created_at && <div className="mt-1 text-xs text-slate-600">{new Date(item.created_at).toLocaleString()}</div>}</div></div>
-          <div className="ml-[18px] mt-1 flex flex-wrap gap-x-4">{(item.path || ['leave', 'loan', 'payroll'].includes(item.source_type)) && <Link className="inline-flex min-h-11 items-center font-medium text-primary underline decoration-slate-300 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-primary" to={item.path || ({ leave: '/my-leaves', loan: '/my-loans', payroll: '/my-payslips' }[item.source_type])} onClick={() => setOpen(false)}>Open</Link>}{item.id && !item.read_at && <button className="min-h-11 font-medium text-primary underline decoration-slate-300 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60" type="button" onClick={() => read.mutate(item.id)} disabled={read.isPending}>Mark as read</button>}</div>
-        </div>)}
-        {read.isError && <p className="p-2 text-sm text-error">Could not mark update as read. Try again.</p>}
+        {list.data?.results?.length === 0 && <p className="px-4 py-8 text-center text-sm text-slate-600">{tab === 'tasks' ? 'No new tasks.' : 'No updates.'}</p>}
+        {list.data?.results?.map(item => <button key={item.key || item.id} type="button" onClick={() => dismiss.mutate(item)} disabled={dismiss.isPending} aria-busy={dismiss.isPending && (item.id ? dismiss.variables?.id === item.id : dismiss.variables?.key === item.key)} className={`block w-full border-b border-slate-100 px-4 py-3 text-left text-sm last:border-b-0 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary disabled:opacity-60 ${item.id && !item.read_at ? 'bg-blue-50/40' : ''}`}>
+          <span className="flex items-start gap-2.5"><span aria-hidden="true" className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tab === 'tasks' ? 'bg-amber-600' : item.read_at ? 'bg-slate-300' : 'bg-primary'}`} /><span className="min-w-0"><span className="block break-words font-medium leading-5 text-slate-900">{item.title}</span>
+          {item.created_at && <span className="mt-1 block text-xs text-slate-600">{new Date(item.created_at).toLocaleString()}</span>}</span></span>
+          <span className="ml-[18px] inline-flex min-h-11 items-center font-medium text-primary underline decoration-slate-300 underline-offset-4">{notificationPath(item) ? 'Open' : 'Dismiss'}</span>
+        </button>)}
+        {dismiss.isError && <p role="alert" className="p-2 text-sm text-error">Could not dismiss notification. Try again.</p>}
       </div>
       {list.data?.count > 10 && <div className="flex items-center justify-between border-t border-slate-200 px-4 text-sm"><button type="button" className="min-h-11 font-medium text-primary disabled:text-slate-400" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span className="text-slate-600 tabular-nums">Page {page}</span><button type="button" className="min-h-11 font-medium text-primary disabled:text-slate-400" disabled={page * 10 >= list.data.count} onClick={() => setPage(page + 1)}>Next</button></div>}
     </section>}

@@ -1,6 +1,7 @@
 export const ROLES = {
   TEACHING: 'TEACHING',
   ADMINISTRATIVE: 'ADMINISTRATIVE',
+  PRINCIPAL: 'PRINCIPAL',
   NON_TEACHING: 'NON_TEACHING',
   HR: 'HR',
   ACCOUNTANT: 'ACCOUNTANT',
@@ -15,8 +16,11 @@ export const DEPED_POSITIONS = {
     'Master Teacher III', 'Master Teacher IV',
     'SPED Teacher I', 'SPED Teacher II', 'SPED Teacher III'
   ],
-  ADMINISTRATIVE: [
+  PRINCIPAL: [
     'Principal I', 'Principal II', 'Principal III', 'Principal IV',
+    'School Principal I', 'School Principal II', 'School Principal III', 'School Principal IV',
+  ],
+  ADMINISTRATIVE: [
     'Head Teacher I', 'Head Teacher II', 'Head Teacher III', 'Head Teacher IV', 'Head Teacher V', 'Head Teacher VI',
     'Schools Division Superintendent', 'Assistant Schools Division Superintendent',
     'Public Schools District Supervisor (PSDS)', 'Education Program Supervisor (EPS)'

@@ -12,6 +12,7 @@ class Role(models.TextChoices):
     TEACHING = 'TEACHING', 'Teaching Staff'
     NON_TEACHING = 'NON_TEACHING', 'Non-Teaching Staff'
     ADMINISTRATIVE = 'ADMINISTRATIVE', 'Administrative Staff'
+    PRINCIPAL = 'PRINCIPAL', 'School Principal'
 
 
 MANAGEMENT_ROLES = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
@@ -85,6 +86,12 @@ class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile', null=True, blank=True)
     objects = EmployeeManager()
     
+    registration_status = models.CharField(max_length=12, choices=[('none', 'Not a registration'), ('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='none')
+    rejection_reason = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='reviewed_registrations')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    setup_nonce = models.UUIDField(null=True, blank=True, editable=False)
+
     # Personal Information (PDS Section I)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)

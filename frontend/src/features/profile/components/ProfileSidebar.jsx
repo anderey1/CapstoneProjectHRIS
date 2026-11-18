@@ -26,10 +26,12 @@ const ProfileSidebar = ({
               <img 
                 src={me.e_signature} 
                 alt="Digital Signature" 
+                width="240"
+                height="96"
                 className="max-h-full max-w-full object-contain"
               />
             ) : (
-              <p className="text-xs text-slate-400 font-medium text-center">No digital signature uploaded</p>
+              <p className="text-xs text-slate-600 font-medium text-center">No digital signature uploaded</p>
             )}
             {isUploadingSig && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
@@ -51,30 +53,30 @@ const ProfileSidebar = ({
                 type="button"
                 onClick={() => sigInputRef.current?.click()}
                 disabled={isUploadingSig}
-                className="btn btn-sm bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium w-full h-9 shadow-sm"
+                className="btn min-h-11 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-sm font-medium w-full shadow-sm"
               >
                 {me?.e_signature ? 'Update Signature' : 'Upload Signature'}
               </button>
-              <p className="text-xs text-slate-400 text-center">PNG or JPG with clean signature on white background</p>
+              <p className="text-xs text-slate-600 text-center">PNG or JPG with clean signature on white background</p>
             </div>
           ) : (
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-center">
               <p className="text-xs font-semibold text-slate-700">
                 {me?.e_signature ? 'Official Signature on File' : 'No Signature Registered'}
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">Signature upload is restricted to the account owner</p>
+              <p className="text-xs text-slate-600 mt-0.5">Signature upload is restricted to the account owner</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Assigned Work Location */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col min-h-[360px] shadow-sm z-0">
+      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col z-0">
         <div className="p-4 border-b border-slate-100 bg-white">
-          <span className="text-xs font-medium text-slate-400 block">Assigned Workstation</span>
-          <h3 className="text-sm font-bold text-slate-800 mt-0.5">{workstation?.name || 'Lucena Division Office'}</h3>
+          <span className="text-xs font-medium text-slate-600 block">Assigned Workstation</span>
+          <h3 className="text-sm font-bold text-slate-800 mt-0.5">{workstation?.name || 'No workstation recorded'}</h3>
         </div>
-        <div className="flex-1 min-h-[200px] z-0 relative">
+        {pos ? <><div className="h-60 z-0 relative">
           <MapContainer 
             key={`${pos.lat}-${pos.lng}`}
             center={[pos.lat, pos.lng]} 
@@ -84,16 +86,16 @@ const ProfileSidebar = ({
             scrollWheelZoom={false}
             dragging={false}
           >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
             <Marker position={[pos.lat, pos.lng]} />
           </MapContainer>
         </div>
         <div className="p-3 bg-slate-50 flex items-center gap-2 border-t border-slate-200">
           <MapPin className="text-[#0038A8] w-4 h-4 shrink-0" />
-          <span className="text-xs font-mono text-slate-500">
+          <span className="text-xs tabular-nums text-slate-600">
             {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Assigned school location
           </span>
-        </div>
+        </div></> : <p className="p-4 text-sm text-slate-600">{workstation ? 'No map coordinates recorded for this workstation.' : 'Contact HR if your school assignment is missing.'}</p>}
       </div>
     </div>
   );

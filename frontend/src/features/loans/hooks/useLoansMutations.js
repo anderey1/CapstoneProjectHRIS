@@ -32,7 +32,7 @@ export function useLoansMutations() {
     },
     onError: (err) => {
       const errorData = err.response?.data;
-      let msg = 'Application failed. Please ensure all data is correct.';
+      let msg = 'We couldn’t complete your loan submission. Check your applications before submitting again.';
       if (errorData) {
         if (typeof errorData === 'string') msg = errorData;
         else if (Array.isArray(errorData)) msg = errorData[0];

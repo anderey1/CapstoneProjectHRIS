@@ -15,7 +15,8 @@ import {
   ChevronRight,
   ChevronLeft,
   School,
-  MapPin
+   MapPin,
+   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRBAC } from '../hooks/useRBAC';
@@ -39,20 +40,20 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
     {
       title: 'Human Resources & Staffing',
       links: [
-        { to: '/employees', icon: <Users className="w-4 h-4" />, label: role === 'PRINCIPAL' ? 'School Teachers' : 'Personnel Directory', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'ADMINISTRATIVE', 'PRINCIPAL'] },
-        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Applicant Board (MSP)', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance Monitor', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/staff-dtr', icon: <FileText className="w-4 h-4" />, label: 'Staff Form 48 (DTR)', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals (Form 6)', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/employees', icon: <Users className="w-4 h-4" />, label: role === 'PRINCIPAL' ? 'School Teachers' : 'Personnel Directory', roles: ['HR', 'SUPERINTENDENT', 'ACCOUNTANT', 'PRINCIPAL'] },
+        { to: '/recruitment', icon: <KanbanSquare className="w-4 h-4" />, label: 'Applicant Board (MSP)', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/attendance-management', icon: <CalendarCheck className="w-4 h-4" />, label: 'Attendance Monitor', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/staff-dtr', icon: <FileText className="w-4 h-4" />, label: 'Staff Form 48 (DTR)', roles: ['HR', 'SUPERINTENDENT'] },
+        { to: '/leave-management', icon: <Clock className="w-4 h-4" />, label: 'Leave Approvals (Form 6)', roles: ['HR', 'SUPERINTENDENT'] },
         { to: '/my-leaves?tab=approvals', icon: <Clock className="w-4 h-4" />, label: 'Teacher Leave Approvals', roles: ['PRINCIPAL'] },
-        { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/performance-management', icon: <BarChart2 className="w-4 h-4" />, label: 'Performance Reviews', roles: ['HR', 'SUPERINTENDENT'] },
       ]
     },
     {
       title: 'Financial & Loan Services',
       links: [
-        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Management', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
-        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Processing Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT', 'ADMINISTRATIVE'] },
+        { to: '/payroll-management', icon: <Wallet className="w-4 h-4" />, label: 'Payroll Management', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'] },
+        { to: '/loan-management', icon: <FileText className="w-4 h-4" />, label: 'Loan Processing Center', roles: ['HR', 'ACCOUNTANT', 'SUPERINTENDENT'] },
       ]
     },
     {
@@ -76,7 +77,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
   ];
 
   return (
-    <aside className={`flex h-dvh min-h-0 max-w-[calc(100vw-2rem)] shrink-0 flex-col bg-deped-navy text-white transition-all duration-300 ease-in-out border-r border-slate-800/40 shadow-xl overflow-hidden ${
+      <aside className={`flex h-dvh min-h-0 max-w-[calc(100vw-2rem)] shrink-0 flex-col bg-deped-navy text-white border-r border-slate-800/40 overflow-hidden ${
       isCollapsed ? 'w-72 lg:w-20' : 'w-72'
     }`}>
       
@@ -89,7 +90,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
             <div className={`bg-white rounded-xl flex items-center justify-center shadow-md overflow-hidden p-1 shrink-0 transition-all duration-300 ${
               isCollapsed ? 'w-11 h-11 lg:w-9 lg:h-9' : 'w-11 h-11'
             }`}>
-              <img src="/Deped2.png" alt="DepEd Seal" className="w-full h-full object-contain" />
+              <img src="/Deped2.png" alt="DepEd Seal" width="44" height="44" className="w-full h-full object-contain" />
             </div>
             <div className={`min-w-0 ${isCollapsed ? 'lg:hidden' : 'block'}`}>
               <h2 className="font-bold text-base tracking-tight leading-none text-white">DepEd HRIS</h2>
@@ -101,15 +102,19 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
             <button
               type="button"
               onClick={toggleCollapse}
-              className={`hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0 ${
+              className={`hidden lg:flex items-center justify-center min-w-11 min-h-11 rounded-md text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0 ${
                 isCollapsed ? 'lg:hidden' : ''
               }`}
               title="Collapse sidebar"
               aria-label="Collapse sidebar"
+              aria-expanded={!isCollapsed}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
           )}
+          <button type="button" onClick={closeDrawer} aria-label="Close navigation" className="lg:hidden flex min-h-11 min-w-11 items-center justify-center rounded-md text-white hover:bg-white/10">
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
         </div>
 
         {/* When collapsed on desktop, show small expand button */}
@@ -118,9 +123,10 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
             <button
               type="button"
               onClick={toggleCollapse}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex items-center justify-center min-w-11 min-h-11 rounded-md text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
               title="Expand sidebar"
               aria-label="Expand sidebar"
+              aria-expanded={!isCollapsed}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -134,7 +140,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
       }`}>
         {menuGroups.map((group, idx) => {
           const visibleLinks = group.links.filter(link => 
-            (!link.superuserOnly || user?.is_superuser) && (!link.roles || (user && link.roles.includes(user.role)))
+            (!link.superuserOnly || user?.is_superuser) && (!link.roles || (user && (user.is_superuser || link.roles.includes(user.role))))
           );
 
           if (visibleLinks.length === 0) return null;
@@ -155,7 +161,8 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
                   <NavLink
                     key={link.to}
                     to={link.to}
-                    aria-current={matchesLeaveTab(link) ? 'page' : null}
+                    aria-current={matchesLeaveTab(link) ? undefined : null}
+                    aria-label={link.label}
                     onClick={closeDrawer}
                     title={link.label}
                     className={({ isActive }) => `
@@ -201,7 +208,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
           </div>
           <div className={`flex-1 min-w-0 ${isCollapsed ? 'lg:hidden' : 'block'}`}>
             <p className="text-xs font-semibold truncate text-white">{user?.username || 'Guest'}</p>
-            <p className="text-[10px] font-medium text-amber-300/80 uppercase tracking-wide truncate">{roleLabel}</p>
+            <p className="text-xs font-medium text-amber-300 truncate">{roleLabel}</p>
           </div>
         </div>
         
@@ -212,7 +219,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
             logout();
           }}
           title="Sign Out"
-          className={`btn btn-ghost btn-sm btn-block text-red-300 hover:bg-red-500/15 hover:text-red-200 rounded-lg text-xs font-medium cursor-pointer overflow-hidden ${
+          className={`btn btn-ghost btn-block min-h-11 text-red-300 hover:bg-red-500/15 hover:text-red-200 rounded-md text-sm font-medium cursor-pointer overflow-hidden ${
             isCollapsed ? 'justify-start lg:justify-center lg:px-0' : 'justify-start gap-2.5'
           }`}
         >

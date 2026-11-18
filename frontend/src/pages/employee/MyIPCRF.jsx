@@ -13,8 +13,8 @@ import {
   Calendar,
   CheckCircle2,
 } from 'lucide-react';
-import IPCRFDetailsModal from '../../components/features/performance/IPCRFDetailsModal';
-import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal';
+import IPCRFDetailsModal from '../../features/performance/components/IPCRFDetailsModal';
+import IPCRFFormModal from '../../features/performance/components/IPCRFFormModal';
 import { computeRPMSScore, getAdjectivalRating } from '../../utils/performance';
 
 /**

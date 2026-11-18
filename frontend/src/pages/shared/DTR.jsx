@@ -27,7 +27,7 @@ const DTR = () => {
   const [downloading, setDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const { data: records = [], isLoading } = useQuery({
+  const { data: records = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: [QUERY_KEYS.ATTENDANCE, selectedMonth],
     queryFn: ({ signal }) => {
       const [year, month] = selectedMonth.split('-');
@@ -74,8 +74,9 @@ const DTR = () => {
   };
 
   if (isLoading) return (
-    <div className="p-8 flex justify-center h-[60vh] items-center">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
+    <div role="status" className="p-8 flex justify-center gap-3 h-[60vh] items-center text-sm text-slate-600">
+      <span aria-hidden="true" className="loading loading-spinner loading-lg text-primary"></span>
+      Loading attendance records…
     </div>
   );
 
@@ -100,19 +101,22 @@ const DTR = () => {
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
-          <input
-            aria-label="Attendance month"
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
+            Attendance month
+            <input
               type="month"
+            required
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-800 focus:outline-none focus:border-[#0038A8]"
+            onChange={(e) => { if (e.target.value) setSelectedMonth(e.target.value); }}
+            className="min-h-11 px-3 py-1.5 bg-white border border-slate-500 rounded text-sm text-slate-800"
           />
+          </label>
 
           <div className="dropdown dropdown-end">
             <button 
               tabIndex={0} 
-              disabled={downloading}
-              className={`px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center gap-1.5 transition-colors ${downloading ? 'opacity-60' : ''}`}
+              disabled={downloading || isError}
+              className={`min-h-11 px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-sm font-semibold rounded border border-[#002d86] flex items-center gap-1.5 transition-colors disabled:opacity-60`}
             >
               <Download className="w-4 h-4" />
               {downloading ? 'Generating PDF...' : 'Export Form 48 PDF'}
@@ -136,7 +140,15 @@ const DTR = () => {
       )}
 
       {/* DTR Data Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-300 overflow-hidden">
+      {isError ? (
+        <section role="alert" className="rounded-lg border border-red-200 bg-white p-6">
+          <h2 className="text-base font-semibold text-slate-900">Attendance records could not load</h2>
+          <p className="mt-2 text-sm text-slate-600">Your records have not changed. Try loading this period again.</p>
+          <button type="button" disabled={isFetching} onClick={() => refetch()} className="mt-4 min-h-11 rounded bg-primary px-4 text-sm font-medium text-white disabled:opacity-60">
+            {isFetching ? 'Retrying…' : 'Retry'}
+          </button>
+        </section>
+      ) : <div className="bg-white rounded-lg shadow-sm border border-slate-300 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
@@ -209,13 +221,13 @@ const DTR = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-20 text-slate-600 italic text-xs uppercase tracking-wide">No records for this period</td>
+                  <td colSpan="8" className="text-center px-4 py-16 text-slate-600 text-sm">No attendance records for this month. Select another month or contact HR about missing entries.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

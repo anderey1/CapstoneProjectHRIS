@@ -3,7 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
 import { Plus, User, Mail, Phone, Trash2, ChevronRight, Layout, Search, Star, FileText, CheckCircle2, XCircle, Info, MessageSquare } from 'lucide-react';
-import AddApplicantModal from '../../components/features/recruitment/AddApplicantModal';
+import AddApplicantModal from '../../features/recruitment/components/AddApplicantModal';
+import AccessibleDialog from '../../components/common/AccessibleDialog';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import Pagination from '../../components/common/Pagination';
 
@@ -99,6 +100,10 @@ const Recruitment = () => {
   };
 
   const stageCounts = Object.fromEntries(COLUMNS.map(col => [col.id, summary.statuses?.[col.id] || 0]));
+  const isProcessing = statusMutation.isPending || updateScoresMutation.isPending;
+  const closeApplicant = () => {
+    if (!isProcessing) setSelectedApplicant(null);
+  };
 
   return (
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
@@ -334,19 +339,18 @@ const Recruitment = () => {
       
       {/* Applicant Detail / Status Update Modal */}
       {selectedApplicant && (
-         <div className="modal modal-open">
-            <div className="modal-box rounded-lg max-w-4xl p-0 overflow-hidden shadow-lg border border-slate-200 bg-white h-[85vh] flex flex-col">     
+         <AccessibleDialog onClose={closeApplicant} labelledBy="recruitment-applicant-title" className="rounded-lg w-full max-w-4xl p-0 overflow-hidden border border-slate-200 bg-white h-[85vh] max-h-[calc(100dvh-2rem)] flex flex-col">
                <div className="bg-base-50/50 border-b border-base-200 p-8 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-4">
                      <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center text-xl font-semibold uppercase shadow-sm">
                         {selectedApplicant.first_name[0]}{selectedApplicant.last_name[0]}
                      </div>
                      <div>
-                        <h3 className="font-semibold text-2xl text-base-content tracking-tight leading-none">{selectedApplicant.first_name} {selectedApplicant.middle_name ? selectedApplicant.middle_name + ' ' : ''}{selectedApplicant.last_name}</h3>
+                        <h3 id="recruitment-applicant-title" className="font-semibold text-2xl text-base-content tracking-tight leading-none">{selectedApplicant.first_name} {selectedApplicant.middle_name ? selectedApplicant.middle_name + ' ' : ''}{selectedApplicant.last_name}</h3>
                         <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mt-2">Applied for: {selectedApplicant.position_applied}</p>
                      </div>
                   </div>
-                  <button onClick={() => setSelectedApplicant(null)} className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100"><XCircle className="w-6 h-6" /></button>
+                  <button type="button" onClick={closeApplicant} disabled={isProcessing} aria-label="Close applicant details" className="btn btn-ghost btn-circle min-h-11 min-w-11 shrink-0 text-slate-600 hover:text-slate-900"><XCircle className="w-6 h-6" aria-hidden="true" /></button>
                </div>
 
                <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
@@ -476,11 +480,12 @@ const Recruitment = () => {
                               ].map(s => (
                                  <div key={s.key} className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-center group">
                                     <div className="flex items-center justify-center gap-1 mb-1">
-                                       <p className="text-xs font-semibold text-slate-600 uppercase tracking-tighter">{s.label}</p>
+                                       <label htmlFor={`recruitment-${s.key}`} className="text-xs font-semibold text-slate-600 uppercase tracking-tighter">{s.label}</label>
                                        <span className="text-xs font-bold text-primary/40 uppercase">(Max {s.max})</span>
                                     </div>
                                     {isEditingScores ? (
-                                      <input 
+                                       <input
+                                         id={`recruitment-${s.key}`}
                                         type="number" 
                                         step="0.01"
                                         max={s.max}
@@ -496,7 +501,7 @@ const Recruitment = () => {
                                     )}
                                  </div>
                               ))}
-                              <div className="bg-primary border-2 border-primary rounded-xl p-4 text-center shadow-lg shadow-primary/20">
+                              <div className="bg-primary border-2 border-primary rounded-xl p-4 text-center">
                                  <p className="text-xs font-semibold text-white/60 uppercase tracking-tighter mb-1">Total Points</p>
                                  <p className="text-xl font-semibold text-white">
                                     {isEditingScores 
@@ -521,7 +526,7 @@ const Recruitment = () => {
                         </section>
 
                         {/* Status Change Section */}
-                        <section className="bg-white border-2 border-primary/20 rounded-2xl p-8 space-y-6 shadow-xl shadow-primary/5">
+                        <section className="bg-white border-2 border-primary/20 rounded-2xl p-8 space-y-6">
                            <div className="flex items-center justify-between">
                               <h4 className="text-xs font-semibold tracking-wide text-primary flex items-center gap-2">
                                  Update Pipeline Status
@@ -533,7 +538,7 @@ const Recruitment = () => {
 
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="space-y-2">
-                                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">New Stage</label>
+                                 <label htmlFor="status-select" className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">New Stage</label>
                                  <select 
                                     id="status-select"
                                     className="select select-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-bold"
@@ -544,8 +549,9 @@ const Recruitment = () => {
                                  </select>
                               </div>
                               <div className="space-y-2">
-                                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Internal Remarks</label>
+                                 <label htmlFor="recruitment-status-note" className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Internal Remarks</label>
                                  <textarea 
+                                    id="recruitment-status-note"
                                     className="textarea textarea-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-medium h-12"       
                                     placeholder="Add reason for status change..."
                                     value={statusNote}
@@ -556,7 +562,7 @@ const Recruitment = () => {
 
                            <div className="flex gap-4">
                               <button 
-                                 className="btn btn-primary btn-block rounded-xl font-semibold uppercase tracking-wide text-xs h-14 shadow-lg shadow-primary/20"
+                                 className="btn btn-primary btn-block rounded-xl font-semibold uppercase tracking-wide text-xs h-14"
                                  onClick={() => {
                                     const select = document.getElementById('status-select');
                                     statusMutation.mutate({ 
@@ -577,9 +583,7 @@ const Recruitment = () => {
                      </div>
                   </div>
                </div>
-            </div>
-            <div className="modal-backdrop bg-black/60 backdrop-blur-sm" onClick={() => setSelectedApplicant(null)}></div>
-         </div>
+         </AccessibleDialog>
       )}
     </div>
   );

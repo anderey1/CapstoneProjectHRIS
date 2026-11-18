@@ -1,6 +1,6 @@
 # Biometric attendance integration
 
-HR and Administrative staff import school biometric logs through **Attendance Monitor → Import biometric attendance**. Staff view imported records through **My Attendance** or **My DTR**. The HRIS no longer accepts QR/GPS punches.
+HR and system superusers import school biometric logs through **Attendance Monitor → Import biometric attendance**. Staff view imported records through **My Attendance** or **My DTR**. The HRIS no longer accepts QR/GPS punches.
 
 ## Prepare an attendance file
 

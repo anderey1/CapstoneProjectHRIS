@@ -12,10 +12,9 @@ import {
   Download,
   BarChart3,
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
-import IPCRFFormModal from '../../components/features/performance/IPCRFFormModal';
-import IPCRFDetailsModal from '../../components/features/performance/IPCRFDetailsModal';
+import { useRBAC } from '../../hooks/useRBAC';
+import IPCRFFormModal from '../../features/performance/components/IPCRFFormModal';
+import IPCRFDetailsModal from '../../features/performance/components/IPCRFDetailsModal';
 import { computeRPMSScore, getAdjectivalRating } from '../../utils/performance';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import Pagination from '../../components/common/Pagination';
@@ -25,7 +24,6 @@ import Pagination from '../../components/common/Pagination';
  * Conforming to DepEd Order No. 2, s. 2015 & CSC Institutional Standards.
  */
 const IPCRFManagement = () => {
-  const { user } = useAuth();
   const { can } = useRBAC();
   const queryClient = useQueryClient();
 
@@ -38,7 +36,7 @@ const IPCRFManagement = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('ALL');
   const [selectedRatingFilter, setSelectedRatingFilter] = useState('ALL');
 
-  const canRate = can(PERMISSIONS.RATE_PERFORMANCE) || ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
+  const canRate = can('RATE_PERFORMANCE');
 
   // Data Fetching
   const { records: filteredReviews, summary, pagination, isLoading } = usePaginatedList(QUERY_KEYS.PERFORMANCE, 'performance/', {

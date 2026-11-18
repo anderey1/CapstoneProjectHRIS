@@ -1,5 +1,7 @@
 # API Endpoint Authentication & Authorization Matrix
 
+Historical audit: permission class names and role coverage below predate the 2026-11-18 role cleanup. See [current role policy](role-policy.md); school writes are now superuser-only.
+
 **Project:** DepEd Lucena City Division HRIS  
 **Date:** October 15, 2026  
 **Auditor:** Senior Application Security Engineer  

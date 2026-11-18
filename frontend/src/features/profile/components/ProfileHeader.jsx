@@ -17,7 +17,7 @@ const ProfileHeader = ({
   canEditProfile = false,
   canChangePhoto = false
 }) => {
-  const uploadedDocsCount = Object.keys(documents || {}).length;
+  const uploadedDocsCount = REQUIRED_DOCS_LIST.filter(doc => documents?.[doc.key]).length;
   const mandatoryDocsCount = REQUIRED_DOCS_LIST.filter(d => d.mandatory).length;
   const uploadedMandatoryCount = REQUIRED_DOCS_LIST
     .filter(d => d.mandatory)
@@ -47,7 +47,8 @@ const ProfileHeader = ({
             {canChangePhoto && (
               <button 
                 onClick={onChangePhoto}
-                className="absolute -bottom-2 -right-2 btn btn-circle btn-xs bg-[#0038A8] text-white hover:bg-[#002d86] active:scale-[0.97] border-2 border-white shadow transition-[transform,background-color,box-shadow] duration-150"
+                className="absolute -bottom-2 -right-2 btn btn-circle min-h-11 min-w-11 bg-[#0038A8] text-white hover:bg-[#002d86] border-2 border-white shadow"
+                aria-label="Change profile photo (this browser only)"
                 title="Change Profile Photo"
               >
                 <Camera className="w-3.5 h-3.5" />
@@ -62,7 +63,7 @@ const ProfileHeader = ({
                 {me?.first_name} {me?.middle_name ? `${me.middle_name.charAt(0)}.` : ''} {me?.last_name} {me?.name_extension || ''}
               </h2>
               
-              <RoleBadge role={me?.user_details?.role || me?.role} />
+              <RoleBadge role={me?.user_details?.role ?? me?.role} isSuperuser={me?.user_details?.is_superuser} />
               
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 ${
                 me?.date_hired 
@@ -91,7 +92,7 @@ const ProfileHeader = ({
               {canEditProfile && (
                 <button 
                   onClick={onEditProfile}
-                  className="btn btn-sm h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-colors"
+                  className="btn min-h-11 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-sm font-medium transition-colors"
                 >
                   <Pencil className="w-3.5 h-3.5 mr-1 text-slate-400" /> Edit Profile
                 </button>
@@ -99,7 +100,7 @@ const ProfileHeader = ({
               {canChangePhoto && (
                 <button 
                   onClick={onChangePhoto}
-                  className="btn btn-sm h-9 px-3.5 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium transition-colors shadow-sm"
+                  className="btn min-h-11 px-3.5 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-sm font-medium transition-colors shadow-sm"
                 >
                   <Camera className="w-3.5 h-3.5 mr-1" /> Change Photo
                 </button>
@@ -124,7 +125,7 @@ const ProfileHeader = ({
                 style={{ width: `${completion}%` }}
               />
             </div>
-            <span className="text-xs text-slate-400 mt-2 block">PDS core fields verified</span>
+            <span className="text-xs text-slate-400 mt-2 block">Profile fields completed</span>
           </div>
         </div>
 

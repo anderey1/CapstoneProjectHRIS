@@ -10,7 +10,7 @@ import Pagination from '../../components/common/Pagination';
 
 export default function AttendanceManagement() {
   const { user } = useAuth();
-  const canImport = ['HR', 'ADMINISTRATIVE'].includes(user?.role);
+  const canImport = user?.is_superuser || user?.role === 'HR';
   const [params] = useSearchParams();
   const active = canImport && ['import', 'mappings'].includes(params.get('view')) ? params.get('view') : 'records';
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,21 +21,28 @@ export default function AttendanceManagement() {
     search: searchTerm, department: deptFilter, year, month,
   });
   const tabs = [{ id: 'records', label: 'Attendance records', icon: FileText }, ...(canImport ? [{ id: 'import', label: 'Import file', icon: Upload }, { id: 'mappings', label: 'Employee ID mappings', icon: Users }] : [])];
-  return <div className="p-4 md:p-8 max-w-[1440px] mx-auto space-y-6">
-    <header className="flex flex-wrap justify-between items-start gap-4">
-      <div><p className="text-xs font-semibold text-slate-500 tracking-wide mb-2">PERSONNEL ADMINISTRATION / CSC FORM 48</p><h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Attendance management</h1><p className="text-sm text-slate-600 mt-2">Import school time logs, review attendance, and prepare monthly DTRs.</p></div>
-      <Link to="/staff-dtr" className="btn btn-outline btn-sm border-slate-300 text-slate-700"><FileText size={16} /> Review staff DTRs <ArrowUpRight size={14} /></Link>
-    </header>
-    <nav aria-label="Attendance workspace" className="flex flex-wrap border-b border-slate-300 gap-x-6">
-      {tabs.map(({ id, label, icon: Icon }) => <Link key={id} to={id === 'records' ? '/attendance-management' : `?view=${id}`} aria-current={active === id ? 'page' : undefined} className={`flex shrink-0 items-center gap-2 pb-3 pt-2 text-sm font-medium border-b-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${active === id ? 'border-[#0038a8] text-[#0038a8]' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'}`}><Icon size={16} />{label}</Link>)}
-    </nav>
-    <div hidden={active !== 'records'} className="space-y-4">
-      <div className="flex flex-wrap gap-x-8 gap-y-3 py-1" aria-label="Attendance totals for selected filters">
-        {[['Daily records', pagination.count], ['Present on time', summary.present || 0], ['Late arrivals', summary.late || 0], ['Pending review', summary.pending || 0]].map(([label, count]) => <div key={label} className="flex items-baseline gap-2"><span className="font-semibold text-xl tabular-nums text-slate-900">{count}</span><span className="text-sm text-slate-600">{label}</span></div>)}
+  return <div className="p-4 md:p-8 space-y-6 [&_:is(button,a,input,select):focus-visible]:outline-2 [&_:is(button,a,input,select):focus-visible]:outline-offset-2 [&_:is(button,a,input,select):focus-visible]:outline-primary">
+    <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-primary"><FileText size={20} aria-hidden="true" /></div>
+        <div><h1 className="text-2xl font-bold tracking-tight text-slate-900">Attendance management</h1><p className="mt-1 text-xs leading-relaxed text-slate-600">CSC Form 48 · Personnel time logs and monthly DTR review</p></div>
       </div>
-      {isError ? <div role="alert" className="p-4 bg-red-50 text-red-800 border border-red-200 rounded">Could not load attendance. <button className="underline" onClick={() => refetch()}>Try again</button></div> : <AttendanceLogs records={records} isLoading={isLoading} searchTerm={searchTerm} setSearchTerm={setSearchTerm} deptFilter={deptFilter} setDeptFilter={setDeptFilter} selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} departments={summary.departments || []} />}
-      <Pagination pagination={pagination} label="attendance records" />
+      <Link to="/staff-dtr" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded border border-secondary bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-sm hover:bg-secondary"><FileText size={16} aria-hidden="true" /> Review staff DTRs <ArrowUpRight size={14} aria-hidden="true" /></Link>
+    </header>
+    <div hidden={active !== 'records'}>
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Attendance totals for selected filters">
+        {[['Daily records', pagination.count, 'text-slate-900', 'Matching personnel time logs'], ['Present on time', summary.present || 0, 'text-emerald-700', 'On-time attendance records'], ['Late arrivals', summary.late || 0, 'text-amber-800', 'Records marked late'], ['Pending review', summary.pending || 0, 'text-primary', 'Awaiting DTR approval']].map(([label, count, color, description]) => <div key={label} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><dt className="text-xs font-bold uppercase tracking-wider text-slate-600">{label}</dt><dd className={`mt-1 font-mono text-xl font-bold tabular-nums ${color}`}>{isLoading || isError ? '—' : count}</dd><dd className="mt-0.5 text-xs text-slate-500">{description}</dd></div>)}
+      </dl>
     </div>
-    {canImport && <div hidden={active === 'records'}><AttendanceImport mode={active === 'mappings' ? 'mappings' : 'import'} /></div>}
+    <section className="min-w-0 overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm" aria-label="Attendance workspace">
+      <nav aria-label="Attendance workspace" className="flex overflow-x-auto border-b border-slate-200 px-3 sm:px-5">
+        {tabs.map(({ id, label, icon: Icon }) => <Link key={id} to={id === 'records' ? '/attendance-management' : `?view=${id}`} aria-current={active === id ? 'page' : undefined} className={`inline-flex min-h-14 shrink-0 items-center justify-center gap-2 border-b-2 px-3 py-3 text-xs font-semibold sm:px-4 ${active === id ? 'border-primary text-primary' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'}`}><Icon size={16} aria-hidden="true" />{label}</Link>)}
+      </nav>
+      <div hidden={active !== 'records'}>
+        {isError ? <div role="alert" className="m-4 rounded border border-red-200 bg-red-50 p-4 text-sm text-red-800">Could not load attendance. <button className="underline" onClick={() => refetch()}>Try again</button></div> : <AttendanceLogs records={records} isLoading={isLoading} searchTerm={searchTerm} setSearchTerm={setSearchTerm} deptFilter={deptFilter} setDeptFilter={setDeptFilter} selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} departments={summary.departments || []} totalCount={pagination.count} />}
+        <Pagination pagination={pagination} label="attendance records" />
+      </div>
+      {canImport && <div hidden={active === 'records'} className="p-4 sm:p-5"><AttendanceImport mode={active === 'mappings' ? 'mappings' : 'import'} /></div>}
+    </section>
   </div>;
 }

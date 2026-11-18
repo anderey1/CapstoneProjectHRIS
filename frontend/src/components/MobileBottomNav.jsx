@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, CalendarCheck, Clock, UserCircle, Menu } from 'lucide-react';
 
-const MobileBottomNav = ({ toggleDrawer }) => {
+const MobileBottomNav = ({ toggleDrawer, isDrawerOpen = false }) => {
   const navItems = [
     { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
     { to: '/attendance', icon: <CalendarCheck className="w-5 h-5" />, label: 'Attendance' },
@@ -47,6 +47,7 @@ const MobileBottomNav = ({ toggleDrawer }) => {
           onClick={toggleDrawer}
           type="button"
           aria-label="Open sidebar menu"
+          aria-expanded={isDrawerOpen}
           className="flex flex-col items-center justify-center py-1 px-2 flex-1 text-slate-500 hover:text-slate-800 transition-colors min-h-[44px]"
         >
           <Menu className="w-5 h-5" />

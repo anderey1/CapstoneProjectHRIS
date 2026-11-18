@@ -15,15 +15,15 @@ class PerformanceReviewViewSet(PaginatedListMixin, viewsets.ModelViewSet):
             if self.action == 'create':
                 permission_classes = [IsAuthenticated]
             else:
-                from ..permissions import IsHR, IsSuperintendentOrAdmin
-                permission_classes = [IsAuthenticated, (IsHR | IsSuperintendentOrAdmin)]
+                from ..permissions import IsHROrSuperintendent
+                permission_classes = [IsAuthenticated, IsHROrSuperintendent]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]:
+        if user.is_superuser or user.role in [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT]:
             return PerformanceReview.objects.select_related('employee', 'employee__user').order_by('-date_evaluated', '-pk')
         return PerformanceReview.objects.select_related('employee', 'employee__user').filter(employee__user=user).order_by('-date_evaluated', '-pk')
 
@@ -32,7 +32,7 @@ class PerformanceReviewViewSet(PaginatedListMixin, viewsets.ModelViewSet):
         employee = serializer.validated_data.get('employee')
         
         # Security: Employees can only create records for themselves
-        if not (user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]):
+        if not (user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT]):
             from ..models import Employee
             try:
                 user_employee = Employee.objects.get(user=user)

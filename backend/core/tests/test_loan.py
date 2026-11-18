@@ -146,7 +146,7 @@ def test_superintendent_and_admin_can_approve_loan(client, teacher_employee):
     """Both Superintendent and Admin can approve loans (both verified and pending)."""
     User = get_user_model()
     superintendent = User.objects.create_user(username="supt", password="pwd", role=Role.SUPERINTENDENT)
-    admin_user = User.objects.create_user(username="admin_staff", password="pwd", role=Role.ADMINISTRATIVE)
+    admin_user = User.objects.create_superuser(username="system_admin", password="pwd")
 
     # Loan 1: Verified loan approved by Superintendent
     loan1 = ProvidentLoan.objects.create(

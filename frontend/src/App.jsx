@@ -33,7 +33,7 @@ import { ROLE_GROUPS } from './utils/rbac';
 
 // Role Groups (canonical from rbac.js)
 const MANAGEMENT_ROLES = ROLE_GROUPS.MANAGEMENT;
-const HR_SUPERINTENDENT_ADMIN = ROLE_GROUPS.OPERATIONS;
+const OPERATIONS_ROLES = ROLE_GROUPS.OPERATIONS;
 const DIRECTORY_ROLES = [...MANAGEMENT_ROLES, 'PRINCIPAL'];
 
 /**
@@ -47,6 +47,7 @@ function App() {
   const role = user?.role;
   const renderDashboard = () => {
     if (!user) return <EmployeeDashboard />;
+    if (user.is_superuser) return <AdminDashboard />;
     if (role === 'ACCOUNTANT') return <AccountantDashboardPage />;
     if (role === 'SUPERINTENDENT') return <SuperintendentDashboardPage />;
     if (MANAGEMENT_ROLES.includes(role)) return <AdminDashboard />;
@@ -85,14 +86,14 @@ function App() {
             <Route path="schools" element={<Schools />} />
           </Route>
 
-          {/* Management Tier (HR, Accountant, Superintendent, Admin) */}
+          {/* Management Tier (HR, Accountant, Superintendent, Superuser) */}
           <Route element={<ProtectedRoute roles={MANAGEMENT_ROLES} />}>
             <Route path="loan-management" element={<LoanManagement />} />
             <Route path="payroll-management" element={<Payroll />} />
           </Route>
 
-          {/* HR, Superintendent & Admin Operations Tier */}
-          <Route element={<ProtectedRoute roles={HR_SUPERINTENDENT_ADMIN} />}>
+          {/* HR, Superintendent & Superuser Operations Tier */}
+          <Route element={<ProtectedRoute roles={OPERATIONS_ROLES} />}>
             <Route path="leave-management" element={<LeaveManagement />} />
             <Route path="attendance-management" element={<AttendanceManagement />} />
             <Route path="staff-dtr" element={<StaffDTRManagement />} />

@@ -8,7 +8,7 @@ export const TABS = [
   { id: 'education', label: 'Educational Background', icon: GraduationCap },
   { id: 'eligibility', label: 'Eligibility', icon: Award },
   { id: 'work', label: 'Work Experience', icon: History },
-  { id: 'ids', label: 'Verified IDs', icon: Fingerprint },
+  { id: 'ids', label: 'Government IDs', icon: Fingerprint },
   { id: 'documents', label: 'Required Documents', icon: FileText }
 ];
 

@@ -41,7 +41,7 @@ def operational_dashboard(user):
 
     finance_only = management and user.role == Role.ACCOUNTANT
     if management and not finance_only:
-        add('workforce', 'Workforce composition', breakdown(employees, 'user__role', Role.choices),
+        add('workforce', 'Workforce composition', breakdown(employees, 'user__role', [('', 'System Administrator'), *Role.choices]),
             'personnel', 'Open personnel directory', '/employees',
             'Includes every recorded staff role. Headcount alone does not establish staffing adequacy.', 'Current personnel records')
         add('stations', 'Personnel by station', breakdown(employees, 'school__name'),

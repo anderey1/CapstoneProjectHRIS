@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from django.db.models import Exists, OuterRef, Q
 from ...models import Employee, Role, AuditLog
 from ...serializers import EmployeeSerializer
-from ...permissions import IsAdminOrHRorSuperintendent
+from ...permissions import IsHROrSuperintendent
 from ..listing import PaginatedListMixin
 
 from .accounts import EmployeeAccountActions
@@ -29,7 +29,7 @@ class EmployeeViewSet(
             return [AllowAny()]
         if self.action in ['list', 'retrieve', 'me', 'change_password']:
             return [IsAuthenticated()]
-        return [IsAdminOrHRorSuperintendent()]
+        return [IsHROrSuperintendent()]
 
     def get_queryset(self):
         user = self.request.user
@@ -110,7 +110,7 @@ class EmployeeViewSet(
                 )
             else:
                 # GET fallback for system users (Admin)
-                is_admin = user.is_superuser or user.role in [Role.ADMINISTRATIVE]
+                is_admin = user.is_superuser
                 return Response({
                     "id": None,
                     "first_name": user.first_name or user.username,
@@ -122,6 +122,7 @@ class EmployeeViewSet(
                         "username": user.username,
                         "email": user.email,
                         "role": user.role,
+                        "is_superuser": user.is_superuser,
                         "first_name": user.first_name,
                         "last_name": user.last_name
                     },

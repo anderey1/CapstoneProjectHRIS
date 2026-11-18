@@ -43,7 +43,7 @@ def test_anonymous_denied(client, mock_school, method):
     assert getattr(client, method)(url, VALUES).status_code == 401
 
 
-@pytest.mark.parametrize('role', [Role.ADMINISTRATIVE, Role.TEACHING])
+@pytest.mark.parametrize('role', [Role.NON_TEACHING, Role.TEACHING])
 def test_superuser_crud_and_audit(client, admin_user, role):
     admin_user.role = role
     admin_user.save()
@@ -108,6 +108,7 @@ def test_token_superuser_flag_and_live_permission(client, admin_user, mock_schoo
     token = response.data['access']
     assert AccessToken(token)['is_superuser'] is True
     admin_user.is_superuser = False
+    admin_user.role = Role.HR
     admin_user.save()
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
     assert client.patch(f'/api/schools/{mock_school.pk}/', {'name': 'Denied'}).status_code == 403

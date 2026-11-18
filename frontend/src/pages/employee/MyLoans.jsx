@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLoans, ApplyLoanModal, SubsidiaryLedger } from '../../features/loans';
 import Pagination from '../../components/common/Pagination';
+import AccessibleDialog from '../../components/common/AccessibleDialog';
 
 const PURPOSE_LABELS = {
   general: 'General Purpose',
@@ -247,7 +248,7 @@ const MyLoans = () => {
                       {/* Purpose */}
                       <td className="py-3 px-3">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${purposeClass}`}
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold border ${purposeClass}`}
                         >
                           {PURPOSE_LABELS[loan.purpose] || loan.purpose}
                         </span>
@@ -278,7 +279,7 @@ const MyLoans = () => {
                       {/* Status */}
                       <td className="py-3 px-3 text-center">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${statusClass}`}
+                          className={`inline-flex items-center px-2 py-1 rounded text-sm font-medium border ${statusClass}`}
                         >
                           {statusLabel}
                         </span>
@@ -328,16 +329,15 @@ const MyLoans = () => {
 
       {/* Official Subsidiary Ledger Inspection Modal */}
       {inspectingLoan && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+        <AccessibleDialog
+          onClose={() => setInspectingLoan(null)}
+          labelledBy="personal-loan-ledger-title"
+          className="bg-white rounded-lg border border-slate-300 w-full max-w-4xl overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col"
         >
-          <div className="bg-white rounded-lg border border-slate-300 shadow-xl w-full max-w-4xl overflow-hidden my-8">
             {/* Modal Header */}
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-start justify-between">
+            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex shrink-0 items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 id="personal-loan-ledger-title" className="text-base font-bold text-slate-900">
                   Provident Fund Subsidiary Ledger Docket
                 </h2>
                 <span className="text-xs font-mono tabular-nums text-[#0038A8] block mt-0.5">
@@ -347,14 +347,15 @@ const MyLoans = () => {
               <button
                 type="button"
                 onClick={() => setInspectingLoan(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-md transition-colors"
+                aria-label="Close loan ledger"
+                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 rounded-md transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+            <div className="p-6 space-y-6 min-h-0 overflow-y-auto">
               {/* Metadata Card */}
               <div className="bg-slate-50 border border-slate-200 rounded-md p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
@@ -386,7 +387,7 @@ const MyLoans = () => {
                     Approval Standing
                   </span>
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border mt-0.5 ${
+                    className={`inline-flex items-center px-2 py-1 rounded text-sm font-medium border mt-0.5 ${
                       STATUS_BADGES[inspectingLoan.status] || 'bg-slate-100 text-slate-700 border-slate-200'
                     }`}
                   >
@@ -412,7 +413,7 @@ const MyLoans = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-end gap-2">
+            <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex shrink-0 items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setInspectingLoan(null)}
@@ -421,8 +422,7 @@ const MyLoans = () => {
                 Close Docket
               </button>
             </div>
-          </div>
-        </div>
+        </AccessibleDialog>
       )}
 
       {/* Apply Loan Modal */}

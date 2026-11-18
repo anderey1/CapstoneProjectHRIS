@@ -11,7 +11,7 @@ class LoanApplicationActions:
         user = self.request.user
         employee_id = self.request.data.get('employee')
         # 1. Target Employee Identification
-        if user.role in [Role.ADMINISTRATIVE, Role.HR] and employee_id:
+        if (user.is_superuser or user.role == Role.HR) and employee_id:
             employee = get_object_or_404(Employee, id=employee_id)
         else:
             employee = Employee.objects.filter(user=user).first()

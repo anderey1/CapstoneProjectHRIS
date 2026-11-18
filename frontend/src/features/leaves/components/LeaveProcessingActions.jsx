@@ -48,7 +48,7 @@ export default function LeaveProcessingActions({ leave, onApprove, onReject, onR
       {needsSignature && (
         <div className="space-y-3">
           <label className="block font-medium" htmlFor={`${inputId}-signature`}>Principal signature image (PNG or JPEG, up to 2 MB)</label>
-          <input id={`${inputId}-signature`} type="file" accept="image/png,image/jpeg" className="file-input file-input-bordered file-input-sm w-full" onChange={event => {
+          <input id={`${inputId}-signature`} type="file" accept="image/png,image/jpeg" className="block min-h-11 w-full min-w-0 rounded border border-slate-300 bg-white text-xs text-slate-700 file:mr-3 file:min-h-11 file:border-0 file:border-r file:border-slate-300 file:bg-slate-100 file:px-3 file:font-semibold file:text-slate-700 hover:file:bg-slate-200" onChange={event => {
             const file = event.target.files?.[0];
             setSignature(null);
             setPreview('');
@@ -63,20 +63,20 @@ export default function LeaveProcessingActions({ leave, onApprove, onReject, onR
           }} />
           {preview && <img src={preview} alt="Your signature preview" className="max-h-24 max-w-full rounded border border-slate-200 bg-white p-2 object-contain" />}
           <label className="flex items-start gap-2">
-            <input type="checkbox" className="checkbox checkbox-sm" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />
+            <input type="checkbox" className="mt-0.5 size-5 shrink-0 cursor-pointer accent-primary" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />
             <span>This is my signature. I approve this leave application and authorize attaching it to this record.</span>
           </label>
         </div>
       )}
       <div>
         <label className="mb-1 block font-medium" htmlFor={`${inputId}-reason`}>Reason (required for correction or disapproval)</label>
-        <textarea id={`${inputId}-reason`} className="textarea textarea-bordered w-full text-sm" rows={2} value={reason} onChange={event => setReason(event.target.value)} />
+        <textarea id={`${inputId}-reason`} className="block min-h-24 w-full resize-y rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" rows={2} value={reason} onChange={event => setReason(event.target.value)} />
       </div>
       {error && <p role="alert" className="text-red-800">{error}</p>}
       <div className="flex flex-wrap justify-end gap-2">
-        {leave.workflow === 'teaching' && <button type="button" className="btn btn-sm btn-outline" disabled={pending} onClick={() => submit('return')}>Return for correction</button>}
-        <button type="button" className="btn btn-sm btn-outline btn-error" disabled={pending} onClick={() => submit('reject')}>Disapprove</button>
-        <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => submit('approve')}>{pending ? 'Processing...' : leaveActionLabel(leave)}</button>
+        {leave.workflow === 'teaching' && <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50" disabled={pending} onClick={() => submit('return')}>Return for correction</button>}
+        <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50" disabled={pending} onClick={() => submit('reject')}>Disapprove</button>
+        <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-secondary bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50" disabled={pending} onClick={() => submit('approve')}>{pending ? 'Processing...' : leaveActionLabel(leave)}</button>
       </div>
     </section>
   );

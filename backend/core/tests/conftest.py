@@ -48,7 +48,7 @@ def admin_user(db):
         username="admin",
         password="password123",
         email="admin@example.com",
-        role=Role.ADMINISTRATIVE
+        role=''
     )
 
 @pytest.fixture

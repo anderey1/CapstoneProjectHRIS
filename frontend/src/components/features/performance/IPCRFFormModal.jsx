@@ -15,7 +15,7 @@ import { computeRPMSScore, getAdjectivalRating } from '../../../utils/performanc
 const IPCRFFormModal = ({ onClose, review }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
+  const isAdmin = user?.is_superuser || ['HR', 'SUPERINTENDENT'].includes(user?.role);
 
   const { data: employees, isLoading: loadingEmployees } = useQuery({
     queryKey: [QUERY_KEYS.EMPLOYEES, 'all'],

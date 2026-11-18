@@ -82,7 +82,7 @@ const AuditLogs = () => {
             </div>
           </div>
           <p className="text-xs text-slate-600">
-            Immutable Audit Trail • Republic Act No. 10173 (Data Privacy Act of 2012) Compliance
+            Recorded account activity
           </p>
         </div>
 
@@ -140,7 +140,7 @@ const AuditLogs = () => {
             </span>
             <span className="text-xs text-slate-500">actions</span>
           </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Tracked mutation actions</span>
+          <span className="text-xs text-slate-500 block mt-0.5">Recorded changes</span>
         </div>
       </div>
 
@@ -205,7 +205,7 @@ const AuditLogs = () => {
             <thead>
               <tr className="bg-slate-100 text-slate-700 border-b border-slate-300 text-xs uppercase tracking-wider">
                 <th className="py-3 px-4 font-bold">Timestamp</th>
-                <th className="py-3 px-4 font-bold">Actor Personnel</th>
+                <th className="py-3 px-4 font-bold">Changed by</th>
                 <th className="py-3 px-3 font-bold">Target Module</th>
                 <th className="py-3 px-4 font-bold">Action Performed</th>
                 <th className="py-3 px-4 font-bold text-right">Audit Reference</th>

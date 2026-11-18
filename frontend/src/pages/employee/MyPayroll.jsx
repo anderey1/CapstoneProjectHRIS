@@ -3,6 +3,7 @@ import { usePaginatedList } from '../../hooks/usePaginatedList';
 import Pagination from '../../components/common/Pagination';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
+import { formatCurrency, payrollStatusLabel } from '../../features/payroll/utils/payrollDisplay';
 import {
   Wallet,
   Download,
@@ -20,14 +21,18 @@ const MyPayroll = () => {
   const [selectedPayroll, setSelectedPayroll] = useState(null);
 
   // 1. Data Fetching
-  const { records: payrolls, pagination, isLoading } = usePaginatedList(QUERY_KEYS.PAYROLL, 'payroll/');
+  const { records: payrolls, pagination, isLoading, isError, isFetching, refetch } = usePaginatedList(QUERY_KEYS.PAYROLL, 'payroll/');
 
   // Default selection to latest released payroll
   const activePayroll = useMemo(() => {
-    if (selectedPayroll) return selectedPayroll;
+    if (isError || isFetching) return null;
+    if (selectedPayroll) {
+      const selected = payrolls.find(p => p.id === selectedPayroll.id);
+      if (selected) return selected;
+    }
     if (payrolls && payrolls.length > 0) return payrolls[0];
     return null;
-  }, [selectedPayroll, payrolls]);
+  }, [selectedPayroll, payrolls, isError, isFetching]);
 
   const handlePrint = () => {
     window.print();
@@ -49,6 +54,7 @@ const MyPayroll = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch {
       alert('Unable to download payslip PDF. Please verify your connection and try again.');
     }
@@ -94,7 +100,12 @@ const MyPayroll = () => {
       </div>
 
       <Pagination pagination={pagination} label="payslips" />
-      {payrolls.length > 0 ? (
+      {isError ? (
+        <div role="alert" className="border border-red-200 bg-red-50 rounded-lg p-4 text-sm text-red-800">
+          <p>Could not load payslips. No amounts are available.</p>
+          <button type="button" className="btn min-h-11 mt-3" onClick={() => refetch()}>Retry payslips</button>
+        </div>
+      ) : payrolls.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT: Semi-Monthly Payslip Ledger Table (7 cols) */}
           <div className="lg:col-span-7 bg-white border border-slate-300 rounded-lg overflow-hidden shadow-xs">
@@ -122,9 +133,9 @@ const MyPayroll = () => {
                 <tbody className="divide-y divide-slate-200">
                   {payrolls.map((p) => {
                     const isSelected = activePayroll?.id === p.id;
-                    const gross = Number(p.gross_salary || p.basic_salary || 0);
-                    const deductions = Number(p.total_deductions || 0);
-                    const net = Number(p.net_salary || gross - deductions);
+                    const gross = p.gross_salary;
+                    const deductions = p.total_deductions;
+                    const net = p.net_salary;
 
                     return (
                       <tr
@@ -137,17 +148,17 @@ const MyPayroll = () => {
                           {p.cutoff_period}
                         </td>
                         <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-800">
-                          ₱{gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {formatCurrency(gross)}
                         </td>
                         <td className="py-3 px-3 text-right font-mono tabular-nums text-red-700">
-                          -₱{deductions.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {formatCurrency(deductions)}
                         </td>
                         <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-[#0038A8]">
-                          ₱{net.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {formatCurrency(net)}
                         </td>
                         <td className="py-3 px-3 text-center">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            className={`inline-flex items-center px-2 py-1 rounded text-sm font-semibold ${
                               p.status === 'released'
                                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                 : p.status === 'approved'
@@ -155,13 +166,15 @@ const MyPayroll = () => {
                                 : 'bg-amber-50 text-amber-800 border border-amber-200'
                             }`}
                           >
-                            {p.status === 'released' ? 'Disbursed' : p.status}
+                            {payrollStatusLabel(p.status)}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => setSelectedPayroll(p)}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
+                            disabled={isFetching}
+                            aria-pressed={isSelected}
+                            className={`inline-flex min-h-11 items-center gap-1 px-3 py-2 text-sm font-semibold rounded transition-colors ${
                               isSelected
                                 ? 'bg-[#0038A8] text-white'
                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -179,7 +192,7 @@ const MyPayroll = () => {
             </div>
 
             <div className="bg-slate-50 border-t border-slate-300 px-4 py-2 text-xs text-slate-500 flex justify-between">
-              <span>Select any cutoff cycle to preview the itemized payslip breakdown.</span>
+              <span>Select a pay period to view your payslip.</span>
               <span className="font-mono">DepEd Lucena Division</span>
             </div>
           </div>
@@ -205,15 +218,17 @@ const MyPayroll = () => {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => handleDownloadPDF(activePayroll)}
-                      title="Download signed PDF payslip"
-                      className="p-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded transition-colors"
+                      aria-label="Download PDF payslip"
+                      title="Download PDF payslip"
+                      className="min-h-11 min-w-11 flex items-center justify-center bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded transition-colors"
                     >
                       <Download className="w-4 h-4 text-[#0038A8]" />
                     </button>
                     <button
                       onClick={handlePrint}
                       title="Print payslip"
-                      className="p-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded transition-colors"
+                      aria-label="Print payslip"
+                      className="min-h-11 min-w-11 flex items-center justify-center bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded transition-colors"
                     >
                       <Printer className="w-4 h-4 text-slate-700" />
                     </button>
@@ -227,10 +242,10 @@ const MyPayroll = () => {
                       Employee Personnel
                     </span>
                     <strong className="text-slate-900 block mt-0.5">
-                      {activePayroll.employee_name || 'Plantilla Employee'}
+                      {activePayroll.employee_name || 'Name not available'}
                     </strong>
                     <span className="text-slate-500 text-xs block">
-                      Position: {activePayroll.position || 'Plantilla Staff'}
+                      Position: {activePayroll.position || 'Not available'}
                     </span>
                   </div>
                   <div>
@@ -238,7 +253,7 @@ const MyPayroll = () => {
                       Station / Division
                     </span>
                     <span className="text-slate-800 text-xs block mt-0.5 font-medium">
-                      {activePayroll.department || 'SDO Lucena City'}
+                      {activePayroll.department || 'Not available'}
                     </span>
                     <span className="text-xs text-slate-500 block font-mono">
                       Ref: #PAY-{activePayroll.id?.toString().padStart(6, '0')}
@@ -256,31 +271,23 @@ const MyPayroll = () => {
                     </div>
 
                     <div className="flex justify-between text-slate-700 py-0.5">
-                      <span>Basic Salary (Attendance Computed)</span>
+                      <span>Basic salary</span>
                       <span className="font-mono tabular-nums">
-                        {Number(activePayroll.basic_salary || 0).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(activePayroll.basic_salary)}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-slate-700 py-0.5">
-                      <span>PERA Allowance (₱1,000 / semi-monthly)</span>
+                      <span>PERA allowance</span>
                       <span className="font-mono tabular-nums">
-                        {Number(activePayroll.pera || 1000).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(activePayroll.pera)}
                       </span>
                     </div>
 
                     <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-100">
                       <span>Total Gross Compensation</span>
                       <span className="font-mono tabular-nums">
-                        ₱
-                        {Number(
-                          activePayroll.gross_salary ||
-                            Number(activePayroll.basic_salary) + Number(activePayroll.pera || 1000)
-                        ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {formatCurrency(activePayroll.gross_salary)}
                       </span>
                     </div>
                   </div>
@@ -293,58 +300,44 @@ const MyPayroll = () => {
                     </div>
 
                     <div className="flex justify-between text-slate-700 py-0.5">
-                      <span>GSIS Life &amp; Retirement (9%)</span>
+                      <span>GSIS life &amp; retirement</span>
                       <span className="font-mono tabular-nums text-red-700">
-                        {Number(activePayroll.gsis || activePayroll.sss || 0).toLocaleString(
-                          undefined,
-                          { minimumFractionDigits: 2 }
-                        )}
+                        {formatCurrency(activePayroll.gsis)}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-slate-700 py-0.5">
                       <span>PhilHealth Contribution</span>
                       <span className="font-mono tabular-nums text-red-700">
-                        {Number(activePayroll.philhealth || 0).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(activePayroll.philhealth)}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-slate-700 py-0.5">
                       <span>Pag-IBIG Contribution</span>
                       <span className="font-mono tabular-nums text-red-700">
-                        {Number(activePayroll.pagibig || 100).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(activePayroll.pagibig)}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-slate-700 py-0.5">
                       <span>Withholding Tax (TRAIN Law)</span>
                       <span className="font-mono tabular-nums text-red-700">
-                        {Number(activePayroll.tax || 0).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(activePayroll.tax)}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-slate-700 py-0.5">
                       <span>Provident Loan Deductions</span>
                       <span className="font-mono tabular-nums text-red-700">
-                        {Number(activePayroll.loans || 0).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(activePayroll.loans)}
                       </span>
                     </div>
 
                     <div className="flex justify-between font-bold text-red-700 pt-1 border-t border-slate-100">
                       <span>Total Deductions</span>
                       <span className="font-mono tabular-nums">
-                        -₱
-                        {Number(activePayroll.total_deductions || 0).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(activePayroll.total_deductions)}
                       </span>
                     </div>
                   </div>
@@ -355,13 +348,7 @@ const MyPayroll = () => {
                       Net Take-Home Pay
                     </span>
                     <span className="text-2xl font-bold font-mono tabular-nums text-[#0038A8] block">
-                      ₱
-                      {Number(activePayroll.net_salary || 0).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
-                    </span>
-                    <span className="text-xs text-slate-500 block">
-                      Disbursed to official LandBank payroll account
+                      {formatCurrency(activePayroll.net_salary)}
                     </span>
                   </div>
                 </div>

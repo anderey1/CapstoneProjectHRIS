@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from ...models import Employee, Role, AuditLog, EmployeeDocument
 from ...serializers import EmployeeDocumentSerializer
-from ...permissions import IsAdminOrHRorSuperintendent
+from ...permissions import IsHROrSuperintendent
 from rest_framework.pagination import PageNumberPagination
 
 
@@ -30,7 +30,7 @@ class EmployeeDocumentViewSet(viewsets.ModelViewSet):
         qs = EmployeeDocument.objects.all().select_related('employee', 'verified_by').order_by('-uploaded_at', '-pk')
 
         emp_id = self.request.query_params.get('employee')
-        is_management = user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
+        is_management = user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT]
         if is_management:
             if emp_id:
                 return qs.filter(employee_id=emp_id)
@@ -62,7 +62,7 @@ class EmployeeDocumentViewSet(viewsets.ModelViewSet):
         emp_id = self.request.data.get('employee')
         if user.role == Role.PRINCIPAL and emp_id and str(emp_id) != str(getattr(getattr(user, 'employee_profile', None), 'pk', None)):
             raise PermissionDenied('Principals can only view teacher records.')
-        if emp_id and (user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]):
+        if emp_id and (user.is_superuser or user.role in [Role.HR, Role.SUPERINTENDENT]):
             employee = get_object_or_404(Employee, id=emp_id)
         elif hasattr(user, 'employee_profile'):
             employee = user.employee_profile
@@ -99,7 +99,7 @@ class EmployeeDocumentViewSet(viewsets.ModelViewSet):
         self._check_principal_write(instance)
         instance.delete()
 
-    @action(detail=True, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
+    @action(detail=True, methods=['POST'], permission_classes=[IsHROrSuperintendent])
     def verify(self, request, pk=None):
         doc = self.get_object()
         verified = request.data.get('verified', True)

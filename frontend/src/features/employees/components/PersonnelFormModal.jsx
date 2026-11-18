@@ -9,6 +9,7 @@ import { ROLES } from '../../../utils/constants';
 import PersonalFields from './PersonalFields';
 import EmploymentFields from './EmploymentFields';
 import PDSUploadForm from '../../../components/common/PDSUploadModal';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 import { FamilyFields, EducationFields, EligibilityFields, WorkHistoryFields } from './PDSDetailFields';
 
 const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, initialData }) => {
@@ -234,13 +235,16 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
   if (!isOpen) return null;
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box rounded-lg p-0 overflow-hidden border border-slate-200 max-w-2xl shadow-lg bg-white flex flex-col max-h-[90vh]">
+    <AccessibleDialog
+      onClose={() => { if (!isPending) onClose(); }}
+      labelledBy="personnel-form-title"
+      className="w-full rounded-lg p-0 overflow-hidden border border-slate-200 max-w-2xl shadow-lg bg-white flex flex-col max-h-[90vh]"
+    >
         
         {/* Page Header */}
-        <div className="bg-slate-50 border-b border-slate-200 p-5 flex items-center justify-between">
+        <div className="bg-slate-50 border-b border-slate-200 p-5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-bold text-lg text-slate-900">
+            <h3 id="personnel-form-title" className="font-bold text-lg text-slate-900">
               {isEdit ? 'Update Employee Record' : 'New Employee Record'}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -254,7 +258,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
               <button 
                 type="button"
                 onClick={() => setShowPDSImport(true)}
-                className="btn btn-outline btn-sm rounded-md text-xs font-semibold px-3"
+                className="btn btn-outline min-h-11 rounded-md text-sm font-semibold px-3"
               >
                 <FileText className="w-3.5 h-3.5 mr-1" />
                 Import PDS
@@ -262,8 +266,9 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
             )}
             <button 
               type="button"
-              className="btn btn-ghost btn-sm btn-circle text-slate-500 hover:text-slate-800" 
+              className="btn btn-ghost min-h-11 min-w-11 btn-circle text-slate-600 hover:text-slate-800"
               onClick={onClose}
+              disabled={isPending}
               aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
@@ -272,33 +277,35 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
         </div>
 
         {showPDSImport ? (
-          <div className="p-8 space-y-4 overflow-y-auto">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-semibold tracking-wide text-primary">PDS Auto-Fill</h4>
+          <div className="p-5 space-y-4 overflow-y-auto">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h4 className="text-sm font-semibold text-primary">PDS import</h4>
               <button 
+                type="button"
                 onClick={() => setShowPDSImport(false)}
-                className="text-xs font-semibold uppercase tracking-wide text-slate-600 hover:opacity-100"
+                className="btn btn-ghost min-h-11 rounded-md text-sm font-medium text-slate-700"
               >
-                Back to Manual Form
+                Back to manual form
               </button>
             </div>
             <PDSUploadForm onExtractionComplete={handlePDSExtraction} />
-            <div className="alert bg-info/5 border-info/10 text-xs font-bold text-info/70 rounded-lg py-2">
-              <AlertCircle className="w-3 h-3" />
+            <div className="flex items-start gap-2 text-sm text-slate-600">
+              <AlertCircle aria-hidden="true" className="w-4 h-4 shrink-0 mt-0.5" />
               <span>Extracted data will be pre-filled into the form fields.</span>
             </div>
           </div>
         ) : (
           <>
             {/* Professional Tabs */}
-            <div className="flex border-b border-base-100 px-8 bg-white overflow-x-auto no-scrollbar">
+            <div role="group" className="flex flex-wrap border-b border-slate-200 px-3 bg-white" aria-label="Employee form sections">
               <button
                 type="button"
                 onClick={() => setActiveTab('personal')}
-                className={`flex-shrink-0 flex items-center gap-2 px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all ${
+                aria-pressed={activeTab === 'personal'}
+                className={`min-h-11 flex cursor-pointer items-center gap-2 px-3 py-3 text-sm font-semibold border-b-2 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
                   activeTab === 'personal' 
                     ? 'border-primary text-primary' 
-                    : 'border-transparent opacity-40 hover:opacity-100'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 <User className="w-3.5 h-3.5" />
@@ -307,10 +314,11 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
               <button
                 type="button"
                 onClick={() => setActiveTab('employment')}
-                className={`flex-shrink-0 flex items-center gap-2 px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all ${
+                aria-pressed={activeTab === 'employment'}
+                className={`min-h-11 flex cursor-pointer items-center gap-2 px-3 py-3 text-sm font-semibold border-b-2 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
                   activeTab === 'employment' 
                     ? 'border-primary text-primary' 
-                    : 'border-transparent opacity-40 hover:opacity-100'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 <Briefcase className="w-3.5 h-3.5" />
@@ -319,28 +327,29 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
               <button
                 type="button"
                 onClick={() => setActiveTab('history')}
-                className={`flex-shrink-0 flex items-center gap-2 px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all ${
+                aria-pressed={activeTab === 'history'}
+                className={`min-h-11 flex cursor-pointer items-center gap-2 px-3 py-3 text-sm font-semibold border-b-2 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
                   activeTab === 'history' 
                     ? 'border-primary text-primary' 
-                    : 'border-transparent opacity-40 hover:opacity-100'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                3. PDS Sections
+                3. PDS sections
               </button>
             </div>
             
             <form onSubmit={handleSubmit(handleProcessSubmit)} className="flex flex-col flex-1 overflow-hidden">
-              <div className="p-8 overflow-y-auto flex-1 bg-white custom-scrollbar">
+              <div className="p-5 overflow-y-auto flex-1 bg-white custom-scrollbar">
                 
                 {backendError && (
-                  <div className="mb-6 bg-error/10 border border-error/20 p-4 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                  <div role="alert" className="mb-6 bg-red-50 border border-red-300 p-4 rounded-md flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-error shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-error mb-1">Save Failure</p>
-                      <p className="text-xs font-bold text-error/80 leading-relaxed uppercase">{backendError}</p>
+                      <p className="text-sm font-semibold text-red-800 mb-1">Could not save employee</p>
+                      <p className="text-sm text-red-800 leading-relaxed break-words">{backendError}</p>
                     </div>
-                    <button onClick={() => setBackendError(null)} className="btn btn-ghost btn-xs btn-circle text-error">×</button>
+                    <button type="button" aria-label="Dismiss save error" onClick={() => setBackendError(null)} className="btn btn-ghost min-h-11 min-w-11 btn-circle text-error">×</button>
                   </div>
                 )}
 
@@ -376,11 +385,12 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
               </div>
 
               {/* Clean Footer */}
-              <div className="p-6 bg-base-50/50 border-t border-base-100 flex items-center justify-end gap-3">
-                <button 
-                  type="button" 
-                  className="btn btn-ghost text-xs font-semibold uppercase tracking-wide text-slate-600" 
-                  onClick={onClose}
+              <div className="p-5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    className="btn btn-ghost min-h-11 rounded-md text-sm font-medium text-slate-700"
+                    onClick={onClose}
+                    disabled={isPending}
                 >
                   Cancel
                 </button>
@@ -388,37 +398,35 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
                 {activeTab === 'personal' ? (
                   <button 
                     type="button" 
-                    className="btn btn-primary rounded-lg text-xs font-semibold uppercase tracking-wide px-8 shadow-md shadow-primary/20"
+                    className="btn btn-primary min-h-11 rounded-md text-sm font-semibold px-5"
                     onClick={() => setActiveTab('employment')}
                   >
-                    Next Step
+                    Next step
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </button>
                 ) : activeTab === 'employment' ? (
                   <button 
                     type="button" 
-                    className="btn btn-primary rounded-lg text-xs font-semibold uppercase tracking-wide px-8 shadow-md shadow-primary/20"
+                    className="btn btn-primary min-h-11 rounded-md text-sm font-semibold px-5"
                     onClick={() => setActiveTab('history')}
                   >
-                    Next Step
+                    Next step
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </button>
                 ) : (
                   <button 
                     type="submit" 
-                    className={`btn btn-primary rounded-lg text-xs font-black uppercase tracking-widest px-10 shadow-md shadow-primary/20 ${isPending ? 'loading' : ''}`}
+                    className="btn btn-primary min-h-11 rounded-md text-sm font-semibold px-5"
                     disabled={isPending}
                   >
-                    {isPending ? 'Saving...' : (isEdit ? 'Update' : 'Save Staff')}
+                    {isPending ? 'Saving...' : (isEdit ? 'Update employee' : 'Save staff')}
                   </button>
                 )}
               </div>
             </form>
           </>
         )}
-      </div>
-      <div className="modal-backdrop bg-black/40" onClick={onClose}></div>
-    </div>
+    </AccessibleDialog>
   );
 };
 

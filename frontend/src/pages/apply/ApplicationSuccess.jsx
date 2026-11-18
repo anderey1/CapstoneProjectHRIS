@@ -14,7 +14,7 @@ const ApplicationSuccess = () => {
         <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-6">DepEd Lucena City Division</p>
         
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-medium text-slate-700 mb-8 leading-relaxed max-w-sm mx-auto">
-          Thank you for submitting your application. We have dispatched a confirmation receipt containing your evaluation summary to your registered email address.
+          Your application has been submitted.
         </div>
 
         <a 

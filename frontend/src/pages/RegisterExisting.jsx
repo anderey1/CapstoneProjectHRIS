@@ -200,7 +200,7 @@ const RegisterExisting = () => {
                 Activation Request Submitted
               </h1>
               <p className="text-xs text-slate-600 mt-1">
-                Your portal account request has been routed to the Division Personnel / HR Section for Plantilla verification.
+                HR will check your request against division plantilla records.
               </p>
             </div>
             <div className="p-4 bg-slate-50 border border-slate-200 rounded text-left text-xs text-slate-700 space-y-2">
@@ -215,7 +215,7 @@ const RegisterExisting = () => {
                 to="/login"
                 className="inline-flex items-center justify-center px-6 py-2.5 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86]"
               >
-                Return to Login Terminal
+                Back to sign in
               </Link>
             </div>
           </div>
@@ -380,7 +380,7 @@ const RegisterExisting = () => {
                 <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
                   <span className="w-5 h-5 rounded-full bg-[#0038A8] text-white text-xs font-bold flex items-center justify-center font-mono">2</span>
                   <h2 className="text-xs font-bold tracking-wide text-slate-800">
-                    Portal Security & Login Credentials
+                    Username and password
                   </h2>
                 </div>
 

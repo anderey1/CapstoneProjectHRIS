@@ -20,40 +20,40 @@ const COLOR_MAP = {
     wrapper: 'bg-primary/5 border-primary/20 hover:bg-primary/10',
     iconBox: 'text-primary border-primary/10',
     label: 'text-primary',
-    btn: 'btn-primary',
+    btn: 'border-primary bg-primary text-white hover:bg-secondary',
   },
   secondary: {
     wrapper: 'bg-secondary/5 border-secondary/20 hover:bg-secondary/10',
     iconBox: 'text-secondary border-secondary/10',
     label: 'text-secondary',
-    btn: 'btn-secondary',
+    btn: 'border-secondary bg-secondary text-white hover:bg-primary',
   },
   accent: {
     wrapper: 'bg-accent/5 border-accent/20 hover:bg-accent/10',
-    iconBox: 'text-accent border-accent/10',
-    label: 'text-accent',
-    btn: 'btn-accent',
+    iconBox: 'text-amber-800 border-amber-200',
+    label: 'text-amber-900',
+    btn: 'border-amber-300 bg-accent text-slate-900 hover:bg-amber-300',
   },
 };
 
 export const DocumentAttachmentCard = ({ title, subtitle, fileUrl, color = 'primary' }) => {
   const style = COLOR_MAP[color] || COLOR_MAP.primary;
   return (
-    <div className={`group relative p-4 border rounded-xl flex items-center justify-between transition-all ${style.wrapper}`}>
-      <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm border ${style.iconBox}`}>
-          <FileText className="w-5 h-5" />
+    <div className={`flex flex-col justify-between gap-3 rounded border p-3 sm:flex-row sm:items-center ${style.wrapper}`}>
+      <div className="flex min-w-0 items-center gap-3">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded border bg-white ${style.iconBox}`}>
+          <FileText className="w-5 h-5" aria-hidden="true" />
         </div>
-        <div>
-          <p className={`text-[10px] font-black uppercase tracking-widest ${style.label}`}>{title}</p>
-          <p className="text-xs font-bold text-slate-600 uppercase">{subtitle}</p>
+        <div className="min-w-0">
+          <p className={`text-xs font-semibold ${style.label}`}>{title}</p>
+          <p className="mt-0.5 text-xs text-slate-600">{subtitle}</p>
         </div>
       </div>
       <a
         href={fileUrl}
         target="_blank"
         rel="noreferrer"
-        className={`btn btn-sm rounded-lg font-black text-[9px] uppercase tracking-widest px-6 ${style.btn}`}
+        className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded border px-3 py-2 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${style.btn}`}
       >
         Open Document
       </a>

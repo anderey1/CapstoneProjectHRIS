@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { X, Loader2 } from 'lucide-react';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 const PDSDetailModal = ({ 
   activeModal, 
@@ -10,18 +11,24 @@ const PDSDetailModal = ({
   onSave, 
   isPending 
 }) => {
+  const formId = useId();
+  const fieldId = (field) => `${formId}-${activeModal}-${field}`;
+  const handleClose = () => {
+    if (!isPending) onClose();
+  };
+
   if (!activeModal) return null;
 
   return (
-    <div className="modal modal-open flex items-center justify-center bg-slate-900/60 z-[999] p-4 transition-all duration-200">
-      <div className="bg-white rounded-lg border border-slate-200 max-w-lg w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xl">
+    <AccessibleDialog onClose={handleClose} labelledBy={fieldId('title')} className="bg-white rounded-lg border border-slate-200 max-w-lg w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xl [&_.input]:min-h-11 [&_select]:min-h-11 [&_textarea]:min-h-11 [&_label]:text-[12px] [&_input]:text-[14px] [&_select]:text-[14px] [&_textarea]:text-[14px]">
         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-          <h3 className="text-sm font-bold text-slate-900">
-            {modalIndex !== null ? 'Edit' : 'Add'} {activeModal === 'personal' ? 'Profile' : activeModal.charAt(0).toUpperCase() + activeModal.slice(1)} Details
+          <h3 id={fieldId('title')} className="text-base font-bold text-slate-900">
+            {activeModal === 'personal' || modalIndex !== null ? 'Edit' : 'Add'} {activeModal === 'personal' ? 'Profile' : activeModal.charAt(0).toUpperCase() + activeModal.slice(1)} Details
           </h3>
           <button 
-            onClick={onClose} 
-            className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
+            onClick={handleClose}
+            disabled={isPending}
+            className="btn min-h-11 min-w-11 p-2 text-slate-700 rounded"
            aria-label="Close dialog">
             <X className="w-5 h-5" />
           </button>
@@ -34,8 +41,8 @@ const PDSDetailModal = ({
           {activeModal === 'personal' && (
             <div className="grid grid-cols-2 gap-3.5">
               <div className="space-y-1 col-span-2 sm:col-span-1">
-                <label className="text-xs font-medium text-slate-700">First Name</label>
-                <input 
+                <label htmlFor={fieldId('first_name')} className="text-xs font-medium text-slate-700">First Name</label>
+                <input id={fieldId('first_name')}
                   type="text" 
                   value={modalData?.first_name || ''} 
                   onChange={(e) => onFieldChange('first_name', e.target.value)}
@@ -43,8 +50,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1 col-span-2 sm:col-span-1">
-                <label className="text-xs font-medium text-slate-700">Last Name</label>
-                <input 
+                <label htmlFor={fieldId('last_name')} className="text-xs font-medium text-slate-700">Last Name</label>
+                <input id={fieldId('last_name')}
                   type="text" 
                   value={modalData?.last_name || ''} 
                   onChange={(e) => onFieldChange('last_name', e.target.value)}
@@ -52,8 +59,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Middle Name</label>
-                <input 
+                <label htmlFor={fieldId('middle_name')} className="text-xs font-medium text-slate-700">Middle Name</label>
+                <input id={fieldId('middle_name')}
                   type="text" 
                   value={modalData?.middle_name || ''} 
                   onChange={(e) => onFieldChange('middle_name', e.target.value)}
@@ -61,8 +68,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Extension Name</label>
-                <input 
+                <label htmlFor={fieldId('name_extension')} className="text-xs font-medium text-slate-700">Extension Name</label>
+                <input id={fieldId('name_extension')}
                   type="text" 
                   value={modalData?.name_extension || ''} 
                   onChange={(e) => onFieldChange('name_extension', e.target.value)}
@@ -71,8 +78,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Date of Birth</label>
-                <input 
+                <label htmlFor={fieldId('date_of_birth')} className="text-xs font-medium text-slate-700">Date of Birth</label>
+                <input id={fieldId('date_of_birth')}
                   type="date" 
                   value={modalData?.date_of_birth || ''} 
                   onChange={(e) => onFieldChange('date_of_birth', e.target.value)}
@@ -80,8 +87,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Sex</label>
-                <select 
+                <label htmlFor={fieldId('sex')} className="text-xs font-medium text-slate-700">Sex</label>
+                <select id={fieldId('sex')}
                   value={modalData?.sex || ''} 
                   onChange={(e) => onFieldChange('sex', e.target.value)}
                   className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
@@ -92,8 +99,8 @@ const PDSDetailModal = ({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Civil Status</label>
-                <select 
+                <label htmlFor={fieldId('civil_status')} className="text-xs font-medium text-slate-700">Civil Status</label>
+                <select id={fieldId('civil_status')}
                   value={modalData?.civil_status || ''} 
                   onChange={(e) => onFieldChange('civil_status', e.target.value)}
                   className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
@@ -107,8 +114,8 @@ const PDSDetailModal = ({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Contact Number</label>
-                <input 
+                <label htmlFor={fieldId('mobile_no')} className="text-xs font-medium text-slate-700">Contact Number</label>
+                <input id={fieldId('mobile_no')}
                   type="text" 
                   value={modalData?.mobile_no || ''} 
                   onChange={(e) => onFieldChange('mobile_no', e.target.value)}
@@ -116,8 +123,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1 col-span-2">
-                <label className="text-xs font-medium text-slate-700">Place of Birth</label>
-                <input 
+                <label htmlFor={fieldId('place_of_birth')} className="text-xs font-medium text-slate-700">Place of Birth</label>
+                <input id={fieldId('place_of_birth')}
                   type="text" 
                   value={modalData?.place_of_birth || ''} 
                   onChange={(e) => onFieldChange('place_of_birth', e.target.value)}
@@ -125,16 +132,16 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1 col-span-2">
-                <label className="text-xs font-medium text-slate-700">Residential Address</label>
-                <textarea 
+                <label htmlFor={fieldId('residential_address')} className="text-xs font-medium text-slate-700">Residential Address</label>
+                <textarea id={fieldId('residential_address')}
                   value={modalData?.residential_address || ''} 
                   onChange={(e) => onFieldChange('residential_address', e.target.value)}
                   className="textarea textarea-bordered textarea-sm w-full rounded-md text-xs h-16 pt-2 bg-white border-slate-300 focus:border-[#0038A8]" 
                 />
               </div>
               <div className="space-y-1 col-span-2">
-                <label className="text-xs font-medium text-slate-700">Permanent Address</label>
-                <textarea 
+                <label htmlFor={fieldId('permanent_address')} className="text-xs font-medium text-slate-700">Permanent Address</label>
+                <textarea id={fieldId('permanent_address')}
                   value={modalData?.permanent_address || ''} 
                   onChange={(e) => onFieldChange('permanent_address', e.target.value)}
                   className="textarea textarea-bordered textarea-sm w-full rounded-md text-xs h-16 pt-2 bg-white border-slate-300 focus:border-[#0038A8]" 
@@ -147,8 +154,8 @@ const PDSDetailModal = ({
           {activeModal === 'education' && (
             <div className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Academic Level</label>
-                <select 
+                <label htmlFor={fieldId('level')} className="text-xs font-medium text-slate-700">Academic Level</label>
+                <select id={fieldId('level')}
                   value={modalData?.level || ''} 
                   onChange={(e) => onFieldChange('level', e.target.value)}
                   className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
@@ -161,8 +168,8 @@ const PDSDetailModal = ({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">School / Institution Name</label>
-                <input 
+                <label htmlFor={fieldId('school_name')} className="text-xs font-medium text-slate-700">School / Institution Name</label>
+                <input id={fieldId('school_name')}
                   type="text" 
                   value={modalData?.school_name || ''} 
                   onChange={(e) => onFieldChange('school_name', e.target.value)}
@@ -170,8 +177,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Degree / Basic Course</label>
-                <input 
+                <label htmlFor={fieldId('degree_course')} className="text-xs font-medium text-slate-700">Degree / Basic Course</label>
+                <input id={fieldId('degree_course')}
                   type="text" 
                   value={modalData?.degree_course || ''} 
                   onChange={(e) => onFieldChange('degree_course', e.target.value)}
@@ -180,8 +187,8 @@ const PDSDetailModal = ({
               </div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Period From</label>
-                  <input 
+                  <label htmlFor={fieldId('period_from')} className="text-xs font-medium text-slate-700">Period From</label>
+                  <input id={fieldId('period_from')}
                     type="text" 
                     value={modalData?.period_from || ''} 
                     onChange={(e) => onFieldChange('period_from', e.target.value)}
@@ -190,8 +197,8 @@ const PDSDetailModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Period To</label>
-                  <input 
+                  <label htmlFor={fieldId('period_to')} className="text-xs font-medium text-slate-700">Period To</label>
+                  <input id={fieldId('period_to')}
                     type="text" 
                     value={modalData?.period_to || ''} 
                     onChange={(e) => onFieldChange('period_to', e.target.value)}
@@ -202,8 +209,8 @@ const PDSDetailModal = ({
               </div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Year Graduated</label>
-                  <input 
+                  <label htmlFor={fieldId('year_graduated')} className="text-xs font-medium text-slate-700">Year Graduated</label>
+                  <input id={fieldId('year_graduated')}
                     type="text" 
                     value={modalData?.year_graduated || ''} 
                     onChange={(e) => onFieldChange('year_graduated', e.target.value)}
@@ -211,8 +218,8 @@ const PDSDetailModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Honors Received</label>
-                  <input 
+                  <label htmlFor={fieldId('honors_received')} className="text-xs font-medium text-slate-700">Honors Received</label>
+                  <input id={fieldId('honors_received')}
                     type="text" 
                     value={modalData?.honors_received || ''} 
                     onChange={(e) => onFieldChange('honors_received', e.target.value)}
@@ -228,8 +235,8 @@ const PDSDetailModal = ({
           {activeModal === 'work' && (
             <div className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Position Title</label>
-                <input 
+                <label htmlFor={fieldId('position_title')} className="text-xs font-medium text-slate-700">Position Title</label>
+                <input id={fieldId('position_title')}
                   type="text" 
                   value={modalData?.position_title || ''} 
                   onChange={(e) => onFieldChange('position_title', e.target.value)}
@@ -237,8 +244,8 @@ const PDSDetailModal = ({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Employer / Agency Name</label>
-                <input 
+                <label htmlFor={fieldId('agency')} className="text-xs font-medium text-slate-700">Employer / Agency Name</label>
+                <input id={fieldId('agency')}
                   type="text" 
                   value={modalData?.agency || ''} 
                   onChange={(e) => onFieldChange('agency', e.target.value)}
@@ -247,8 +254,8 @@ const PDSDetailModal = ({
               </div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Period From</label>
-                  <input 
+                  <label htmlFor={fieldId('date_from')} className="text-xs font-medium text-slate-700">Period From</label>
+                  <input id={fieldId('date_from')}
                     type="date" 
                     value={modalData?.date_from || ''} 
                     onChange={(e) => onFieldChange('date_from', e.target.value)}
@@ -256,8 +263,8 @@ const PDSDetailModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Period To</label>
-                  <input 
+                  <label htmlFor={fieldId('date_to')} className="text-xs font-medium text-slate-700">Period To</label>
+                  <input id={fieldId('date_to')}
                     type="date" 
                     disabled={modalData?.is_present}
                     value={modalData?.is_present ? '' : (modalData?.date_to || '')} 
@@ -269,7 +276,7 @@ const PDSDetailModal = ({
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox" 
-                  id="is_present"
+                  id={fieldId('is_present')}
                   checked={modalData?.is_present || false} 
                   onChange={(e) => {
                     onFieldChange('is_present', e.target.checked);
@@ -277,12 +284,12 @@ const PDSDetailModal = ({
                   }}
                   className="checkbox checkbox-xs rounded" 
                 />
-                <label htmlFor="is_present" className="text-xs font-medium text-slate-700 cursor-pointer">Currently Working Here</label>
+                <label htmlFor={fieldId('is_present')} className="text-xs font-medium text-slate-700 cursor-pointer">Currently Working Here</label>
               </div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Monthly Salary</label>
-                  <input 
+                  <label htmlFor={fieldId('monthly_salary')} className="text-xs font-medium text-slate-700">Monthly Salary</label>
+                  <input id={fieldId('monthly_salary')}
                     type="text" 
                     value={modalData?.monthly_salary || ''} 
                     onChange={(e) => onFieldChange('monthly_salary', e.target.value)}
@@ -290,8 +297,8 @@ const PDSDetailModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Appointment Status</label>
-                  <select 
+                  <label htmlFor={fieldId('status_of_appointment')} className="text-xs font-medium text-slate-700">Appointment Status</label>
+                  <select id={fieldId('status_of_appointment')}
                     value={modalData?.status_of_appointment || ''} 
                     onChange={(e) => onFieldChange('status_of_appointment', e.target.value)}
                     className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
@@ -306,8 +313,8 @@ const PDSDetailModal = ({
               </div>
               <div className="grid grid-cols-2 gap-3.5 items-end">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Salary Grade (SG)</label>
-                  <input 
+                  <label htmlFor={fieldId('salary_grade')} className="text-xs font-medium text-slate-700">Salary Grade (SG)</label>
+                  <input id={fieldId('salary_grade')}
                     type="text" 
                     value={modalData?.salary_grade || ''} 
                     onChange={(e) => onFieldChange('salary_grade', e.target.value)}
@@ -318,12 +325,12 @@ const PDSDetailModal = ({
                 <div className="flex items-center gap-2 pb-2">
                   <input 
                     type="checkbox" 
-                    id="is_gov_service"
+                    id={fieldId('is_gov_service')}
                     checked={modalData?.is_gov_service || false} 
                     onChange={(e) => onFieldChange('is_gov_service', e.target.checked)}
                     className="checkbox checkbox-xs rounded" 
                   />
-                  <label htmlFor="is_gov_service" className="text-xs font-medium text-slate-700 cursor-pointer">Government Service</label>
+                  <label htmlFor={fieldId('is_gov_service')} className="text-xs font-medium text-slate-700 cursor-pointer">Government Service</label>
                 </div>
               </div>
             </div>
@@ -333,8 +340,8 @@ const PDSDetailModal = ({
           {activeModal === 'eligibility' && (
             <div className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Exam / Board Title</label>
-                <input 
+                <label htmlFor={fieldId('service')} className="text-xs font-medium text-slate-700">Exam / Board Title</label>
+                <input id={fieldId('service')}
                   type="text" 
                   value={modalData?.service || ''} 
                   onChange={(e) => onFieldChange('service', e.target.value)}
@@ -343,8 +350,8 @@ const PDSDetailModal = ({
               </div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Rating Obtained</label>
-                  <input 
+                  <label htmlFor={fieldId('rating')} className="text-xs font-medium text-slate-700">Rating Obtained</label>
+                  <input id={fieldId('rating')}
                     type="text" 
                     value={modalData?.rating || ''} 
                     onChange={(e) => onFieldChange('rating', e.target.value)}
@@ -352,8 +359,8 @@ const PDSDetailModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Exam Date</label>
-                  <input 
+                  <label htmlFor={fieldId('date_of_exam')} className="text-xs font-medium text-slate-700">Exam Date</label>
+                  <input id={fieldId('date_of_exam')}
                     type="date" 
                     value={modalData?.date_of_exam || ''} 
                     onChange={(e) => onFieldChange('date_of_exam', e.target.value)}
@@ -362,8 +369,8 @@ const PDSDetailModal = ({
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Place of Exam</label>
-                <input 
+                <label htmlFor={fieldId('place_of_exam')} className="text-xs font-medium text-slate-700">Place of Exam</label>
+                <input id={fieldId('place_of_exam')}
                   type="text" 
                   value={modalData?.place_of_exam || ''} 
                   onChange={(e) => onFieldChange('place_of_exam', e.target.value)}
@@ -372,8 +379,8 @@ const PDSDetailModal = ({
               </div>
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">License Number</label>
-                  <input 
+                  <label htmlFor={fieldId('license_no')} className="text-xs font-medium text-slate-700">License Number</label>
+                  <input id={fieldId('license_no')}
                     type="text" 
                     value={modalData?.license_no || ''} 
                     onChange={(e) => onFieldChange('license_no', e.target.value)}
@@ -381,8 +388,8 @@ const PDSDetailModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">License Date of Validity</label>
-                  <input 
+                  <label htmlFor={fieldId('license_date')} className="text-xs font-medium text-slate-700">License Date of Validity</label>
+                  <input id={fieldId('license_date')}
                     type="date" 
                     value={modalData?.license_date || ''} 
                     onChange={(e) => onFieldChange('license_date', e.target.value)}
@@ -398,8 +405,8 @@ const PDSDetailModal = ({
             <div className="space-y-3.5">
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Relationship</label>
-                  <select 
+                  <label htmlFor={fieldId('relationship')} className="text-xs font-medium text-slate-700">Relationship</label>
+                  <select id={fieldId('relationship')}
                     value={modalData?.relationship || ''} 
                     onChange={(e) => onFieldChange('relationship', e.target.value)}
                     className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
@@ -411,8 +418,8 @@ const PDSDetailModal = ({
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Extension (Jr./Sr.)</label>
-                  <input 
+                  <label htmlFor={fieldId('extension')} className="text-xs font-medium text-slate-700">Extension (Jr./Sr.)</label>
+                  <input id={fieldId('extension')}
                     type="text" 
                     value={modalData?.extension || ''} 
                     onChange={(e) => onFieldChange('extension', e.target.value)}
@@ -422,8 +429,8 @@ const PDSDetailModal = ({
               </div>
               {modalData?.relationship === 'CHILD' ? (
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Full Name</label>
-                  <input 
+                  <label htmlFor={fieldId('full_name')} className="text-xs font-medium text-slate-700">Full Name</label>
+                  <input id={fieldId('full_name')}
                     type="text" 
                     value={modalData?.full_name || ''} 
                     onChange={(e) => onFieldChange('full_name', e.target.value)}
@@ -433,8 +440,8 @@ const PDSDetailModal = ({
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Surname</label>
-                    <input 
+                    <label htmlFor={fieldId('surname')} className="text-xs font-medium text-slate-700">Surname</label>
+                    <input id={fieldId('surname')}
                       type="text" 
                       value={modalData?.surname || ''} 
                       onChange={(e) => onFieldChange('surname', e.target.value)}
@@ -442,8 +449,8 @@ const PDSDetailModal = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">First Name</label>
-                    <input 
+                    <label htmlFor={fieldId('first_name')} className="text-xs font-medium text-slate-700">First Name</label>
+                    <input id={fieldId('first_name')}
                       type="text" 
                       value={modalData?.first_name || ''} 
                       onChange={(e) => onFieldChange('first_name', e.target.value)}
@@ -451,8 +458,8 @@ const PDSDetailModal = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Middle Name</label>
-                    <input 
+                    <label htmlFor={fieldId('middle_name')} className="text-xs font-medium text-slate-700">Middle Name</label>
+                    <input id={fieldId('middle_name')}
                       type="text" 
                       value={modalData?.middle_name || ''} 
                       onChange={(e) => onFieldChange('middle_name', e.target.value)}
@@ -463,8 +470,8 @@ const PDSDetailModal = ({
               )}
               <div className="grid grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Date of Birth</label>
-                  <input 
+                  <label htmlFor={fieldId('date_of_birth')} className="text-xs font-medium text-slate-700">Date of Birth</label>
+                  <input id={fieldId('date_of_birth')}
                     type="date" 
                     value={modalData?.date_of_birth || ''} 
                     onChange={(e) => onFieldChange('date_of_birth', e.target.value)}
@@ -472,8 +479,8 @@ const PDSDetailModal = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Occupation</label>
-                  <input 
+                  <label htmlFor={fieldId('occupation')} className="text-xs font-medium text-slate-700">Occupation</label>
+                  <input id={fieldId('occupation')}
                     type="text" 
                     value={modalData?.occupation || ''} 
                     onChange={(e) => onFieldChange('occupation', e.target.value)}
@@ -482,8 +489,8 @@ const PDSDetailModal = ({
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Employer / Agency</label>
-                <input 
+                <label htmlFor={fieldId('employer')} className="text-xs font-medium text-slate-700">Employer / Agency</label>
+                <input id={fieldId('employer')}
                   type="text" 
                   value={modalData?.employer || ''} 
                   onChange={(e) => onFieldChange('employer', e.target.value)}
@@ -498,15 +505,16 @@ const PDSDetailModal = ({
         {/* Modal Footer Actions */}
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
           <button 
-            onClick={onClose} 
-            className="btn btn-sm h-8 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded text-xs font-medium"
+            onClick={handleClose}
+            disabled={isPending}
+            className="btn min-h-11 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded text-sm font-medium"
           >
             Cancel
           </button>
           <button 
             onClick={onSave}
             disabled={isPending}
-            className="btn btn-sm h-8 px-4 bg-[#0038A8] hover:bg-[#002d86] text-white rounded text-xs font-medium flex items-center gap-1.5 border-none shadow-sm"
+            className="btn min-h-11 px-4 bg-[#0038A8] hover:bg-[#002d86] text-white rounded text-sm font-medium flex items-center gap-1.5 border-none shadow-sm"
           >
             {isPending ? (
               <>
@@ -515,8 +523,7 @@ const PDSDetailModal = ({
             ) : 'Save Details'}
           </button>
         </div>
-      </div>
-    </div>
+    </AccessibleDialog>
   );
 };
 

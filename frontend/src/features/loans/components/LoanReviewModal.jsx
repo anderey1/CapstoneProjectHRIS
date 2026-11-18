@@ -3,6 +3,7 @@ import { Eye, FileCheck, Circle, MessageSquare, X } from 'lucide-react';
 import SubsidiaryLedger from './SubsidiaryLedger';
 import LoanActionWorkflow from './LoanActionWorkflow';
 import { PURPOSE_LABELS } from './LoanRegistryTable';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 const getFileUrl = (path) => {
   if (!path) return '';
@@ -46,17 +47,20 @@ const LoanReviewModal = ({
   if (!loan) return null;
 
   const isServicingOrPaid = loan.status === 'released' || loan.status === 'paid';
+  const isProcessing = isVerifying || isApproving || isDisbursing || isRejecting;
+  const closeReview = () => {
+    if (!isProcessing) onClose();
+  };
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box rounded-lg max-w-3xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white max-h-[92vh] flex flex-col">
+    <AccessibleDialog onClose={closeReview} labelledBy="feature-loan-review-title" className="rounded-lg w-full max-w-3xl p-0 overflow-hidden border border-slate-300 bg-white max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Clean Institutional Header */}
         <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              <h2 id="feature-loan-review-title" className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                 Provident Fund Loan Review
-              </span>
+              </h2>
               <span className="font-mono text-xs text-slate-500 font-bold">
                 [Ref #PF-{loan.id.toString().padStart(4, '0')}]
               </span>
@@ -69,10 +73,11 @@ const LoanReviewModal = ({
 
           <button
             type="button"
-            onClick={onClose}
-            className="btn btn-ghost btn-xs btn-circle text-slate-500 hover:bg-slate-200"
-           aria-label="Close dialog">
-            <X className="w-4 h-4" />
+            onClick={closeReview}
+            disabled={isProcessing}
+            className="btn btn-ghost btn-circle min-h-11 min-w-11 shrink-0 text-slate-500 hover:bg-slate-200"
+            aria-label="Close loan review">
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -255,9 +260,7 @@ const LoanReviewModal = ({
             </>
           )}
         </div>
-      </div>
-      <div className="modal-backdrop bg-black/40" onClick={onClose}></div>
-    </div>
+    </AccessibleDialog>
   );
 };
 

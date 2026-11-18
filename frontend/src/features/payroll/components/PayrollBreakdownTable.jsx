@@ -1,10 +1,7 @@
 import React from 'react';
 import { Search, FileSpreadsheet, Check, Send } from 'lucide-react';
 
-const formatCurrency = (val) => {
-  const num = parseFloat(val) || 0;
-  return `₱${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+import { formatCurrency, payrollStatusLabel, sumRecordedAmounts, unavailable } from '../utils/payrollDisplay';
 
 const PayrollBreakdownTable = ({
   selectedCutoff,
@@ -16,12 +13,16 @@ const PayrollBreakdownTable = ({
   onApprove,
   approveLoading,
   onRelease,
-  releaseLoading
+  releaseLoading,
+  dataUnavailable = false,
+  isLoading = false,
+  isError = false,
+  retry,
 }) => {
   // Aggregate page totals
-  const totalGross = activePayrolls.reduce((sum, p) => sum + (parseFloat(p.gross_salary || p.basic_salary) || 0), 0);
-  const totalDeductions = activePayrolls.reduce((sum, p) => sum + (parseFloat(p.total_deductions) || 0), 0);
-  const totalNet = activePayrolls.reduce((sum, p) => sum + (parseFloat(p.net_salary) || 0), 0);
+  const totalGross = sumRecordedAmounts(activePayrolls, 'gross_salary');
+  const totalDeductions = sumRecordedAmounts(activePayrolls, 'total_deductions');
+  const totalNet = sumRecordedAmounts(activePayrolls, 'net_salary');
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
@@ -40,11 +41,13 @@ const PayrollBreakdownTable = ({
         </div>
 
         <div className="relative w-full md:w-72">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+          <label htmlFor="payroll-search" className="block text-sm text-slate-700 mb-1">Search payroll records</label>
+          <Search className="w-3.5 h-3.5 absolute left-3 bottom-3.5 text-slate-500" />
           <input 
+            id="payroll-search"
             type="text" 
             placeholder="Search personnel or station..." 
-            className="input input-sm input-bordered w-full pl-8.5 bg-white border-slate-200 text-xs font-medium rounded-md"
+            className="input input-bordered min-h-11 w-full pl-8.5 bg-white border-slate-200 text-sm font-medium rounded-md"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -67,26 +70,33 @@ const PayrollBreakdownTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {activePayrolls.length > 0 ? (
+            {isError ? (
+              <tr><td colSpan="8" className="p-4 text-red-700">
+                <p role="alert">Could not load payroll records.</p>
+                <button type="button" className="btn min-h-11 mt-2" onClick={retry}>Retry records</button>
+              </td></tr>
+            ) : isLoading ? (
+              <tr><td colSpan="8" className="p-4 text-slate-600" role="status">Loading payroll records...</td></tr>
+            ) : activePayrolls.length > 0 ? (
               activePayrolls.map((p) => {
-                const grossVal = parseFloat(p.gross_salary || p.basic_salary) || 0;
-                const deductVal = parseFloat(p.total_deductions) || 0;
-                const netVal = parseFloat(p.net_salary) || 0;
+                const grossVal = p.gross_salary;
+                const deductVal = p.total_deductions;
+                const netVal = p.net_salary;
 
-                const deductionBreakdown = `GSIS (9%): ₱${parseFloat(p.sss || 0).toFixed(2)} | PhilHealth: ₱${parseFloat(p.philhealth || 0).toFixed(2)} | Pag-IBIG: ₱${parseFloat(p.pagibig || 0).toFixed(2)} | Loans: ₱${parseFloat(p.loans || 0).toFixed(2)} | Tax: ₱${parseFloat(p.tax || 0).toFixed(2)}`;
+                const deductionBreakdown = `GSIS: ${formatCurrency(p.gsis)} | PhilHealth: ${formatCurrency(p.philhealth)} | Pag-IBIG: ${formatCurrency(p.pagibig)} | Loans: ${formatCurrency(p.loans)} | Tax: ${formatCurrency(p.tax)}`;
 
                 return (
                   <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-4 py-3 font-semibold text-slate-900">
-                      <div>{p.employee_name}</div>
-                      <span className="text-xs font-mono text-slate-400">ID #{p.employee || p.id}</span>
+                      <div>{p.employee_name || 'Name not available'}</div>
+                      <span className="text-xs font-mono text-slate-600">Employee ID: {p.employee ?? unavailable}</span>
                     </td>
                     <td className="px-3 py-3 text-slate-600">
-                      <div className="font-medium text-slate-800">{p.position || 'Staff'}</div>
-                      <div className="text-xs text-slate-500">{p.department || 'Division Office'}</div>
+                      <div className="font-medium text-slate-800">{p.position || 'Position not available'}</div>
+                      <div className="text-xs text-slate-600">{p.department || 'Station not available'}</div>
                     </td>
                     <td className="px-3 py-3 text-center font-mono font-medium text-slate-700">
-                      {p.days_worked || '11.0'}
+                      {p.days_worked === '' ? unavailable : p.days_worked ?? unavailable}
                     </td>
                     <td className="px-3 py-3 text-right font-mono font-semibold text-slate-800">
                       {formatCurrency(grossVal)}
@@ -103,7 +113,7 @@ const PayrollBreakdownTable = ({
                       {formatCurrency(netVal)}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border uppercase ${
+                      <span className={`inline-flex items-center px-2 py-1 rounded text-sm font-semibold border ${
                         p.status === 'released'
                           ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                           : p.status === 'approved'
@@ -112,7 +122,7 @@ const PayrollBreakdownTable = ({
                           ? 'bg-amber-50 text-amber-800 border-amber-200'
                           : 'bg-slate-100 text-slate-700 border-slate-200'
                       }`}>
-                        {p.status}
+                        {payrollStatusLabel(p.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -121,22 +131,22 @@ const PayrollBreakdownTable = ({
                           <button
                             type="button"
                             onClick={() => onApprove(p.id)}
-                            disabled={approveLoading}
-                            className="btn btn-ghost btn-xs text-blue-700 hover:bg-blue-50 font-semibold px-2"
+                            disabled={dataUnavailable || approveLoading}
+                            className="btn btn-ghost min-h-11 text-sm text-blue-700 hover:bg-blue-50 font-semibold px-3"
                             title="Sign and certify this record"
                           >
-                            <Check className="w-3 h-3 mr-1" /> Sign
+                            <Check className="w-4 h-4 mr-1" /> Approve payroll
                           </button>
                         )}
                         {p.status === 'approved' && canRelease && (
                           <button
                             type="button"
                             onClick={() => onRelease(p.id)}
-                            disabled={releaseLoading}
-                            className="btn btn-ghost btn-xs text-emerald-700 hover:bg-emerald-50 font-semibold px-2"
-                            title="Release to ATM account"
+                            disabled={dataUnavailable || releaseLoading}
+                            className="btn btn-ghost min-h-11 text-sm text-emerald-700 hover:bg-emerald-50 font-semibold px-3"
+                            title="Record payroll release"
                           >
-                            <Send className="w-3 h-3 mr-1" /> Disburse
+                            <Send className="w-4 h-4 mr-1" /> Release payroll
                           </button>
                         )}
                         {p.status === 'released' && (
@@ -157,11 +167,11 @@ const PayrollBreakdownTable = ({
           </tbody>
 
           {/* Table Footer Totals */}
-          {activePayrolls.length > 0 && (
+          {!isError && !isLoading && activePayrolls.length > 0 && (
             <tfoot>
               <tr className="bg-slate-50 border-t-2 border-slate-200 font-bold text-slate-800">
                 <td colSpan="3" className="px-4 py-3 uppercase tracking-wider text-xs">
-                  Batch Totals ({activePayrolls.length} Personnel)
+                  Page subtotal ({activePayrolls.length} Personnel)
                 </td>
                 <td className="px-3 py-3 text-right font-mono text-slate-900">
                   {formatCurrency(totalGross)}

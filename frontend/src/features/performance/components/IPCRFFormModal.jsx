@@ -7,6 +7,7 @@ import { QUERY_KEYS } from '../../../api/queryKeys';
 import { X, Award, Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { computeRPMSScore, getAdjectivalRating } from '../../../utils/performance';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 /**
  * IPCRF Form Modal (DepEd RPMS Evaluation & Portfolio Upload)
@@ -15,7 +16,7 @@ import { computeRPMSScore, getAdjectivalRating } from '../../../utils/performanc
 const IPCRFFormModal = ({ onClose, review }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE'].includes(user?.role);
+  const isAdmin = user?.is_superuser || ['HR', 'SUPERINTENDENT'].includes(user?.role);
 
   const { data: employees, isLoading: loadingEmployees } = useQuery({
     queryKey: [QUERY_KEYS.EMPLOYEES, 'all'],
@@ -82,15 +83,16 @@ const IPCRFFormModal = ({ onClose, review }) => {
   const onSubmit = (data) => {
     mutation.mutate(data);
   };
+  const closeModal = () => {
+    if (!mutation.isPending) onClose();
+  };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="ipcrf-modal-title"
-      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+    <AccessibleDialog
+      onClose={closeModal}
+      labelledBy="ipcrf-modal-title"
+      className="bg-white rounded-lg border border-slate-300 w-full max-w-xl overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col"
     >
-      <div className="bg-white rounded-lg border border-slate-300 shadow-xl w-full max-w-xl overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Institutional Header */}
         <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-4 flex shrink-0 items-start justify-between gap-3">
           <div className="space-y-1">
@@ -113,11 +115,12 @@ const IPCRFFormModal = ({ onClose, review }) => {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={closeModal}
+            disabled={mutation.isPending}
             className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 rounded-md focus-visible:outline-2 focus-visible:outline-primary"
             aria-label="Close dialog"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -191,10 +194,11 @@ const IPCRFFormModal = ({ onClose, review }) => {
                 {/* Quality 40% */}
                 <div className="space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
                   <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-                    <span>Quality</span>
+                    <label htmlFor="ipcrf-quality-score">Quality</label>
                     <span className="text-slate-500 font-mono">40%</span>
                   </div>
                   <input
+                    id="ipcrf-quality-score"
                     type="number"
                     min="1"
                     max="5"
@@ -208,10 +212,11 @@ const IPCRFFormModal = ({ onClose, review }) => {
                 {/* Efficiency / Behavior 30% */}
                 <div className="space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
                   <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-                    <span>Efficiency</span>
+                    <label htmlFor="ipcrf-efficiency-score">Efficiency</label>
                     <span className="text-slate-500 font-mono">30%</span>
                   </div>
                   <input
+                    id="ipcrf-efficiency-score"
                     type="number"
                     min="1"
                     max="5"
@@ -225,10 +230,11 @@ const IPCRFFormModal = ({ onClose, review }) => {
                 {/* Timeliness / Punctuality 30% */}
                 <div className="space-y-1 bg-slate-50 p-2.5 rounded-md border border-slate-200">
                   <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-                    <span>Timeliness</span>
+                    <label htmlFor="ipcrf-timeliness-score">Timeliness</label>
                     <span className="text-slate-500 font-mono">30%</span>
                   </div>
                   <input
+                    id="ipcrf-timeliness-score"
                     type="number"
                     min="1"
                     max="5"
@@ -274,10 +280,10 @@ const IPCRFFormModal = ({ onClose, review }) => {
 
           {/* Official Signed Portfolio / Form Document */}
           <div className="space-y-1.5 pt-2 border-t border-slate-200">
-            <label className="text-xs font-semibold text-slate-700 block">
+            <label htmlFor="ipcrf_file_input" className="text-xs font-semibold text-slate-700 block">
               Signed IPCRF File (PDF or Excel)
             </label>
-            <div className="border border-dashed border-slate-300 rounded-md p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+            <div className="border border-dashed border-slate-300 rounded-md p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors focus-within:outline-2 focus-within:outline-primary">
               <div className="flex flex-col items-center justify-center text-center">
                 <Upload className="w-6 h-6 text-slate-400 mb-1.5" />
                 <label
@@ -318,7 +324,8 @@ const IPCRFFormModal = ({ onClose, review }) => {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={closeModal}
+              disabled={mutation.isPending}
               className="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
             >
               Cancel
@@ -333,8 +340,7 @@ const IPCRFFormModal = ({ onClose, review }) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </AccessibleDialog>
   );
 };
 

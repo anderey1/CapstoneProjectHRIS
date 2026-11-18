@@ -57,9 +57,10 @@ for (const scenario of [
 for (const scenario of [
   { role: 'ACCOUNTANT', initial: null, action: 'bulk_generate', next: 'draft', button: 'Calculate Division Payroll' },
   { role: 'SUPERINTENDENT', initial: 'draft', action: 'bulk_approve', next: 'approved', button: 'Certify & Sign General Payroll (Form 7)' },
-  { role: 'ACCOUNTANT', initial: 'approved', action: 'bulk_release', next: 'released', button: 'Disburse & Credit Salaries to LandBank ATM' },
+  { role: 'ACCOUNTANT', initial: 'approved', action: 'bulk_release', next: 'released', button: 'Record payroll release' },
 ]) {
   test(`payroll ${scenario.action} keeps its cutoff and refresh behavior`, async ({ page }, testInfo) => {
+    await page.clock.setFixedTime(new Date('2026-05-10T12:00:00'));
     const payroll = {
       id: 31, employee: 21, employee_name: 'Maria Santos', department: 'Instructional',
       cutoff_period: 'May 1-15, 2026', basic_salary: '13500.00', gross_salary: '14500.00',

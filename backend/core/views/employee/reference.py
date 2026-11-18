@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from ...models import School, AuditLog, SalaryGrade
 from ...serializers import SchoolSerializer, SalaryGradeSerializer
-from ...permissions import IsAdminOrHRorSuperintendent, IsSuperuser
+from ...permissions import IsHROrSuperintendent, IsSuperuser
 
 
 class SalaryGradeViewSet(viewsets.ModelViewSet):
@@ -15,7 +15,7 @@ class SalaryGradeViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
-        return [IsAdminOrHRorSuperintendent()]
+        return [IsHROrSuperintendent()]
 
 
 class SchoolViewSet(viewsets.ModelViewSet):

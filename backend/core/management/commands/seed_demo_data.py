@@ -69,7 +69,7 @@ class Command(BaseCommand):
         users_specs = [
             # Executives / Division Admin
             {
-                "username": "admin", "email": "admin@deped.gov.ph", "role": Role.ADMINISTRATIVE,
+                "username": "admin", "email": "admin@deped.gov.ph", "role": "",
                 "is_staff": True, "is_superuser": True,
                 "emp": {
                     "first_name": "System", "last_name": "Administrator",
@@ -242,17 +242,6 @@ class Command(BaseCommand):
                     "agency_employee_no": "2024-SDO-004", "salary": sg_map[12].amount, "salary_grade": sg_map[12],
                     "vacation_leave_balance": Decimal("10.000"), "sick_leave_balance": Decimal("12.000"),
                     "mobile_no": "09171234568", "civil_status": "Married", "sex": "Male"
-                }
-            },
-            {
-                "username": "elena.torres", "email": "elena.torres@deped.gov.ph", "role": Role.ADMINISTRATIVE,
-                "emp": {
-                    "first_name": "Elena", "last_name": "Torres", "middle_name": "Villanueva",
-                    "position": "Administrative Assistant II", "department": "Cashier & Disbursement",
-                    "school": school_objs["Division Office - Lucena City"],
-                    "agency_employee_no": "2024-SDO-005", "salary": Decimal("20402.00"),
-                    "vacation_leave_balance": Decimal("15.000"), "sick_leave_balance": Decimal("14.000"),
-                    "mobile_no": "09171234569", "civil_status": "Single", "sex": "Female"
                 }
             },
             {
@@ -523,7 +512,6 @@ class Command(BaseCommand):
             (emp_objs["juandelacruz"], Decimal("11.0"), Decimal("14256.00"), Decimal("1283.04"), Decimal("356.40"), Decimal("100.00"), Decimal("650.00"), Decimal("0.00"), "approved"),
             (emp_objs["clarissa.reyes"], Decimal("11.0"), Decimal("25300.50"), Decimal("2277.05"), Decimal("632.51"), Decimal("100.00"), Decimal("3100.00"), Decimal("0.00"), "draft"),
             (emp_objs["roberto.navarro"], Decimal("10.5"), Decimal("14746.77"), Decimal("1390.41"), Decimal("386.23"), Decimal("100.00"), Decimal("850.00"), Decimal("0.00"), "approved"),
-            (emp_objs["elena.torres"], Decimal("11.0"), Decimal("10201.00"), Decimal("918.09"), Decimal("255.03"), Decimal("100.00"), Decimal("0.00"), Decimal("0.00"), "released"),
             (emp_objs["maria.santos"], Decimal("11.0"), Decimal("14256.00"), Decimal("1283.04"), Decimal("356.40"), Decimal("100.00"), Decimal("650.00"), Decimal("0.00"), "draft"),
         ]
         for emp, days, basic, gsis, phil, pagibig, tax, loans, st in payroll_staff:

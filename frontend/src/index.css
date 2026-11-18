@@ -55,6 +55,82 @@ body {
   min-height: 100vh;
 }
 
+@layer base {
+  :is(a[href], button, summary, select, label[for], input[type="checkbox"], input[type="radio"], input[type="file"]) {
+    cursor: pointer;
+  }
+
+  :is(button, input, select, textarea):disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  :is(a[href], button, summary, input, select, textarea):focus-visible {
+    outline: 2px solid #0038a8;
+    outline-offset: 3px;
+  }
+
+  button:not(:disabled):active {
+    filter: brightness(0.94);
+  }
+}
+
+.accessible-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  padding: 16px;
+  background: transparent;
+  color: #0f172a;
+  overflow-y: auto;
+}
+
+.accessible-dialog[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accessible-dialog::backdrop {
+  background: rgb(15 23 42 / 60%);
+}
+
+.accessible-dialog > div {
+  flex-shrink: 0;
+  max-height: calc(100dvh - 32px);
+}
+
+.accessible-dialog :is(button, a.btn) {
+  min-height: 44px;
+}
+
+.accessible-dialog button:has(> svg:only-child) {
+  min-width: 44px;
+}
+
+.navigation-dialog {
+  padding: 0;
+}
+
+.navigation-dialog[open] {
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.navigation-dialog > div {
+  max-height: 100dvh;
+}
+
+.navigation-dialog :focus-visible,
+aside.bg-deped-navy :focus-visible {
+  outline-color: #fcd116;
+}
+
 .toast-item {
   opacity: 1;
   transform: translateX(0);

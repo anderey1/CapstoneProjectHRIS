@@ -66,7 +66,7 @@ class LeaveViewSet(
                 Q(status='rejected', rejection_stage='pending_superintendent')
             )
 
-        # For other roles (TEACHING, NON_TEACHING, ADMINISTRATIVE, ACCOUNTANT):
+        # For other roles (TEACHING, NON_TEACHING, ACCOUNTANT):
         # They can see their own leaves.
         # If they are a supervisor (Principal/Head Teacher), they can also see leaves of their subordinates.
         if employee_profile:

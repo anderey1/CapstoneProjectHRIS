@@ -2,15 +2,16 @@ import { usePayrollExports } from './usePayrollExports';
 import { usePayrollQueries } from './usePayrollQueries';
 import { usePayrollMutations } from './usePayrollMutations';
 import { useState } from 'react';
-import { getCutoffStatus } from '../components/payrollConstants';
+import { currentCutoff, getCutoffStatus } from '../components/payrollConstants';
+import { sumRecordedAmounts } from '../utils/payrollDisplay';
 
 /**
  * Custom Domain Hook for Payroll Cutoffs & Salary Releases
  */
-export function usePayroll(initialCutoff = 'May 1-15, 2026') {
-  const [selectedCutoff, setSelectedCutoff] = useState(initialCutoff);
+export function usePayroll(initialCutoff) {
+  const [selectedCutoff, setSelectedCutoff] = useState(() => initialCutoff ?? currentCutoff());
 
-  const { employees, allPayrolls, loadingEmployees, loadingPayrolls } = usePayrollQueries();
+  const { employees, allPayrolls, loadingEmployees, loadingPayrolls, isError, error, isRefreshing, retry } = usePayrollQueries();
 
   const {
     generateMutation, bulkGenerateMutation, approveMutation,
@@ -21,20 +22,14 @@ export function usePayroll(initialCutoff = 'May 1-15, 2026') {
 
   // 4. Cutoff-level Calculations
   const cutoffPayrolls = allPayrolls.filter((p) => p.cutoff_period === selectedCutoff);
-  const cutoffStatus = getCutoffStatus(cutoffPayrolls);
+  const dataAvailable = !isError && !loadingPayrolls && !loadingEmployees;
+  const cutoffStatus = dataAvailable ? getCutoffStatus(cutoffPayrolls) : 'unavailable';
 
-  const totalGross = cutoffPayrolls.reduce(
-    (sum, p) => sum + parseFloat(p.gross_salary || p.basic_salary || 0),
-    0
-  );
-  const totalDeductions = cutoffPayrolls.reduce(
-    (sum, p) => sum + parseFloat(p.total_deductions || 0),
-    0
-  );
-  const totalNet = cutoffPayrolls.reduce(
-    (sum, p) => sum + parseFloat(p.net_salary || 0),
-    0
-  );
+  const totalGross = dataAvailable ? sumRecordedAmounts(cutoffPayrolls, 'gross_salary') : null;
+  const totalDeductions = dataAvailable ? sumRecordedAmounts(cutoffPayrolls, 'total_deductions') : null;
+  const totalNet = dataAvailable ? sumRecordedAmounts(cutoffPayrolls, 'net_salary') : null;
+  const processingAvailable = dataAvailable && cutoffStatus !== 'unavailable'
+    && totalGross !== null && totalDeductions !== null && totalNet !== null;
 
   return {
     employees,
@@ -46,6 +41,12 @@ export function usePayroll(initialCutoff = 'May 1-15, 2026') {
     totalGross,
     totalDeductions,
     totalNet,
+    isError,
+    error,
+    isRefreshing,
+    retry,
+    dataAvailable,
+    processingAvailable,
     isLoading: loadingPayrolls || loadingEmployees,
     generatePayroll: generateMutation.mutateAsync,
     isGenerating: generateMutation.isPending,

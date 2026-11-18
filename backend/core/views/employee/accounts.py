@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from ...models import Employee, Role, AuditLog, Notification, User
 from ...services.employee_accounts import rotate_setup, email_employee
-from ...permissions import IsAdminOrHRorSuperintendent
+from ...permissions import IsHROrSuperintendent
 
 
 class EmployeeAccountActions:
@@ -73,7 +73,7 @@ class EmployeeAccountActions:
         ])
         return Response({"message": "Registration submitted successfully! Please wait for HR approval before logging in."}, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['GET'], permission_classes=[IsAdminOrHRorSuperintendent], url_path='pending-registrations')
+    @action(detail=False, methods=['GET'], permission_classes=[IsHROrSuperintendent], url_path='pending-registrations')
     def list_pending_registrations(self, request):
         pending_employees = self.get_queryset().filter(registration_status='pending', user__is_active=False)
         return self.paginated_list(pending_employees)

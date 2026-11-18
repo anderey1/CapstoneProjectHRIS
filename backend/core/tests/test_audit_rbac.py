@@ -8,8 +8,8 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_all_management_roles_can_access_audit_logs():
-    """All management roles (HR, Superintendent, Accountant, Administrative) can read audit logs."""
-    admin_user = User.objects.create_user(username="admin_user", password="pwd", role=Role.ADMINISTRATIVE)
+    """All management roles and the superuser can read audit logs."""
+    admin_user = User.objects.create_superuser(username="admin_user", password="pwd")
     hr_user = User.objects.create_user(username="hr_user", password="pwd", role=Role.HR)
     supt_user = User.objects.create_user(username="supt_user", password="pwd", role=Role.SUPERINTENDENT)
     accountant_user = User.objects.create_user(username="acct_user", password="pwd", role=Role.ACCOUNTANT)
@@ -33,8 +33,8 @@ def test_all_management_roles_can_access_audit_logs():
 
 @pytest.mark.django_db
 def test_admin_can_release_approved_loan_funds(teacher_employee):
-    """Admin role can release funds for approved loans."""
-    admin_user = User.objects.create_user(username="admin_officer", password="pwd", role=Role.ADMINISTRATIVE)
+    """The superuser can release funds for approved loans."""
+    admin_user = User.objects.create_superuser(username="admin_officer", password="pwd")
     loan = ProvidentLoan.objects.create(
         employee=teacher_employee,
         loan_amount=Decimal("25000.00"),

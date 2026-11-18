@@ -13,7 +13,6 @@ def dashboard_stats(request):
     total_employees = Employee.objects.count()
     teaching_count = Employee.objects.filter(user__role=Role.TEACHING).count()
     non_teaching_count = Employee.objects.filter(user__role=Role.NON_TEACHING).count()
-    administrative_count = Employee.objects.filter(user__role=Role.ADMINISTRATIVE).count()
 
     total_payroll = Payroll.objects.filter(status='released').aggregate(total=Sum('net_salary'))['total'] or 0
     pending_payroll_approval = Payroll.objects.filter(status='draft').count()
@@ -63,7 +62,7 @@ def dashboard_stats(request):
     insights = {
         "workforce": {
             "title": "Workforce Deployment & School Staffing",
-            "summary": f"Teaching personnel account for {teaching_pct}% ({teaching_count} of {total_employees}) across cluster schools (South 1, West 1, North 1, East 1, LCNHS). Administrative support is actively staffed at {administrative_count} division officers.",
+            "summary": f"Teaching personnel account for {teaching_pct}% ({teaching_count} of {total_employees}) across cluster schools (South 1, West 1, North 1, East 1, LCNHS). Non-teaching staff account for {non_teaching_count} personnel.",
             "status": "Optimal Deployment" if teaching_pct >= 50 else "Review Deployment"
         },
         "attendance": {
@@ -90,7 +89,6 @@ def dashboard_stats(request):
         "total_employees": total_employees,
         "teaching_count": teaching_count,
         "non_teaching_count": non_teaching_count,
-        "administrative_count": administrative_count,
         "total_loans": ProvidentLoan.objects.count(),
         "active_loans_count": active_loans_count,
         "approved_loan_count": ProvidentLoan.objects.filter(status='approved').count(),

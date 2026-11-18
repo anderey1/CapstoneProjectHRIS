@@ -17,14 +17,14 @@ class IsHR(BaseRolePermission):
 class IsSuperintendent(BaseRolePermission):
     allowed_roles = [Role.SUPERINTENDENT]
 
-class IsSuperintendentOrAdmin(BaseRolePermission):
-    allowed_roles = [Role.SUPERINTENDENT, Role.ADMINISTRATIVE, Role.HR]
+class IsHROrSuperintendent(BaseRolePermission):
+    allowed_roles = [Role.SUPERINTENDENT, Role.HR]
 
 class IsAccountant(BaseRolePermission):
     allowed_roles = [Role.ACCOUNTANT]
 
 class IsEmployee(BaseRolePermission):
-    allowed_roles = [Role.TEACHING, Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.PRINCIPAL]
+    allowed_roles = [Role.TEACHING, Role.NON_TEACHING, Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.PRINCIPAL]
     
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser or request.user.role in [Role.HR]:
@@ -35,21 +35,12 @@ class IsEmployee(BaseRolePermission):
             return obj.user == request.user
         return False
 
-class IsAdminOnly(BaseRolePermission):
-    allowed_roles = [Role.ADMINISTRATIVE]
-
-class IsAdminOrHR(BaseRolePermission):
-    allowed_roles = [Role.HR, Role.ADMINISTRATIVE]
-
-class IsAdminOrHRorSuperintendent(BaseRolePermission):
-    allowed_roles = [Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
-
 class IsManagement(BaseRolePermission):
     """Matches frontend isManagement check."""
-    allowed_roles = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
+    allowed_roles = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT]
 
-class IsEmployeeOrAdminOrHR(BaseRolePermission):
-    allowed_roles = [Role.TEACHING, Role.HR, Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.PRINCIPAL]
+class IsEmployeeOrHR(BaseRolePermission):
+    allowed_roles = [Role.TEACHING, Role.HR, Role.NON_TEACHING, Role.PRINCIPAL]
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser or request.user.role in [Role.HR]:

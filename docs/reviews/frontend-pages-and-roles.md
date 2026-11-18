@@ -1,5 +1,7 @@
 # Frontend pages and roles: UI review
 
+Historical review: its role coverage predates the 2026-11-18 removal of the Administrative Staff account role. See [current role policy](../role-policy.md).
+
 Reviewed 2026-11-05 against DESIGN.md. Existing page layouts were retained wherever practical. Changes focus on typography, visual hierarchy, mobile fit, labels, and dialog reachability.
 
 ## Coverage

@@ -65,7 +65,7 @@ const MyLeaves = () => {
   };
 
   const isSupervisorOrManager = 
-    ['HR', 'SUPERINTENDENT', 'ADMINISTRATIVE', 'PRINCIPAL'].includes(user?.role) || employee?.is_supervisor;
+    user?.is_superuser || ['HR', 'SUPERINTENDENT', 'PRINCIPAL'].includes(user?.role) || employee?.is_supervisor;
 
   const pendingSubordinateCount = teamSummary.action_required || 0;
 

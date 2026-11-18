@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from ..models import Applicant, ApplicantDocument, AuditLog
 from ..serializers import ApplicantSerializer
 from .listing import PaginatedListMixin
-from ..permissions import IsAdminOrHRorSuperintendent
+from ..permissions import IsHROrSuperintendent
 from ..notifications import send_applicant_notification
 from ..utils import extract_pds_data
 from ..services import onboard_applicant
@@ -17,7 +17,7 @@ class ApplicantViewSet(PaginatedListMixin, viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
-        return [IsAuthenticated(), IsAdminOrHRorSuperintendent()]
+        return [IsAuthenticated(), IsHROrSuperintendent()]
 
     def perform_create(self, serializer):
         applicant = serializer.save()

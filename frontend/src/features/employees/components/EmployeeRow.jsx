@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MoreVertical, Briefcase, Building2, Trash2, Edit, Calendar, Heart, Plane } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Trash2, Edit } from 'lucide-react';
 import { useRBAC } from '../../../hooks/useRBAC';
 
 /**
@@ -10,17 +10,11 @@ import { useRBAC } from '../../../hooks/useRBAC';
  */
 const EmployeeRow = ({ emp, onDelete, onEdit }) => {
   const { can } = useRBAC();
-  const navigate = useNavigate();
   const canEdit = can('MANAGE_EMPLOYEES');
-
-  const handleRowClick = () => {
-    navigate(`/employees/${emp.id}`);
-  };
 
   return (
     <tr 
-      onClick={handleRowClick}
-      className="hover:bg-slate-50/80 transition-colors border-b border-slate-200/70 last:border-0 bg-white cursor-pointer group/row"
+      className="hover:bg-slate-50/80 transition-colors border-b border-slate-200/70 last:border-0 bg-white group/row"
     >
       <td className="px-6 py-3.5">
         <div className="flex items-center gap-3">
@@ -28,11 +22,11 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
             {emp.first_name?.[0]}{emp.last_name?.[0]}
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-sm text-slate-900 leading-tight group-hover/row:text-[#0038A8] transition-colors">
+            <Link to={`/employees/${emp.id}`} className="inline-flex min-h-11 items-center rounded font-semibold text-sm text-primary underline underline-offset-4 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
               {emp.first_name} {emp.last_name}
-            </div>
+            </Link>
             <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-              <span className="font-mono text-xs text-slate-400">#{emp.id.toString().padStart(4, '0')}</span>
+              <span className="font-mono text-xs text-slate-600">#{emp.id.toString().padStart(4, '0')}</span>
               <span>•</span>
               <span className="truncate">{emp.user_details?.email || 'No email'}</span>
             </div>
@@ -41,15 +35,15 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
       </td>
       <td className="px-6 py-3.5">
         <div className="flex flex-col">
-          <div className="text-xs font-semibold text-slate-800">{emp.position || 'Teacher I'}</div>
+          <div className="text-sm font-semibold text-slate-800">{emp.position || 'Position not recorded'}</div>
           <div className="text-xs text-slate-500 mt-0.5">
-            {emp.department} • {emp.school_details?.name || 'Division Office'}
+            {[emp.department, emp.school_details?.name].filter(Boolean).join(' • ') || 'Workplace not recorded'}
           </div>
         </div>
       </td>
       <td className="px-6 py-3.5">
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-          {Math.floor(emp.leave_balance || 0)} credits
+          {emp.leave_balance != null ? `${emp.leave_balance} credits` : 'Not recorded'}
         </span>
       </td>
       <td className="px-6 py-3.5 text-xs text-slate-600 font-medium">
@@ -59,14 +53,14 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
         {canEdit && (
           <div className="flex justify-end gap-1">
             <button 
-              className="btn btn-ghost btn-xs h-7 px-2.5 text-xs font-medium text-slate-600 hover:text-[#0038A8] hover:bg-slate-100 rounded-md"
+              className="btn btn-ghost min-h-11 min-w-11 px-3 text-sm font-medium text-slate-700 hover:text-[#0038A8] hover:bg-slate-100 rounded-md"
               onClick={() => onEdit(emp)}
               title="Edit Staff"
             >
               <Edit className="w-3.5 h-3.5 mr-1 text-slate-400" /> Edit
             </button>
             <button 
-              className="btn btn-ghost btn-xs h-7 px-2.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-md"
+              className="btn btn-ghost min-h-11 min-w-11 px-3 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md"
               onClick={() => onDelete(emp.id)}
               title="Delete Staff"
             >

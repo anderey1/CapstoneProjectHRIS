@@ -34,9 +34,9 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
         if (selectedRole !== ROLES.TEACHING) {
           setValue('role', ROLES.TEACHING);
         }
-      } else if (DEPED_POSITIONS.ADMINISTRATIVE.includes(selectedPosition)) {
-        if (selectedRole !== ROLES.ADMINISTRATIVE) {
-          setValue('role', ROLES.ADMINISTRATIVE);
+      } else if (DEPED_POSITIONS.SUPERINTENDENT.includes(selectedPosition)) {
+        if (selectedRole !== ROLES.SUPERINTENDENT) {
+          setValue('role', ROLES.SUPERINTENDENT);
         }
       }
     }
@@ -46,7 +46,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
   const getFilteredPositions = () => {
     if (selectedRole === ROLES.TEACHING) return DEPED_POSITIONS.TEACHING;
     if (selectedRole === ROLES.PRINCIPAL) return DEPED_POSITIONS.PRINCIPAL;
-    if (selectedRole === ROLES.ADMINISTRATIVE) return DEPED_POSITIONS.ADMINISTRATIVE;
+    if (selectedRole === ROLES.SUPERINTENDENT) return DEPED_POSITIONS.SUPERINTENDENT;
     if (selectedRole === ROLES.NON_TEACHING) return DEPED_POSITIONS.NON_TEACHING;
     if (selectedRole === ROLES.HR) return DEPED_POSITIONS.NON_TEACHING;
     if (selectedRole === ROLES.ACCOUNTANT) return DEPED_POSITIONS.NON_TEACHING;
@@ -55,7 +55,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
     return [
       ...DEPED_POSITIONS.TEACHING,
       ...DEPED_POSITIONS.PRINCIPAL,
-      ...DEPED_POSITIONS.ADMINISTRATIVE,
+      ...DEPED_POSITIONS.SUPERINTENDENT,
       ...DEPED_POSITIONS.NON_TEACHING
     ];
   };
@@ -71,7 +71,7 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
         <legend className="px-2 text-sm font-semibold text-slate-800">Leave processing assignments</legend>
         <label className="space-y-1 text-xs font-medium text-slate-700">
           <span>Principal / Immediate Supervisor</span>
-          <select {...register('supervisor')} className="select select-bordered select-sm w-full">
+          <select {...register('supervisor')} className="select select-bordered min-h-11 w-full rounded-md border-slate-400 bg-white text-sm font-normal">
             <option value="">Not assigned</option>
             {leaveStaff.filter(person => person.id !== currentEmployeeId && (selectedRole !== ROLES.TEACHING || (person.role === ROLES.PRINCIPAL && selectedSchool && String(person.school) === String(selectedSchool)))).map(person => <option key={person.id} value={person.id}>{person.name}{person.position ? ` (${person.position})` : ''}</option>)}
           </select>
@@ -80,40 +80,43 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
       </fieldset>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Role</label>
+          <label htmlFor="personnel-role" className="text-sm font-medium text-slate-700">Role</label>
           <select
+            id="personnel-role"
             {...register("role", { required: "Role is required" })}
-            className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.role ? 'border-error' : ''}`}
+            className={`select min-h-11 w-full bg-white border-slate-400 focus:border-primary rounded-md text-sm font-normal ${errors.role ? 'border-error' : ''}`}
           >
             <option value="">Select Role</option>
             <option value={ROLES.TEACHING}>Teaching Staff</option>
-            <option value={ROLES.ADMINISTRATIVE}>Administrative Staff</option>
+            <option value={ROLES.SUPERINTENDENT}>Superintendent</option>
             <option value={ROLES.PRINCIPAL}>School Principal</option>
             <option value={ROLES.NON_TEACHING}>Non-Teaching Staff</option>
             <option value={ROLES.HR}>HR Staff</option>
             <option value={ROLES.ACCOUNTANT}>Accountant</option>
           </select>
-          {errors.role && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.role.message}</span>}
+          {errors.role && <p className="text-sm text-error">{errors.role.message}</p>}
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Position</label>
+          <label htmlFor="personnel-position" className="text-sm font-medium text-slate-700">Position</label>
           <select
+            id="personnel-position"
             {...register("position", { required: "Position is required" })}
-            className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.position ? 'border-error' : ''}`}
+            className={`select min-h-11 w-full bg-white border-slate-400 focus:border-primary rounded-md text-sm font-normal ${errors.position ? 'border-error' : ''}`}
           >
             <option value="">Select Position</option>
             {filteredPositions.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
-          {errors.position && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.position.message}</span>}
+          {errors.position && <p className="text-sm text-error">{errors.position.message}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Area</label>
+          <label htmlFor="personnel-department" className="text-sm font-medium text-slate-700">Area</label>
           <select
+            id="personnel-department"
             {...register("department", { required: "Department is required" })}
-            className={`select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-[10px] font-black uppercase tracking-widest ${errors.department ? 'border-error' : ''}`}
+            className={`select min-h-11 w-full bg-white border-slate-400 focus:border-primary rounded-md text-sm font-normal ${errors.department ? 'border-error' : ''}`}
           >
             <option value="">Select Area</option>
             <option value="Instructional">Instructional</option>
@@ -121,31 +124,33 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
             <option value="Finance">Finance</option>
             <option value="Division Office">Division Office</option>
           </select>
-          {errors.department && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.department.message}</span>}
+          {errors.department && <p className="text-sm text-error">{errors.department.message}</p>}
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Workplace</label>
+          <label htmlFor="personnel-school" className="text-sm font-medium text-slate-700">Workplace</label>
           <select
+            id="personnel-school"
             {...register("school", { required: selectedRole === ROLES.PRINCIPAL ? 'Assign a school to the principal.' : false })}
-            className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
+            className="select min-h-11 w-full bg-white border-slate-400 focus:border-primary rounded-md text-sm font-normal"
           >
             <option value="">Select Workplace</option>
             {schools?.map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-          {errors.school && <span className="text-xs text-error">{errors.school.message}</span>}
+          {errors.school && <p className="text-sm text-error">{errors.school.message}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
-            Salary Grade {currentSGDetails && <span className="text-primary font-semibold ml-1">(SG {currentSGDetails.grade})</span>}
+          <label htmlFor="personnel-salary-grade" className="text-sm font-medium text-slate-700">
+            Salary grade {currentSGDetails && <span className="text-primary font-semibold ml-1">(SG {currentSGDetails.grade})</span>}
           </label>
           <select
+            id="personnel-salary-grade"
             {...register("salary_grade")}
-            className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
+            className="select min-h-11 w-full bg-white border-slate-400 focus:border-primary rounded-md text-sm font-normal"
           >
             <option value="">Select SG</option>
             {salaryGrades?.map(sg => (
@@ -154,30 +159,32 @@ const EmploymentFields = ({ schools, salaryGrades, register, setValue, watch, er
           </select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Monthly Salary</label>
+          <label htmlFor="personnel-salary" className="text-sm font-medium text-slate-700">Monthly salary</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-600">₱</span>
             <input
+              id="personnel-salary"
               {...register("salary", { required: "Salary is required" })}
               type="number"
               step="0.01"
               placeholder="0.00"
-              className={`input input-sm w-full pl-7 bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.salary ? 'border-error' : ''}`}
+              className={`input min-h-11 w-full pl-7 bg-white border-slate-400 focus:border-primary rounded-md text-sm font-normal ${errors.salary ? 'border-error' : ''}`}
             />
           </div>
-          {errors.salary && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.salary.message}</span>}
+          {errors.salary && <p className="text-sm text-error">{errors.salary.message}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Joined Date</label>
+          <label htmlFor="personnel-date-hired" className="text-sm font-medium text-slate-700">Joined date</label>
           <input
+            id="personnel-date-hired"
             {...register("date_hired", { required: "Date is required" })}
             type="date"
-            className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.date_hired ? 'border-error' : ''}`}
+            className={`input min-h-11 w-full bg-white border-slate-400 focus:border-primary rounded-md text-sm font-normal ${errors.date_hired ? 'border-error' : ''}`}
           />
-          {errors.date_hired && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.date_hired.message}</span>}
+          {errors.date_hired && <p className="text-sm text-error">{errors.date_hired.message}</p>}
         </div>
       </div>
     </div>

@@ -2,6 +2,8 @@
 from django.db import models
 # pyrefly: ignore [missing-import]
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import UserManager as DjangoUserManager
+from django.core.exceptions import ValidationError
 class Role(models.TextChoices):
     # Core System Roles
     HR = 'HR', 'HR Staff'
@@ -11,19 +13,39 @@ class Role(models.TextChoices):
     # Staff Categories
     TEACHING = 'TEACHING', 'Teaching Staff'
     NON_TEACHING = 'NON_TEACHING', 'Non-Teaching Staff'
-    ADMINISTRATIVE = 'ADMINISTRATIVE', 'Administrative Staff'
     PRINCIPAL = 'PRINCIPAL', 'School Principal'
 
 
-MANAGEMENT_ROLES = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT, Role.ADMINISTRATIVE]
+MANAGEMENT_ROLES = [Role.HR, Role.ACCOUNTANT, Role.SUPERINTENDENT]
+
+
+class UserManager(DjangoUserManager):
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('role', '')
+        return super().create_superuser(username, email, password, **extra_fields)
 
 
 class User(AbstractUser):
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
-        default=Role.TEACHING
+        default=Role.TEACHING,
+        blank=True,
     )
+    objects = UserManager()
+
+    class Meta(AbstractUser.Meta):
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(is_superuser=True) | ~models.Q(role=''),
+                name='staff_role_required',
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if not self.role and not self.is_superuser:
+            raise ValidationError({'role': 'A staff role is required for non-superusers.'})
 
     @property
     def is_management(self):

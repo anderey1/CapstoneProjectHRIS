@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
             loggedIn: true, 
             id: payload.user_id,
             employee_id: payload.employee_id,
-            role: payload.role || 'TEACHING',
+            role: payload.role ?? '',
             is_superuser: payload.is_superuser === true,
             username: payload.username || localStorage.getItem('username') 
           });
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('username', response.data.username);
 
     const payload = parseJwt(response.data.access);
-    const verifiedRole = payload?.role || response.data.role;
+    const verifiedRole = payload?.role ?? response.data.role;
     const verifiedUsername = payload?.username || response.data.username;
     const verifiedId = payload?.user_id || response.data.id;
     const verifiedEmployeeId = payload?.employee_id || response.data.employee_id;

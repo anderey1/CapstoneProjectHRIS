@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Award, Printer, Download, FileText, CheckCircle2 } from 'lucide-react';
 import { computeRPMSScore, getAdjectivalRating } from '../../../utils/performance';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 /**
  * Performance Details Modal (IPCRF Official Docket View)
@@ -17,13 +18,11 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
   const adjectival = getAdjectivalRating(finalScore);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="ipcrf-details-title"
-      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+    <AccessibleDialog
+      onClose={onClose}
+      labelledBy="ipcrf-details-title"
+      className="bg-white rounded-lg border border-slate-300 w-full max-w-2xl overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col"
     >
-      <div className="bg-white rounded-lg border border-slate-300 shadow-xl w-full max-w-2xl overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Institutional DepEd Header */}
         <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-4 flex shrink-0 items-start justify-between gap-3">
           <div className="space-y-1">
@@ -33,7 +32,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-[#0038A8] shrink-0" />
               <h2 id="ipcrf-details-title" className="text-base font-bold text-slate-900">
-                IPCRF Evaluation Summary
+                IPCRF evaluation summary
               </h2>
             </div>
             <p className="text-xs text-slate-600">
@@ -46,7 +45,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
             className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-slate-900 rounded-md focus-visible:outline-2 focus-visible:outline-primary"
             aria-label="Close dialog"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -57,7 +56,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div>
                 <span className="text-xs uppercase font-bold text-slate-500 tracking-wider block">
-                  Employee Evaluated
+                  Ratee Personnel
                 </span>
                 <span className="text-sm font-bold text-slate-900 block mt-0.5">
                   {review.employee_name || 'Plantilla Employee'}
@@ -269,8 +268,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
             Print Evaluation
           </button>
         </div>
-      </div>
-    </div>
+    </AccessibleDialog>
   );
 };
 

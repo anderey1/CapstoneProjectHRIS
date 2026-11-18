@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import SidebarContent from './SidebarContent';
 import Navbar from './Navbar';
 import MobileBottomNav from './MobileBottomNav';
+import AccessibleDialog from './common/AccessibleDialog';
 
 /**
  * MainLayout Component
@@ -14,6 +15,17 @@ import MobileBottomNav from './MobileBottomNav';
  */
 const MainLayout = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)');
+    const update = () => {
+      setIsDesktop(media.matches);
+      setIsDrawerOpen(false);
+    };
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       return localStorage.getItem('sidebar-collapsed') === 'true';
@@ -36,23 +48,17 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="drawer lg:drawer-open min-h-dvh max-w-full">
-      <input
-        id="main-drawer"
-        type="checkbox"
-        className="drawer-toggle"
-        checked={isDrawerOpen}
-        onChange={toggleDrawer}
-      />
+    <div className="flex min-h-dvh max-w-full">
 
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-white focus:p-3 focus:text-primary focus:outline-2">Skip to main content</a>
 
       {/* Page Content */}
-      <div className="drawer-content flex flex-col min-h-screen bg-base-200/50 min-w-0 max-w-full overflow-x-clip">
+      <div className="flex flex-1 flex-col min-h-screen bg-base-200/50 min-w-0 max-w-full overflow-x-clip">
         <Navbar 
           toggleDrawer={toggleDrawer} 
           toggleCollapse={toggleCollapse} 
           isCollapsed={isCollapsed} 
+          isDrawerOpen={isDrawerOpen}
         />
 
         <main id="main-content" tabIndex={-1} className="flex-1 overflow-x-hidden overflow-y-auto pb-24 lg:pb-0">
@@ -64,7 +70,7 @@ const MainLayout = () => {
         </main>
 
         {/* Mobile-only Bottom Navigation Bar */}
-        <MobileBottomNav toggleDrawer={toggleDrawer} />
+        <MobileBottomNav toggleDrawer={toggleDrawer} isDrawerOpen={isDrawerOpen} />
 
         {/* Simple Mobile Footer Branding */}
         <footer className="p-4 text-center text-xs text-slate-400 lg:hidden mb-16">
@@ -73,14 +79,24 @@ const MainLayout = () => {
       </div>
 
       {/* Sidebar / Drawer Side */}
-      <div className="drawer-side z-[60] overflow-x-hidden">
-        <label htmlFor="main-drawer" className="drawer-overlay" aria-label="close sidebar"></label>
+      {isDesktop ? <div className="order-first sticky top-0 h-dvh shrink-0">
         <SidebarContent 
           closeDrawer={closeDrawer} 
           isCollapsed={isCollapsed}
           toggleCollapse={toggleCollapse}
         />
-      </div>
+      </div> : (
+        <AccessibleDialog
+          open={isDrawerOpen}
+          onClose={closeDrawer}
+          labelledBy="mobile-navigation-title"
+          dialogClassName="navigation-dialog"
+          className="h-dvh"
+        >
+          <h2 id="mobile-navigation-title" className="sr-only">Main navigation</h2>
+          <SidebarContent closeDrawer={closeDrawer} isCollapsed={false} />
+        </AccessibleDialog>
+      )}
     </div>
   );
 };

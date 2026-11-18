@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import ApplicantScoringMatrix from './ApplicantScoringMatrix';
 import { RECRUITMENT_COLUMNS } from './RecruitmentTable';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 const formatDocType = (type) => {
   const mapping = {
@@ -50,10 +51,13 @@ const ApplicantDetailModal = ({
   isChangingStatus,
 }) => {
   if (!applicant) return null;
+  const isProcessing = isSavingScores || isChangingStatus;
+  const closeModal = () => {
+    if (!isProcessing) onClose();
+  };
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box rounded-lg max-w-4xl p-0 overflow-hidden shadow-lg border border-slate-200 bg-white h-[85vh] flex flex-col">
+    <AccessibleDialog onClose={closeModal} labelledBy="applicant-detail-title" className="rounded-lg w-full max-w-4xl p-0 overflow-hidden border border-slate-200 bg-white h-[85vh] max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Header */}
         <div className="bg-base-50/50 border-b border-base-200 p-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
@@ -62,7 +66,7 @@ const ApplicantDetailModal = ({
               {applicant.last_name[0]}
             </div>
             <div>
-              <h3 className="font-semibold text-2xl text-base-content tracking-tight leading-none">
+              <h3 id="applicant-detail-title" className="font-semibold text-2xl text-base-content tracking-tight leading-none">
                 {applicant.first_name}{' '}
                 {applicant.middle_name ? applicant.middle_name + ' ' : ''}
                 {applicant.last_name}
@@ -74,10 +78,12 @@ const ApplicantDetailModal = ({
           </div>
           <button
             type="button"
-            onClick={onClose}
-            className="btn btn-ghost btn-sm btn-circle opacity-30 hover:opacity-100"
+            onClick={closeModal}
+            disabled={isProcessing}
+            aria-label="Close applicant details"
+            className="btn btn-ghost btn-circle min-h-11 min-w-11 shrink-0 text-slate-600 hover:text-slate-900"
           >
-            <XCircle className="w-6 h-6" />
+            <XCircle className="w-6 h-6" aria-hidden="true" />
           </button>
         </div>
 
@@ -216,7 +222,7 @@ const ApplicantDetailModal = ({
               </section>
 
               {/* Status Change Section */}
-              <section className="bg-white border-2 border-primary/20 rounded-2xl p-8 space-y-6 shadow-xl shadow-primary/5">
+              <section className="bg-white border-2 border-primary/20 rounded-2xl p-8 space-y-6">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-semibold tracking-wide text-primary flex items-center gap-2">
                     Update Application Status
@@ -228,7 +234,7 @@ const ApplicantDetailModal = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
+                    <label htmlFor="status-select" className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
                       New Stage
                     </label>
                     <select
@@ -245,10 +251,11 @@ const ApplicantDetailModal = ({
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
+                    <label htmlFor="applicant-status-note" className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">
                       Internal Remarks
                     </label>
                     <textarea
+                      id="applicant-status-note"
                       className="textarea textarea-bordered w-full bg-base-50 border-base-200 rounded-lg text-xs font-medium h-12"
                       placeholder="Add reason for status change..."
                       value={statusNote}
@@ -260,7 +267,7 @@ const ApplicantDetailModal = ({
                 <div className="flex gap-4">
                   <button
                     type="button"
-                    className="btn btn-primary btn-block rounded-xl font-semibold uppercase tracking-wide text-xs h-14 shadow-lg shadow-primary/20"
+                    className="btn btn-primary btn-block rounded-xl font-semibold uppercase tracking-wide text-xs h-14"
                     onClick={() => {
                       const select = document.getElementById('status-select');
                       onChangeStatus({
@@ -283,12 +290,7 @@ const ApplicantDetailModal = ({
             </div>
           </div>
         </div>
-      </div>
-      <div
-        className="modal-backdrop bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
-    </div>
+    </AccessibleDialog>
   );
 };
 

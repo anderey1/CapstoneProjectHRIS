@@ -139,7 +139,6 @@ const Employees = () => {
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Teaching Personnel</p>
           <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{teachingCount}</p>
-          <p className="text-xs text-slate-500 mt-0.5">Instructional cadre</p>
         </div>
         {!isPrincipal && <><div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Non-Teaching Staff</p>

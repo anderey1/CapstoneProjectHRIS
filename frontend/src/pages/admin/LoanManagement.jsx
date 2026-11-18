@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import { useLoans, SubsidiaryLedger } from '../../features/loans';
 import Pagination from '../../components/common/Pagination';
+import AccessibleDialog from '../../components/common/AccessibleDialog';
 
 const PURPOSE_LABELS = {
   general: 'General Purpose',
@@ -73,6 +74,10 @@ const LoanManagement = () => {
     isRejecting,
   } = useLoans(selectedLoan?.id, { search: searchTerm, status: activeTab === 'released' ? 'released,paid' : activeTab });
   const counts = summary.statuses || {};
+  const isProcessing = isVerifying || isApproving || isDisbursing || isRejecting;
+  const closeReview = () => {
+    if (!isProcessing) setSelectedLoan(null);
+  };
 
   if (isLoading) {
     return (
@@ -339,15 +344,14 @@ const LoanManagement = () => {
 
       {/* ===== REVIEW & AUDIT MODAL (INSTITUTIONAL REDESIGN) ===== */}
       {selectedLoan && (
-        <div className="modal modal-open">
-          <div className="modal-box rounded-lg max-w-3xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white max-h-[92vh] flex flex-col">
+        <AccessibleDialog onClose={closeReview} labelledBy="loan-review-title" className="rounded-lg w-full max-w-3xl p-0 overflow-hidden border border-slate-300 bg-white max-h-[calc(100dvh-2rem)] flex flex-col">
             {/* Clean Institutional Header */}
             <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                  <h2 id="loan-review-title" className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                     Provident Fund Loan Review
-                  </span>
+                  </h2>
                   <span className="font-mono text-xs text-slate-500 font-bold">
                     [Ref #PF-{selectedLoan.id.toString().padStart(4, '0')}]
                   </span>
@@ -359,10 +363,12 @@ const LoanManagement = () => {
 
               <button
                 type="button"
-                onClick={() => setSelectedLoan(null)}
-                className="btn btn-ghost btn-xs btn-circle text-slate-500 hover:bg-slate-200"
+                onClick={closeReview}
+                disabled={isProcessing}
+                aria-label="Close loan review"
+                className="btn btn-ghost btn-circle min-h-11 min-w-11 shrink-0 text-slate-500 hover:bg-slate-200"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -532,10 +538,11 @@ const LoanManagement = () => {
 
                           {/* Reject Drawer */}
                           <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
-                            <label className="text-xs font-semibold text-slate-700 block">
+                            <label htmlFor="loan-reject-remarks" className="text-xs font-semibold text-slate-700 block">
                               Disapprove / Return Application (Specify COA audit justification):
                             </label>
                             <textarea
+                              id="loan-reject-remarks"
                               value={rejectRemarks}
                               onChange={(e) => setRejectRemarks(e.target.value)}
                               placeholder="Reason for returning files or disapproving loan..."
@@ -573,7 +580,9 @@ const LoanManagement = () => {
                       {canApprove ? (
                         <div className="space-y-3">
                           <div className="space-y-2">
+                            <label htmlFor="loan-approve-remarks" className="text-xs font-semibold text-slate-700 block">Endorsement remarks (optional)</label>
                             <input
+                              id="loan-approve-remarks"
                               type="text"
                               value={approveRemarks}
                               onChange={(e) => setApproveRemarks(e.target.value)}
@@ -595,7 +604,9 @@ const LoanManagement = () => {
                           </div>
 
                           <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
+                            <label htmlFor="loan-executive-reject-remarks" className="text-xs font-semibold text-slate-700 block">Reason for disapproval</label>
                             <textarea
+                              id="loan-executive-reject-remarks"
                               value={rejectRemarks}
                               onChange={(e) => setRejectRemarks(e.target.value)}
                               placeholder="Reason for disapproval..."
@@ -657,9 +668,7 @@ const LoanManagement = () => {
                 </>
               )}
             </div>
-          </div>
-          <div className="modal-backdrop bg-black/40" onClick={() => setSelectedLoan(null)}></div>
-        </div>
+        </AccessibleDialog>
       )}
     </div>
   );

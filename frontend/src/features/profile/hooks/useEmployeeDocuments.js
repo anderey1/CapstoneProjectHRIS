@@ -16,7 +16,7 @@ export function useEmployeeDocuments(employeeId) {
 
   const queryKey = [QUERY_KEYS.EMPLOYEE_DOCUMENTS, employeeId];
 
-  const { data: documents = [] } = useQuery({
+  const { data: documents = [], isLoading, isError, refetch } = useQuery({
     queryKey,
     queryFn: ({ signal }) => fetchAllPages('employee-documents/', { employee: employeeId }, signal),
     enabled: !!employeeId,
@@ -71,6 +71,9 @@ export function useEmployeeDocuments(employeeId) {
 
   return {
     documents,
+    isLoading,
+    isError,
+    refetch,
     uploadDocument: uploadMutation.mutateAsync,
     isUploading: uploadMutation.isPending,
     deleteDocument: deleteMutation.mutateAsync,
@@ -89,14 +92,14 @@ export function mapDocumentsToChecklist(documents) {
   documents.forEach((doc) => {
     byType[doc.document_type] = {
       id: doc.id,
-      fileName: doc.file_name || `${doc.document_type}.pdf`,
+      fileName: doc.file_name || doc.file?.split('/').pop() || doc.document_type,
       uploadDate: new Date(doc.uploaded_at).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       }),
       verified: doc.verified,
-      fileData: doc.file_url,
+      fileData: doc.file_url || doc.file,
     };
   });
   return byType;

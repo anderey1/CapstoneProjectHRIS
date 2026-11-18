@@ -6,7 +6,7 @@ test('a missing analytics endpoint stops loading and allows a manual retry', asy
     localStorage.setItem('access_token', `test.${payload}.test`);
   });
   let requests = 0;
-  await page.route('**/api/**', async route => {
+  await page.route(url => url.pathname.startsWith('/api/'), async route => {
     if (new URL(route.request().url()).pathname === '/api/dashboard/operations/') {
       requests += 1;
       return route.fulfill({ status: 404, json: { detail: 'Not found.' } });

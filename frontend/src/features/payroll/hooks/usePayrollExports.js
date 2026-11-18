@@ -21,7 +21,7 @@ export function usePayrollExports(selectedCutoff) {
       link.remove();
       toast.success('Downloaded General Payroll PDF');
     } catch {
-      toast.error('No payroll records found for this period to generate sheet.');
+      toast.error('Unable to download the payroll sheet. Check your connection and access, then retry.');
     }
   };
 
@@ -41,7 +41,7 @@ export function usePayrollExports(selectedCutoff) {
       link.remove();
       toast.success('Downloaded Disbursement Voucher PDF');
     } catch {
-      toast.error('No payroll records found for this period to generate DV.');
+      toast.error('Unable to download the disbursement voucher. Check your connection and access, then retry.');
     }
   };
 

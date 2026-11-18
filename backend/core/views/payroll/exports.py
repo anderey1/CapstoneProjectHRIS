@@ -2,12 +2,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from ...models import Payroll, Role
-from ...permissions import IsAdminOrHR, IsAccountant, IsSuperintendent
+from ...permissions import IsHR, IsAccountant, IsSuperintendent
 from ...utils.pdf_generator import generate_general_payroll_pdf, generate_disbursement_voucher_pdf
 
 
 class PayrollExportActions:
-    @action(detail=False, methods=['GET'], permission_classes=[IsAccountant | IsSuperintendent | IsAdminOrHR], url_path='export_payroll_sheet')
+    @action(detail=False, methods=['GET'], permission_classes=[IsAccountant | IsSuperintendent | IsHR], url_path='export_payroll_sheet')
     def export_payroll_sheet(self, request):
         cutoff = request.query_params.get('cutoff_period') or request.query_params.get('cutoff')
         if not cutoff:
@@ -24,7 +24,7 @@ class PayrollExportActions:
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
 
-    @action(detail=False, methods=['GET'], permission_classes=[IsAccountant | IsSuperintendent | IsAdminOrHR], url_path='export_disbursement_voucher')
+    @action(detail=False, methods=['GET'], permission_classes=[IsAccountant | IsSuperintendent | IsHR], url_path='export_disbursement_voucher')
     def export_disbursement_voucher(self, request):
         cutoff = request.query_params.get('cutoff_period') or request.query_params.get('cutoff')
         if not cutoff:

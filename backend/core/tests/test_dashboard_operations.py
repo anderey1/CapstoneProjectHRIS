@@ -45,7 +45,7 @@ def test_workforce_includes_management_roles(hr_user, teacher_employee):
     Employee.objects.create(user=hr_user, first_name='HR', last_name='Officer', salary=Decimal('27000'))
     chart = next(c for c in operational_dashboard(hr_user)['charts'] if c['key'] == 'workforce')
     assert chart['total'] == 3  # Teacher fixture also creates its principal.
-    assert {row['name'] for row in chart['data']} == {'Teaching Staff', 'Administrative Staff', 'HR Staff'}
+    assert {row['name'] for row in chart['data']} == {'Teaching Staff', 'School Principal', 'HR Staff'}
 
 
 def test_payroll_chart_only_uses_released_records_and_sums_net_pay(hr_user, teacher_employee):

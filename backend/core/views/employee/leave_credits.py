@@ -1,11 +1,11 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from ...models import Employee, Role, AuditLog
-from ...permissions import IsAdminOrHRorSuperintendent
+from ...permissions import IsHROrSuperintendent
 
 
 class EmployeeLeaveCreditActions:
-    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
+    @action(detail=False, methods=['POST'], permission_classes=[IsHROrSuperintendent])
     def award_yearly_credits(self, request):
         from decimal import Decimal
         from django.db.models import F
@@ -13,7 +13,7 @@ class EmployeeLeaveCreditActions:
         # In DepEd, only non-teaching/administrative personnel accrue 15/15 VL/SL
         # Teaching personnel earn Service Credits/PVP during summer vacation
         non_teaching = Employee.objects.filter(
-            user__role__in=[Role.NON_TEACHING, Role.ADMINISTRATIVE, Role.PRINCIPAL, Role.HR, Role.ACCOUNTANT]
+            user__role__in=[Role.NON_TEACHING, Role.PRINCIPAL, Role.HR, Role.ACCOUNTANT]
         )
         count = non_teaching.count()
         non_teaching.update(

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Key } from 'lucide-react';
@@ -7,8 +7,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { 
   TABS, 
-  REQUIRED_DOCS_LIST, 
-  GOVERNMENT_IDS_LIST,
   ProfileHeader,
   PersonalInfoTab,
   FamilyBackgroundTab,
@@ -23,7 +21,6 @@ import {
   loadProfilePhoto,
   saveProfilePhoto,
   loadProfileIDs,
-  saveProfileIDs,
   useEmployeeDocuments,
   mapDocumentsToChecklist,
 } from '../../features/profile';
@@ -51,7 +48,7 @@ const Profile = () => {
   
   // Profile photo stays local: the Employee record has no photo field to save it to.
   const [profilePhoto, setProfilePhoto] = useState(null);
-  const [simulatedIDs, setSimulatedIDs] = useState({});
+  const [localIDs, setLocalIDs] = useState({});
   const [activeDocUpload, setActiveDocUpload] = useState(null);
   const [activeIDUpload, setActiveIDUpload] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
@@ -69,7 +66,7 @@ const Profile = () => {
   const [isChangingPw, setIsChangingPw] = useState(false);
 
   // Fetch current user / employee details
-  const { data: me, isLoading } = useQuery({
+  const { data: me, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: id ? ['employee', id] : ['me'],
     queryFn: () => {
       const endpoint = id ? `employees/${id}/` : 'employees/me/';
@@ -90,6 +87,12 @@ const Profile = () => {
     uploadDocument,
     deleteDocument,
     verifyDocument,
+    isLoading: documentsLoading,
+    isError: documentsError,
+    refetch: refetchDocuments,
+    isUploading,
+    isDeleting,
+    isVerifying,
   } = useEmployeeDocuments(targetEmployeeId);
 
   const docsMap = useMemo(() => mapDocumentsToChecklist(documents), [documents]);
@@ -103,22 +106,22 @@ const Profile = () => {
     : TABS;
 
   // Check user role and permissions strictly from authenticated session
-  const currentUserRole = user?.role || localStorage.getItem('user_role') || 'TEACHING';
+  const currentUserRole = user?.role ?? '';
   const isHrOrSuperintendent = currentUserRole === 'HR' || currentUserRole === 'SUPERINTENDENT';
-  const isAdmin = isHrOrSuperintendent || currentUserRole === 'ADMINISTRATIVE';
+  const isAdmin = isHrOrSuperintendent || Boolean(user?.is_superuser);
 
   // Personal PDS editing, photo changes, and digital signature upload are STRICTLY limited to the account owner
   const canEditProfile = isOwnProfile;
   const canChangePhoto = isOwnProfile;
   const canUploadSignature = isOwnProfile;
-  const canVerifyDocs = isHrOrSuperintendent || currentUserRole === 'ADMINISTRATIVE';
+  const canVerifyDocs = isAdmin;
 
-  // Synchronize local storage photo and simulated IDs when employee id changes
+  // Keep legacy browser attachments available without treating them as server records.
   const [syncedEmployeeId, setSyncedEmployeeId] = useState(null);
   if (me?.id && syncedEmployeeId !== me.id) {
     setSyncedEmployeeId(me.id);
     setProfilePhoto(loadProfilePhoto(me.id));
-    setSimulatedIDs(loadProfileIDs(me));
+    setLocalIDs(loadProfileIDs(me));
   }
 
   // Update profile mutation
@@ -215,7 +218,7 @@ const Profile = () => {
       const base64 = reader.result;
       setProfilePhoto(base64);
       saveProfilePhoto(me.id, base64);
-      toast.success('Profile photo updated!');
+      toast.success('Profile photo saved in this browser only.');
     };
     reader.readAsDataURL(file);
   };
@@ -225,10 +228,14 @@ const Profile = () => {
     const file = e.target.files[0];
     if (!file || !activeDocUpload) return;
 
-    await uploadDocument({ file, documentType: activeDocUpload });
-
-    setActiveDocUpload(null);
-    if (docInputRef.current) docInputRef.current.value = '';
+    try {
+      await uploadDocument({ file, documentType: activeDocUpload });
+    } catch {
+      // The document hook reports the server error.
+    } finally {
+      setActiveDocUpload(null);
+      if (docInputRef.current) docInputRef.current.value = '';
+    }
   };
 
   const triggerDocUpload = (docKey) => {
@@ -239,22 +246,18 @@ const Profile = () => {
   const handleDeleteDoc = (docKey) => {
     const docItem = docsMap[docKey];
     if (!docItem) return;
-    deleteDocument(docItem.id);
+    deleteDocument(docItem.id).catch(() => {});
   };
 
   const handleVerifyDoc = (docKey, newVerifiedStatus) => {
     const docItem = docsMap[docKey];
     if (!docItem) return;
-    verifyDocument({ docId: docItem.id, verified: newVerifiedStatus });
+    verifyDocument({ docId: docItem.id, verified: newVerifiedStatus }).catch(() => {});
   };
 
   const handlePreviewDoc = (doc) => {
     const fileInfo = docsMap[doc.key];
     if (!fileInfo) return;
-    if (fileInfo.fileData?.startsWith('http')) {
-      window.open(fileInfo.fileData, '_blank');
-      return;
-    }
     setPreviewFile({
       title: doc.name,
       fileName: fileInfo.fileName,
@@ -262,28 +265,18 @@ const Profile = () => {
     });
   };
 
-  // Verified IDs simulation handlers
-  const handleIDFileSelect = (e) => {
+  // ID scans use the same persisted employee-document contract as checklist files.
+  const handleIDFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file || !activeIDUpload || !me?.id) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const updated = {
-        ...simulatedIDs,
-        [activeIDUpload]: {
-          uploaded: true,
-          fileName: file.name,
-          uploadDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          data: reader.result,
-          verified: false
-        }
-      };
-      setSimulatedIDs(updated);
-      saveProfileIDs(me.id, updated);
+    try {
+      await uploadDocument({ file, documentType: activeIDUpload });
+    } catch {
+      // The document hook reports the server error.
+    } finally {
       setActiveIDUpload(null);
-      toast.success('ID attachment uploaded successfully!');
-    };
-    reader.readAsDataURL(file);
+      if (idFileInputRef.current) idFileInputRef.current.value = '';
+    }
   };
 
   const triggerIDUpload = (idKey) => {
@@ -291,35 +284,13 @@ const Profile = () => {
     idFileInputRef.current?.click();
   };
 
-  const handleDeleteID = (idKey) => {
-    if (!me?.id) return;
-    const updated = { ...simulatedIDs };
-    delete updated[idKey];
-    setSimulatedIDs(updated);
-    saveProfileIDs(me.id, updated);
-    toast.info('ID attachment removed.');
-  };
-
-  const handleVerifyID = (idKey) => {
-    if (!me?.id) return;
-    const current = simulatedIDs[idKey];
-    if (!current) return;
-    const updated = {
-      ...simulatedIDs,
-      [idKey]: { ...current, verified: !current.verified }
-    };
-    setSimulatedIDs(updated);
-    saveProfileIDs(me.id, updated);
-    toast.success(updated[idKey].verified ? 'ID verified!' : 'ID unverified.');
-  };
-
-  const handlePreviewIDCard = (idKey, item) => {
-    const currentSim = simulatedIDs[idKey];
+  const handlePreviewIDCard = (item, local = false) => {
+    const attachment = local ? localIDs[item.id] : docsMap[item.id];
     setPreviewFile({
       title: item.label,
-      number: me?.[idKey],
-      fileName: currentSim?.fileName || `${item.id}_card.png`,
-      data: currentSim?.data || 'MOCK_CARD'
+      fileName: attachment?.fileName,
+      data: local ? attachment?.data : attachment?.fileData,
+      local,
     });
   };
 
@@ -365,20 +336,31 @@ const Profile = () => {
   };
 
   const completion = getProfileCompletion();
-  const workstation = me?.school_details || {
-    name: 'DepEd Division Office of Lucena City',
-    latitude: 13.9374,
-    longitude: 121.6171
-  };
-  const pos = {
-    lat: workstation?.latitude ? Number(workstation.latitude) : 13.9374,
-    lng: workstation?.longitude ? Number(workstation.longitude) : 121.6171
-  };
+  const workstation = me?.school_details;
+  const latitude = workstation?.latitude;
+  const longitude = workstation?.longitude;
+  const hasCoordinates = [latitude, longitude].every(value =>
+    value !== null && value !== undefined && String(value).trim() !== '' && Number.isFinite(Number(value)),
+  ) && Math.abs(Number(latitude)) <= 90 && Math.abs(Number(longitude)) <= 180;
+  const pos = hasCoordinates ? { lat: Number(latitude), lng: Number(longitude) } : null;
 
   if (isLoading) {
     return (
-      <div className="p-8 flex justify-center h-[60vh] items-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+      <div role="status" className="p-8 flex justify-center gap-3 h-[60vh] items-center text-sm text-slate-600">
+        <span aria-hidden="true" className="loading loading-spinner loading-lg text-primary"></span>
+        Loading employee profile…
+      </div>
+    );
+  }
+
+  if (isError || !me) {
+    return (
+      <div className="p-6 space-y-4" role="alert">
+        <h1 className="text-lg font-semibold text-slate-900">Profile unavailable</h1>
+        <p className="text-sm text-slate-700">Unable to load this employee profile. Check your connection or access permissions.</p>
+        <button type="button" onClick={() => refetch()} disabled={isFetching} className="btn min-h-11 bg-[#0038A8] text-white">
+          {isFetching ? 'Retrying...' : 'Retry'}
+        </button>
       </div>
     );
   }
@@ -411,7 +393,7 @@ const Profile = () => {
         type="file" 
         ref={idFileInputRef}
         onChange={handleIDFileSelect}
-        accept="image/*"
+        accept="image/*,.pdf"
         className="hidden"
       />
 
@@ -447,7 +429,7 @@ const Profile = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold shrink-0 whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-2 min-h-11 px-3 py-2 rounded-md text-sm font-semibold shrink-0 whitespace-nowrap transition-colors ${
                     isSelected 
                       ? 'bg-[#0038A8] text-white shadow-sm' 
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -461,7 +443,16 @@ const Profile = () => {
           </div>
 
           {/* Active Tab Panel */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 md:p-6 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-lg p-5 md:p-6 shadow-sm [&_button]:min-h-11 [&_button]:min-w-11">
+            {(activeTab === 'ids' || activeTab === 'documents') && documentsLoading && (
+              <p role="status" className="text-sm text-slate-700">Loading attachments...</p>
+            )}
+            {(activeTab === 'ids' || activeTab === 'documents') && documentsError && (
+              <div role="alert" className="mb-4 space-y-2 text-sm text-slate-700">
+                <p>Unable to load saved attachments. Attachment changes are unavailable until loading succeeds.</p>
+                <button type="button" onClick={() => refetchDocuments()} className="btn min-h-11">Retry attachments</button>
+              </div>
+            )}
             {activeTab === 'personal' && (
               <PersonalInfoTab 
                 me={me}
@@ -569,23 +560,26 @@ const Profile = () => {
             {activeTab === 'ids' && (
               <VerifiedIDsTab 
                 me={me}
-                simulatedIDs={simulatedIDs}
-                isAdmin={isAdmin}
-                canEdit={canEditProfile}
-                canVerify={canVerifyDocs}
+                documents={docsMap}
+                localIDs={localIDs}
+                canEdit={canEditProfile && !documentsLoading && !documentsError}
+                canVerify={canVerifyDocs && !documentsLoading && !documentsError}
+                busy={isUploading || isDeleting || isVerifying}
+                unavailable={documentsLoading || documentsError}
                 onPreview={handlePreviewIDCard}
                 onTriggerUpload={triggerIDUpload}
-                onDelete={handleDeleteID}
-                onVerify={handleVerifyID}
+                onDelete={handleDeleteDoc}
+                onVerify={handleVerifyDoc}
               />
             )}
 
             {activeTab === 'documents' && (
               <DocumentChecklistTab 
                 documents={docsMap}
-                isAdmin={isAdmin}
-                canEdit={canEditProfile}
-                canVerify={canVerifyDocs}
+                canEdit={canEditProfile && !documentsLoading && !documentsError}
+                canVerify={canVerifyDocs && !documentsLoading && !documentsError}
+                busy={isUploading || isDeleting || isVerifying}
+                unavailable={documentsLoading || documentsError}
                 onPreview={handlePreviewDoc}
                 onTriggerUpload={triggerDocUpload}
                 onDelete={handleDeleteDoc}
@@ -597,7 +591,7 @@ const Profile = () => {
               <div className="space-y-6 animate-in fade-in duration-[180ms]">
                 <div className="border-b border-slate-200 pb-4">
                   <h3 className="text-base font-bold text-slate-900">Security & Account Settings</h3>
-                  <p className="text-xs text-slate-500 mt-1">Manage your portal password and login security credentials.</p>
+                  <p className="text-xs text-slate-500 mt-1">Change your password.</p>
                 </div>
 
                 <form onSubmit={handlePasswordChange} className="max-w-md space-y-4">
@@ -691,7 +685,6 @@ const Profile = () => {
       <DocumentPreviewModal 
         previewFile={previewFile}
         onClose={() => setPreviewFile(null)}
-        me={me}
       />
     </div>
   );

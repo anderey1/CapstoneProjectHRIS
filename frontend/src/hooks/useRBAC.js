@@ -37,7 +37,7 @@ export function useRBAC() {
     isSuperuser,
     // Role Checks
     isManagement: hasAnyRole(user, ROLE_GROUPS.MANAGEMENT),
-    isAdmin: role === ROLES.ADMINISTRATIVE,
+    isAdmin: isSuperuser,
     isPrincipal: role === ROLES.PRINCIPAL,
     isHR: role === ROLES.HR,
     isSuperintendent: role === ROLES.SUPERINTENDENT,
@@ -48,7 +48,7 @@ export function useRBAC() {
     can,
     hasRole,
     // Helpers
-    roleLabel: getRoleLabel(role),
+    roleLabel: isSuperuser ? 'System Administrator' : getRoleLabel(role),
     roleBadgeClass: ROLE_BADGE_STYLES[role] || 'bg-slate-100 text-slate-700 border-slate-200',
   };
 }

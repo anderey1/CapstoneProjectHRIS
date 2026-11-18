@@ -1,89 +1,326 @@
-import { useId } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { ArrowRight, RefreshCw, Sparkles } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { useIsFetching, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  RefreshCw,
+  LayoutDashboard,
+  ShieldCheck,
+  AlertCircle,
+  MapPin,
+  Award,
+  CalendarCheck,
+} from 'lucide-react';
 import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import { useAuth } from '../../context/AuthContext';
+import { ROLE_BADGE_STYLES, ROLE_LABELS } from '../../utils/rbac';
+import DashboardChart from './DashboardChart';
+import DashboardKpis from './DashboardKpis';
+import DashboardWorkQueue from './DashboardWorkQueue';
+import { dashboardTitle, kpiCharts, orderedCharts } from './dashboardConfig';
 
-const COLORS = ['#0038a8', '#0a225c', '#15803d', '#b45309', '#475569', '#0284c7'];
-const valueLabel = (value, unit) => unit === 'PHP'
-  ? new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(Number(value))
-  : Number(value).toLocaleString();
-
-function Chart({ chart }) {
-  const max = Math.max(...chart.data.map(item => Number(item.value)), 1);
-  if (!chart.data.length || (!Number(chart.total) && chart.unit !== 'PHP')) return <div className="flex min-h-40 items-center justify-center rounded bg-slate-50 p-6 text-sm text-slate-600">No records available for this view.</div>;
-  if (chart.key === 'payroll') return <div className="h-64 min-w-0" role="img" aria-label={chart.insight}>
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={chart.data.map(item => ({ ...item, value: Number(item.value) }))} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
-        <CartesianGrid vertical={false} stroke="#e2e8f0" />
-        <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} />
-        <YAxis width={65} tick={{ fontSize: 12 }} tickLine={false} tickFormatter={value => `${Number(value / 1000).toLocaleString()}k`} />
-        <Tooltip formatter={value => [valueLabel(value, 'PHP'), 'Released net pay']} />
-        <Line dataKey="value" name="Released net pay" stroke={COLORS[0]} strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>;
-  if (chart.key === 'workforce') return <div className="flex flex-col items-center gap-4 sm:flex-row">
-    <div className="h-52 w-52 shrink-0" role="img" aria-label={chart.insight}>
-      <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={chart.data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2} isAnimationActive={false}>{chart.data.map((item, i) => <Cell key={item.name} fill={COLORS[i % COLORS.length]} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer>
-    </div>
-    <ul className="w-full space-y-3 text-sm">{chart.data.map((item, i) => <li key={item.name} className="flex items-start justify-between gap-3"><span className="flex items-start gap-2 text-slate-600"><span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />{item.name}</span><strong className="tabular-nums text-slate-900">{valueLabel(item.value, chart.unit)}</strong></li>)}</ul>
-  </div>;
-  return <ul className="space-y-4" aria-label={`${chart.title}, ${chart.unit}`}>
-    {chart.data.map((item, i) => <li key={item.name}>
-      <div className="mb-1.5 flex items-start justify-between gap-4 text-sm"><span className="text-slate-700">{item.name}</span><span className="shrink-0 font-semibold tabular-nums text-slate-900">{valueLabel(item.value, chart.unit)}</span></div>
-      <div aria-hidden="true" className="h-2.5 overflow-hidden rounded-sm bg-slate-100"><div className="h-full rounded-sm" style={{ width: `${Number(item.value) / max * 100}%`, backgroundColor: COLORS[i % COLORS.length] }} /></div>
-    </li>)}
-  </ul>;
-}
-
-function AnalyticsCard({ chart, userId }) {
-  const titleId = useId();
-  const summary = useQuery({
-    queryKey: [QUERY_KEYS.DASHBOARD_INSIGHT, userId, chart.key, chart.data],
-    queryFn: ({ signal }) => api.get(`dashboard/operations/insight/${chart.key}/`, { signal }).then(response => response.data),
-    enabled: false, retry: false, staleTime: 900000,
-  });
-  return <section aria-labelledby={titleId} className="flex min-w-0 flex-col rounded-lg border border-slate-200 bg-white p-5 sm:p-6">
-    <header className="mb-5 flex items-start justify-between gap-3">
-      <div><h2 id={titleId} className="text-base font-semibold text-slate-900">{chart.title}</h2><p className="mt-1 text-xs text-slate-600">{chart.period}</p></div>
-      <span className="shrink-0 text-xs text-slate-600">{chart.unit === 'PHP' ? 'PHP' : chart.unit}</span>
-    </header>
-    <Chart chart={chart} />
-    {chart.key === 'payroll' && chart.data.length > 0 && <details className="mt-3 text-sm text-slate-600"><summary className="cursor-pointer py-2 font-medium text-[#0038a8]">View monthly figures</summary><ul className="space-y-2 py-2">{chart.data.map(item => <li key={item.name} className="flex justify-between gap-3"><span>{item.name}</span><span className="tabular-nums">{valueLabel(item.value, chart.unit)}</span></li>)}</ul></details>}
-    <div className="mt-5 border-t border-slate-200 pt-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">What this shows</h3>
-      <p className="mt-2 text-sm leading-relaxed text-slate-900">{chart.insight}</p>
-      <p className="mt-2 text-xs leading-relaxed text-slate-600">{chart.note}</p>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4">
-        <Link to={chart.path} className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#0038a8] underline-offset-4 hover:underline focus-visible:outline-2">{chart.action}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-        <button type="button" onClick={() => summary.refetch()} disabled={summary.isFetching} className="inline-flex min-h-11 items-center gap-2 text-sm text-slate-600 hover:text-[#0038a8] focus-visible:outline-2 disabled:opacity-60"><Sparkles className="h-4 w-4" aria-hidden="true" />{summary.isFetching ? 'Generating…' : summary.data?.source === 'ai' ? 'Regenerate AI explanation' : 'Explain with AI'}</button>
+function LoadingDashboard() {
+  return (
+    <div role="status" className="space-y-6 animate-pulse">
+      <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <span className="loading loading-spinner loading-xs text-[#0038A8]"></span>
+        <span>Synchronizing Division Operational Records…</span>
       </div>
-      <div aria-live="polite">
-        {summary.isError && <p className="mt-2 text-sm text-error">AI explanation could not load. Try again; the figures above remain available.</p>}
-        {summary.data && <div className="mt-3 rounded border border-blue-100 bg-blue-50/50 p-3"><h3 className="text-xs font-semibold text-[#0038a8]">{summary.data.source === 'ai' ? 'AI-generated explanation — verify against the figures' : 'Data-based explanation'}</h3><p className="mt-1 text-sm leading-relaxed text-slate-700">{summary.data.message || summary.data.text}</p>{summary.data.source === 'ai' && <p className="mt-1 text-xs text-slate-600">Supports interpretation; it does not approve applications or establish compliance.</p>}</div>}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((index) => (
+          <div
+            key={index}
+            className="h-28 rounded-xl border border-slate-200 bg-white p-4 shadow-xs"
+          >
+            <div className="h-3 w-24 rounded bg-slate-200 mb-3" />
+            <div className="h-6 w-32 rounded bg-slate-200" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {[0, 1].map((index) => (
+          <div
+            key={index}
+            className="h-80 rounded-xl border border-slate-200 bg-white p-5 shadow-xs"
+          >
+            <div className="h-4 w-40 rounded bg-slate-200 mb-4" />
+            <div className="h-56 rounded bg-slate-100" />
+          </div>
+        ))}
       </div>
     </div>
-  </section>;
+  );
 }
 
 export default function OperationsDashboard() {
   const { user } = useAuth();
-  const query = useQuery({ queryKey: [QUERY_KEYS.DASHBOARD_OPERATIONS, user?.id, user?.role], queryFn: ({ signal }) => api.get('dashboard/operations/', { signal, timeout: 15000 }).then(response => response.data), staleTime: 60000, retry: false });
-  const titles = { ACCOUNTANT: 'Finance dashboard', SUPERINTENDENT: 'Division operations dashboard', HR: 'HR operations dashboard', ADMINISTRATIVE: 'Administrative operations dashboard' };
-  if (query.isPending) return <div role="status" className="p-8 text-sm text-slate-600">Loading dashboard analytics…</div>;
-  if (query.isError) return <div role="alert" className="m-6 rounded border border-red-200 bg-white p-6"><h1 className="font-semibold text-slate-900">Dashboard could not load</h1><p className="mt-2 text-sm text-slate-600">Your records have not changed. Retry to load the analytics.</p><button type="button" className="btn bg-[#0038a8] text-white mt-4" onClick={() => query.refetch()}>Retry</button></div>;
-  const data = query.data;
-  const summaryKeys = data.scope === 'personal' ? ['attendance', 'leaves', 'loans', 'performance'] : user.role === 'ACCOUNTANT' ? ['payroll', 'payroll_status', 'loans'] : ['workforce', 'leaves', 'loans', 'recruitment'];
-  return <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-8">
-    <header className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start">
-      <div><p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#0038a8]">{data.scope === 'personal' ? 'Employee self-service' : 'Business operations'}</p><h1 className="text-2xl font-semibold tracking-tight text-slate-900">{titles[user.role] || 'My dashboard'}</h1><p className="mt-2 max-w-2xl text-sm text-slate-600">{data.scope === 'personal' ? 'Understand your attendance, applications, payslips, and performance records.' : 'See the current workload, understand each measure, and open the records that need review.'}</p><p className="mt-2 text-xs text-slate-600">Updated {new Date(data.as_of).toLocaleString()} · Each chart states its reporting period.</p></div>
-      <button type="button" onClick={() => query.refetch()} disabled={query.isFetching} className="inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded border border-slate-300 bg-white px-4 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-2 disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${query.isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />{query.isFetching ? 'Refreshing…' : 'Refresh data'}</button>
-    </header>
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{summaryKeys.map(key => data.charts.find(chart => chart.key === key)).filter(Boolean).map(chart => <Link key={chart.key} to={chart.path} className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 hover:border-blue-400 focus-visible:outline-2"><p className="text-sm text-slate-600">{chart.title}</p><p className="mt-3 break-words text-2xl font-semibold tabular-nums text-slate-900">{valueLabel(chart.total, chart.unit)}</p><p className="mt-2 text-xs text-slate-600">{chart.unit === 'PHP' ? chart.period : chart.unit + ' · ' + chart.period}</p></Link>)}</div>
-    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">{data.charts.map(chart => <AnalyticsCard key={chart.key} chart={chart} userId={user.id} />)}</div>
-  </div>;
+  const client = useQueryClient();
+  const tasksFetching = useIsFetching({ queryKey: [QUERY_KEYS.NOTIFICATIONS, user?.id, 'tasks'] });
+
+  // 1. Unified Operational Dashboard Data from Backend
+  const query = useQuery({
+    queryKey: [QUERY_KEYS.DASHBOARD_OPERATIONS, user?.id, user?.role],
+    queryFn: ({ signal }) =>
+      api.get('dashboard/operations/', { signal, timeout: 15000 }).then((response) => response.data),
+    staleTime: 60000,
+    retry: false,
+  });
+
+  // 2. Personal Employee Profile from Backend (if account has associated personnel record)
+  const { data: meProfile } = useQuery({
+    queryKey: ['me', user?.id],
+    queryFn: () => api.get('employees/me/').then((res) => res.data).catch(() => null),
+    staleTime: 60000,
+    retry: false,
+  });
+
+  const charts = Array.isArray(query.data?.charts) ? query.data.charts : [];
+  const primaryCharts = orderedCharts(charts, user);
+  const summaryCharts = kpiCharts(charts, user);
+
+  const roleBadgeStyle =
+    user?.is_superuser
+      ? 'bg-purple-50 text-purple-800 border-purple-200'
+      : ROLE_BADGE_STYLES[user?.role] || 'bg-slate-100 text-slate-700 border-slate-200';
+  const roleLabel =
+    user?.is_superuser
+      ? 'System Administrator'
+      : ROLE_LABELS[user?.role] || user?.role || 'Staff Member';
+
+  const isRefreshing = query.isFetching || tasksFetching > 0;
+
+  const handleSyncAll = () => {
+    query.refetch();
+    client.invalidateQueries({ queryKey: ['me', user?.id] });
+    client.invalidateQueries({ queryKey: [QUERY_KEYS.NOTIFICATIONS, user?.id] });
+  };
+
+  const hasPersonalCredits =
+    query.data?.scope === 'personal' &&
+    meProfile &&
+    (meProfile.vacation_leave_balance !== undefined || meProfile.sick_leave_balance !== undefined);
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
+      {/* DepEd Lucena City Institutional Cockpit Header */}
+      <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition-all">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#0038A8] font-mono">
+                Department of Education • SDO Lucena City
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-[#0038A8] shadow-2xs">
+                <LayoutDashboard className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                    {dashboardTitle(user)}
+                  </h1>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-bold ${roleBadgeStyle}`}
+                  >
+                    <ShieldCheck className="h-3 w-3" />
+                    {roleLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Official Personnel Metadata directly from Backend (no dummy fallbacks) */}
+            <div className="text-xs text-slate-600 flex flex-wrap items-center gap-x-2 gap-y-1">
+              {meProfile?.position && (
+                <>
+                  <span>
+                    Plantilla Position: <strong className="font-semibold text-slate-800">{meProfile.position}</strong>
+                  </span>
+                  <span>•</span>
+                </>
+              )}
+              {meProfile?.agency_employee_no && (
+                <>
+                  <span>
+                    Agency ID: <strong className="font-mono text-slate-800">{meProfile.agency_employee_no}</strong>
+                  </span>
+                  <span>•</span>
+                </>
+              )}
+              {meProfile?.department && (
+                <>
+                  <span>
+                    Department: <span className="text-slate-700">{meProfile.department}</span>
+                  </span>
+                  <span>•</span>
+                </>
+              )}
+              <span className="text-slate-500">
+                {query.data?.scope === 'division' ? 'Division-Wide Administrative Scope' : 'Personal Personnel Scope'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+            {meProfile?.school_details?.name && (
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
+                <MapPin className="h-4 w-4 text-[#0038A8] shrink-0" />
+                <div>
+                  <span className="block text-[10px] uppercase font-semibold text-slate-500">Official Station</span>
+                  <span className="font-bold text-slate-900 truncate max-w-[200px] block">
+                    {meProfile.school_details.name}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {meProfile?.salary_grade && (
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
+                <Award className="h-4 w-4 text-amber-600 shrink-0" />
+                <div>
+                  <span className="block text-[10px] uppercase font-semibold text-slate-500">Salary Grade</span>
+                  <span className="font-mono font-bold text-slate-900">
+                    SG {meProfile.salary_grade}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSyncAll}
+              disabled={isRefreshing}
+              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-[#0038A8] disabled:opacity-60"
+            >
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin text-[#0038A8]' : 'text-slate-500'}`}
+                aria-hidden="true"
+              />
+              <span>{isRefreshing ? 'Synchronizing…' : 'Sync Records'}</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Real CSC Form No. 6 Leave Balances Strip from Backend (when viewing personal scope) */}
+      {hasPersonalCredits && (
+        <section aria-label="Personal leave credit balances" className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CalendarCheck className="h-4 w-4 text-[#0038A8]" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              CSC Form No. 6 Recorded Credit Balances (Sec 7.B)
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+                Vacation Leave (VL)
+              </span>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="font-mono text-2xl font-bold tabular-nums text-slate-900">
+                  {Number(meProfile.vacation_leave_balance || 0).toFixed(3)}
+                </span>
+                <span className="text-xs text-slate-500">days</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+                Sick Leave (SL)
+              </span>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="font-mono text-2xl font-bold tabular-nums text-slate-900">
+                  {Number(meProfile.sick_leave_balance || 0).toFixed(3)}
+                </span>
+                <span className="text-xs text-slate-500">days</span>
+              </div>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+                Total Available Credits
+              </span>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="font-mono text-2xl font-bold tabular-nums text-[#0038A8]">
+                  {Number(meProfile.leave_balance ?? (Number(meProfile.vacation_leave_balance || 0) + Number(meProfile.sick_leave_balance || 0))).toFixed(3)}
+                </span>
+                <span className="text-xs text-slate-500">days</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {query.isPending ? (
+        <LoadingDashboard />
+      ) : query.isError ? (
+        <section
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-white p-6 shadow-xs"
+        >
+          <div className="flex items-center gap-2 text-rose-800 font-bold">
+            <AlertCircle className="h-5 w-5" />
+            <h2 className="text-base">Operations analytics unavailable</h2>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-slate-600">
+            Recorded KPI figures could not be loaded from the division server. Your review docket below remains operational.
+          </p>
+          <button
+            type="button"
+            disabled={query.isFetching}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#0038A8] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#0A225C] disabled:opacity-60"
+            onClick={() => query.refetch()}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Retry Connection</span>
+          </button>
+        </section>
+      ) : (
+        <>
+          {summaryCharts.length > 0 && (
+            <DashboardKpis charts={summaryCharts} asOf={query.data?.as_of} />
+          )}
+
+          <section aria-labelledby="dashboard-charts-title" className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+              <div>
+                <h2
+                  id="dashboard-charts-title"
+                  className="text-xs font-bold uppercase tracking-wider text-slate-600"
+                >
+                  Operational Distributions & Activity Series
+                </h2>
+                <p className="text-[11px] text-slate-500">
+                  Aggregated plantillas, dockets, and fiscal histories matching this account
+                </p>
+              </div>
+            </div>
+
+            {primaryCharts.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-xs text-slate-600 shadow-xs">
+                <p className="font-semibold text-slate-800">No registered data in current view</p>
+                <p className="mt-1">
+                  Once records are recorded in the official modules, interactive pipeline breakdowns will display here.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {primaryCharts.map((chart, index) => (
+                  <div
+                    key={chart.key}
+                    className={index === 0 ? 'min-w-0 lg:col-span-2' : 'min-w-0'}
+                  >
+                    <DashboardChart chart={chart} userId={user?.id} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* Review Docket & Operational Navigation */}
+      <DashboardWorkQueue user={user} />
+    </div>
+  );
 }

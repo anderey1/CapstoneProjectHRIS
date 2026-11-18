@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  XCircle, Clock as ClockIcon,
-  Search, UserCheck, ShieldAlert,
-  AlertCircle, FileCheck
+  X, AlertCircle, FileText, Search, Clock, CheckCircle2, XCircle, List
 } from 'lucide-react';
 import LeaveProcessingActions from '../../features/leaves/components/LeaveProcessingActions';
 import LeaveWorkflowDetails from '../../features/leaves/components/LeaveWorkflowDetails';
@@ -65,125 +63,74 @@ const LeaveManagement = () => {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="p-4 md:p-8" role="status">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Leave management</h1>
+        <p className="mt-4 text-sm text-slate-600">Loading leave applications…</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 p-4 md:p-8 [&_:is(button,a,input,select,textarea):focus-visible]:outline-2 [&_:is(button,a,input,select,textarea):focus-visible]:outline-offset-2 [&_:is(button,a,input,select,textarea):focus-visible]:outline-primary">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-              DepEd SDO Lucena City
-            </span>
-            <span className="text-xs font-mono text-slate-500">CSC Form No. 6 (Revised 2020)</span>
+      <header className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-primary"><FileText size={20} aria-hidden="true" /></div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Leave management</h1>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">CSC Form No. 6 (Revised 2020) · Division leave processing docket</p>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Division Leave Processing Docket
-          </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
-            Institutional verification and approval queue for personnel application for leave.
-          </p>
         </div>
 
         {pendingActionRequiredCount > 0 && (
-          <div className="flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 px-3 py-1.5 rounded text-xs font-semibold">
+          <div className="flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
             <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-            <span><strong className="font-mono tabular-nums">{pendingActionRequiredCount}</strong> application(s) awaiting your immediate action</span>
+            <span><strong className="tabular-nums">{pendingActionRequiredCount}</strong> {pendingActionRequiredCount === 1 ? 'application needs' : 'applications need'} your action</span>
           </div>
         )}
-      </div>
+      </header>
 
       {/* Metric Summary Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pending Review</p>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">{totalPendingCount}</span>
-            <ClockIcon className="w-4 h-4 text-slate-400" />
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Leave application totals">
+        {[['Pending review', totalPendingCount, 'text-slate-900', 'Applications in processing'], ['Awaiting your action', pendingActionRequiredCount, 'text-amber-800', 'Assigned for your review'], ['Approved', approvedCount, 'text-emerald-700', 'Approved leave applications'], ['Disapproved', rejectedCount, 'text-red-800', 'Disapproved applications']].map(([label, count, color, description]) => (
+          <div key={label} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-600">{label}</dt>
+            <dd className={`mt-1 font-mono text-xl font-bold tabular-nums ${color}`}>{count}</dd>
+            <dd className="mt-0.5 text-xs text-slate-500">{description}</dd>
           </div>
-        </div>
-        <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Awaiting Your Action</p>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-amber-700">{pendingActionRequiredCount}</span>
-            <UserCheck className="w-4 h-4 text-amber-600" />
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Approved Records</p>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-emerald-700">{approvedCount}</span>
-            <FileCheck className="w-4 h-4 text-emerald-600" />
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 p-3.5 rounded shadow-xs">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Disapproved</p>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-slate-600">{rejectedCount}</span>
-            <ShieldAlert className="w-4 h-4 text-slate-400" />
-          </div>
-        </div>
-      </div>
+        ))}
+      </dl>
 
       {/* Control Bar: Tabs + Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded border border-slate-200">
+      <section className="min-w-0 overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm" aria-label="Leave applications">
         {/* Institutional Tabs */}
-        <div className="inline-flex rounded border border-slate-200 p-0.5 bg-slate-50">
-          <button
-            type="button"
-            className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-              activeTab === 'pending'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-            onClick={() => setActiveTab('pending')}
-          >
-            Pending ({totalPendingCount})
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-              activeTab === 'approved'
-                ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-            onClick={() => setActiveTab('approved')}
-          >
-            Approved ({approvedCount})
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-              activeTab === 'rejected'
-                ? 'bg-white text-rose-800 shadow-xs border border-slate-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-            onClick={() => setActiveTab('rejected')}
-          >
-            Disapproved ({rejectedCount})
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-              activeTab === 'all'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-            onClick={() => setActiveTab('all')}
-          >
-            All Docket
-          </button>
-        </div>
+        <nav className="flex overflow-x-auto border-b border-slate-200 px-3 sm:px-5" aria-label="Leave application status">
+          {[
+            { id: 'pending', label: 'Pending', count: totalPendingCount, icon: Clock },
+            { id: 'approved', label: 'Approved', count: approvedCount, icon: CheckCircle2 },
+            { id: 'rejected', label: 'Disapproved', count: rejectedCount, icon: XCircle },
+            { id: 'all', label: 'All applications', icon: List },
+          ].map(({ id, label, count, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              className="inline-flex min-h-14 shrink-0 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-900 aria-pressed:border-primary aria-pressed:text-primary sm:px-4"
+              aria-pressed={activeTab === id}
+              onClick={() => setActiveTab(id)}
+            >
+              <Icon size={16} aria-hidden="true" />
+              {label}
+              {count !== undefined && <span className={`rounded px-1.5 py-0.5 font-mono text-[11px] tabular-nums ${activeTab === id ? 'bg-blue-50 text-primary' : 'bg-slate-100 text-slate-600'}`}>{count}</span>}
+            </button>
+          ))}
+        </nav>
 
         {/* Filter & Search */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 border-b border-slate-200 p-4 sm:flex-row sm:items-end">
+          <label className="min-w-0 text-xs font-semibold text-slate-600 sm:w-64" htmlFor="leave-type-filter">Leave type
           <select
-            className="select select-bordered select-xs h-8 text-xs font-medium bg-white border-slate-200 rounded"
+            id="leave-type-filter"
+            className="mt-2 block min-h-11 w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 focus:border-primary focus:bg-white"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
           >
@@ -203,37 +150,43 @@ const LeaveManagement = () => {
             <option value="adoption">Adoption Leave</option>
             <option value="others">Others</option>
           </select>
+          </label>
 
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <label className="min-w-0 flex-1 text-xs font-semibold text-slate-600" htmlFor="leave-search">Find an application
+            <span className="relative mt-2 block">
+              <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <input
-              type="text"
-              placeholder="Search applicant or station..."
-              className="input input-bordered input-xs h-8 pl-8 text-xs bg-white border-slate-200 rounded w-48 lg:w-64"
+              id="leave-search"
+              type="search"
+              placeholder="Search applicant or station"
+              className="block min-h-11 w-full rounded border border-slate-300 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-900 focus:border-primary focus:bg-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
+            </span>
+          </label>
         </div>
-      </div>
+        <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 text-xs text-slate-600">
+          <p>Showing <span className="font-mono font-semibold tabular-nums text-slate-900">{filteredLeaves.length}</span> of <span className="font-mono font-semibold tabular-nums text-slate-900">{pagination.count}</span> matching applications</p>
+          <span>CSC Form No. 6</span>
+        </div>
 
       {/* Main Administrative Table */}
-      <div className="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table table-xs w-full">
+          <table className="w-full border-collapse text-left text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs uppercase tracking-wider">
-                <th className="py-2.5 px-3">Docket ID</th>
-                <th className="py-2.5 px-3">Applicant Name</th>
-                <th className="py-2.5 px-3">Office / Station</th>
-                <th className="py-2.5 px-3">Type of Leave</th>
-                <th className="py-2.5 px-3">Inclusive Dates</th>
-                <th className="py-2.5 px-3 text-right">Work Days</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-center">Action</th>
+              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <th scope="col" className="px-4 py-3">Docket ID</th>
+                <th scope="col" className="px-4 py-3">Applicant</th>
+                <th scope="col" className="px-4 py-3">Office / Station</th>
+                <th scope="col" className="px-4 py-3">Leave type</th>
+                <th scope="col" className="px-4 py-3">Inclusive dates</th>
+                <th scope="col" className="px-4 py-3 text-right">Work days</th>
+                <th scope="col" className="px-4 py-3">Status</th>
+                <th scope="col" className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-200">
               {filteredLeaves.length > 0 ? (
                 filteredLeaves.map((leave) => {
                   const isActionRequired = leave.can_approve && PENDING_LEAVE_STATUSES.includes(leave.status);
@@ -242,49 +195,49 @@ const LeaveManagement = () => {
                       key={leave.id} 
                       className={`hover:bg-slate-50/80 transition-colors ${isActionRequired ? 'bg-amber-50/30' : ''}`}
                     >
-                      <td className="py-2 px-3 font-mono text-xs font-medium text-slate-500">
+                      <td className="px-4 py-3 font-mono font-medium text-slate-600">
                         #{leave.id}
                       </td>
-                      <td className="py-2 px-3">
-                        <div className="font-semibold text-slate-900 text-xs">{leave.employee_name}</div>
-                        <div className="text-xs text-slate-400 font-mono">Filing Date: {new Date(leave.date_applied).toLocaleDateString()}</div>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-slate-900">{leave.employee_name}</div>
+                        <div className="mt-1 text-xs text-slate-600">Filed {new Date(leave.date_applied).toLocaleDateString()}</div>
                       </td>
-                      <td className="py-2 px-3 text-xs text-slate-600">
+                      <td className="px-4 py-3 text-slate-600">
                         {leave.department || 'Division Office'}
                       </td>
-                      <td className="py-2 px-3">
-                        <span className="font-semibold text-xs text-slate-800 capitalize">
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-slate-800 capitalize">
                           {leave.leave_type.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="py-2 px-3 font-mono text-xs tabular-nums text-slate-600">
+                      <td className="whitespace-nowrap px-4 py-3 tabular-nums text-slate-600">
                         {new Date(leave.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         <span className="mx-1 text-slate-400">→</span>
                         {new Date(leave.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
-                      <td className="py-2 px-3 text-right font-mono tabular-nums font-bold text-xs text-slate-900">
+                      <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-slate-900">
                         {leave.working_days_applied}
                       </td>
-                      <td className="py-2 px-3">
+                      <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${getStatusBadge(leave.status)}`}>
+                          <span className={`inline-flex w-fit rounded border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getStatusBadge(leave.status)}`}>
                             {formatStatus(leave.status)}
                           </span>
                           {isActionRequired && (
-                            <span className="text-xs font-bold text-amber-700 uppercase tracking-tight">
-                              ● Action Required
+                            <span className="text-xs font-medium text-amber-800 mt-1">
+                              Your action required
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-2 px-3 text-center">
+                      <td className="px-4 py-3 text-right">
                         <button
                           type="button"
                           onClick={() => setSelectedLeave(leave)}
-                          className={`btn btn-xs rounded text-[11px] font-semibold transition-colors ${
+                          className={`inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded border px-3 py-2 text-xs font-semibold transition-colors motion-reduce:transition-none ${
                             isActionRequired
-                              ? 'bg-[#0038a8] text-white hover:bg-[#002b80] border-none px-3'
-                              : 'btn-ghost border border-slate-200 text-slate-700 hover:bg-slate-100'
+                              ? 'border-primary bg-primary text-white hover:bg-secondary'
+                              : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                           }`}
                         >
                           {isActionRequired ? 'Review & Sign' : 'View Docket'}
@@ -295,23 +248,29 @@ const LeaveManagement = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan="8" className="px-4 py-12 text-center text-sm text-slate-600">
                     No leave applications matched the selected filter criteria.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-          <Pagination pagination={pagination} label="leave applications" />
         </div>
-      </div>
+        <Pagination pagination={pagination} label="leave applications" />
+      </section>
 
       {/* Official CSC Form 6 Review Modal */}
       {selectedLeave && (
-        <div className="modal modal-open">
-          <div className="modal-box rounded-lg max-w-4xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white h-[90vh] flex flex-col">
+        <dialog
+          ref={node => { if (node && !node.open) node.showModal(); }}
+          aria-labelledby="leave-review-title"
+          onCancel={() => setSelectedLeave(null)}
+          onClick={event => { if (event.target === event.currentTarget) setSelectedLeave(null); }}
+          className="fixed inset-0 m-auto max-h-none max-w-none overflow-visible border-0 bg-transparent p-0 backdrop:bg-black/40"
+        >
+          <div className="flex h-[90dvh] max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-4xl flex-col overflow-hidden rounded-lg border border-slate-300 bg-white shadow-xl">
             {/* Modal Header */}
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 sm:px-6 sm:py-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
@@ -319,21 +278,22 @@ const LeaveManagement = () => {
                   </span>
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedLeave.id}</span>
                 </div>
-                <h3 className="font-bold text-base text-slate-900 mt-0.5">
+                <h3 id="leave-review-title" className="mt-2 text-base font-semibold leading-relaxed text-slate-900">
                   Application for Leave — {selectedLeave.employee_name}
                 </h3>
               </div>
               <button 
-                type="button" 
+                type="button"
+                aria-label="Close leave application"
                 onClick={() => setSelectedLeave(null)}
-                className="btn btn-ghost btn-xs btn-circle text-slate-500 hover:text-slate-800"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-slate-600 hover:bg-slate-200 hover:text-slate-900"
               >
-                <XCircle className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1 bg-white text-slate-800 text-xs">
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 text-sm leading-relaxed text-slate-800 sm:p-6">
               
               {/* Section 6: Details of Application */}
               <div className="border border-slate-200 rounded">
@@ -464,18 +424,17 @@ const LeaveManagement = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex justify-end shrink-0">
+            <div className="flex shrink-0 justify-end border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-6">
               <button 
                 type="button" 
                 onClick={() => setSelectedLeave(null)}
-                className="btn btn-xs btn-ghost border border-slate-200 text-slate-700 hover:bg-slate-100 rounded px-4 text-xs font-medium"
+                className="inline-flex min-h-11 items-center justify-center rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
               >
                 Close Record
               </button>
             </div>
           </div>
-          <div className="modal-backdrop bg-black/40" onClick={() => setSelectedLeave(null)}></div>
-        </div>
+        </dialog>
       )}
     </div>
   );

@@ -3,7 +3,9 @@
 **Document:** `docs/specs/rbac_audit_and_revisions_spec.md`  
 **Target System:** DepEd Lucena City Division HRIS  
 **Date:** October 7, 2026  
-**Status:** Approved for Implementation  
+**Status:** Historical specification; superseded role policy below.
+
+**2026-11-18 update:** The Administrative Staff account role was retired. System administrators use `is_superuser=True` without a staff role. Current staff roles and permissions are documented in [role-policy.md](../role-policy.md). The findings below describe the earlier system, not the current permission matrix.
 
 ---
 

@@ -15,7 +15,7 @@ def task_sources(request, include_dismissed=False):
     if profile:
         eligible |= Q(workflow='teaching', status='pending_supervisor', assigned_principal=profile)
         eligible |= Q(workflow='standard', status='pending_supervisor', employee__supervisor=profile)
-    if user.is_superuser or user.role == Role.ADMINISTRATIVE:
+    if user.is_superuser:
         eligible |= Q(workflow='standard', status='pending_supervisor')
     if user.is_superuser or user.role == Role.HR:
         eligible |= Q(status='pending_hr')
@@ -23,7 +23,7 @@ def task_sources(request, include_dismissed=False):
         eligible |= Q(workflow='standard', status='pending_superintendent')
     leaves = visible.filter(eligible).exclude(~Q(status='returned') & Q(employee__user=user)).order_by('pk')
     sources = [('leave', leaves, '/my-leaves?tab=approvals' if user.role == Role.PRINCIPAL else '/my-leaves')]
-    manager = user.is_superuser or user.role in (Role.HR, Role.SUPERINTENDENT, Role.ADMINISTRATIVE)
+    manager = user.is_superuser or user.role in (Role.HR, Role.SUPERINTENDENT)
     finance = manager or user.role == Role.ACCOUNTANT
     if finance:
         sources.append(('loan', ProvidentLoan.objects.filter(status__in=['pending', 'verified', 'approved']).order_by('pk'), '/loan-management'))

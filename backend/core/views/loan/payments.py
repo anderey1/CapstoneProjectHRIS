@@ -5,11 +5,11 @@ from django.db import transaction
 from decimal import Decimal, InvalidOperation
 from ...models import ProvidentLoan, LoanPayment, AuditLog
 from ...serializers import LoanSerializer, LoanPaymentSerializer
-from ...permissions import IsAdminOrHR, IsHR, IsAccountant
+from ...permissions import IsHR, IsAccountant
 
 
 class LoanPaymentActions:
-    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsAdminOrHR], url_path='post-payment')
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsHR], url_path='post-payment')
     def post_payment(self, request, pk=None):
         """Allows manual posting of a loan deduction/payment by Accountant or Admin/HR."""
         loan = self.get_object()

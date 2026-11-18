@@ -54,7 +54,7 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto('/my-leaves');
     if (viewport.width < 1024) {
-      await page.getByRole('button', { name: 'Open Navigation', exact: true }).click();
+      await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
     }
     await expectSidebarFits(page);
   });
@@ -66,11 +66,11 @@ test('collapsed desktop sidebar expands on mobile and closes after navigation', 
   await page.locator('aside').getByRole('button', { name: 'Collapse sidebar' }).click();
   await expect.poll(async () => (await page.locator('aside').boundingBox()).width).toBe(80);
   await page.setViewportSize({ width: 390, height: 600 });
-  await page.getByRole('button', { name: 'Open Navigation', exact: true }).click();
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
   await expectSidebarFits(page);
   await expect.poll(async () => (await page.locator('aside').boundingBox()).width).toBe(288);
   await page.getByRole('navigation', { name: 'Main navigation', exact: true })
     .getByRole('link', { name: 'My Leave Applications' }).click();
-  await expect(page.locator('#main-drawer')).not.toBeChecked();
+  await expect(page.getByRole('dialog', { name: 'Main navigation' })).toHaveCount(0);
   await expect(page.locator('aside')).not.toBeInViewport();
 });

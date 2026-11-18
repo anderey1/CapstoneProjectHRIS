@@ -11,7 +11,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name']
+        fields = ['id', 'username', 'email', 'role', 'is_superuser', 'first_name', 'last_name']
+        read_only_fields = ['is_superuser']
 
 class SchoolSerializer(serializers.ModelSerializer):
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6, min_value=-90, max_value=90, required=False, allow_null=True)

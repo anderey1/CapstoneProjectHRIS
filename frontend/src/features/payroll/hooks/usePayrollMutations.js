@@ -72,7 +72,7 @@ export function usePayrollMutations() {
     mutationFn: (data) => api.post('payroll/bulk_release/', data),
     onSuccess: () => {
       invalidatePayroll();
-      toast.success('All payroll records in cutoff released and credited to LandBank ATM!');
+      toast.success('Payroll release recorded. Bank transfers are handled outside this system.');
     },
     onError: (err) => {
       toast.error(err.response?.data?.detail || 'Bulk release failed.');

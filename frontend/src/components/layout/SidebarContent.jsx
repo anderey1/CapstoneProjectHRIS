@@ -133,7 +133,7 @@ const SidebarContent = ({ closeDrawer, isCollapsed, toggleCollapse }) => {
       }`}>
         {menuGroups.map((group, idx) => {
           const visibleLinks = group.links.filter(link => 
-            !link.roles || (user && link.roles.includes(user.role))
+            !link.roles || (user && (user.is_superuser || link.roles.includes(user.role)))
           );
 
           if (visibleLinks.length === 0) return null;

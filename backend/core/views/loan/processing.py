@@ -4,12 +4,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
 from ...models import ProvidentLoan, AuditLog
-from ...permissions import IsAccountant, IsSuperintendentOrAdmin
+from ...permissions import IsAccountant, IsHROrSuperintendent
 from ...services.notification_updates import notify_employee
 
 
 class LoanProcessingActions:
-    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsSuperintendentOrAdmin])
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsHROrSuperintendent])
     @transaction.atomic
     def verify(self, request, pk=None):
         """Accountant/Admin/Superintendent action to verify documents and mark as ready for approval."""
@@ -27,7 +27,7 @@ class LoanProcessingActions:
         )
         return Response({"message": "Loan documents verified. Sent for executive approval.", "status": "verified"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendentOrAdmin])
+    @action(detail=True, methods=['post'], permission_classes=[IsHROrSuperintendent])
     @transaction.atomic
     def approve(self, request, pk=None):
         """Superintendent or Admin action to approve a loan."""
@@ -45,7 +45,7 @@ class LoanProcessingActions:
         AuditLog.objects.create(user=request.user, action=f"Approved Loan: {loan.employee}")
         return Response({"message": "Loan approved.", "status": "approved"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsSuperintendentOrAdmin | IsAccountant])
+    @action(detail=True, methods=['post'], permission_classes=[IsHROrSuperintendent | IsAccountant])
     @transaction.atomic
     def reject(self, request, pk=None):
         """Rejects a loan. Accountant, Superintendent, or Admin can reject pending or verified loans."""
@@ -70,7 +70,7 @@ class LoanProcessingActions:
         AuditLog.objects.create(user=request.user, action=f"Rejected Loan #{loan.id}: {loan.employee}")
         return Response({"message": "Loan rejected.", "status": "rejected"})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsSuperintendentOrAdmin], url_path='release-funds')
+    @action(detail=True, methods=['post'], permission_classes=[IsAccountant | IsHROrSuperintendent], url_path='release-funds')
     def release_funds(self, request, pk=None):
         """Accountant action to release money after superintendent approval."""
         loan = self.get_object()

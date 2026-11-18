@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 
-const Navbar = ({ toggleDrawer }) => {
+const Navbar = ({ toggleDrawer, isDrawerOpen = false }) => {
   const { logout } = useAuth();
   const accountMenu = useRef(null);
 
@@ -38,6 +38,7 @@ const Navbar = ({ toggleDrawer }) => {
             onClick={toggleDrawer}
             className="btn btn-ghost btn-square min-h-11 min-w-11 lg:hidden text-slate-600 hover:text-slate-900"
             aria-label="Open navigation"
+            aria-expanded={isDrawerOpen}
           >
             <Menu className="w-5 h-5" aria-hidden="true" />
           </button>

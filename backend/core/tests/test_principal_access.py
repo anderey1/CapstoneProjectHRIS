@@ -37,7 +37,7 @@ def test_principal_directory_and_details_are_school_scoped(client, teacher_emplo
     assert client.get(f'/api/employees/{supervisor_user.employee_profile.pk}/').status_code == 200
     for employee in (other_teacher, non_teaching_employee):
         assert client.get(f'/api/employees/{employee.pk}/').status_code == 404
-    assert client.get('/api/employees/', {'search': 'Other', 'role': Role.ADMINISTRATIVE}).data['count'] == 0
+    assert client.get('/api/employees/', {'search': 'Other', 'role': Role.NON_TEACHING}).data['count'] == 0
     assert not supervisor_user.is_management
 
 
@@ -137,7 +137,7 @@ def test_principal_can_read_teacher_documents_but_cannot_modify_them(client, tea
 
 def test_migration_converts_principal_titles_without_promoting_other_staff(supervisor_user, hr_user, admin_user):
     migration = import_module('core.migrations.0026_principal_school_access')
-    supervisor_user.role = Role.ADMINISTRATIVE
+    supervisor_user.role = 'ADMINISTRATIVE'  # Historical input for migration 0026.
     supervisor_user.save(update_fields=['role'])
     migration.assign_principal_role(apps, None)
     supervisor_user.refresh_from_db()
@@ -146,7 +146,7 @@ def test_migration_converts_principal_titles_without_promoting_other_staff(super
     assert supervisor_user.role == Role.PRINCIPAL
     assert hr_user.role == Role.HR
     assert admin_user.is_superuser
-    assert admin_user.role == Role.ADMINISTRATIVE
+    assert admin_user.role == ''
 
 
 def test_principal_audit_and_login_role(supervisor_user, client):

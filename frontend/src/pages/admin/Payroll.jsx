@@ -14,10 +14,7 @@ import {
   PayrollBreakdownTable,
 } from '../../features/payroll';
 
-const formatCurrency = (val) => {
-  const num = parseFloat(val) || 0;
-  return `₱${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+import { formatCurrency } from '../../features/payroll/utils/payrollDisplay';
 
 /**
  * Payroll Management (Institutional Financial Control Center)
@@ -48,6 +45,11 @@ const Payroll = () => {
     totalDeductions,
     totalNet,
     isLoading,
+    isError,
+    retry,
+    isRefreshing,
+    dataAvailable,
+    processingAvailable,
     generatePayroll,
     isGenerating,
     bulkGeneratePayroll,
@@ -65,32 +67,36 @@ const Payroll = () => {
   } = usePayroll();
 
   const handleGenerate = async () => {
-    if (!selectedEmployee) return;
+    if (!selectedEmployee || !processingAvailable || isRefreshing) return;
     const employee = employees?.find((emp) => emp.id === parseInt(selectedEmployee));
-    if (employee && (employee.salary === null || employee.salary === undefined || parseFloat(employee.salary) <= 0)) {
-      alert(`Cannot generate payroll: ${employee.first_name} ${employee.last_name} has no salary grade set in their profile.`);
+    if (!employee) return;
+    if (employee.salary === null || employee.salary === undefined || !Number.isFinite(Number(employee.salary)) || Number(employee.salary) <= 0) {
+      alert(`Cannot generate payroll: ${employee.first_name} ${employee.last_name} has no valid salary recorded in their profile.`);
       return;
     }
     await generatePayroll({ employee_id: selectedEmployee, cutoff_period: selectedCutoff });
   };
 
   const handleBulkGenerate = () => {
+    if (!processingAvailable || isRefreshing) return;
     bulkGeneratePayroll({ cutoff_period: selectedCutoff });
   };
 
   const handleBulkApprove = () => {
+    if (!processingAvailable || isRefreshing) return;
     if (window.confirm(`Certify and approve the General Payroll Sheet (Form 7) for ${selectedCutoff}?`)) {
       bulkApprovePayroll({ cutoff_period: selectedCutoff });
     }
   };
 
   const handleBulkRelease = () => {
-    if (window.confirm(`Disburse and credit all net salaries to LandBank ATM accounts for ${selectedCutoff}? This will record statutory loan payments and lock the cycle.`)) {
+    if (!processingAvailable || isRefreshing) return;
+    if (window.confirm(`Record payroll release for ${selectedCutoff}? This records loan payments and locks the cycle. It does not transfer money to bank accounts.`)) {
       bulkReleasePayroll({ cutoff_period: selectedCutoff });
     }
   };
 
-  const { records: activePayrolls, pagination } = usePaginatedList(QUERY_KEYS.PAYROLL, 'payroll/', {
+  const { records: activePayrolls, pagination, isFetching: loadingRecords, isError: recordsError, refetch: retryRecords } = usePaginatedList(QUERY_KEYS.PAYROLL, 'payroll/', {
     cutoff_period: selectedCutoff, search: searchTerm,
   });
 
@@ -140,6 +146,20 @@ const Payroll = () => {
         </div>
       </div>
 
+      {isError && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <p>Could not load authoritative payroll or employee data. Totals and processing are unavailable.</p>
+          <button type="button" onClick={retry} disabled={isRefreshing} className="btn min-h-11 mt-3 bg-white text-red-800">
+            {isRefreshing ? 'Retrying...' : 'Retry payroll data'}
+          </button>
+        </div>
+      )}
+      {dataAvailable && !processingAvailable && (
+        <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Payroll amounts or statuses are missing. Processing is disabled until the records are corrected.
+        </p>
+      )}
+
       {/* Financial Executive Summary Cards (4 Columns) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
@@ -179,7 +199,7 @@ const Payroll = () => {
               {formatCurrency(totalNet)}
             </span>
             <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-              LandBank ATM
+              Recorded net pay
             </span>
           </div>
         </div>
@@ -190,7 +210,7 @@ const Payroll = () => {
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl font-bold text-slate-900 font-mono tabular-nums">
-              {cutoffPayrolls.length} <span className="text-xs font-normal text-slate-500">Personnel</span>
+              {dataAvailable ? cutoffPayrolls.length : 'Not available'} <span className="text-xs font-normal text-slate-500">Personnel</span>
             </span>
             <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
               Period Cycle
@@ -204,6 +224,7 @@ const Payroll = () => {
         selectedCutoff={selectedCutoff}
         onSelectCutoff={(period) => setSelectedCutoff(period)}
         allPayrolls={allPayrolls}
+        dataAvailable={dataAvailable}
       />
 
       {/* 2. Pipeline Stepper */}
@@ -214,6 +235,7 @@ const Payroll = () => {
       {/* 3. Action Command Panel */}
       <PayrollActionPanel
         cutoffStatus={cutoffStatus}
+        dataUnavailable={!processingAvailable || isRefreshing || loadingRecords || recordsError}
         canGenerate={canGenerate}
         canApprove={canApprove}
         canRelease={canRelease}
@@ -239,11 +261,15 @@ const Payroll = () => {
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         activePayrolls={activePayrolls}
+        dataUnavailable={!processingAvailable || isRefreshing || loadingRecords || recordsError}
+        isLoading={loadingRecords}
+        isError={recordsError}
+        retry={retryRecords}
         canApprove={canApprove}
         canRelease={canRelease}
-        onApprove={(id) => approvePayroll(id)}
+        onApprove={(id) => processingAvailable && !isRefreshing && approvePayroll(id)}
         approveLoading={isApproving}
-        onRelease={(id) => releasePayroll(id)}
+        onRelease={(id) => processingAvailable && !isRefreshing && releasePayroll(id)}
         releaseLoading={isReleasing}
       />
     </div>

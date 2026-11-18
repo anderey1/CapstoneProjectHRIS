@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from datetime import time
-from ..permissions import IsAdminOrHR, IsAdminOrHRorSuperintendent
+from ..permissions import IsHR, IsHROrSuperintendent
 from ..models import Attendance, Employee, AuditLog
 from ..serializers import AttendanceSerializer
 from .listing import PaginatedListMixin
@@ -21,12 +21,12 @@ class AttendanceViewSet(PaginatedListMixin, viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ('import_preview', 'import_commit', 'import_template', 'biometric_mappings'):
-            return [IsAdminOrHR()]
+            return [IsHR()]
         if self.action == 'approve_dtr':
-            return [IsAdminOrHRorSuperintendent()]
+            return [IsHROrSuperintendent()]
         if self.request.method == 'GET':
             return [IsAuthenticated()]
-        return [IsAdminOrHR()]
+        return [IsHR()]
 
     def get_queryset(self):
         user = self.request.user
@@ -34,7 +34,7 @@ class AttendanceViewSet(PaginatedListMixin, viewsets.ModelViewSet):
             return Attendance.objects.select_related('employee', 'employee__user').order_by('-date', '-pk')
         return Attendance.objects.select_related('employee', 'employee__user').filter(employee__user=user).order_by('-date', '-pk')
 
-    @action(detail=False, methods=['POST'], permission_classes=[IsAdminOrHRorSuperintendent])
+    @action(detail=False, methods=['POST'], permission_classes=[IsHROrSuperintendent])
     def approve_dtr(self, request):
         """Approves all attendance records for an employee within a specific month."""
         employee_id = request.data.get('employee_id')

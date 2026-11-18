@@ -1,19 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import axios from '../../api/axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../api/queryKeys';
-import {
-    AlertCircle, CheckCircle2, Loader2, Upload,
-    UserPlus, RefreshCw, FileSearch, Eye, ShieldCheck
-} from 'lucide-react';
 
 const PDSUploadModal = ({ onExtractionComplete, onSuccess }) => {
     const queryClient = useQueryClient();
     const [file, setFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [extractedData, setExtractedData] = useState(null);
-    const [confidence, setConfidence] = useState(0);
     const [errorMsg, setErrorMsg] = useState(null);
+    const fieldId = useId();
+
+    useEffect(() => {
+        if (!previewUrl) return;
+        return () => URL.revokeObjectURL(previewUrl);
+    }, [previewUrl]);
 
     const cleanValue = (val) => {
         if (!val) return '';
@@ -67,11 +68,9 @@ const PDSUploadModal = ({ onExtractionComplete, onSuccess }) => {
 
             if (!hasData) {
                 setExtractedData(null);
-                setConfidence(0);
-                setErrorMsg("The AI extracted no data. Please check the document's content or clarity.");
+                setErrorMsg("No details could be extracted. Choose a completed, readable CS Form 212 PDF and try again.");
             } else {
                 setExtractedData(cleaned);
-                setConfidence(data.confidence_avg);
                 setErrorMsg(null);
             }
         }
@@ -87,12 +86,19 @@ const PDSUploadModal = ({ onExtractionComplete, onSuccess }) => {
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
-        if (selectedFile && selectedFile.type === 'application/pdf') {
+        if (!selectedFile) return;
+        setExtractedData(null);
+        extractMutation.reset();
+        saveApplicantMutation.reset();
+        if (selectedFile.type === 'application/pdf' || (!selectedFile.type && /\.pdf$/i.test(selectedFile.name))) {
             setFile(selectedFile);
             setPreviewUrl(URL.createObjectURL(selectedFile));
+            setErrorMsg(null);
         } else {
-            alert("Please upload a PDF file.");
-            e.target.value = null;
+            setFile(null);
+            setPreviewUrl(null);
+            setErrorMsg("Choose a PDF file. Other file types cannot be imported.");
+            e.target.value = '';
         }
     };
 
@@ -105,9 +111,9 @@ const PDSUploadModal = ({ onExtractionComplete, onSuccess }) => {
             'Registrar I', 'Accountant I', 'School Principal I'
         ];
         
-        let position = extractedData.position || 'Teacher I';
+        let position = extractedData.position || '';
         const match = validPositions.find(p => p.toLowerCase() === position.trim().toLowerCase());
-        position = match || 'Teacher I';
+        position = match || position.trim();
 
         const applicantData = {
             first_name: extractedData.first_name || '',
@@ -122,165 +128,129 @@ const PDSUploadModal = ({ onExtractionComplete, onSuccess }) => {
     };
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="space-y-5 text-sm text-slate-800">
+            <div>
+                <h3 className="text-base font-semibold text-slate-900">Import details from a PDS</h3>
+                <p id={`${fieldId}-help`} className="mt-1 text-sm text-slate-600">
+                    Select a completed CS Form 212 PDF. Review the extracted details before applying or saving them.
+                </p>
+            </div>
+            <div className="space-y-2">
+                <label htmlFor={`${fieldId}-file`} className="block text-sm font-medium">PDS document (PDF)</label>
+                <input
+                    id={`${fieldId}-file`}
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    aria-describedby={`${fieldId}-help`}
+                    disabled={extractMutation.isPending || saveApplicantMutation.isPending}
+                    onChange={handleFileChange}
+                    className="block min-h-11 w-full min-w-0 rounded-md border border-slate-400 bg-white p-2 text-sm file:mr-3 file:cursor-pointer file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-800 hover:file:bg-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed"
+                />
+            </div>
             {!extractedData ? (
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-primary/20 rounded-2xl p-12 bg-primary/5 transition-all hover:bg-primary/10">
-                    <div className="w-16 h-16 bg-white rounded-full shadow-sm border border-slate-200 flex items-center justify-center text-primary mb-4">
-                        <FileSearch className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-lg font-black uppercase tracking-widest text-base-content mb-2">Intelligent PDS Reader</h3>
-                    <p className="text-xs font-bold text-base-content/40 mb-8 text-center max-w-[300px] leading-relaxed">
-                        Drop your CS Form 212 PDF here. Our AI will automatically map fields for you.
-                    </p>
-
-                    <div className="w-full max-w-sm space-y-4">
-                        <label className="flex flex-col items-center px-4 py-6 bg-white text-primary rounded-xl shadow-lg tracking-wide border border-primary/10 cursor-pointer hover:bg-primary hover:text-white transition-all group">
-                            <Upload className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                            <span className="mt-2 text-[10px] font-black uppercase tracking-widest">
-                                {file ? file.name : "Select PDF Document"}
-                            </span>
-                            <input type="file" accept=".pdf" className="hidden" onChange={handleFileChange} />
-                        </label>
-
-                        <button
-                            onClick={() => extractMutation.mutate(file)}
-                            disabled={!file || extractMutation.isPending}
-                            className="btn btn-primary btn-block rounded-xl shadow-lg shadow-primary/30 h-14 font-black uppercase tracking-[0.2em] text-xs"
-                        >
-                            {extractMutation.isPending ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin mr-3" />
-                                    Analyzing Document...
-                                </>
-                            ) : (
-                                "Execute OCR Scan"
-                            )}
-                        </button>
-                    </div>
-                </div>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setErrorMsg(null);
+                        extractMutation.mutate(file);
+                    }}
+                    disabled={!file || extractMutation.isPending}
+                    className="btn btn-primary min-h-11 rounded-md text-sm font-semibold"
+                >
+                    {extractMutation.isPending ? 'Extracting details...' : 'Extract details'}
+                </button>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in zoom-in-95 duration-500">
+                <div className="space-y-5">
+                    <p role="status" className="text-sm text-slate-700">Extraction complete. Check names, dates, and other details against your PDF.</p>
                     {/* Left: Preview */}
-                    <div className="hidden lg:flex flex-col bg-base-200 rounded-2xl overflow-hidden border border-base-300">
-                        <div className="bg-base-300 px-4 py-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Eye className="w-4 h-4 opacity-50" />
-                                <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Document View</span>
-                            </div>
-                            <ShieldCheck className="w-4 h-4 text-success" />
-                        </div>
-                        <iframe src={previewUrl} className="w-full h-full min-h-[500px]" title="PDS Preview" />
-                    </div>
-
+                    {previewUrl && (
+                        <details className="rounded-md border border-slate-300">
+                            <summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-medium text-primary hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-primary">View original PDF</summary>
+                            <iframe src={previewUrl} width="600" height="400" className="h-96 w-full" title="Original PDS document" />
+                        </details>
+                    )}
                     {/* Right: Data Verification */}
-                    <div className="flex flex-col gap-6">
-                        <div className="flex items-center justify-between bg-success/10 border border-success/20 p-5 rounded-2xl">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-success text-white rounded-xl flex items-center justify-center shadow-lg shadow-success/20">
-                                    <CheckCircle2 className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-black uppercase tracking-widest text-base-content">Scan Complete</h4>
-                                    <p className="text-[10px] font-bold opacity-50 uppercase tracking-tighter">Please verify extracted fields</p>
-                                </div>
+                    <dl className="grid grid-cols-1 gap-x-4 gap-y-3 border-y border-slate-200 py-4 sm:grid-cols-2">
+                        {[
+                            ['Family background', extractedData.family?.length || 0],
+                            ['Education background', extractedData.education?.length || 0],
+                            ['Civil service eligibility', extractedData.eligibilities?.length || 0],
+                            ['Work experience', extractedData.work_experience?.length || 0],
+                        ].map(([label, count]) => (
+                            <div key={label}>
+                                <dt className="text-xs font-medium text-slate-600">{label}</dt>
+                                <dd className="mt-1 text-sm">{count} {count === 1 ? 'record' : 'records'} extracted</dd>
                             </div>
-                            <div className="text-right">
-                                <span className="block text-[10px] font-black opacity-30 uppercase">Accuracy</span>
-                                <span className="text-lg font-black text-success">{confidence}%</span>
-                            </div>
-                        </div>
-
-                        <div className="bg-white border border-base-200 rounded-2xl p-6 shadow-sm overflow-hidden flex-1">
-                            <div className="max-h-[400px] overflow-y-auto pr-4 custom-scrollbar space-y-5">
-                                <div className="grid grid-cols-2 gap-4 bg-base-50 p-4 rounded-xl border border-base-200 text-left mb-4">
-                                    <div className="text-xs">
-                                        <span className="block text-[8px] font-black opacity-40 uppercase">Family Background</span>
-                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.family?.length || 0} members extracted</span>
-                                    </div>
-                                    <div className="text-xs">
-                                        <span className="block text-[8px] font-black opacity-40 uppercase">Education Background</span>
-                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.education?.length || 0} records extracted</span>
-                                    </div>
-                                    <div className="text-xs">
-                                        <span className="block text-[8px] font-black opacity-40 uppercase">Civil Service Eligibility</span>
-                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.eligibilities?.length || 0} records extracted</span>
-                                    </div>
-                                    <div className="text-xs">
-                                        <span className="block text-[8px] font-black opacity-40 uppercase">Work Experience</span>
-                                        <span className="font-bold text-base-content/80 text-[11px]">{extractedData.work_experience?.length || 0} records extracted</span>
-                                    </div>
-                                </div>
-
-                                {Object.entries(extractedData)
-                                    .filter(([key, value]) => !Array.isArray(value) && typeof value !== 'object')
-                                    .map(([key, value]) => (
-                                    <div key={key} className="space-y-1.5 group">
-                                        <div className="flex justify-between items-center ml-1">
-                                            <label className="text-[9px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">
-                                                {key.replace(/_/g, ' ')}
-                                            </label>
-                                            {!value && <span className="text-[8px] font-black text-warning uppercase bg-warning/10 px-2 py-0.5 rounded-full">Missing</span>}
-                                        </div>
+                        ))}
+                    </dl>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {Object.entries(extractedData)
+                            .filter(([, value]) => !Array.isArray(value) && typeof value !== 'object')
+                            .map(([key, value]) => {
+                                const label = key.replace(/_/g, ' ');
+                                return (
+                                    <div key={key} className="min-w-0 space-y-1.5">
+                                        <label htmlFor={`${fieldId}-${key}`} className="block text-sm font-medium">
+                                            {label.charAt(0).toUpperCase() + label.slice(1)}
+                                            {!value && <span className="ml-2 text-xs font-normal text-slate-600">(not extracted)</span>}
+                                        </label>
                                         <input
+                                            id={`${fieldId}-${key}`}
                                             type="text"
-                                            value={value || ''}
+                                            value={value ?? ''}
+                                            disabled={saveApplicantMutation.isPending}
                                             onChange={(e) => setExtractedData(prev => ({ ...prev, [key]: e.target.value }))}
-                                            className={`input input-bordered w-full bg-base-50/50 focus:bg-white rounded-xl text-xs font-bold h-10 transition-all ${!value ? 'border-warning/50' : 'border-base-200'}`}
-                                            placeholder={`Enter ${key.replace(/_/g, ' ')}`}
+                                            className="input min-h-11 w-full rounded-md border-slate-400 bg-white text-sm font-normal focus:border-primary"
                                         />
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 mt-auto">
-                            <button
-                                className="btn btn-ghost flex-1 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-40 hover:bg-base-200"
-                                onClick={() => setExtractedData(null)}
-                            >
-                                <RefreshCw className="w-3 h-3 mr-2" />
-                                Re-Scan
+                                );
+                            })}
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        <button
+                            type="button"
+                            className="btn btn-ghost min-h-11 rounded-md text-sm font-medium text-slate-700"
+                            disabled={saveApplicantMutation.isPending}
+                            onClick={() => {
+                                setExtractedData(null);
+                                setErrorMsg(null);
+                                saveApplicantMutation.reset();
+                            }}
+                        >
+                            Extract again
+                        </button>
+                        {onExtractionComplete ? (
+                            <button type="button" className="btn btn-primary min-h-11 rounded-md text-sm font-semibold" onClick={() => onExtractionComplete(extractedData)}>
+                                Apply to employee form
                             </button>
-                            {onExtractionComplete ? (
-                                <button
-                                    className="btn btn-primary flex-[2] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 h-12"
-                                    onClick={() => onExtractionComplete(extractedData)}
-                                >
-                                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                                    Apply to Employee Form
-                                </button>
-                            ) : (
-                                <button
-                                    className="btn btn-primary flex-[2] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 h-12"
-                                    onClick={handleSaveAsApplicant}
-                                    disabled={saveApplicantMutation.isPending}
-                                >
-                                    {saveApplicantMutation.isPending ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        <>
-                                            <UserPlus className="w-4 h-4 mr-2" />
-                                            Commit to Database
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                        </div>
+                        ) : (
+                            <button type="button" className="btn btn-primary min-h-11 rounded-md text-sm font-semibold" onClick={handleSaveAsApplicant} disabled={saveApplicantMutation.isPending || saveApplicantMutation.isSuccess}>
+                                {saveApplicantMutation.isPending ? 'Saving applicant...' : saveApplicantMutation.isSuccess ? 'Applicant saved' : 'Save applicant'}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
-
+            {(extractMutation.isPending || saveApplicantMutation.isPending) && (
+                <p role="status" className="text-sm text-slate-700">
+                    {extractMutation.isPending ? `Extracting details from ${file?.name}. Keep this form open while the document is processed.` : 'Saving the applicant record. Keep this form open.'}
+                </p>
+            )}
             {(extractMutation.isError || errorMsg) && (
-                <div className="alert alert-error bg-error/10 border-error/20 text-error rounded-xl p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 mt-0.5" />
-                    <div className="flex-1">
-                        <p className="text-[10px] font-black uppercase tracking-widest mb-1">Extraction Failure</p>
-                        <p className="text-[11px] font-bold opacity-80">
-                            {errorMsg || extractMutation.error?.response?.data?.details || extractMutation.error?.response?.data?.error || "Check internet connection or PDF validity"}
-                        </p>
-                    </div>
+                <div role="alert" className="break-words rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+                    <p className="font-semibold">Could not extract details</p>
+                    <p className="mt-1">{errorMsg || extractMutation.error?.response?.data?.details || extractMutation.error?.response?.data?.error || 'Check your connection and choose a readable PDF, then try again.'}</p>
                 </div>
             )}
+            {saveApplicantMutation.isError && (
+                <div role="alert" className="break-words rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+                    <p className="font-semibold">Could not save applicant</p>
+                    <p className="mt-1">
+                        {Object.entries(saveApplicantMutation.error?.response?.data || {}).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : typeof value === 'string' ? value : JSON.stringify(value)}`).join(' ') || 'Check your connection and try saving again. Your extracted details are still available.'}
+                    </p>
+                </div>
+            )}
+            {saveApplicantMutation.isSuccess && <p role="status" className="text-sm text-slate-700">Applicant saved successfully.</p>}
         </div>
     );
 };

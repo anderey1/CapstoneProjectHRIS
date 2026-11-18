@@ -4,9 +4,10 @@ import { REQUIRED_DOCS_LIST } from './constants';
 
 const DocumentChecklistTab = ({ 
   documents, 
-  isAdmin,
-  canEdit = true,
+  canEdit = false,
   canVerify = false,
+  busy = false,
+  unavailable = false,
   onPreview, 
   onTriggerUpload, 
   onDelete, 
@@ -19,7 +20,7 @@ const DocumentChecklistTab = ({
         <p className="text-xs text-slate-500 mt-0.5">Civil Service & DepEd 201-file compliance documents</p>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-2.5 [&_button]:min-h-11 [&_a]:min-h-11 [&_button]:min-w-11">
         {REQUIRED_DOCS_LIST.map((doc) => {
           const docData = documents?.[doc.key];
           const hasFile = !!docData;
@@ -46,11 +47,11 @@ const DocumentChecklistTab = ({
                   </p>
                   
                   {hasFile && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-slate-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-sm text-slate-700">
                       <span>File: <span className="font-mono text-slate-700 font-medium break-all">{fileName}</span></span>
                       {uploadDate && <span>Uploaded: <span className="text-slate-700 font-medium">{uploadDate}</span></span>}
                       <span>Status: <span className={isDocVerified ? 'text-emerald-700 font-medium' : 'text-amber-700 font-medium'}>
-                        {isDocVerified ? 'Verified by Admin' : 'Pending Verification'}
+                        {isDocVerified ? 'Document verified' : 'Document not verified'}
                       </span></span>
                     </div>
                   )}
@@ -62,64 +63,65 @@ const DocumentChecklistTab = ({
                   <>
                     <button 
                       onClick={() => onPreview(doc)}
-                      className="btn btn-sm h-7 px-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded shadow-none"
+                      className="btn min-h-11 px-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded shadow-none"
                     >
                       <Eye className="w-3 h-3 mr-1" /> Preview
                     </button>
                     
-                    <a 
-                      href={docData.fileData || '#'} 
+                    {docData.fileData && <a
+                      href={docData.fileData}
                       download={fileName}
-                      onClick={(e) => {
-                        if (!docData.fileData) {
-                          e.preventDefault();
-                          alert("Simulating standard file download package.");
-                        }
-                      }}
-                      className="btn btn-sm h-7 px-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded shadow-none flex items-center"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn min-h-11 px-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded shadow-none flex items-center"
                     >
-                      <Download className="w-3 h-3 mr-1" /> Download
-                    </a>
+                      <Download className="w-3 h-3 mr-1" /> Open / download
+                    </a>}
                     
                     {canEdit && (
                       <>
                         <button 
+                          disabled={busy}
                           onClick={() => onTriggerUpload(doc.key)}
-                          className="btn btn-sm h-7 px-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded shadow-none"
+                          className="btn min-h-11 px-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded shadow-none"
                         >
                           <RefreshCw className="w-3 h-3 mr-1" /> Replace
                         </button>
                         
                         <button 
+                          disabled={busy}
+                          aria-label={`Remove ${doc.name}`}
                           onClick={() => onDelete(doc.key)}
-                          className="btn btn-sm h-7 px-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-medium rounded shadow-none"
+                          className="btn min-h-11 min-w-11 px-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-700 text-sm font-medium rounded shadow-none"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </>
                     )}
 
-                    {(canVerify || isAdmin) && (
+                    {canVerify && (
                       <button 
+                        disabled={busy}
                         onClick={() => onVerify(doc.key, !isDocVerified)}
-                        className={`btn btn-sm h-7 px-2.5 rounded text-xs font-medium shadow-sm border-none text-white ${
-                          isDocVerified ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'
+                        className={`btn min-h-11 px-2.5 rounded text-sm font-medium shadow-sm border-none text-white ${
+                          isDocVerified ? 'bg-amber-800 hover:bg-amber-900' : 'bg-emerald-800 hover:bg-emerald-900'
                         }`}
                       >
-                        {isDocVerified ? 'Revoke Review' : 'Approve Doc'}
+                        {isDocVerified ? 'Revoke verification' : 'Verify document'}
                       </button>
                     )}
                   </>
                 ) : (
                   canEdit ? (
                     <button 
+                      disabled={busy}
                       onClick={() => onTriggerUpload(doc.key)}
-                      className="btn btn-sm h-7 px-2.5 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded text-xs font-medium flex items-center gap-1 shadow-sm"
+                      className="btn min-h-11 px-2.5 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded text-sm font-medium flex items-center gap-1 shadow-sm"
                     >
                       <Upload className="w-3 h-3" /> Upload File
                     </button>
                   ) : (
-                    <span className="text-xs text-slate-400 italic">No document uploaded</span>
+                    <span className="text-sm text-slate-700">{unavailable ? 'Attachment status unavailable' : 'No document uploaded'}</span>
                   )
                 )}
               </div>

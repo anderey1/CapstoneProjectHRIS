@@ -48,12 +48,6 @@ const Login = () => {
               <p className="text-xs font-semibold text-blue-100 uppercase tracking-tight mt-0.5">Department of Education • Division of Lucena City</p>
             </div>
           </div>
-          <div className="text-right">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-900/60 border border-blue-400/30 rounded text-xs font-mono text-blue-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              PORTAL SECURE
-            </span>
-          </div>
         </div>
       </header>
 
@@ -63,10 +57,10 @@ const Login = () => {
           {/* Card Header Strip */}
           <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
             <h1 className="text-base font-bold tracking-tight text-slate-900">
-              HRIS Administrative Portal
+              Sign in to HRIS
             </h1>
             <p className="text-xs text-slate-600 mt-0.5">
-              Authorized personnel authentication terminal
+              Use your employee username and password.
             </p>
           </div>
 
@@ -141,7 +135,7 @@ const Login = () => {
                 className="w-full mt-2 bg-[#0038A8] hover:bg-[#002d86] text-white font-semibold text-xs uppercase tracking-wider py-2.5 px-4 rounded border border-[#002d86] shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
               >
                 <ShieldCheck className="w-4 h-4" />
-                {isLoading ? 'Verifying Credentials...' : 'Sign In to Portal'}
+                {isLoading ? 'Signing in...' : 'Sign in'}
               </button>
             </form>
 

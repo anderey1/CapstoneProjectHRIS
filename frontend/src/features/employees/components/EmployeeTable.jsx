@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Edit, Trash2, MoreVertical, Briefcase, Building2, Calendar, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Edit, Trash2, Briefcase, Building2, User } from 'lucide-react';
 import EmployeeRow from './EmployeeRow';
 import { useRBAC } from '../../../hooks/useRBAC';
 
@@ -11,7 +11,6 @@ import { useRBAC } from '../../../hooks/useRBAC';
  */
 const EmployeeTable = ({ employees, onDelete, onEdit }) => {
   const { can } = useRBAC();
-  const navigate = useNavigate();
   const canEdit = can('MANAGE_EMPLOYEES');
 
   return (
@@ -23,30 +22,29 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
           employees.map((emp) => (
             <div 
               key={emp.id} 
-              onClick={() => navigate(`/employees/${emp.id}`)}
-              className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3.5 hover:border-slate-300 hover:shadow-md transition-all cursor-pointer"
+              className="bg-white p-5 rounded-xl border border-slate-200 flex flex-col gap-3.5"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8] font-bold text-xs shrink-0">
                     {emp.first_name?.[0]}{emp.last_name?.[0]}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-sm text-slate-900 leading-tight">{emp.first_name} {emp.last_name}</h3>
-                    <p className="text-xs text-slate-400 font-mono mt-0.5">#{emp.id.toString().padStart(4, '0')}</p>
+                    <h3><Link to={`/employees/${emp.id}`} className="inline-flex min-h-11 items-center rounded font-semibold text-sm text-primary underline underline-offset-4 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{emp.first_name} {emp.last_name}</Link></h3>
+                    <p className="text-xs text-slate-600 font-mono mt-0.5">#{emp.id.toString().padStart(4, '0')}</p>
                   </div>
                 </div>
                 
                 {canEdit && (
                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <button 
-                      className="btn btn-ghost btn-xs h-7 text-slate-600 hover:text-[#0038A8] font-medium text-xs px-2"
+                      className="btn btn-ghost min-h-11 min-w-11 text-slate-700 hover:text-[#0038A8] font-medium text-sm px-3"
                       onClick={() => onEdit(emp)}
                     >
                       <Edit className="w-3.5 h-3.5 mr-1 text-slate-400" /> Edit
                     </button>
                     <button 
-                      className="btn btn-ghost btn-xs h-7 text-red-600 hover:bg-red-50 font-medium text-xs px-2"
+                      className="btn btn-ghost min-h-11 min-w-11 text-red-700 hover:bg-red-50 font-medium text-sm px-3"
                       onClick={() => onDelete(emp.id)}
                     >
                       <Trash2 className="w-3.5 h-3.5 mr-1 text-red-400" /> Delete
@@ -58,28 +56,28 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
               <div className="flex flex-col gap-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
                 <div className="flex items-center gap-2">
                   <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="font-medium text-slate-800 truncate">{emp.position || 'Teacher I'} ({emp.department})</span>
+                   <span className="font-medium text-slate-800 break-words">{emp.position || 'Position not recorded'}{emp.department ? ` (${emp.department})` : ''}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="text-slate-500 truncate">{emp.school_details?.name || 'Division Office'}</span>
+                   <span className="text-slate-600 break-words">{emp.school_details?.name || 'Workplace not recorded'}</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
                 <div>
-                   <span className="text-slate-400 font-medium">Leave Credits</span>
-                   <p className="font-semibold text-slate-800 mt-0.5">{Math.floor(emp.leave_balance || 0)} days</p>
+                   <span className="text-slate-600 font-medium">Leave credits</span>
+                   <p className="font-semibold text-slate-800 mt-0.5">{emp.leave_balance != null ? `${emp.leave_balance} days` : 'Not recorded'}</p>
                 </div>
                 <div className="text-right">
-                   <span className="text-slate-400 font-medium">Appointed</span>
+                   <span className="text-slate-600 font-medium">Appointed</span>
                    <p className="font-medium text-slate-700 mt-0.5">{emp.date_hired || '---'}</p>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="col-span-full py-16 bg-white rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
+           <div className="col-span-full py-16 bg-white rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-600">
              <User className="w-8 h-8 mb-2 stroke-1" />
              <p className="text-xs font-medium">No personnel records found</p>
           </div>
@@ -105,7 +103,7 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-16 text-xs text-slate-400 italic">
+                <td colSpan="5" className="text-center py-16 text-sm text-slate-600">
                   No employee records match the current criteria
                 </td>
               </tr>

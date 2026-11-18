@@ -21,11 +21,11 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
     },
     {
       num: 3,
-      name: 'Disbursement & ATM Credit',
-      actor: 'LandBank of the Philippines',
+      name: 'Payroll release',
+      actor: 'Division Accountant',
       isComplete: cutoffStatus === 'released',
       isCurrent: cutoffStatus === 'approved',
-      desc: 'Credits net salaries to employee ATM accounts, locks ledger, and releases digital payslips.',
+      desc: 'Records payroll release and loan payments, locks the ledger, and makes payslips available. Bank transfers happen outside this system.',
     },
   ];
 
@@ -86,7 +86,7 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
               <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-400 uppercase tracking-wider">Status</span>
                 <span className={step.isComplete ? 'text-emerald-700' : step.isCurrent ? 'text-[#0038A8]' : 'text-slate-500'}>
-                  {step.isComplete ? 'Completed' : step.isCurrent ? 'Active In Progress' : 'Pending Previous Step'}
+                  {cutoffStatus === 'unavailable' ? 'Status unavailable' : step.isComplete ? 'Completed' : step.isCurrent ? 'In progress' : 'Pending previous step'}
                 </span>
               </div>
             </div>

@@ -117,7 +117,7 @@ class LeaveRequest(models.Model):
                 return user.role == Role.HR or user.is_superuser
             return False
         if self.status == 'pending_supervisor':
-            return bool((profile and self.employee.supervisor_id == profile.pk) or user.role == Role.ADMINISTRATIVE or user.is_superuser)
+            return bool((profile and self.employee.supervisor_id == profile.pk) or user.is_superuser)
         if self.status == 'pending_hr':
             return user.role == Role.HR or user.is_superuser
         if self.status == 'pending_superintendent':

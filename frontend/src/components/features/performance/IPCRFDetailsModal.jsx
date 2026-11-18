@@ -204,7 +204,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                   }`}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  {review.is_promotion_eligible ? 'Endorsed for Promotion' : 'Regular Rating Recorded'}
+                  {review.is_promotion_eligible ? 'Meets configured rating threshold' : 'Regular Rating Recorded'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">

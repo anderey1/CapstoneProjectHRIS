@@ -190,13 +190,14 @@ export default function OperationsDashboard() {
               type="button"
               onClick={handleSyncAll}
               disabled={isRefreshing}
+              aria-label="Refresh data"
               className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-[#0038A8] disabled:opacity-60"
             >
               <RefreshCw
                 className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin text-[#0038A8]' : 'text-slate-500'}`}
                 aria-hidden="true"
               />
-              <span>{isRefreshing ? 'Synchronizing…' : 'Sync Records'}</span>
+              <span>{isRefreshing ? 'Synchronizing…' : 'Refresh data'}</span>
             </button>
           </div>
         </div>
@@ -260,7 +261,7 @@ export default function OperationsDashboard() {
         >
           <div className="flex items-center gap-2 text-rose-800 font-bold">
             <AlertCircle className="h-5 w-5" />
-            <h2 className="text-base">Operations analytics unavailable</h2>
+            <h2 className="text-base">Dashboard could not load</h2>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-slate-600">
             Recorded KPI figures could not be loaded from the division server. Your review docket below remains operational.
@@ -271,8 +272,8 @@ export default function OperationsDashboard() {
             className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#0038A8] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#0A225C] disabled:opacity-60"
             onClick={() => query.refetch()}
           >
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span>Retry Connection</span>
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Retry</span>
           </button>
         </section>
       ) : (
@@ -288,7 +289,7 @@ export default function OperationsDashboard() {
                   id="dashboard-charts-title"
                   className="text-xs font-bold uppercase tracking-wider text-slate-600"
                 >
-                  Operational Distributions & Activity Series
+                  Role-specific charts
                 </h2>
                 <p className="text-[11px] text-slate-500">
                   Aggregated plantillas, dockets, and fiscal histories matching this account
@@ -298,7 +299,7 @@ export default function OperationsDashboard() {
 
             {primaryCharts.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-xs text-slate-600 shadow-xs">
-                <p className="font-semibold text-slate-800">No registered data in current view</p>
+                <p className="font-semibold text-slate-800">No chart records are available for this account yet.</p>
                 <p className="mt-1">
                   Once records are recorded in the official modules, interactive pipeline breakdowns will display here.
                 </p>

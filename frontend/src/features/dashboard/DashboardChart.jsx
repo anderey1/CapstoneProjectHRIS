@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { AlertCircle, RotateCw, Sparkles } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -165,45 +165,70 @@ function ChartExplanation({ chart, userId }) {
   });
 
   return (
-    <details className="mt-3 border-t border-slate-200 pt-1">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
-        Optional explanation
+    <details className="group border-t border-slate-200/80 pt-1">
+      <summary className="flex min-h-11 cursor-pointer items-center justify-between py-2 text-xs font-semibold text-slate-600 hover:text-primary transition-colors select-none">
+        <span className="flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
+          <span>Optional explanation</span>
+        </span>
+        <span className="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">
+          ▼
+        </span>
       </summary>
-      <button
-        type="button"
-        onClick={() => summary.refetch()}
-        disabled={summary.isFetching}
-        className="inline-flex min-h-11 items-center rounded border border-slate-300 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-      >
-        {summary.isFetching
-          ? 'Generating…'
-          : summary.data?.source === 'ai'
-            ? 'Regenerate AI explanation'
-            : 'Explain with AI'}
-      </button>
-      <div aria-live="polite">
-        {summary.isError && (
-          <p className="mt-2 text-sm text-error">
-            AI explanation could not load. Try again; the figures above remain available.
-          </p>
-        )}
-        {summary.data && (
-          <div className="mt-3 rounded bg-slate-50 p-3">
-            <h4 className="text-sm font-semibold text-slate-900">
-              {summary.data.source === 'ai'
-                ? 'AI-generated explanation: verify against the figures'
-                : 'Data-based explanation'}
-            </h4>
-            <p className="mt-1 text-sm leading-relaxed text-slate-700">
-              {summary.data.message || summary.data.text}
-            </p>
-            {summary.data.source === 'ai' && (
-              <p className="mt-1 text-xs text-slate-600">
-                Supports interpretation; it does not approve applications or establish compliance.
+      <div className="pb-3 pt-1 space-y-2.5">
+        <button
+          type="button"
+          onClick={() => summary.refetch()}
+          disabled={summary.isFetching}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60 transition-all"
+        >
+          {summary.isFetching ? (
+            <>
+              <RotateCw className="h-3 w-3 animate-spin text-primary" aria-hidden="true" />
+              <span>Generating…</span>
+            </>
+          ) : summary.data?.source === 'ai' ? (
+            <>
+              <RotateCw className="h-3 w-3 text-slate-500" aria-hidden="true" />
+              <span>Regenerate AI explanation</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-3 w-3 text-amber-500" aria-hidden="true" />
+              <span>Explain with AI</span>
+            </>
+          )}
+        </button>
+        <div aria-live="polite">
+          {summary.isError && (
+            <div className="rounded-lg bg-red-50 p-3 border border-red-200/70">
+              <p className="text-xs font-medium text-error flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>AI explanation could not load. Try again; the figures above remain available.</span>
               </p>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+          {summary.data && (
+            <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-200/80 shadow-2xs space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                <h4 className="text-xs font-bold text-slate-900 tracking-tight">
+                  {summary.data.source === 'ai'
+                    ? 'AI-generated explanation: verify against the figures'
+                    : 'Data-based explanation'}
+                </h4>
+              </div>
+              <p className="text-xs leading-relaxed text-slate-700">
+                {summary.data.message || summary.data.text}
+              </p>
+              {summary.data.source === 'ai' && (
+                <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-200/50">
+                  Supports interpretation; it does not approve applications or establish compliance.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </details>
   );
@@ -272,13 +297,7 @@ export default function DashboardChart({ chart, userId }) {
           </details>
         )}
 
-        <div className="mt-auto border-t border-slate-200 pt-3">
-          <Link
-            to={chart.path}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {chart.action}
-          </Link>
+        <div className="mt-auto pt-2">
           <ChartExplanation chart={chart} userId={userId} />
         </div>
       </div>

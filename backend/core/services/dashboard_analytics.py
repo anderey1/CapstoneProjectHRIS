@@ -4,7 +4,41 @@ from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce, TruncMonth
 from django.utils import timezone
 
-from core.models import Employee, Attendance, LeaveRequest, ProvidentLoan, Payroll, PerformanceReview, Applicant, Role
+from core.models import Employee, Attendance, LeaveRequest, ProvidentLoan, Payroll, PerformanceReview, Applicant, Role, User, School, AuditLog
+
+
+PERSONAL_LAYOUT = {
+    'scope': 'personal',
+    'charts': ['attendance', 'leaves', 'loans', 'payroll_status', 'payroll', 'performance'],
+    'kpis': ['leaves', 'attendance', 'loans', 'payroll'],
+}
+
+SUPERUSER_LAYOUT = {
+    'scope': 'system',
+    'charts': ['accounts', 'registrations', 'audit_activity', 'school_configuration', 'account_status', 'workforce'],
+    'kpis': ['accounts', 'registrations', 'audit_activity', 'school_configuration'],
+}
+
+DASHBOARD_LAYOUTS = {
+    Role.HR: {
+        'scope': 'division',
+        'charts': ['workforce', 'attendance', 'leaves', 'recruitment', 'stations', 'loans', 'payroll_status', 'payroll', 'performance'],
+        'kpis': ['workforce', 'attendance', 'leaves', 'recruitment'],
+    },
+    Role.ACCOUNTANT: {
+        'scope': 'division',
+        'charts': ['payroll', 'payroll_status', 'loans'],
+        'kpis': ['payroll', 'payroll_status', 'loans'],
+    },
+    Role.SUPERINTENDENT: {
+        'scope': 'division',
+        'charts': ['workforce', 'leaves', 'payroll_status', 'attendance', 'loans', 'performance', 'recruitment', 'stations', 'payroll'],
+        'kpis': ['workforce', 'leaves', 'payroll_status', 'loans'],
+    },
+    Role.PRINCIPAL: PERSONAL_LAYOUT,
+    Role.TEACHING: PERSONAL_LAYOUT,
+    Role.NON_TEACHING: PERSONAL_LAYOUT,
+}
 
 
 def breakdown(qs, field, choices=None):
@@ -14,6 +48,8 @@ def breakdown(qs, field, choices=None):
 
 
 def operational_dashboard(user):
+    layout = SUPERUSER_LAYOUT if user.is_superuser else DASHBOARD_LAYOUTS.get(user.role, PERSONAL_LAYOUT)
+    wanted = set(layout['charts'])
     management = user.is_management
     employees = Employee.objects.all() if management else Employee.objects.filter(user=user)
     scope = {} if management else {'employee__user': user}
@@ -39,42 +75,83 @@ def operational_dashboard(user):
         charts.append(dict(key=key, title=title, data=data, unit=unit, total=str(total) if unit == 'PHP' else total,
                            insight=insight, note=note, action=action, path=path, period=period))
 
-    finance_only = management and user.role == Role.ACCOUNTANT
-    if management and not finance_only:
+    def include(key):
+        return key in wanted
+
+    if include('accounts'):
+        add('accounts', 'User accounts by role', breakdown(User.objects.all(), 'role', [('', 'System Administrator'), *Role.choices]),
+            'accounts', 'Open personnel directory', '/employees',
+            'Counts user accounts by assigned staff role. Inactive accounts remain counted until removed.', 'Current user accounts')
+    if include('registrations'):
+        add('registrations', 'Registration review queue', breakdown(
+                Employee.objects.filter(registration_status__in=['pending', 'rejected']),
+                'registration_status', [('pending', 'Pending'), ('rejected', 'Rejected')]),
+            'requests', 'Review registrations', '/employees',
+            'Counts pending and rejected registration records. Rejected requests stay visible for audit.',
+            'Current registration queue')
+    if include('audit_activity'):
+        entries = list(AuditLog.objects.annotate(month=TruncMonth('timestamp'))
+                       .values('month').annotate(value=Count('pk')).order_by('-month')[:12])
+        add('audit_activity', 'Audit entries by month',
+            [dict(name=row['month'].strftime('%b %Y'), value=row['value']) for row in reversed(entries)],
+            'entries', 'Open audit logs', '/audit-logs',
+            'Counts recorded audit rows by month. Free-text actions are not categorized.',
+            'Latest 12 recorded months')
+    if include('school_configuration'):
+        annotated_schools = School.objects.annotate(personnel_count=Count('personnel'))
+        add('school_configuration', 'School configuration', [
+            dict(name='Schools with assigned personnel', value=annotated_schools.filter(personnel_count__gt=0).count()),
+            dict(name='Schools without assigned personnel', value=annotated_schools.filter(personnel_count=0).count())],
+            'schools', 'Open schools', '/schools',
+            'Counts configured school records. Missing personnel does not prove a school is inactive.',
+            'Current school records')
+    if include('account_status'):
+        add('account_status', 'Account status', [
+            dict(name='Active accounts', value=User.objects.filter(is_active=True).count()),
+            dict(name='Inactive accounts', value=User.objects.filter(is_active=False).count())],
+            'accounts', 'Open personnel directory', '/employees',
+            'Counts user accounts by active flag. Inactive accounts cannot sign in until reactivated.',
+            'Current user accounts')
+    if include('workforce'):
         add('workforce', 'Workforce composition', breakdown(employees, 'user__role', [('', 'System Administrator'), *Role.choices]),
             'personnel', 'Open personnel directory', '/employees',
             'Includes every recorded staff role. Headcount alone does not establish staffing adequacy.', 'Current personnel records')
+    if include('stations'):
         add('stations', 'Personnel by station', breakdown(employees, 'school__name'),
             'personnel', 'Review station assignments', '/employees',
             'A larger headcount does not prove a station is overstaffed.', 'Current personnel records')
-    if not finance_only:
+    if include('attendance'):
         add('attendance', 'Attendance review status', [
             dict(name='Approved daily records', value=attendance.filter(is_dtr_approved=True).count()),
             dict(name='Awaiting review', value=attendance.filter(is_dtr_approved=False).count())],
             'daily records', 'Review attendance' if management else 'View my DTR',
             '/attendance-management' if management else '/dtr',
             'Counts daily attendance rows, not employees or monthly DTR forms. Approval is not an attendance-compliance score.')
+    if include('leaves'):
         add('leaves', 'Leave processing pipeline', breakdown(leaves, 'status', LeaveRequest.STATUS_CHOICES),
             'applications', 'Review leave applications' if management else 'View my leave applications',
             '/leave-management' if management else '/my-leaves',
             'Each application is counted once at its current stage. This does not measure processing time.')
-    add('loans', 'Provident loan pipeline', breakdown(loans, 'status', ProvidentLoan.STATUS_CHOICES),
-        'applications', 'Review loan applications' if management else 'View my loans',
-        '/loan-management' if management else '/my-loans',
-        'Shows application status, not outstanding principal or a measure of portfolio health.')
-    add('payroll_status', 'Payroll processing pipeline', breakdown(payroll, 'status', Payroll.STATUS_CHOICES),
-        'employee payroll records', 'Open payroll' if management else 'View my payslips',
-        '/payroll-management' if management else '/my-payslips',
-        'Each row is one employee payroll record, not a whole payroll batch. Draft and approved records are not yet released.')
-    monthly = list(payroll.filter(status='released').annotate(
-        released_month=TruncMonth(Coalesce('date_released', 'date_generated'))
-    ).values('released_month').annotate(amount=Sum('net_salary')).order_by('-released_month')[:12])
-    add('payroll', 'Released payroll by month', [dict(name=row['released_month'].strftime('%b %Y'), value=str(row['amount'])) for row in reversed(monthly)],
-        'PHP', 'Open payroll' if management else 'View my payslips',
-        '/payroll-management' if management else '/my-payslips',
-        'Only released employee payroll records are included. Release date is used; older records without it use their generation date.',
-        'Latest 12 recorded release months')
-    if not finance_only:
+    if include('loans'):
+        add('loans', 'Provident loan pipeline', breakdown(loans, 'status', ProvidentLoan.STATUS_CHOICES),
+            'applications', 'Review loan applications' if management else 'View my loans',
+            '/loan-management' if management else '/my-loans',
+            'Shows application status, not outstanding principal or a measure of portfolio health.')
+    if include('payroll_status'):
+        add('payroll_status', 'Payroll processing pipeline', breakdown(payroll, 'status', Payroll.STATUS_CHOICES),
+            'employee payroll records', 'Open payroll' if management else 'View my payslips',
+            '/payroll-management' if management else '/my-payslips',
+            'Each row is one employee payroll record, not a whole payroll batch. Draft and approved records are not yet released.')
+    if include('payroll'):
+        monthly = list(payroll.filter(status='released').annotate(
+            released_month=TruncMonth(Coalesce('date_released', 'date_generated'))
+        ).values('released_month').annotate(amount=Sum('net_salary')).order_by('-released_month')[:12])
+        add('payroll', 'Released payroll by month', [dict(name=row['released_month'].strftime('%b %Y'), value=str(row['amount'])) for row in reversed(monthly)],
+            'PHP', 'Open payroll' if management else 'View my payslips',
+            '/payroll-management' if management else '/my-payslips',
+            'Only released employee payroll records are included. Release date is used; older records without it use their generation date.',
+            'Latest 12 recorded release months')
+    if include('performance'):
         scored = Q(quality_score__isnull=False, behavior_score__isnull=False, punctuality_score__isnull=False)
         add('performance', 'Performance record coverage', [
             dict(name='Scored records', value=performance.filter(scored).count()),
@@ -82,8 +159,11 @@ def operational_dashboard(user):
             'review records', 'Open performance reviews' if management else 'View my performance records',
             '/performance-management' if management else '/my-performance',
             'Multiple review periods for one employee count separately. This does not determine promotion eligibility.')
-    if management and not finance_only:
+    if include('recruitment'):
         add('recruitment', 'Recruitment pipeline', breakdown(Applicant.objects.all(), 'status', Applicant.STATUS_CHOICES),
             'applicants', 'Open applicant board', '/recruitment',
             'Shows current application stages, including completed outcomes. It is not a conversion rate.')
-    return dict(scope='division' if management else 'personal', as_of=timezone.now().isoformat(), charts=charts)
+
+    charts_by_key = {chart['key']: chart for chart in charts}
+    ordered_charts = [charts_by_key[key] for key in layout['charts'] if key in charts_by_key]
+    return dict(scope=layout['scope'], as_of=timezone.now().isoformat(), charts=ordered_charts, kpi_keys=list(layout['kpis']))

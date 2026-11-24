@@ -9,9 +9,13 @@ import PasswordSetup from './pages/PasswordSetup';
 import Apply from './pages/Apply';
 import RegisterExisting from './pages/RegisterExisting';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AccountantDashboardPage from './pages/admin/AccountantDashboardPage';
-import SuperintendentDashboardPage from './pages/admin/SuperintendentDashboardPage';
+import HRDashboard from './pages/admin/HRDashboard';
+import AccountantDashboard from './pages/admin/AccountantDashboard';
+import SuperintendentDashboard from './pages/admin/SuperintendentDashboard';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
+import PrincipalDashboard from './pages/employee/PrincipalDashboard';
+import TeachingDashboard from './pages/employee/TeachingDashboard';
+import NonTeachingDashboard from './pages/employee/NonTeachingDashboard';
 import Schools from './pages/admin/Schools';
 import Employees from './pages/admin/Employees';
 import LoanManagement from './pages/admin/LoanManagement';
@@ -46,11 +50,13 @@ function App() {
   const { user } = useAuth();
   const role = user?.role;
   const renderDashboard = () => {
-    if (!user) return <EmployeeDashboard />;
-    if (user.is_superuser) return <AdminDashboard />;
-    if (role === 'ACCOUNTANT') return <AccountantDashboardPage />;
-    if (role === 'SUPERINTENDENT') return <SuperintendentDashboardPage />;
-    if (MANAGEMENT_ROLES.includes(role)) return <AdminDashboard />;
+    if (user?.is_superuser) return <AdminDashboard />;
+    if (role === 'HR') return <HRDashboard />;
+    if (role === 'ACCOUNTANT') return <AccountantDashboard />;
+    if (role === 'SUPERINTENDENT') return <SuperintendentDashboard />;
+    if (role === 'PRINCIPAL') return <PrincipalDashboard />;
+    if (role === 'TEACHING') return <TeachingDashboard />;
+    if (role === 'NON_TEACHING') return <NonTeachingDashboard />;
     return <EmployeeDashboard />;
   };
 

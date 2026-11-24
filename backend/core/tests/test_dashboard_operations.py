@@ -5,7 +5,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
-from core.models import Attendance, Employee, Payroll, Role
+from core.models import Attendance, AuditLog, Employee, Payroll, Role, School
 from core.services.dashboard_analytics import operational_dashboard
 
 
@@ -37,8 +37,75 @@ def test_personal_dashboard_never_counts_other_employees(teacher_employee, non_t
 def test_finance_dashboard_only_exposes_finance_charts():
     user = get_user_model().objects.create_user(username='finance_dashboard', role=Role.ACCOUNTANT)
     data = operational_dashboard(user)
-    assert [chart['key'] for chart in data['charts']] == ['loans', 'payroll_status', 'payroll']
+    assert [chart['key'] for chart in data['charts']] == ['payroll', 'payroll_status', 'loans']
+    assert data['kpi_keys'] == ['payroll', 'payroll_status', 'loans']
     assert authenticated(user).get('/api/dashboard/operations/insight/recruitment/').status_code == 404
+
+
+@pytest.mark.parametrize('role, expected_scope, expected_charts, expected_kpis', [
+    (Role.HR, 'division',
+     ['workforce', 'attendance', 'leaves', 'recruitment', 'stations', 'loans', 'payroll_status', 'payroll', 'performance'],
+     ['workforce', 'attendance', 'leaves', 'recruitment']),
+    (Role.SUPERINTENDENT, 'division',
+     ['workforce', 'leaves', 'payroll_status', 'attendance', 'loans', 'performance', 'recruitment', 'stations', 'payroll'],
+     ['workforce', 'leaves', 'payroll_status', 'loans']),
+    (Role.PRINCIPAL, 'personal',
+     ['attendance', 'leaves', 'loans', 'payroll_status', 'payroll', 'performance'],
+     ['leaves', 'attendance', 'loans', 'payroll']),
+    (Role.TEACHING, 'personal',
+     ['attendance', 'leaves', 'loans', 'payroll_status', 'payroll', 'performance'],
+     ['leaves', 'attendance', 'loans', 'payroll']),
+    (Role.NON_TEACHING, 'personal',
+     ['attendance', 'leaves', 'loans', 'payroll_status', 'payroll', 'performance'],
+     ['leaves', 'attendance', 'loans', 'payroll']),
+])
+def test_dashboard_layout_is_role_specific(role, expected_scope, expected_charts, expected_kpis):
+    user = get_user_model().objects.create_user(username=f'layout_{role.lower()}', role=role)
+    data = operational_dashboard(user)
+    assert data['scope'] == expected_scope
+    assert [chart['key'] for chart in data['charts']] == expected_charts
+    assert data['kpi_keys'] == expected_kpis
+
+
+def test_superuser_dashboard_layout(admin_user):
+    data = operational_dashboard(admin_user)
+    assert data['scope'] == 'system'
+    assert [chart['key'] for chart in data['charts']] == [
+        'accounts', 'registrations', 'audit_activity', 'school_configuration', 'account_status', 'workforce'
+    ]
+    assert data['kpi_keys'] == ['accounts', 'registrations', 'audit_activity', 'school_configuration']
+
+
+def test_superuser_dashboard_charts_use_system_records(admin_user, mock_school):
+    User = get_user_model()
+    pending_user = User.objects.create_user(username='pending_account', role=Role.TEACHING, is_active=False)
+    Employee.objects.create(user=pending_user, first_name='Pending', last_name='Employee',
+                            school=mock_school, salary=Decimal('10000'), registration_status='pending')
+    rejected_user = User.objects.create_user(username='rejected_account', role=Role.NON_TEACHING, is_active=False)
+    Employee.objects.create(user=rejected_user, first_name='Rejected', last_name='Employee',
+                            school=mock_school, salary=Decimal('10000'), registration_status='rejected')
+    School.objects.create(name='Unassigned School')
+    AuditLog.objects.create(user=admin_user, action='Test audit entry')
+
+    charts = {chart['key']: chart for chart in operational_dashboard(admin_user)['charts']}
+    account_rows = {row['name']: row['value'] for row in charts['accounts']['data']}
+    assert account_rows['System Administrator'] == 1
+    assert account_rows['Teaching Staff'] == 1
+    assert account_rows['Non-Teaching Staff'] == 1
+
+    status_rows = {row['name']: row['value'] for row in charts['account_status']['data']}
+    assert status_rows == {'Active accounts': 1, 'Inactive accounts': 2}
+
+    registration_rows = {row['name']: row['value'] for row in charts['registrations']['data']}
+    assert registration_rows == {'Pending': 1, 'Rejected': 1}
+
+    school_rows = {row['name']: row['value'] for row in charts['school_configuration']['data']}
+    assert school_rows == {
+        'Schools with assigned personnel': 1,
+        'Schools without assigned personnel': 1,
+    }
+
+    assert charts['audit_activity']['total'] == 1
 
 
 def test_workforce_includes_management_roles(hr_user, teacher_employee):

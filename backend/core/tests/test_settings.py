@@ -14,6 +14,10 @@ def run_manage(*args, **overrides):
         'SECRET_KEY',
         'DEBUG',
         'ALLOWED_HOSTS',
+        'CORS_ALLOWED_ORIGINS',
+        'DATABASE_URL',
+        'PORTAL_URL',
+        'RENDER_EXTERNAL_HOSTNAME',
         'SECURE_SSL_REDIRECT',
         'SESSION_COOKIE_SECURE',
         'CSRF_COOKIE_SECURE',
@@ -55,3 +59,36 @@ def test_local_http_and_frontend_work_without_environment_configuration():
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_production_settings_use_postgres_from_database_url():
+    result = run_manage(
+        'shell',
+        '-c',
+        "from django.conf import settings; "
+        "assert settings.DEBUG is False; "
+        "assert settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql'; "
+        "assert settings.ALLOWED_HOSTS == ['hris.onrender.com']; "
+        "assert settings.CORS_ALLOWED_ORIGINS == ['https://hris.vercel.app']",
+        DJANGO_ENV='prod',
+        SECRET_KEY='test-only-placeholder-key-1234567890-abcdefghijklmnopqrstuvwxyz',
+        ALLOWED_HOSTS='hris.onrender.com',
+        CORS_ALLOWED_ORIGINS='https://hris.vercel.app',
+        PORTAL_URL='https://hris.vercel.app',
+        DATABASE_URL='postgresql://placeholder:placeholder@localhost:5432/hris?sslmode=require',
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_production_settings_require_database_url():
+    result = run_manage(
+        'check',
+        DJANGO_ENV='prod',
+        SECRET_KEY='test-only-placeholder-key-1234567890-abcdefghijklmnopqrstuvwxyz',
+        ALLOWED_HOSTS='hris.onrender.com',
+        PORTAL_URL='https://hris.vercel.app',
+    )
+
+    assert result.returncode != 0
+    assert 'DATABASE_URL is required in production' in result.stderr

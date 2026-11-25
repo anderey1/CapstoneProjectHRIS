@@ -7,6 +7,7 @@ import AddApplicantModal from '../../features/recruitment/components/AddApplican
 import AccessibleDialog from '../../components/common/AccessibleDialog';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import Pagination from '../../components/common/Pagination';
+import PageHeader from '../../components/common/PageHeader';
 
 /**
  * DepEd Recruitment Board
@@ -106,35 +107,21 @@ const Recruitment = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
-      {/* Institutional Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
-              <Layout className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 ">
-                Comparative Assessment Result (CAR) Ledger
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                DepEd Order No. 007, s. 2023 • Merit Selection Plan & Personnel Evaluation
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <button
-            className="px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center gap-1.5 transition-colors"
-            onClick={() => setShowAddModal(true)}
-          >
-            <Plus className="w-4 h-4" />
-            Encode Applicant Profile
-          </button>
-        </div>
-      </div>
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+      <PageHeader
+        icon={Layout}
+        title="Comparative Assessment Result (CAR) Ledger"
+        subtitle="DepEd Order No. 007, s. 2023 · Merit Selection Plan & Personnel Evaluation"
+      >
+        <button
+          type="button"
+          className="btn btn-primary btn-sm gap-1.5"
+          onClick={() => setShowAddModal(true)}
+        >
+          <Plus className="w-4 h-4" />
+          Encode Applicant Profile
+        </button>
+      </PageHeader>
 
       {/* 5-Metric Portfolio Summary Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -145,7 +132,7 @@ const Recruitment = () => {
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Initial Review</p>
-          <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{stageCounts.initial_evaluation || 0}</p>
+          <p className="text-xl font-bold text-primary font-mono tabular-nums mt-1">{stageCounts.initial_evaluation || 0}</p>
           <p className="text-xs text-slate-400 mt-0.5">Document screening</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
@@ -174,7 +161,7 @@ const Recruitment = () => {
               type="text" 
               aria-label="Search applicants"
               placeholder="Search candidate by name or position applied..." 
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-primary rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -190,7 +177,7 @@ const Recruitment = () => {
             onClick={() => setActiveStage('all')}
             className={`px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors ${
               activeStage === 'all'
-                ? 'bg-[#0038A8] text-white'
+                ? 'bg-primary text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -202,7 +189,7 @@ const Recruitment = () => {
               onClick={() => setActiveStage(col.id)}
               className={`px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors flex items-center gap-1.5 ${
                 activeStage === col.id
-                  ? 'bg-[#0038A8] text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -221,7 +208,7 @@ const Recruitment = () => {
       <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-12 text-center text-primary">
-            <span className="loading loading-spinner loading-lg text-[#0038A8]" />
+            <span className="loading loading-spinner loading-lg text-primary" />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -280,7 +267,7 @@ const Recruitment = () => {
                       <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
                         {applicant.interview_score || 0}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums font-bold text-[#0038A8]">
+                      <td className="px-4 py-3 text-right font-mono tabular-nums font-bold text-primary">
                         {applicant.total_score || 0}
                       </td>
                       <td className="px-4 py-3">

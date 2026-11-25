@@ -18,7 +18,7 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
     >
       <td className="px-6 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-50 border border-blue-100/80 rounded-lg flex items-center justify-center text-[#0038A8] font-bold text-xs shrink-0 group-hover/row:bg-[#0038A8] group-hover/row:text-white transition-colors">
+          <div className="w-9 h-9 bg-blue-50 border border-blue-100/80 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0 group-hover/row:bg-primary group-hover/row:text-white transition-colors">
             {emp.first_name?.[0]}{emp.last_name?.[0]}
           </div>
           <div className="min-w-0">
@@ -53,7 +53,7 @@ const EmployeeRow = ({ emp, onDelete, onEdit }) => {
         {canEdit && (
           <div className="flex justify-end gap-1">
             <button 
-              className="btn btn-ghost min-h-11 min-w-11 px-3 text-sm font-medium text-slate-700 hover:text-[#0038A8] hover:bg-slate-100 rounded-md"
+              className="btn btn-ghost min-h-11 min-w-11 px-3 text-sm font-medium text-slate-700 hover:text-primary hover:bg-slate-100 rounded-md"
               onClick={() => onEdit(emp)}
               title="Edit Staff"
             >

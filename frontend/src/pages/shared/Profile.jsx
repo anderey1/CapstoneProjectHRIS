@@ -355,10 +355,10 @@ const Profile = () => {
 
   if (isError || !me) {
     return (
-      <div className="p-6 space-y-4" role="alert">
+      <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto" role="alert">
         <h1 className="text-lg font-semibold text-slate-900">Profile unavailable</h1>
         <p className="text-sm text-slate-700">Unable to load this employee profile. Check your connection or access permissions.</p>
-        <button type="button" onClick={() => refetch()} disabled={isFetching} className="btn min-h-11 bg-[#0038A8] text-white">
+        <button type="button" onClick={() => refetch()} disabled={isFetching} className="btn btn-primary btn-sm">
           {isFetching ? 'Retrying...' : 'Retry'}
         </button>
       </div>
@@ -366,7 +366,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-[180ms]">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-[180ms]">
       {/* Hidden File Inputs */}
       <input 
         type="file" 
@@ -431,7 +431,7 @@ const Profile = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 min-h-11 px-3 py-2 rounded-md text-sm font-semibold shrink-0 whitespace-nowrap transition-colors ${
                     isSelected 
-                      ? 'bg-[#0038A8] text-white shadow-sm' 
+                      ? 'bg-primary text-white shadow-sm' 
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
@@ -644,7 +644,7 @@ const Profile = () => {
                   <button 
                     type="submit" 
                     disabled={isChangingPw}
-                    className="btn bg-[#0038A8] hover:bg-[#002d86] text-white btn-sm rounded-lg text-xs font-medium px-5 border-none"
+                    className="btn btn-primary btn-sm"
                   >
                     {isChangingPw ? 'Updating Password...' : 'Update Password'}
                   </button>

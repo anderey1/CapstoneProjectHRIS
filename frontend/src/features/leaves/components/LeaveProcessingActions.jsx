@@ -74,9 +74,9 @@ export default function LeaveProcessingActions({ leave, onApprove, onReject, onR
       </div>
       {error && <p role="alert" className="text-red-800">{error}</p>}
       <div className="flex flex-wrap justify-end gap-2">
-        {leave.workflow === 'teaching' && <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50" disabled={pending} onClick={() => submit('return')}>Return for correction</button>}
-        <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50" disabled={pending} onClick={() => submit('reject')}>Disapprove</button>
-        <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-secondary bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50" disabled={pending} onClick={() => submit('approve')}>{pending ? 'Processing...' : leaveActionLabel(leave)}</button>
+        {leave.workflow === 'teaching' && <button type="button" className="btn btn-outline btn-sm" disabled={pending} onClick={() => submit('return')}>Return for correction</button>}
+        <button type="button" className="btn btn-error btn-outline btn-sm" disabled={pending} onClick={() => submit('reject')}>Disapprove</button>
+        <button type="button" className="btn btn-primary btn-sm" disabled={pending} onClick={() => submit('approve')}>{pending ? 'Processing...' : leaveActionLabel(leave)}</button>
       </div>
     </section>
   );

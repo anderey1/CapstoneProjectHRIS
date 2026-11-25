@@ -18,7 +18,7 @@ const RecruitmentMetricsBar = ({ totalCount = 0, stageCounts = {} }) => {
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
           Initial Review
         </p>
-        <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">
+        <p className="text-xl font-bold text-primary font-mono tabular-nums mt-1">
           {stageCounts.initial_evaluation || 0}
         </p>
         <p className="text-xs text-slate-400 mt-0.5">Document screening</p>

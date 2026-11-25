@@ -37,7 +37,7 @@ const PayrollActionPanel = ({
               cutoffStatus === 'released'
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : cutoffStatus === 'approved'
-                ? 'bg-blue-50 text-[#0038A8] border-blue-200'
+                ? 'bg-blue-50 text-primary border-blue-200'
                 : cutoffStatus === 'draft'
                 ? 'bg-amber-50 text-amber-800 border-amber-200'
                 : 'bg-slate-100 text-slate-600 border-slate-200'
@@ -65,7 +65,7 @@ const PayrollActionPanel = ({
               type="button"
               onClick={handleBulkGenerate}
               disabled={bulkGenerateLoading}
-              className="btn min-h-11 h-auto py-2 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-sm font-semibold px-4 shadow-xs"
+              className="btn btn-primary btn-sm h-auto py-2 px-4"
             >
               {bulkGenerateLoading ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -81,7 +81,7 @@ const PayrollActionPanel = ({
               type="button"
               onClick={handleBulkApprove}
               disabled={bulkApproveLoading}
-              className="btn min-h-11 h-auto py-2 bg-emerald-700 hover:bg-emerald-800 text-white border-none rounded-md text-sm font-semibold px-4 shadow-xs"
+              className="btn btn-success btn-sm h-auto py-2 px-4"
             >
               {bulkApproveLoading ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -97,7 +97,7 @@ const PayrollActionPanel = ({
               type="button"
               onClick={handleBulkRelease}
               disabled={bulkReleaseLoading}
-              className="btn min-h-11 h-auto py-2 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-sm font-semibold px-4 shadow-xs"
+              className="btn btn-primary btn-sm h-auto py-2 px-4"
             >
               {bulkReleaseLoading ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -115,7 +115,7 @@ const PayrollActionPanel = ({
               event.currentTarget.querySelector('summary')?.focus();
             }
           }}>
-            <summary className="btn min-h-11 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-sm font-semibold px-3">
+            <summary className="btn btn-outline btn-sm px-3">
               <Download className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
               Export Reports
             </summary>
@@ -132,7 +132,7 @@ const PayrollActionPanel = ({
                   onClick={handleExportPayrollSheet}
                   className="min-h-11 text-sm text-slate-700 hover:bg-slate-50 font-medium py-2 rounded"
                 >
-                  <FileText className="w-3.5 h-3.5 text-[#0038A8] mr-2" />
+                  <FileText className="w-3.5 h-3.5 text-primary mr-2" />
                   General Payroll Sheet (Form 7)
                 </button>
               </li>
@@ -181,7 +181,7 @@ const PayrollActionPanel = ({
               type="button"
               disabled={!selectedEmployee || generateLoading}
               onClick={handleGenerate}
-              className="btn min-h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-md text-sm font-semibold px-3"
+              className="btn btn-outline btn-sm px-3"
             >
               {generateLoading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

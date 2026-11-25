@@ -63,7 +63,7 @@ const LoanMetricsBar = ({
           Active Loans Released
         </span>
         <div className="mt-2 flex items-baseline justify-between">
-          <span className="text-xl font-bold text-[#0038A8] font-mono tabular-nums">
+          <span className="text-xl font-bold text-primary font-mono tabular-nums">
             {formatCurrency(totalReleasedValue)}
           </span>
           <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">

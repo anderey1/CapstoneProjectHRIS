@@ -11,6 +11,9 @@ import {
   Calendar,
 } from 'lucide-react';
 import RoleBadge from '../../components/common/RoleBadge';
+import PageHeader from '../../components/common/PageHeader';
+import StatCards from '../../components/common/StatCards';
+import PageLoader from '../../components/common/PageLoader';
 
 /**
  * Maps raw audit action descriptions to authoritative institutional modules.
@@ -18,7 +21,7 @@ import RoleBadge from '../../components/common/RoleBadge';
 function resolveAuditModule(action = '') {
   const text = action.toLowerCase();
   if (text.includes('leave') || text.includes('form 6')) {
-    return { name: 'CSC Form 6 (Leave)', badge: 'bg-blue-50 text-[#0038A8] border-blue-200' };
+    return { name: 'CSC Form 6 (Leave)', badge: 'bg-blue-50 text-primary border-blue-200' };
   }
   if (text.includes('attendance') || text.includes('dtr') || text.includes('clock')) {
     return { name: 'CSC Form 48 (DTR)', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
@@ -56,93 +59,26 @@ const AuditLogs = () => {
   const metrics = { total: 0, operators: 0, recent: 0, critical: 0, ...summary };
 
   if (isLoading) {
-    return (
-      <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
-        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Loading Security Audit Trail...
-        </p>
-      </div>
-    );
+    return <PageLoader label="Loading Security Audit Trail..." />;
   }
 
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* DepEd Institutional Header */}
-      <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Activity logs
-              </h1>
-            </div>
-          </div>
-          <p className="text-xs text-slate-600">
-            Recorded account activity
-          </p>
-        </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title="Activity logs"
+        subtitle="Recorded account activity"
+      />
 
-
-      </div>
-
-      {/* 4-Metric Status Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Total Event Logs
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-slate-500">entries</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Retained in database</span>
-        </div>
-
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Active System Actors
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-[#0038A8]">
-              {metrics.operators}
-            </span>
-            <span className="text-xs text-slate-500">personnel</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Division accounts</span>
-        </div>
-
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Activity in Past 24 Hours
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-emerald-700">
-              {metrics.recent}
-            </span>
-            <span className="text-xs text-slate-500">events</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Recent system operations</span>
-        </div>
-
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Deletions / Modifications
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-amber-700">
-              {metrics.critical}
-            </span>
-            <span className="text-xs text-slate-500">actions</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Recorded changes</span>
-        </div>
-      </div>
+      <StatCards
+        ariaLabel="Audit log metrics"
+        stats={[
+          { label: 'Total Event Logs', value: metrics.total, description: 'Retained in database' },
+          { label: 'Active System Actors', value: metrics.operators, valueClass: 'text-primary', description: 'Division accounts' },
+          { label: 'Activity in Past 24 Hours', value: metrics.recent, valueClass: 'text-emerald-700', description: 'Recent system operations' },
+          { label: 'Deletions / Modifications', value: metrics.critical, valueClass: 'text-amber-700', description: 'Recorded changes' },
+        ]}
+      />
 
       {/* Filter and Search Bar */}
       <div className="bg-white border border-slate-300 rounded-lg p-3 flex flex-col md:flex-row items-center justify-between gap-3 shadow-xs">
@@ -154,7 +90,7 @@ const AuditLogs = () => {
               placeholder="Search actor, action text, or reference ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-md pl-9 pr-3 py-1.5 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
+            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-md pl-9 pr-3 py-1.5 text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
           />
         </div>
 
@@ -166,7 +102,7 @@ const AuditLogs = () => {
               aria-label="Filter by module"
               value={selectedModule}
               onChange={(e) => setSelectedModule(e.target.value)}
-              className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+              className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="ALL">All System Modules</option>
               <option value="CSC Form 6 (Leave)">CSC Form 6 (Leave)</option>
@@ -187,7 +123,7 @@ const AuditLogs = () => {
               aria-label="Filter by date range"
               value={selectedDateRange}
               onChange={(e) => setSelectedDateRange(e.target.value)}
-              className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+              className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="ALL">All Time</option>
               <option value="24H">Past 24 Hours</option>

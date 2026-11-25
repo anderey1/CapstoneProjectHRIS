@@ -21,13 +21,13 @@ export default function AttendanceManagement() {
     search: searchTerm, department: deptFilter, year, month,
   });
   const tabs = [{ id: 'records', label: 'Attendance records', icon: FileText }, ...(canImport ? [{ id: 'import', label: 'Import file', icon: Upload }, { id: 'mappings', label: 'Employee ID mappings', icon: Users }] : [])];
-  return <div className="p-4 md:p-8 space-y-6 [&_:is(button,a,input,select):focus-visible]:outline-2 [&_:is(button,a,input,select):focus-visible]:outline-offset-2 [&_:is(button,a,input,select):focus-visible]:outline-primary">
+  return <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto [&_:is(button,a,input,select):focus-visible]:outline-2 [&_:is(button,a,input,select):focus-visible]:outline-offset-2 [&_:is(button,a,input,select):focus-visible]:outline-primary">
     <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-primary"><FileText size={20} aria-hidden="true" /></div>
         <div><h1 className="text-2xl font-bold tracking-tight text-slate-900">Attendance management</h1><p className="mt-1 text-xs leading-relaxed text-slate-600">CSC Form 48 · Personnel time logs and monthly DTR review</p></div>
       </div>
-      <Link to="/staff-dtr" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded border border-secondary bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-sm hover:bg-secondary"><FileText size={16} aria-hidden="true" /> Review staff DTRs <ArrowUpRight size={14} aria-hidden="true" /></Link>
+      <Link to="/staff-dtr" className="btn btn-primary btn-sm shrink-0"><FileText size={16} aria-hidden="true" /> Review staff DTRs <ArrowUpRight size={14} aria-hidden="true" /></Link>
     </header>
     <div hidden={active !== 'records'}>
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Attendance totals for selected filters">

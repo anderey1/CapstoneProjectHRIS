@@ -30,7 +30,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
               Republic of the Philippines • Department of Education • SDO Lucena City
             </span>
             <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-[#0038A8] shrink-0" />
+              <Award className="w-5 h-5 text-primary shrink-0" />
               <h2 id="ipcrf-details-title" className="text-base font-bold text-slate-900">
                 IPCRF evaluation summary
               </h2>
@@ -73,7 +73,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                 <span className="text-xs uppercase font-bold text-slate-500 tracking-wider block">
                   Rating Period &amp; Date
                 </span>
-                <span className="text-sm font-bold text-[#0038A8] font-mono tabular-nums block mt-0.5">
+                <span className="text-sm font-bold text-primary font-mono tabular-nums block mt-0.5">
                   {review.period}
                 </span>
                 <span className="text-slate-600 text-xs block mt-0.5">
@@ -165,7 +165,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                     <td className="py-2.5 px-3 text-slate-900 uppercase">Composite Numerical Rating</td>
                     <td className="py-2.5 px-3 text-center font-mono tabular-nums text-slate-700">100%</td>
                     <td className="py-2.5 px-3 text-center text-slate-400">—</td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-sm text-[#0038A8]">
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-sm text-primary">
                       {finalScore !== null ? finalScore.toFixed(3) : '—'}
                     </td>
                   </tr>
@@ -226,7 +226,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           {review.ipcrf_file && (
             <div className="flex items-center justify-between p-3 bg-blue-50/50 border border-blue-200 rounded-md text-xs">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#0038A8]" />
+                <FileText className="w-4 h-4 text-primary" />
                 <span className="font-semibold text-slate-800">
                   Signed IPCRF Document
                 </span>
@@ -235,7 +235,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                 href={review.ipcrf_file}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-[#0038A8] border border-blue-300 rounded font-semibold text-xs hover:bg-blue-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-primary border border-blue-300 rounded font-semibold text-xs hover:bg-blue-50 transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
                 Download Attachment
@@ -262,7 +262,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0038A8] rounded-md hover:bg-[#002c85] transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-primary rounded-md hover:bg-secondary transition-colors shadow-sm"
           >
             <Printer className="w-3.5 h-3.5" />
             Print Evaluation

@@ -16,7 +16,7 @@ const ProfileSidebar = ({
       {/* E-Signature Overlay */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3.5 shadow-sm">
         <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
-          <Signature className="w-4 h-4 text-[#0038A8]" />
+          <Signature className="w-4 h-4 text-primary" />
           <h3 className="text-xs font-bold text-slate-800">Digital Signature (DepEd Form 48)</h3>
         </div>
         
@@ -35,7 +35,7 @@ const ProfileSidebar = ({
             )}
             {isUploadingSig && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-[#0038A8]" />
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
             )}
           </div>
@@ -53,7 +53,7 @@ const ProfileSidebar = ({
                 type="button"
                 onClick={() => sigInputRef.current?.click()}
                 disabled={isUploadingSig}
-                className="btn min-h-11 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-sm font-medium w-full shadow-sm"
+                className="btn btn-primary btn-sm w-full"
               >
                 {me?.e_signature ? 'Update Signature' : 'Upload Signature'}
               </button>
@@ -91,7 +91,7 @@ const ProfileSidebar = ({
           </MapContainer>
         </div>
         <div className="p-3 bg-slate-50 flex items-center gap-2 border-t border-slate-200">
-          <MapPin className="text-[#0038A8] w-4 h-4 shrink-0" />
+          <MapPin className="text-primary w-4 h-4 shrink-0" />
           <span className="text-xs tabular-nums text-slate-600">
             {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)} • Assigned school location
           </span>

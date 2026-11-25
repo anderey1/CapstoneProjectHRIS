@@ -1,16 +1,44 @@
+import {
+  Award,
+  Banknote,
+  Building2,
+  CalendarCheck,
+  CalendarDays,
+  ClipboardCheck,
+  History,
+  Landmark,
+  School,
+  ShieldCheck,
+  UserCheck,
+  UserCog,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+
 // Chart series stay inside the DepEd blue/navy/slate tokens. Yellow stays reserved for the accent moment.
 export const CHART_COLORS = ['#0038A8', '#0A225C', '#0284C7', '#475569'];
 
 export const METRIC_CONFIG = {
-  workforce: { sourceLabel: 'DepEd Plantilla' },
-  attendance: { sourceLabel: 'CSC Form 48 DTR' },
-  leaves: { sourceLabel: 'CSC Form No. 6' },
-  loans: { sourceLabel: 'Provident Fund' },
-  payroll_status: { sourceLabel: 'Cycle Status' },
-  payroll: { sourceLabel: 'Net Compensation' },
-  performance: { sourceLabel: 'RPMS / IPCRF' },
-  recruitment: { sourceLabel: 'RQA Pipeline' },
-  stations: { sourceLabel: 'School Clusters' },
+  workforce: { sourceLabel: 'DepEd Plantilla', icon: Users },
+  attendance: { sourceLabel: 'CSC Form 48 DTR', icon: CalendarCheck },
+  leaves: { sourceLabel: 'CSC Form No. 6', icon: CalendarDays },
+  loans: { sourceLabel: 'Provident Fund', icon: Landmark },
+  payroll_status: { sourceLabel: 'Cycle Status', icon: ClipboardCheck },
+  payroll: { sourceLabel: 'Net Compensation', icon: Banknote },
+  performance: { sourceLabel: 'RPMS / IPCRF', icon: Award },
+  recruitment: { sourceLabel: 'RQA Pipeline', icon: UserPlus },
+  stations: { sourceLabel: 'School Clusters', icon: School },
+  accounts: { sourceLabel: 'User Directory', icon: UserCog },
+  registrations: { sourceLabel: 'Onboarding Queue', icon: UserCheck },
+  audit_activity: { sourceLabel: 'System Audit Log', icon: History },
+  school_configuration: { sourceLabel: 'School Registry', icon: Building2 },
+  account_status: { sourceLabel: 'Account Access', icon: ShieldCheck },
+};
+
+export const SCOPE_META = {
+  personal: { label: 'Personal records' },
+  system: { label: 'System records' },
+  division: { label: 'Division records' },
 };
 
 export function formatChartValue(value, unit) {

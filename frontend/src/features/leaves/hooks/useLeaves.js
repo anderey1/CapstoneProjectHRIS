@@ -26,10 +26,10 @@ export const calculateWorkingDays = (start, end, holidays = []) => {
   return count;
 };
 
-export function useLeaveCalendar(start, end, enabled, usesCalendarDays) {
+export function useLeaveCalendar(start, end, enabled) {
   const currentYear = Number(manilaToday().slice(0, 4));
   const years = new Set([currentYear]);
-  if (!usesCalendarDays && isCalendarDate(start) && isCalendarDate(end) && start <= end) {
+  if (isCalendarDate(start) && isCalendarDate(end) && start <= end) {
     for (let year = Number(start.slice(0, 4)); year <= Number(end.slice(0, 4)); year++) years.add(year);
   }
   const queries = useQueries({ queries: [...years].map(year => ({

@@ -33,7 +33,7 @@ const LeaveBalanceCards = ({ employee }) => {
         <div className="bg-slate-50 border border-slate-200 p-3 rounded">
           <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-xs font-semibold uppercase tracking-wider">Vacation Leave (VL)</span>
-            <CalendarCheck className="w-4 h-4 text-[#0038a8]" />
+            <CalendarCheck className="w-4 h-4 text-primary" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">

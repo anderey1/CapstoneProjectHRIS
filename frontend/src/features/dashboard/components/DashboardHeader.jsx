@@ -1,4 +1,5 @@
 import { LayoutDashboard, RefreshCw } from 'lucide-react';
+import { SCOPE_META } from '../dashboardConfig';
 
 export default function DashboardHeader({
   title,
@@ -8,29 +9,37 @@ export default function DashboardHeader({
   isRefreshing,
   onRefresh,
 }) {
+  const scopeLabel = (SCOPE_META[scope] || SCOPE_META.division).label;
+
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0 space-y-1">
+    <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0 space-y-1.5">
         <p className="text-xs font-medium text-slate-500">
           DepEd Lucena City Division
         </p>
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
-            <LayoutDashboard className="w-5 h-5" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-primary">
+            <LayoutDashboard className="h-5 w-5" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             {title}
           </h1>
         </div>
-        <p className="text-sm text-slate-600">
-          {roleLabel}
-          {scope === 'personal'
-            ? ' · Personal records'
-            : scope === 'system'
-              ? ' · System records'
-              : ' · Division records'}
-          {asOf ? ` · Updated ${new Date(asOf).toLocaleString()}` : ''}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600">
+          <span className="font-medium text-slate-800">{roleLabel}</span>
+          <span aria-hidden="true" className="text-slate-300">·</span>
+          <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">
+            {scopeLabel}
+          </span>
+          {asOf && (
+            <>
+              <span aria-hidden="true" className="text-slate-300">·</span>
+              <span className="text-xs text-slate-500 tabular-nums">
+                Updated {new Date(asOf).toLocaleString()}
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       <button

@@ -63,7 +63,7 @@ const LeaveManagement = () => {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8" role="status">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto" role="status">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Leave management</h1>
         <p className="mt-4 text-sm text-slate-600">Loading leave applications…</p>
       </div>
@@ -71,7 +71,7 @@ const LeaveManagement = () => {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 [&_:is(button,a,input,select,textarea):focus-visible]:outline-2 [&_:is(button,a,input,select,textarea):focus-visible]:outline-offset-2 [&_:is(button,a,input,select,textarea):focus-visible]:outline-primary">
+    <div className="space-y-6 p-4 md:p-8 max-w-7xl mx-auto [&_:is(button,a,input,select,textarea):focus-visible]:outline-2 [&_:is(button,a,input,select,textarea):focus-visible]:outline-offset-2 [&_:is(button,a,input,select,textarea):focus-visible]:outline-primary">
       {/* Header Banner */}
       <header className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end">
         <div className="flex items-start gap-3">
@@ -273,7 +273,7 @@ const LeaveManagement = () => {
             <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 sm:px-6 sm:py-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-primary bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                     CSC Form No. 6
                   </span>
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedLeave.id}</span>

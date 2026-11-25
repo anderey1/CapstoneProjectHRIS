@@ -26,7 +26,7 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8] font-bold text-xs shrink-0">
+                  <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-primary font-bold text-xs shrink-0">
                     {emp.first_name?.[0]}{emp.last_name?.[0]}
                   </div>
                   <div className="min-w-0">
@@ -38,7 +38,7 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
                 {canEdit && (
                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <button 
-                      className="btn btn-ghost min-h-11 min-w-11 text-slate-700 hover:text-[#0038A8] font-medium text-sm px-3"
+                      className="btn btn-ghost min-h-11 min-w-11 text-slate-700 hover:text-primary font-medium text-sm px-3"
                       onClick={() => onEdit(emp)}
                     >
                       <Edit className="w-3.5 h-3.5 mr-1 text-slate-400" /> Edit

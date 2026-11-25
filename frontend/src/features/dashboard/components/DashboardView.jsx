@@ -1,3 +1,4 @@
+import { BarChart3 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import DashboardChart from '../DashboardChart';
 import DashboardKpis from '../DashboardKpis';
@@ -23,7 +24,7 @@ export default function DashboardView({ title }) {
   const summaryCharts = summaryKeys.map(key => charts.find(chart => chart.key === key)).filter(Boolean);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-9 p-4 sm:p-6 lg:p-8">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* DepEd Lucena City Institutional Cockpit Header */}
       <DashboardHeader
         title={title}
@@ -44,19 +45,22 @@ export default function DashboardView({ title }) {
       ) : (
         <>
           {summaryCharts.length > 0 && (
-            <DashboardKpis charts={summaryCharts} asOf={query.data?.as_of} />
+            <DashboardKpis charts={summaryCharts} />
           )}
 
           <section aria-labelledby="dashboard-charts-title" className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-2.5">
               <div>
-                <h2
-                  id="dashboard-charts-title"
-                  className="text-xs font-semibold text-slate-600"
-                >
-                  Role-specific charts
-                </h2>
-                <p className="text-xs text-slate-600">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <h2
+                    id="dashboard-charts-title"
+                    className="text-base font-semibold text-slate-900"
+                  >
+                    Role-specific breakdowns
+                  </h2>
+                </div>
+                <p className="mt-0.5 text-xs text-slate-600">
                   Figures from the records available to this account
                 </p>
               </div>
@@ -71,14 +75,19 @@ export default function DashboardView({ title }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {primaryCharts.map((chart, index) => (
-                  <div
-                    key={chart.key}
-                    className={index === 0 ? 'min-w-0 lg:col-span-2' : 'min-w-0'}
-                  >
-                    <DashboardChart chart={chart} userId={user?.id} />
-                  </div>
-                ))}
+                {primaryCharts.map((chart, index) => {
+                  const isFullSpan =
+                    index === 0 ||
+                    (primaryCharts.length % 2 === 0 && index === primaryCharts.length - 1);
+                  return (
+                    <div
+                      key={chart.key}
+                      className={isFullSpan ? 'min-w-0 lg:col-span-2' : 'min-w-0'}
+                    >
+                      <DashboardChart chart={chart} userId={user?.id} />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>

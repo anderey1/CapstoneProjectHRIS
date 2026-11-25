@@ -1,6 +1,7 @@
 import { useId } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, RotateCw, Table2 } from 'lucide-react';
+import { ArrowRight, BarChart3, ChevronDown, Info, RotateCw, Table2 } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -17,6 +18,7 @@ import api from '../../api/axios';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import {
   CHART_COLORS,
+  METRIC_CONFIG,
   formatAxisValue,
   formatChartValue,
   truncateLabel,
@@ -25,10 +27,14 @@ import {
 const GRID_COLOR = '#e2e8f0';
 
 function EmptyChart({ chart }) {
+  const Icon = METRIC_CONFIG[chart.key]?.icon || BarChart3;
   return (
     <div className="flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400">
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </div>
       <p className="font-medium text-slate-900">No records in this view yet.</p>
-      <p className="mt-2 text-sm text-slate-600">{chart.insight}</p>
+      <p className="mt-1.5 text-sm text-slate-600">{chart.insight}</p>
     </div>
   );
 }
@@ -42,8 +48,14 @@ function ChartPlot({ chart }) {
     value: Number(item.value),
     label: formatChartValue(item.value, chart.unit),
   }));
-  const isTrend = chart.key === 'payroll' || chart.unit === 'PHP';
-  const height = isTrend ? 240 : Math.max(220, data.length * 34 + 32);
+  const isTrend = chart.key === 'payroll' || chart.key === 'audit_activity' || chart.unit === 'PHP';
+  const height = isTrend ? 240 : Math.max(210, data.length * 34 + 28);
+  const tooltipStyle = {
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+    fontSize: '12px',
+  };
   const tooltipFormatter = (value) => [
     formatChartValue(value, chart.unit),
     chart.unit === 'PHP' ? 'Amount' : chart.unit,
@@ -69,7 +81,7 @@ function ChartPlot({ chart }) {
               tickLine={false}
               tickFormatter={formatAxisValue}
             />
-            <Tooltip formatter={tooltipFormatter} />
+            <Tooltip contentStyle={tooltipStyle} formatter={tooltipFormatter} />
             <Area
               type="monotone"
               dataKey="value"
@@ -176,24 +188,27 @@ function ChartExplanation({ chart, userId, hasData }) {
     <section
       aria-label={`${chart.title} explanation`}
       aria-live="polite"
-      className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+      className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3.5"
     >
-      <div>
-        <h4 className="text-xs font-semibold text-slate-900">Chart explanation</h4>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <Info className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+          <h4 className="text-xs font-semibold text-slate-900">Chart explanation</h4>
+        </div>
         {sourceLabel && (
-          <p className="mt-1 text-xs font-medium text-slate-600">
-            Source: {sourceLabel}
-          </p>
+          <span className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600">
+            {sourceLabel}
+          </span>
         )}
       </div>
 
       {isLoading ? (
-        <div role="status" className="mt-2 flex min-h-12 items-center gap-2 text-xs text-slate-600">
+        <div role="status" className="mt-2 flex min-h-10 items-center gap-2 text-xs text-slate-600">
           <RotateCw className="h-3.5 w-3.5 animate-spin text-primary" aria-hidden="true" />
           <span>Reading this chart…</span>
         </div>
       ) : (
-        <div className="mt-2 space-y-2">
+        <div className="mt-2 space-y-1.5">
           <p className="text-sm leading-relaxed text-slate-800">
             {summary.data?.text || chart.insight}
           </p>
@@ -201,7 +216,7 @@ function ChartExplanation({ chart, userId, hasData }) {
             <p className="text-xs leading-relaxed text-slate-600">{chart.note}</p>
           )}
           {detail && (
-            <p className="border-t border-slate-200 pt-2 text-xs leading-relaxed text-slate-600">
+            <p className="border-t border-slate-200 pt-1.5 text-xs leading-relaxed text-slate-500">
               {detail}
             </p>
           )}
@@ -214,6 +229,7 @@ function ChartExplanation({ chart, userId, hasData }) {
 export default function DashboardChart({ chart, userId }) {
   const titleId = useId();
   const rows = Array.isArray(chart.data) ? chart.data : [];
+  const Icon = METRIC_CONFIG[chart.key]?.icon || BarChart3;
 
   return (
     <section
@@ -222,11 +238,16 @@ export default function DashboardChart({ chart, userId }) {
       className="flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white"
     >
       <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
-        <div className="min-w-0">
-          <h3 id={titleId} className="text-base font-semibold text-slate-900">
-            {chart.title}
-          </h3>
-          <p className="mt-1 text-xs text-slate-600">{chart.period}</p>
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-primary">
+            <Icon className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h3 id={titleId} className="text-base font-semibold text-slate-900">
+              {chart.title}
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-600">{chart.period}</p>
+          </div>
         </div>
         <span className="shrink-0 text-xs font-medium text-slate-600">
           Measured in {chart.unit}
@@ -290,6 +311,18 @@ export default function DashboardChart({ chart, userId }) {
           </details>
         )}
       </div>
+
+      {chart.path && chart.action && (
+        <footer className="flex items-center justify-end border-t border-slate-100 bg-slate-50/70 px-5 py-2.5">
+          <Link
+            to={chart.path}
+            className="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-primary hover:text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span>{chart.action}</span>
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </footer>
+      )}
     </section>
   );
 }

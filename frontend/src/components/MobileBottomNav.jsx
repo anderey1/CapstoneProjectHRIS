@@ -23,7 +23,7 @@ const MobileBottomNav = ({ toggleDrawer, isDrawerOpen = false }) => {
             to={item.to}
             className={({ isActive }) => `
               flex flex-col items-center justify-center py-1 px-2 flex-1 transition-colors min-h-[44px]
-              ${isActive ? 'text-[#0038A8]' : 'text-slate-500 hover:text-slate-800'}
+              ${isActive ? 'text-primary' : 'text-slate-500 hover:text-slate-800'}
             `}
           >
             {({ isActive }) => (
@@ -31,11 +31,11 @@ const MobileBottomNav = ({ toggleDrawer, isDrawerOpen = false }) => {
                 <div className={`transition-transform duration-150 ${isActive ? 'scale-105' : ''}`}>
                   {item.icon}
                 </div>
-                <span className={`text-[11px] mt-0.5 leading-none ${isActive ? 'font-semibold text-[#0038A8]' : 'font-normal'}`}>
+                <span className={`text-[11px] mt-0.5 leading-none ${isActive ? 'font-semibold text-primary' : 'font-normal'}`}>
                   {item.label}
                 </span>
                 {isActive && (
-                  <span className="w-1 h-1 bg-[#0038A8] rounded-full mt-1"></span>
+                  <span className="w-1 h-1 bg-primary rounded-full mt-1"></span>
                 )}
               </>
             )}

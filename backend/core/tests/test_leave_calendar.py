@@ -76,6 +76,21 @@ def test_maternity_keeps_holiday_and_weekend_days(non_teaching_employee, monkeyp
     assert Decimal(response.data['working_days_applied']) == 4
 
 
+@pytest.mark.django_db
+def test_calendar_day_leave_rejects_unreviewed_year(non_teaching_employee, monkeypatch, settings, tmp_path):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    settings.MEDIA_ROOT = tmp_path
+    monkeypatch.setattr('django.utils.timezone.localdate', lambda *args, **kwargs: date(2026, 11, 5))
+    client = APIClient()
+    client.force_authenticate(non_teaching_employee.user)
+    response = client.post('/api/leaves/', {
+        'leave_type': 'maternity', 'start_date': '2026-12-29', 'end_date': '2027-01-04',
+        'supporting_document': SimpleUploadedFile('proof.pdf', b'%PDF-1.7', content_type='application/pdf'),
+    })
+    assert response.status_code == 400
+    assert '2027' in str(response.data)
+
+
 def test_duplicate_declarations_do_not_double_deduct(monkeypatch):
     calendar = load_calendar(2026)
     holiday = next(item for item in calendar['holidays'] if item['date'] == '2026-11-30')
@@ -103,10 +118,11 @@ def test_calendar_endpoint_authentication_and_year_validation(non_teaching_emplo
     ('sick', '2026-11-05', '2026-11-05', 400, None),
     ('emergency', '2026-11-05', '2026-11-05', 400, None),
     ('vacation', '2026-11-05', '2026-11-05', 400, None),
-    ('vacation', '2026-11-09', '2026-11-09', 400, None),
+    ('vacation', '2026-11-09', '2026-11-09', 201, 1),
     ('vacation', '2026-11-10', '2026-11-10', 201, 1),
     ('vacation', '2026-11-30', '2026-11-30', 400, None),
-    ('sick', '2026-10-06', '2026-10-06', 201, 1),
+    ('vacation', '2026-11-07', '2026-11-09', 201, 1),
+    ('sick', '2026-10-06', '2026-10-06', 400, None),
     ('sick', '2026-10-05', '2026-10-05', 400, None),
     ('forced', '2026-12-29', '2027-01-04', 400, None),
     ('adoption', '2026-11-27', '2026-11-30', 201, 4),

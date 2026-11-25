@@ -44,7 +44,7 @@ const LoanActionWorkflow = ({
                       onComplete();
                     }}
                     disabled={isVerifying}
-                    className="btn btn-sm bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                    className="btn btn-primary btn-sm px-4"
                   >
                     {isVerifying ? 'Verifying...' : 'Verify Requirements & Forward to Superintendent'}
                   </button>
@@ -59,7 +59,7 @@ const LoanActionWorkflow = ({
                       onComplete();
                     }}
                     disabled={isApproving}
-                    className="btn btn-sm bg-emerald-700 hover:bg-emerald-800 text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                    className="btn btn-primary btn-sm px-4"
                   >
                     {isApproving ? 'Approving...' : 'Directly Approve (Superintendent Override)'}
                   </button>
@@ -86,7 +86,7 @@ const LoanActionWorkflow = ({
                     onComplete();
                   }}
                   disabled={isRejecting || !rejectRemarks.trim()}
-                  className="btn btn-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-md text-xs font-semibold px-3 h-8"
+                  className="btn btn-error btn-outline btn-sm px-3"
                 >
                   {isRejecting ? 'Rejecting...' : 'Disapprove Application'}
                 </button>
@@ -125,7 +125,7 @@ const LoanActionWorkflow = ({
                     onComplete();
                   }}
                   disabled={isApproving}
-                  className="btn btn-sm bg-emerald-700 hover:bg-emerald-800 text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                  className="btn btn-primary btn-sm px-4"
                 >
                   {isApproving ? 'Approving...' : 'Certify & Approve Provident Fund Loan'}
                 </button>
@@ -147,7 +147,7 @@ const LoanActionWorkflow = ({
                     onComplete();
                   }}
                   disabled={isRejecting || !rejectRemarks.trim()}
-                  className="btn btn-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-md text-xs font-semibold px-3 h-8"
+                  className="btn btn-error btn-outline btn-sm px-3"
                 >
                   {isRejecting ? 'Rejecting...' : 'Disapprove Application'}
                 </button>
@@ -180,7 +180,7 @@ const LoanActionWorkflow = ({
                   onComplete();
                 }}
                 disabled={isDisbursing}
-                className="btn btn-sm bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                className="btn btn-primary btn-sm px-4"
               >
                 {isDisbursing ? 'Releasing Funds...' : 'Record Loan Release'}
               </button>

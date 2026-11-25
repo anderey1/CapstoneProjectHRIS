@@ -118,7 +118,7 @@ const LeaveDocketTable = ({ filteredLeaves = [], onSelectLeave }) => {
                         onClick={() => onSelectLeave(leave)}
                         className={`btn btn-xs rounded text-[11px] font-semibold transition-colors ${
                           isActionRequired
-                            ? 'bg-[#0038a8] text-white hover:bg-[#002b80] border-none px-3'
+                            ? 'bg-primary text-white hover:bg-secondary border-none px-3'
                             : 'btn-ghost border border-slate-200 text-slate-700 hover:bg-slate-100'
                         }`}
                       >

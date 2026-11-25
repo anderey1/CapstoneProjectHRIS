@@ -12,7 +12,7 @@ const FamilyBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) =>
         {canEdit && (
           <button 
             onClick={onAdd}
-            className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm"
+            className="btn btn-primary btn-sm flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" /> Add Member
           </button>
@@ -28,7 +28,7 @@ const FamilyBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) =>
                   <p className="font-semibold text-sm text-slate-900">
                     {f.relationship === 'CHILD' ? f.full_name : `${f.first_name} ${f.surname}`}
                   </p>
-                  <span className="px-2 py-0.5 bg-blue-50 text-[#0038A8] border border-blue-100 rounded text-xs font-semibold mt-1 inline-block">
+                  <span className="px-2 py-0.5 bg-blue-50 text-primary border border-blue-100 rounded text-xs font-semibold mt-1 inline-block">
                     {f.relationship}
                   </span>
                 </div>
@@ -79,7 +79,7 @@ const FamilyBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) =>
           {canEdit && (
             <button 
               onClick={onAdd}
-              className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium shadow-sm"
+              className="btn btn-primary btn-sm"
             >
               Add Spouse or Child
             </button>

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Users, UserPlus, Search, Filter, FileDown } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
+import PageHeader from '../../components/common/PageHeader';
+import PageLoader from '../../components/common/PageLoader';
 import { useRBAC } from '../../hooks/useRBAC';
 import { 
   useEmployees, 
@@ -84,11 +86,7 @@ const Employees = () => {
   const filteredEmployees = employees;
 
   if (isLoading) {
-    return (
-      <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
-        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-      </div>
-    );
+    return <PageLoader label="Loading personnel directory..." />;
   }
 
   const canManageRegistrations = can('MANAGE_EMPLOYEES');
@@ -97,37 +95,23 @@ const Employees = () => {
   const nonTeachingCount = summary.non_teaching || 0;
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
-      {/* Institutional Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 ">
-                {isPrincipal ? 'School teachers' : 'Personnel directory'}
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {isPrincipal ? 'View teachers assigned to your school. HR maintains employment details.' : 'Official DepEd Plantilla & Personnel Directory • Schools Division of Lucena City'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {can('MANAGE_EMPLOYEES') && activeTab === 'active' && (
-            <button
-              onClick={() => setActiveModal('form')}
-              className="px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase tracking-wider rounded border border-[#002d86] shadow-sm flex items-center gap-1.5 transition-colors"
-            >
-              <UserPlus className="w-4 h-4" />
-              Add Existing Employee
-            </button>
-          )}
-        </div>
-      </div>
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+      <PageHeader
+        icon={Users}
+        title={isPrincipal ? 'School teachers' : 'Personnel directory'}
+        subtitle={isPrincipal ? 'View teachers assigned to your school. HR maintains employment details.' : 'Official DepEd Plantilla & Personnel Directory · Schools Division of Lucena City'}
+      >
+        {can('MANAGE_EMPLOYEES') && activeTab === 'active' && (
+          <button
+            type="button"
+            onClick={() => setActiveModal('form')}
+            className="btn btn-primary btn-sm gap-1.5"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add Existing Employee
+          </button>
+        )}
+      </PageHeader>
 
       {/* 4-Metric Portfolio Status Strip */}
       <div className={`grid grid-cols-2 gap-3 ${isPrincipal ? '' : 'md:grid-cols-4'}`}>
@@ -138,7 +122,7 @@ const Employees = () => {
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Teaching Personnel</p>
-          <p className="text-xl font-bold text-[#0038A8] font-mono tabular-nums mt-1">{teachingCount}</p>
+          <p className="text-xl font-bold text-primary font-mono tabular-nums mt-1">{teachingCount}</p>
         </div>
         {!isPrincipal && <><div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Non-Teaching Staff</p>
@@ -166,7 +150,7 @@ const Employees = () => {
             onClick={() => setActiveTab('active')}
             className={`pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
               activeTab === 'active'
-                ? 'border-[#0038A8] text-[#0038A8]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -177,7 +161,7 @@ const Employees = () => {
             onClick={() => setActiveTab('pending')}
             className={`pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer relative ${
               activeTab === 'pending'
-                ? 'border-[#0038A8] text-[#0038A8]'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -202,7 +186,7 @@ const Employees = () => {
                 type="text"
                 aria-label="Search personnel by name, position, or station"
                 placeholder="Search by personnel name, plantilla position, or station..."
-                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-primary rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -214,7 +198,7 @@ const Employees = () => {
                   onClick={() => setShowFilters((prev) => !prev)}
                   className={`px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider border transition-colors flex items-center gap-1.5 ${
                     appliedRole || appliedArea 
-                      ? 'bg-blue-50 text-[#0038A8] border-blue-300' 
+                      ? 'bg-blue-50 text-primary border-blue-300' 
                       : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                   }`}
                 >
@@ -230,7 +214,7 @@ const Employees = () => {
                         id="personnel-selectedRole"
                         value={selectedRole}
                         onChange={(e) => setSelectedRole(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-primary"
                       >
                         <option value="">All Classifications</option>
                         {roleOptions.map((role) => (
@@ -244,7 +228,7 @@ const Employees = () => {
                         id="personnel-selectedArea"
                         value={selectedArea}
                         onChange={(e) => setSelectedArea(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-[#0038A8]"
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900 focus:outline-none focus:border-primary"
                       >
                         <option value="">All Stations</option>
                         {areaOptions.map((area) => (
@@ -253,8 +237,8 @@ const Employees = () => {
                       </select>
                     </div>
                     <div className="flex gap-2 pt-2 border-t border-slate-200">
-                      <button onClick={applyFilters} className="px-3 py-1.5 bg-[#0038A8] hover:bg-[#002d86] text-white text-xs font-semibold uppercase rounded flex-1">Apply Filters</button>
-                      <button onClick={resetFilters} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold uppercase rounded">Reset</button>
+                      <button onClick={applyFilters} className="btn btn-primary btn-sm flex-1">Apply Filters</button>
+                      <button onClick={resetFilters} className="btn btn-outline btn-sm">Reset</button>
                     </div>
                   </div>
                 )}
@@ -319,7 +303,7 @@ const Employees = () => {
                         <div className="font-semibold text-xs text-slate-900">{emp.first_name} {emp.last_name}</div>
                         <div className="text-xs text-slate-400">{emp.user_details?.email || 'No email'}</div>
                       </td>
-                      <td className="font-semibold text-xs text-[#0038A8]">{emp.agency_employee_no}</td>
+                      <td className="font-semibold text-xs text-primary">{emp.agency_employee_no}</td>
                       <td>
                         <div className="text-xs font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded inline-block">@{emp.user_details?.username}</div>
                         <div className="text-xs text-slate-400 mt-0.5">{emp.user_details?.email}</div>
@@ -338,7 +322,7 @@ const Employees = () => {
                               }
                             }}
                             disabled={isApproving}
-                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-xs font-bold uppercase tracking-wider border-none"
+                            className="btn btn-primary btn-xs"
                           >
                             {isApproving ? 'Approving...' : 'Approve'}
                           </button>
@@ -348,7 +332,7 @@ const Employees = () => {
                               setRejectTarget(emp); setRejectReason(''); setReviewError('');
                             }}
                             disabled={isRejecting}
-                            className="btn bg-rose-600 hover:bg-rose-700 text-white btn-xs rounded-lg px-3 py-1 h-auto min-h-0 text-xs font-bold uppercase tracking-wider border-none"
+                            className="btn btn-error btn-xs"
                           >
                             {isRejecting ? 'Rejecting...' : 'Reject'}
                           </button>

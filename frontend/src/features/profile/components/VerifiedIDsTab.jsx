@@ -29,7 +29,7 @@ const VerifiedIDsTab = ({
         return (
           <div key={item.id} className="p-4 bg-white border border-slate-200 rounded-lg space-y-4 min-w-0">
             <div className="flex gap-3 items-start">
-              {attachment ? <FileText aria-hidden="true" className="w-5 h-5 text-[#0038A8] shrink-0" /> : <Fingerprint aria-hidden="true" className="w-5 h-5 text-slate-500 shrink-0" />}
+              {attachment ? <FileText aria-hidden="true" className="w-5 h-5 text-primary shrink-0" /> : <Fingerprint aria-hidden="true" className="w-5 h-5 text-slate-500 shrink-0" />}
               <div className="min-w-0">
                 <h4 className="font-semibold text-sm text-slate-900">{item.label}</h4>
                 <p className="text-sm text-slate-600">{item.desc}</p>
@@ -50,7 +50,7 @@ const VerifiedIDsTab = ({
                 {attachment ? 'Preview attachment' : 'Attachment details'}
               </button>
               {canEdit && (
-                <button type="button" disabled={busy} onClick={() => onTriggerUpload(item.id)} className="btn min-h-11 px-3 text-sm bg-[#0038A8] hover:bg-[#002d86] text-white">
+                <button type="button" disabled={busy} onClick={() => onTriggerUpload(item.id)} className="btn btn-primary btn-sm px-3">
                   {attachment ? 'Replace attachment' : 'Upload attachment'}
                 </button>
               )}

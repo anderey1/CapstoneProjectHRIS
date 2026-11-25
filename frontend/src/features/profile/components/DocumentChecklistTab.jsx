@@ -103,8 +103,8 @@ const DocumentChecklistTab = ({
                       <button 
                         disabled={busy}
                         onClick={() => onVerify(doc.key, !isDocVerified)}
-                        className={`btn min-h-11 px-2.5 rounded text-sm font-medium shadow-sm border-none text-white ${
-                          isDocVerified ? 'bg-amber-800 hover:bg-amber-900' : 'bg-emerald-800 hover:bg-emerald-900'
+                        className={`btn btn-sm ${
+                          isDocVerified ? 'btn-outline' : 'btn-primary'
                         }`}
                       >
                         {isDocVerified ? 'Revoke verification' : 'Verify document'}
@@ -116,7 +116,7 @@ const DocumentChecklistTab = ({
                     <button 
                       disabled={busy}
                       onClick={() => onTriggerUpload(doc.key)}
-                      className="btn min-h-11 px-2.5 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded text-sm font-medium flex items-center gap-1 shadow-sm"
+                      className="btn btn-primary btn-sm px-2.5 flex items-center gap-1"
                     >
                       <Upload className="w-3 h-3" /> Upload File
                     </button>

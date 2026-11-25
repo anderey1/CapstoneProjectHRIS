@@ -11,6 +11,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useLoans, ApplyLoanModal, SubsidiaryLedger } from '../../features/loans';
 import Pagination from '../../components/common/Pagination';
 import AccessibleDialog from '../../components/common/AccessibleDialog';
+import PageHeader from '../../components/common/PageHeader';
+import StatCards from '../../components/common/StatCards';
+import PageLoader from '../../components/common/PageLoader';
 
 const PURPOSE_LABELS = {
   general: 'General Purpose',
@@ -96,110 +99,44 @@ const MyLoans = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
-        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Loading Personal Provident Loan Portfolio...
-        </p>
-      </div>
-    );
+    return <PageLoader label="Loading Personal Provident Loan Portfolio..." />;
   }
 
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* DepEd Institutional Header */}
-      <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
-              <Coins className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                My provident loans
-              </h1>
-            </div>
-          </div>
-          <p className="text-xs text-slate-600">
-            DepEd Order No. 37, s. 2018 Guidelines • Applications, Active Accounts &amp; Amortization Ledgers
-          </p>
-        </div>
-
+      <PageHeader
+        icon={Coins}
+        title="My provident loans"
+        subtitle="DepEd Order No. 37, s. 2018 Guidelines · Applications, Active Accounts & Amortization Ledgers"
+      >
         <button
+          type="button"
           onClick={() => {
             setSelectedLoan(null);
             setActiveModal('apply');
           }}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0038A8] text-white rounded-md text-xs font-semibold hover:bg-[#002c85] transition-colors shadow-sm self-start md:self-auto"
+          className="btn btn-primary btn-sm gap-1.5"
         >
           <PlusCircle className="w-4 h-4" />
           Apply for Provident Loan
         </button>
-      </div>
+      </PageHeader>
 
-      {/* 4-Metric Personal Loan Summary Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        {/* Active Disbursed Principal */}
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Active Disbursed Principal
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
-              ₱{metrics.activeDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-1">Active loan capital</span>
-        </div>
-
-        {/* Monthly Payroll Deduction */}
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Monthly Amortization
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-[#0038A8]">
-              ₱{metrics.monthlyAmortization.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-1">Payroll deduction total</span>
-        </div>
-
-        {/* Pending Review */}
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Applications Under Review
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-amber-700">
-              {metrics.pendingCount}
-            </span>
-            <span className="text-xs text-slate-500">applications</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-1">HR &amp; SDS endorsement</span>
-        </div>
-
-        {/* Settled / Paid */}
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Fully Settled Accounts
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-emerald-700">
-              {metrics.paidCount}
-            </span>
-            <span className="text-xs text-slate-500">accounts</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-1">Historical paid loans</span>
-        </div>
-      </div>
+      <StatCards
+        ariaLabel="Personal loan metrics"
+        stats={[
+          { label: 'Active Disbursed Principal', value: `₱${metrics.activeDisbursed.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, description: 'Active loan capital' },
+          { label: 'Monthly Amortization', value: `₱${metrics.monthlyAmortization.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, valueClass: 'text-primary', description: 'Payroll deduction total' },
+          { label: 'Applications Under Review', value: metrics.pendingCount, valueClass: 'text-amber-700', description: 'HR & SDS endorsement' },
+          { label: 'Fully Settled Accounts', value: metrics.paidCount, valueClass: 'text-emerald-700', description: 'Historical paid loans' },
+        ]}
+      />
 
       {/* High-Density Personal Loan Ledger Table */}
       <div className="bg-white border border-slate-300 rounded-lg overflow-hidden shadow-xs">
         <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileSpreadsheet className="w-4 h-4 text-[#0038A8]" />
+            <FileSpreadsheet className="w-4 h-4 text-primary" />
             <h2 className="text-xs font-bold text-slate-800 tracking-wider">
               Provident Fund Personal Loan Ledger
             </h2>
@@ -265,7 +202,7 @@ const MyLoans = () => {
                       </td>
 
                       {/* Monthly Amortization */}
-                      <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-[#0038A8]">
+                      <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-primary">
                         ₱{parseFloat(loan.monthly_payment || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
 
@@ -340,7 +277,7 @@ const MyLoans = () => {
                 <h2 id="personal-loan-ledger-title" className="text-base font-bold text-slate-900">
                   Provident Fund Subsidiary Ledger Docket
                 </h2>
-                <span className="text-xs font-mono tabular-nums text-[#0038A8] block mt-0.5">
+                <span className="text-xs font-mono tabular-nums text-primary block mt-0.5">
                   #LOAN-{inspectingLoan.id.toString().padStart(4, '0')} • {inspectingLoan.employee_name}
                 </span>
               </div>
@@ -370,7 +307,7 @@ const MyLoans = () => {
                   <span className="text-xs text-slate-500 uppercase tracking-wider block font-bold">
                     Monthly Deduction
                   </span>
-                  <strong className="text-[#0038A8] text-sm font-mono block mt-0.5">
+                  <strong className="text-primary text-sm font-mono block mt-0.5">
                     ₱{parseFloat(inspectingLoan.monthly_payment || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </strong>
                 </div>

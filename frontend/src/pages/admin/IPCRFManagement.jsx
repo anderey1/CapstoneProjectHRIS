@@ -18,6 +18,9 @@ import IPCRFDetailsModal from '../../features/performance/components/IPCRFDetail
 import { computeRPMSScore, getAdjectivalRating } from '../../utils/performance';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import Pagination from '../../components/common/Pagination';
+import PageHeader from '../../components/common/PageHeader';
+import StatCards from '../../components/common/StatCards';
+import PageLoader from '../../components/common/PageLoader';
 
 /**
  * Performance Ratings (RPMS / IPCRF Division Master Ledger)
@@ -61,104 +64,40 @@ const IPCRFManagement = () => {
   const metrics = { total: 0, outstanding: 0, verySatisfactory: 0, eligible: 0, ...summary };
 
   if (isLoading) {
-    return (
-      <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
-        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Loading RPMS Division Master Ledger...
-        </p>
-      </div>
-    );
+    return <PageLoader label="Loading RPMS Division Master Ledger..." />;
   }
 
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* DepEd Institutional Header */}
-      <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
-              <Award className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Performance reviews (RPMS / IPCRF)
-              </h1>
-            </div>
-          </div>
-          <p className="text-xs text-slate-600">
-            Results-Based Performance Management System (RPMS) • DepEd Order No. 2, s. 2015 &amp; CSC Standards
-          </p>
-        </div>
-
+      <PageHeader
+        icon={Award}
+        title="Performance reviews (RPMS / IPCRF)"
+        subtitle="Results-Based Performance Management System (RPMS) · DepEd Order No. 2, s. 2015 & CSC Standards"
+      >
         {canRate && (
           <button
+            type="button"
             onClick={() => {
               setEditingReview(null);
               setShowModal(true);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0038A8] text-white rounded-md text-xs font-semibold hover:bg-[#002c85] transition-colors shadow-sm self-start md:self-auto"
+            className="btn btn-primary btn-sm gap-1.5"
           >
             <Plus className="w-4 h-4" />
             New RPMS Assessment
           </button>
         )}
-      </div>
+      </PageHeader>
 
-      {/* 4-Metric Institutional Status Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Evaluations Recorded
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-slate-500">records</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Division personnel</span>
-        </div>
-
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Outstanding (O)
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-emerald-700">
-              {metrics.outstanding}
-            </span>
-            <span className="text-xs text-slate-500">personnel</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Score: 4.500 – 5.000</span>
-        </div>
-
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Very Satisfactory (VS)
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-[#0038A8]">
-              {metrics.verySatisfactory}
-            </span>
-            <span className="text-xs text-slate-500">personnel</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Score: 3.500 – 4.499</span>
-        </div>
-
-        <div className="bg-white border border-slate-300 rounded-lg p-3.5 shadow-xs">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-            Promotion Eligible
-          </span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-slate-900">
-              {metrics.eligible}
-            </span>
-            <span className="text-xs text-slate-500">qualified</span>
-          </div>
-          <span className="text-xs text-slate-500 block mt-0.5">Meets CSC rating threshold</span>
-        </div>
-      </div>
+      <StatCards
+        ariaLabel="RPMS performance metrics"
+        stats={[
+          { label: 'Evaluations Recorded', value: metrics.total, description: 'Division personnel' },
+          { label: 'Outstanding (O)', value: metrics.outstanding, valueClass: 'text-emerald-700', description: 'Score: 4.500 – 5.000' },
+          { label: 'Very Satisfactory (VS)', value: metrics.verySatisfactory, valueClass: 'text-primary', description: 'Score: 3.500 – 4.499' },
+          { label: 'Promotion Eligible', value: metrics.eligible, description: 'Meets CSC rating threshold' },
+        ]}
+      />
 
       {/* Filter and Search Bar */}
       <div className="bg-white border border-slate-300 rounded-lg p-3 flex flex-col md:flex-row items-center justify-between gap-3 shadow-xs">
@@ -170,7 +109,7 @@ const IPCRFManagement = () => {
               placeholder="Search employee, plantilla, or period..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-md pl-9 pr-3 py-1.5 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
+            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-md pl-9 pr-3 py-1.5 text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
           />
         </div>
 
@@ -182,7 +121,7 @@ const IPCRFManagement = () => {
               aria-label="Filter by review period"
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+              className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="ALL">All Rating Periods</option>
               {uniquePeriods.map((p) => (
@@ -198,7 +137,7 @@ const IPCRFManagement = () => {
             aria-label="Filter by rating"
               value={selectedRatingFilter}
             onChange={(e) => setSelectedRatingFilter(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+            className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="ALL">All Adjectival Ratings</option>
             <option value="O">Outstanding (O)</option>
@@ -308,7 +247,7 @@ const IPCRFManagement = () => {
                             href={r.ipcrf_file}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[#0038A8] hover:underline font-medium text-xs"
+                            className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs"
                             title="Download official signed document"
                           >
                             <Download className="w-3.5 h-3.5" />
@@ -325,7 +264,7 @@ const IPCRFManagement = () => {
                           <button
                             onClick={() => setSelectedReview(r)}
                             title="View official evaluation docket"
-                            className="p-1 text-slate-600 hover:text-[#0038A8] rounded transition-colors"
+                            className="p-1 text-slate-600 hover:text-primary rounded transition-colors"
                           >
                             <Eye className="w-4 h-4" />
                           </button>

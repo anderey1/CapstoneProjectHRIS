@@ -57,7 +57,7 @@ const LoanRegistryTable = ({
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
                   isSelected
-                    ? 'bg-[#0038A8] text-white shadow-xs'
+                    ? 'bg-primary text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
@@ -136,7 +136,7 @@ const LoanRegistryTable = ({
                       <td className="px-3 py-3 text-center font-mono text-slate-600">
                         {loan.term_months} mos @ {loan.interest_rate}%
                       </td>
-                      <td className="px-3 py-3 text-right font-mono font-bold text-[#0038A8]">
+                      <td className="px-3 py-3 text-right font-mono font-bold text-primary">
                         {formatCurrency(monthlyVal)}/mo
                       </td>
                       <td className="px-3 py-3">
@@ -155,7 +155,7 @@ const LoanRegistryTable = ({
                             loan.status === 'released' || loan.status === 'paid'
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                               : loan.status === 'approved'
-                              ? 'bg-blue-50 text-[#0038A8] border-blue-200'
+                              ? 'bg-blue-50 text-primary border-blue-200'
                               : loan.status === 'verified'
                               ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
                               : loan.status === 'pending'
@@ -174,7 +174,7 @@ const LoanRegistryTable = ({
                         >
                           {loan.status === 'released' || loan.status === 'paid' ? (
                             <>
-                              <FileSpreadsheet className="w-3.5 h-3.5 mr-1 text-[#0038A8]" />
+                              <FileSpreadsheet className="w-3.5 h-3.5 mr-1 text-primary" />
                               Payment History
                             </>
                           ) : (

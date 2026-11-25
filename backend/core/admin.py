@@ -24,8 +24,8 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 @admin.register(School)
 class SchoolAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    fields = ('name',)
+    list_display = ('name', 'latitude', 'longitude')
+    fields = ('name', 'latitude', 'longitude')
     search_fields = ('name',)
 
     def has_add_permission(self, request):

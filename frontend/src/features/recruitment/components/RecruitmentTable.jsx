@@ -36,7 +36,7 @@ const RecruitmentTable = ({
             <input
               type="text"
               placeholder="Search candidate by name or position applied..."
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-[#0038A8] rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8]"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-primary rounded text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -59,7 +59,7 @@ const RecruitmentTable = ({
             onClick={() => setActiveStage('all')}
             className={`px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors ${
               activeStage === 'all'
-                ? 'bg-[#0038A8] text-white'
+                ? 'bg-primary text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -72,7 +72,7 @@ const RecruitmentTable = ({
               onClick={() => setActiveStage(col.id)}
               className={`px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors flex items-center gap-1.5 ${
                 activeStage === col.id
-                  ? 'bg-[#0038A8] text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -93,7 +93,7 @@ const RecruitmentTable = ({
       <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-12 text-center text-primary">
-            <span className="loading loading-spinner loading-lg text-[#0038A8]" />
+            <span className="loading loading-spinner loading-lg text-primary" />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -159,7 +159,7 @@ const RecruitmentTable = ({
                       <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
                         {applicant.interview_score || 0}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums font-bold text-[#0038A8]">
+                      <td className="px-4 py-3 text-right font-mono tabular-nums font-bold text-primary">
                         {applicant.total_score || 0}
                       </td>
                       <td className="px-4 py-3">

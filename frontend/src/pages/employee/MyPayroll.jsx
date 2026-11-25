@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import Pagination from '../../components/common/Pagination';
+import PageHeader from '../../components/common/PageHeader';
+import PageLoader from '../../components/common/PageLoader';
 import { QUERY_KEYS } from '../../api/queryKeys';
 import api from '../../api/axios';
 import { formatCurrency, payrollStatusLabel } from '../../features/payroll/utils/payrollDisplay';
@@ -61,43 +63,23 @@ const MyPayroll = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
-        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Loading Compensation Archive...
-        </p>
-      </div>
-    );
+    return <PageLoader label="Loading Compensation Archive..." />;
   }
 
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* DepEd Institutional Header */}
-      <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
-              <FileCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                My payslips
-              </h1>
-            </div>
-          </div>
-          <p className="text-xs text-slate-600">
-            Semi-Monthly Salary Disbursements • Civil Service Commission &amp; DBM SSL Schedule
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-start md:self-auto text-xs text-slate-600">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#0038A8] border border-blue-200 rounded font-semibold">
+      <PageHeader
+        icon={FileCheck}
+        title="My payslips"
+        subtitle="Semi-Monthly Salary Disbursements · Civil Service Commission & DBM SSL Schedule"
+      >
+        <div className="flex items-center gap-2 text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-primary border border-blue-200 rounded font-semibold">
             <Wallet className="w-3.5 h-3.5" />
             Semi-Monthly Cutoffs
           </span>
         </div>
-      </div>
+      </PageHeader>
 
       <Pagination pagination={pagination} label="payslips" />
       {isError ? (
@@ -153,7 +135,7 @@ const MyPayroll = () => {
                         <td className="py-3 px-3 text-right font-mono tabular-nums text-red-700">
                           {formatCurrency(deductions)}
                         </td>
-                        <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-[#0038A8]">
+                        <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-primary">
                           {formatCurrency(net)}
                         </td>
                         <td className="py-3 px-3 text-center">
@@ -176,7 +158,7 @@ const MyPayroll = () => {
                             aria-pressed={isSelected}
                             className={`inline-flex min-h-11 items-center gap-1 px-3 py-2 text-sm font-semibold rounded transition-colors ${
                               isSelected
-                                ? 'bg-[#0038A8] text-white'
+                                ? 'bg-primary text-white'
                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                             }`}
                           >
@@ -210,7 +192,7 @@ const MyPayroll = () => {
                     <h3 className="text-sm font-bold text-slate-900 mt-0.5">
                       Semi-monthly payslip
                     </h3>
-                    <span className="font-mono tabular-nums text-xs font-semibold text-[#0038A8]">
+                    <span className="font-mono tabular-nums text-xs font-semibold text-primary">
                       {activePayroll.cutoff_period}
                     </span>
                   </div>
@@ -222,7 +204,7 @@ const MyPayroll = () => {
                       title="Download PDF payslip"
                       className="min-h-11 min-w-11 flex items-center justify-center bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded transition-colors"
                     >
-                      <Download className="w-4 h-4 text-[#0038A8]" />
+                      <Download className="w-4 h-4 text-primary" />
                     </button>
                     <button
                       onClick={handlePrint}
@@ -347,7 +329,7 @@ const MyPayroll = () => {
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wide block">
                       Net Take-Home Pay
                     </span>
-                    <span className="text-2xl font-bold font-mono tabular-nums text-[#0038A8] block">
+                    <span className="text-2xl font-bold font-mono tabular-nums text-primary block">
                       {formatCurrency(activePayroll.net_salary)}
                     </span>
                   </div>

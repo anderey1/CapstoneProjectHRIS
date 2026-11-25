@@ -12,7 +12,7 @@ const CivilServiceEligibilityTab = ({ me, onAdd, onEdit, onDelete, canEdit = tru
         {canEdit && (
           <button 
             onClick={onAdd}
-            className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm"
+            className="btn btn-primary btn-sm flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" /> Add Certification
           </button>
@@ -72,7 +72,7 @@ const CivilServiceEligibilityTab = ({ me, onAdd, onEdit, onDelete, canEdit = tru
           {canEdit && (
             <button 
               onClick={onAdd}
-              className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium shadow-sm"
+              className="btn btn-primary btn-sm"
             >
               Add Board or CSC Exam
             </button>

@@ -3,6 +3,8 @@ import {
   Wallet, ShieldCheck, Loader2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import PageHeader from '../../components/common/PageHeader';
+import PageLoader from '../../components/common/PageLoader';
 import Pagination from '../../components/common/Pagination';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { QUERY_KEYS } from '../../api/queryKeys';
@@ -101,50 +103,26 @@ const Payroll = () => {
   });
 
   if (isLoading) {
-    return (
-      <div className="h-[60vh] flex flex-col items-center justify-center gap-3 text-slate-400">
-        <Loader2 className="w-8 h-8 animate-spin text-[#0038A8]" />
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Loading Division Payroll Ledger...
-        </p>
-      </div>
-    );
+    return <PageLoader label="Loading Division Payroll Ledger..." />;
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-300">
-      {/* Official Government Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8] shrink-0">
-              <Wallet className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Payroll management
-                </h1>
-                <span className="badge badge-sm bg-slate-100 text-slate-700 border-slate-200 font-semibold text-xs">
-                  General Payroll (Form 7)
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                DepEd Schools Division of Lucena City • Accounting & Cash Management Services
-              </p>
-            </div>
-          </div>
-        </div>
-
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+      <PageHeader
+        icon={Wallet}
+        title="Payroll management"
+        badge="General Payroll (Form 7)"
+        subtitle="DepEd Schools Division of Lucena City · Accounting & Cash Management Services"
+      >
         <div className="flex items-center gap-2 text-xs">
           <div className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-slate-700 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#0038A8] shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
             <span>
               Role: <strong className="text-slate-900">{user?.role?.replace('_', ' ')}</strong>
             </span>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {isError && (
         <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -195,7 +173,7 @@ const Payroll = () => {
             Net Cash Payable
           </span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl font-bold text-[#0038A8] font-mono tabular-nums">
+            <span className="text-xl font-bold text-primary font-mono tabular-nums">
               {formatCurrency(totalNet)}
             </span>
             <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">

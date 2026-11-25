@@ -12,7 +12,7 @@ const EducationalBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true 
         {canEdit && (
           <button 
             onClick={onAdd}
-            className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm"
+            className="btn btn-primary btn-sm flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" /> Add Education
           </button>
@@ -23,7 +23,7 @@ const EducationalBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true 
         <div className="space-y-3">
           {me.education.map((e, idx) => (
             <div key={idx} className="flex gap-3.5 p-4 bg-white border border-slate-200 rounded-lg shadow-sm hover:border-slate-300 transition-colors">
-              <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0038A8] flex items-center justify-center font-bold text-xs uppercase shrink-0 border border-blue-100">
+              <div className="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center font-bold text-xs uppercase shrink-0 border border-blue-100">
                 {e.level?.charAt(0) || 'E'}
               </div>
               
@@ -84,7 +84,7 @@ const EducationalBackgroundTab = ({ me, onAdd, onEdit, onDelete, canEdit = true 
           {canEdit && (
             <button 
               onClick={onAdd}
-              className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium shadow-sm"
+              className="btn btn-primary btn-sm"
             >
               Add Degree or School
             </button>

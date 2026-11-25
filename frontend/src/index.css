@@ -5,6 +5,31 @@
   themes: light --default;
 }
 
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  --color-primary: #0038a8;
+  --color-primary-content: #ffffff;
+  --color-secondary: #0a225c;
+  --color-secondary-content: #ffffff;
+  --color-accent: #fcd116;
+  --color-accent-content: #0f172a;
+  --color-neutral: #0f172a;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #ffffff;
+  --color-base-200: #f8fafc;
+  --color-base-300: #f1f5f9;
+  --color-base-content: #0f172a;
+  --color-info: #0284c7;
+  --color-info-content: #ffffff;
+  --color-success: #15803d;
+  --color-success-content: #ffffff;
+  --color-warning: #b45309;
+  --color-warning-content: #ffffff;
+  --color-error: #b91c1c;
+  --color-error-content: #ffffff;
+}
+
 @theme {
   --color-primary: #0038a8;
   --color-primary-content: #ffffff;
@@ -186,4 +211,23 @@ aside.bg-deped-navy :focus-visible {
   .modal-panel {
     transform: none;
   }
+}
+
+
+.school-map-pin-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.school-map-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: #0038a8;
+  color: #ffffff;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.35);
 }

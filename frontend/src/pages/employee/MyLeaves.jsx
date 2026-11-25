@@ -11,6 +11,8 @@ import {
 } from '../../features/leaves';
 import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { QUERY_KEYS } from '../../api/queryKeys';
+import PageHeader from '../../components/common/PageHeader';
+import PageLoader from '../../components/common/PageLoader';
 
 /**
  * MyLeaves (Employee View)
@@ -70,36 +72,22 @@ const MyLeaves = () => {
   const pendingSubordinateCount = teamSummary.action_required || 0;
 
   if (isLoading) {
-    return (
-      <div className="p-8 flex justify-center h-[60vh] items-center text-primary">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
+    return <PageLoader label="Loading leave applications..." />;
   }
 
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-              DepEd SDO Lucena City
-            </span>
-            <span className="text-xs font-mono text-slate-500">CSC Form No. 6 (Revised 2020)</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            {activeMainTab === 'mine' ? 'Application for Leave Portal' : 'Subordinate Leave Endorsements'}
-          </h1>
-          <p className="text-xs text-slate-600 mt-0.5">
-            {activeMainTab === 'mine' 
-              ? 'Employee self-service leave applications, credit balances, and docket history.' 
-              : 'Review and supervisory endorsement queue for division personnel.'}
-          </p>
-        </div>
-        
+      <PageHeader
+        title={activeMainTab === 'mine' ? 'Application for Leave Portal' : 'Subordinate Leave Endorsements'}
+        badge="CSC Form No. 6 (Revised 2020)"
+        subtitle={
+          activeMainTab === 'mine'
+            ? 'Employee self-service leave applications, credit balances, and docket history.'
+            : 'Review and supervisory endorsement queue for division personnel.'
+        }
+      >
         {activeMainTab === 'mine' && (
-          <button 
+          <button
             type="button"
             onClick={() => {
               setEditingLeave(null);
@@ -108,14 +96,14 @@ const MyLeaves = () => {
               setEndDate('');
               setIsWithinPhilippines(true);
               setIsModalOpen(true);
-            }} 
-            className="btn btn-sm bg-[#0038a8] text-white hover:bg-[#002b80] rounded font-semibold text-xs px-4 h-9 shadow-xs border-none flex items-center gap-1.5"
+            }}
+            className="btn btn-primary btn-sm gap-1.5"
           >
             <Plus className="w-4 h-4" />
             File CSC Form No. 6
           </button>
         )}
-      </div>
+      </PageHeader>
 
       {/* Main Tab Toggle for Supervisors/Managers */}
       {isSupervisorOrManager && (
@@ -136,7 +124,7 @@ const MyLeaves = () => {
             onClick={() => setActiveMainTab('approvals')}
             className={`px-4 py-1.5 text-xs font-semibold rounded transition-colors flex items-center gap-1.5 ${
               activeMainTab === 'approvals' 
-                ? 'bg-white text-[#0038a8] shadow-xs border border-slate-200/80 font-bold' 
+                ? 'bg-white text-primary shadow-xs border border-slate-200/80 font-bold' 
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >

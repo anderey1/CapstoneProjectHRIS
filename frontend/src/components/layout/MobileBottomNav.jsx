@@ -1,14 +1,23 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CalendarCheck, Clock, UserCircle, Menu } from 'lucide-react';
+import { LayoutDashboard, CalendarCheck, Clock, UserCircle, Menu, Users, School } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const MobileBottomNav = ({ toggleDrawer }) => {
-  const navItems = [
-    { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
-    { to: '/attendance', icon: <CalendarCheck className="w-5 h-5" />, label: 'Attendance' },
-    { to: '/my-leaves', icon: <Clock className="w-5 h-5" />, label: 'Leaves' },
-    { to: '/profile', icon: <UserCircle className="w-5 h-5" />, label: 'Profile' },
-  ];
+  const { user } = useAuth();
+  const navItems = user?.is_superuser
+    ? [
+        { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
+        { to: '/employees', icon: <Users className="w-5 h-5" />, label: 'Directory' },
+        { to: '/schools', icon: <School className="w-5 h-5" />, label: 'Schools' },
+        { to: '/profile', icon: <UserCircle className="w-5 h-5" />, label: 'Account' },
+      ]
+    : [
+        { to: '/', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
+        { to: '/attendance', icon: <CalendarCheck className="w-5 h-5" />, label: 'Attendance' },
+        { to: '/my-leaves', icon: <Clock className="w-5 h-5" />, label: 'Leaves' },
+        { to: '/profile', icon: <UserCircle className="w-5 h-5" />, label: 'Profile' },
+      ];
 
   return (
     <nav 
@@ -23,7 +32,7 @@ const MobileBottomNav = ({ toggleDrawer }) => {
             to={item.to}
             className={({ isActive }) => `
               flex flex-col items-center justify-center py-1 px-2 flex-1 transition-colors min-h-[44px]
-              ${isActive ? 'text-[#0038A8]' : 'text-slate-500 hover:text-slate-800'}
+              ${isActive ? 'text-primary' : 'text-slate-500 hover:text-slate-800'}
             `}
           >
             {({ isActive }) => (
@@ -31,11 +40,11 @@ const MobileBottomNav = ({ toggleDrawer }) => {
                 <div className={`transition-transform duration-150 ${isActive ? 'scale-105' : ''}`}>
                   {item.icon}
                 </div>
-                <span className={`text-[11px] mt-0.5 leading-none ${isActive ? 'font-semibold text-[#0038A8]' : 'font-normal'}`}>
+                <span className={`text-[11px] mt-0.5 leading-none ${isActive ? 'font-semibold text-primary' : 'font-normal'}`}>
                   {item.label}
                 </span>
                 {isActive && (
-                  <span className="w-1 h-1 bg-[#0038A8] rounded-full mt-1"></span>
+                  <span className="w-1 h-1 bg-primary rounded-full mt-1"></span>
                 )}
               </>
             )}

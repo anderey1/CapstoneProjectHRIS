@@ -46,7 +46,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.first_name || ''} 
                   onChange={(e) => onFieldChange('first_name', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1 col-span-2 sm:col-span-1">
@@ -55,7 +55,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.last_name || ''} 
                   onChange={(e) => onFieldChange('last_name', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1">
@@ -64,7 +64,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.middle_name || ''} 
                   onChange={(e) => onFieldChange('middle_name', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1">
@@ -73,7 +73,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.name_extension || ''} 
                   onChange={(e) => onFieldChange('name_extension', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   placeholder="Jr. / Sr."
                 />
               </div>
@@ -83,7 +83,7 @@ const PDSDetailModal = ({
                   type="date" 
                   value={modalData?.date_of_birth || ''} 
                   onChange={(e) => onFieldChange('date_of_birth', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1">
@@ -91,7 +91,7 @@ const PDSDetailModal = ({
                 <select id={fieldId('sex')}
                   value={modalData?.sex || ''} 
                   onChange={(e) => onFieldChange('sex', e.target.value)}
-                  className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
+                  className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary"
                 >
                   <option value="">Select Sex</option>
                   <option value="Male">Male</option>
@@ -103,7 +103,7 @@ const PDSDetailModal = ({
                 <select id={fieldId('civil_status')}
                   value={modalData?.civil_status || ''} 
                   onChange={(e) => onFieldChange('civil_status', e.target.value)}
-                  className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
+                  className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary"
                 >
                   <option value="">Select Status</option>
                   <option value="Single">Single</option>
@@ -119,7 +119,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.mobile_no || ''} 
                   onChange={(e) => onFieldChange('mobile_no', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1 col-span-2">
@@ -128,7 +128,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.place_of_birth || ''} 
                   onChange={(e) => onFieldChange('place_of_birth', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1 col-span-2">
@@ -136,7 +136,7 @@ const PDSDetailModal = ({
                 <textarea id={fieldId('residential_address')}
                   value={modalData?.residential_address || ''} 
                   onChange={(e) => onFieldChange('residential_address', e.target.value)}
-                  className="textarea textarea-bordered textarea-sm w-full rounded-md text-xs h-16 pt-2 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="textarea textarea-bordered textarea-sm w-full rounded-md text-xs h-16 pt-2 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1 col-span-2">
@@ -144,7 +144,7 @@ const PDSDetailModal = ({
                 <textarea id={fieldId('permanent_address')}
                   value={modalData?.permanent_address || ''} 
                   onChange={(e) => onFieldChange('permanent_address', e.target.value)}
-                  className="textarea textarea-bordered textarea-sm w-full rounded-md text-xs h-16 pt-2 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="textarea textarea-bordered textarea-sm w-full rounded-md text-xs h-16 pt-2 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
             </div>
@@ -158,7 +158,7 @@ const PDSDetailModal = ({
                 <select id={fieldId('level')}
                   value={modalData?.level || ''} 
                   onChange={(e) => onFieldChange('level', e.target.value)}
-                  className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
+                  className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary"
                 >
                   <option value="ELEMENTARY">Elementary</option>
                   <option value="SECONDARY">Secondary</option>
@@ -173,7 +173,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.school_name || ''} 
                   onChange={(e) => onFieldChange('school_name', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1">
@@ -182,7 +182,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.degree_course || ''} 
                   onChange={(e) => onFieldChange('degree_course', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-3.5">
@@ -192,7 +192,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.period_from || ''} 
                     onChange={(e) => onFieldChange('period_from', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                     placeholder="Year (e.g. 2012)"
                   />
                 </div>
@@ -202,7 +202,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.period_to || ''} 
                     onChange={(e) => onFieldChange('period_to', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                     placeholder="Year / Present"
                   />
                 </div>
@@ -214,7 +214,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.year_graduated || ''} 
                     onChange={(e) => onFieldChange('year_graduated', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-1">
@@ -223,7 +223,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.honors_received || ''} 
                     onChange={(e) => onFieldChange('honors_received', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                     placeholder="e.g. Cum Laude"
                   />
                 </div>
@@ -240,7 +240,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.position_title || ''} 
                   onChange={(e) => onFieldChange('position_title', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="space-y-1">
@@ -249,7 +249,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.agency || ''} 
                   onChange={(e) => onFieldChange('agency', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-3.5">
@@ -259,7 +259,7 @@ const PDSDetailModal = ({
                     type="date" 
                     value={modalData?.date_from || ''} 
                     onChange={(e) => onFieldChange('date_from', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-1">
@@ -269,7 +269,7 @@ const PDSDetailModal = ({
                     disabled={modalData?.is_present}
                     value={modalData?.is_present ? '' : (modalData?.date_to || '')} 
                     onChange={(e) => onFieldChange('date_to', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8] disabled:bg-slate-100" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary disabled:bg-slate-100" 
                   />
                 </div>
               </div>
@@ -293,7 +293,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.monthly_salary || ''} 
                     onChange={(e) => onFieldChange('monthly_salary', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-1">
@@ -301,7 +301,7 @@ const PDSDetailModal = ({
                   <select id={fieldId('status_of_appointment')}
                     value={modalData?.status_of_appointment || ''} 
                     onChange={(e) => onFieldChange('status_of_appointment', e.target.value)}
-                    className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
+                    className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary"
                   >
                     <option value="PERMANENT">Permanent</option>
                     <option value="TEMPORARY">Temporary</option>
@@ -318,7 +318,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.salary_grade || ''} 
                     onChange={(e) => onFieldChange('salary_grade', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                     placeholder="e.g. 11"
                   />
                 </div>
@@ -345,7 +345,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.service || ''} 
                   onChange={(e) => onFieldChange('service', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-3.5">
@@ -355,7 +355,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.rating || ''} 
                     onChange={(e) => onFieldChange('rating', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-1">
@@ -364,7 +364,7 @@ const PDSDetailModal = ({
                     type="date" 
                     value={modalData?.date_of_exam || ''} 
                     onChange={(e) => onFieldChange('date_of_exam', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
               </div>
@@ -374,7 +374,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.place_of_exam || ''} 
                   onChange={(e) => onFieldChange('place_of_exam', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-3.5">
@@ -384,7 +384,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.license_no || ''} 
                     onChange={(e) => onFieldChange('license_no', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-1">
@@ -393,7 +393,7 @@ const PDSDetailModal = ({
                     type="date" 
                     value={modalData?.license_date || ''} 
                     onChange={(e) => onFieldChange('license_date', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
               </div>
@@ -409,7 +409,7 @@ const PDSDetailModal = ({
                   <select id={fieldId('relationship')}
                     value={modalData?.relationship || ''} 
                     onChange={(e) => onFieldChange('relationship', e.target.value)}
-                    className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]"
+                    className="select select-bordered select-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary"
                   >
                     <option value="SPOUSE">Spouse</option>
                     <option value="FATHER">Father</option>
@@ -423,7 +423,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.extension || ''} 
                     onChange={(e) => onFieldChange('extension', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
               </div>
@@ -434,7 +434,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.full_name || ''} 
                     onChange={(e) => onFieldChange('full_name', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
               ) : (
@@ -445,7 +445,7 @@ const PDSDetailModal = ({
                       type="text" 
                       value={modalData?.surname || ''} 
                       onChange={(e) => onFieldChange('surname', e.target.value)}
-                      className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                      className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                     />
                   </div>
                   <div className="space-y-1">
@@ -454,7 +454,7 @@ const PDSDetailModal = ({
                       type="text" 
                       value={modalData?.first_name || ''} 
                       onChange={(e) => onFieldChange('first_name', e.target.value)}
-                      className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                      className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                     />
                   </div>
                   <div className="space-y-1">
@@ -463,7 +463,7 @@ const PDSDetailModal = ({
                       type="text" 
                       value={modalData?.middle_name || ''} 
                       onChange={(e) => onFieldChange('middle_name', e.target.value)}
-                      className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                      className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                     />
                   </div>
                 </div>
@@ -475,7 +475,7 @@ const PDSDetailModal = ({
                     type="date" 
                     value={modalData?.date_of_birth || ''} 
                     onChange={(e) => onFieldChange('date_of_birth', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-1">
@@ -484,7 +484,7 @@ const PDSDetailModal = ({
                     type="text" 
                     value={modalData?.occupation || ''} 
                     onChange={(e) => onFieldChange('occupation', e.target.value)}
-                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                    className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                   />
                 </div>
               </div>
@@ -494,7 +494,7 @@ const PDSDetailModal = ({
                   type="text" 
                   value={modalData?.employer || ''} 
                   onChange={(e) => onFieldChange('employer', e.target.value)}
-                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-[#0038A8]" 
+                  className="input input-bordered input-sm w-full rounded-md text-xs h-9 bg-white border-slate-300 focus:border-primary" 
                 />
               </div>
             </div>
@@ -514,7 +514,7 @@ const PDSDetailModal = ({
           <button 
             onClick={onSave}
             disabled={isPending}
-            className="btn min-h-11 px-4 bg-[#0038A8] hover:bg-[#002d86] text-white rounded text-sm font-medium flex items-center gap-1.5 border-none shadow-sm"
+            className="btn btn-primary btn-sm px-4 flex items-center gap-1.5"
           >
             {isPending ? (
               <>

@@ -104,7 +104,7 @@ const LoanReviewModal = ({
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
                     Monthly Amortization
                   </span>
-                  <span className="text-base font-bold text-[#0038A8] font-mono">
+                  <span className="text-base font-bold text-primary font-mono">
                     {formatCurrency(loan.monthly_payment)}
                   </span>
                 </div>
@@ -202,7 +202,7 @@ const LoanReviewModal = ({
                                 href={getFileUrl(uploadedDoc.file)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="btn btn-xs bg-white hover:bg-slate-100 text-[#0038A8] border border-slate-200 font-semibold"
+                                className="btn btn-xs bg-white hover:bg-slate-100 text-primary border border-slate-200 font-semibold"
                               >
                                 <Eye className="w-3 h-3 mr-1" /> View
                               </a>

@@ -105,12 +105,12 @@ const StaffDTRManagement = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 border-b border-base-200 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8]">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-primary">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -165,7 +165,7 @@ const StaffDTRManagement = () => {
         <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-[#0038A8]" /> Personnel ({filteredEmployees.length})
+              <Users className="w-4 h-4 text-primary" /> Personnel ({filteredEmployees.length})
             </span>
           </div>
 
@@ -193,7 +193,7 @@ const StaffDTRManagement = () => {
                   onClick={() => setSelectedEmployeeId(emp.id)}
                   className={`w-full text-left p-2.5 rounded-lg text-xs transition-colors flex flex-col gap-0.5 ${
                     String(selectedEmployeeId) === String(emp.id)
-                      ? 'bg-blue-50 border border-blue-200 text-[#0038A8] font-bold'
+                      ? 'bg-blue-50 border border-blue-200 text-primary font-bold'
                       : 'hover:bg-slate-50 text-slate-700'
                   }`}
                 >
@@ -227,7 +227,7 @@ const StaffDTRManagement = () => {
                     Plantilla ID #{selectedEmployee?.id} • Period: {selectedMonth}
                   </p>
                 </div>
-                <span className="px-2.5 py-1 bg-blue-50 border border-blue-200 text-[#0038A8] text-xs font-semibold rounded font-mono tabular-nums">
+                <span className="px-2.5 py-1 bg-blue-50 border border-blue-200 text-primary text-xs font-semibold rounded font-mono tabular-nums">
                   {records.length} DTR Entries Recorded
                 </span>
               </div>

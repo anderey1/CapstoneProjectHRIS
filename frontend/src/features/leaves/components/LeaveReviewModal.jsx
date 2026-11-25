@@ -30,7 +30,7 @@ const LeaveReviewModal = ({
         <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-bold text-primary bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                 CSC Form No. 6
               </span>
               <span className="text-xs font-mono text-slate-500">Application #{leave.id}</span>
@@ -238,7 +238,7 @@ const LeaveReviewModal = ({
                       }
                     }}
                     disabled={isApproving}
-                    className="btn btn-sm bg-[#0038a8] text-white hover:bg-[#002b80] rounded text-xs font-semibold px-5 border-none"
+                    className="btn btn-primary btn-sm px-5"
                   >
                     {isApproving
                       ? 'Recording...'

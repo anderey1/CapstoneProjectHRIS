@@ -39,7 +39,7 @@ const PreviewContent = ({ previewFile, onClose }) => {
       <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">
         <button type="button" onClick={onClose} className="btn min-h-11 px-4 text-sm">Close</button>
         {hasAttachment && (
-          <a href={source} download={previewFile.fileName || 'attachment'} target="_blank" rel="noopener noreferrer" className="btn min-h-11 px-4 bg-[#0038A8] hover:bg-[#002d86] text-white text-sm">
+          <a href={source} download={previewFile.fileName || 'attachment'} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm px-4">
             <Download aria-hidden="true" className="w-4 h-4" /> {source.startsWith('data:') ? 'Download attachment' : 'Open / download file'}
           </a>
         )}

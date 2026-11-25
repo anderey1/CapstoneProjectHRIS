@@ -65,7 +65,7 @@ export const ToastProvider = ({ children }) => {
       case 'warning':
         return 'bg-[#b45309] text-white';
       default:
-        return 'bg-[#0038A8] text-white';
+        return 'bg-primary text-white';
     }
   };
 

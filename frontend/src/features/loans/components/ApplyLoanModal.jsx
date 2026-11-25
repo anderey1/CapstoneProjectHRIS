@@ -122,7 +122,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
         {/* Header */}
         <div className="bg-slate-50 border-b border-slate-200 p-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-             <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-[#0038A8]">
+             <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-primary">
                 <Wallet className="w-5 h-5" />
              </div>
              <div>
@@ -167,7 +167,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
               id="loan-purpose" name="purpose"
               value={formData.purpose}
               onChange={handleInputChange}
-              className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
+              className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               required
             >
               {PURPOSE_OPTIONS.map(opt => (
@@ -188,7 +188,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
                 value={formData.loan_amount}
                 onChange={handleInputChange}
                 placeholder="0.00"
-                className="w-full pl-8 pr-3 py-2 text-sm font-mono tabular-nums font-bold bg-white border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
+                className="w-full pl-8 pr-3 py-2 text-sm font-mono tabular-nums font-bold bg-white border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 required
               />
             </div>
@@ -204,7 +204,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
                 step="0.1"
                 value={formData.interest_rate}
                 onChange={handleInputChange}
-                className="w-full text-xs font-mono tabular-nums font-semibold bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
+                className="w-full text-xs font-mono tabular-nums font-semibold bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 required
               />
             </div>
@@ -214,7 +214,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
                 id="loan-term_months" name="term_months"
                 value={formData.term_months}
                 onChange={handleInputChange}
-                className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
+                className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 required
               >
                 <option value="6">6 Months</option>
@@ -234,7 +234,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
               value={formData.co_maker_name}
               onChange={handleInputChange}
               placeholder="Full name of plantilla co-maker"
-              className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8]"
+              className="w-full text-xs bg-white border border-slate-300 rounded-md px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -247,7 +247,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
               onChange={handleInputChange}
               placeholder="State the purpose of your loan application..."
               rows={3}
-              className="w-full text-xs bg-white border border-slate-300 rounded-md p-3 text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0038A8] focus:border-[#0038A8] leading-relaxed"
+              className="w-full text-xs bg-white border border-slate-300 rounded-md p-3 text-slate-900 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary leading-relaxed"
             />
           </div>
 
@@ -255,13 +255,13 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
           {amount > 0 && (
             <div className="bg-slate-50 border border-slate-200 rounded-md p-4 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-800 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5"><Calculator className="w-3.5 h-3.5 text-[#0038A8]" /> Computation Summary</span>
+                <span className="flex items-center gap-1.5"><Calculator className="w-3.5 h-3.5 text-primary" /> Computation Summary</span>
                 <span className="font-mono text-xs text-slate-500">DepEd Order No. 37, s. 2018</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-xs pt-1">
                 <div>
                   <span className="text-xs text-slate-500 uppercase tracking-wider block">Estimated Monthly Amortization</span>
-                  <span className="text-base font-bold font-mono tabular-nums text-[#0038A8] block mt-0.5">
+                  <span className="text-base font-bold font-mono tabular-nums text-primary block mt-0.5">
                     ₱{monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -312,7 +312,7 @@ const ApplyLoanModal = ({ isOpen, onClose, onSubmit, isPending, user, employees,
             </button>
             <button 
               type="submit" 
-              className="btn btn-primary bg-[#0038A8] text-white hover:bg-[#002b80] flex-1 rounded-md text-xs font-semibold" 
+              className="btn btn-primary btn-sm flex-1" 
               disabled={isPending}
             >
               {isPending ? 'Submitting...' : (initialData ? 'Resubmit Application' : 'Apply Now')}

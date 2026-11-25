@@ -30,7 +30,7 @@ const PayrollBreakdownTable = ({
       <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70">
         <div>
           <div className="flex items-center gap-2">
-            <FileSpreadsheet className="w-4 h-4 text-[#0038A8]" />
+            <FileSpreadsheet className="w-4 h-4 text-primary" />
             <h3 className="text-xs font-bold text-slate-900 tracking-wide">
               General Payroll Sheet (Form 7)
             </h3>
@@ -64,7 +64,7 @@ const PayrollBreakdownTable = ({
               <th className="px-3 py-3 text-center">Days Worked</th>
               <th className="px-3 py-3 text-right">Gross Salary</th>
               <th className="px-3 py-3 text-right text-rose-700">Deductions</th>
-              <th className="px-3 py-3 text-right text-[#0038A8]">Net Take-Home</th>
+              <th className="px-3 py-3 text-right text-primary">Net Take-Home</th>
               <th className="px-3 py-3 text-center">Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -109,7 +109,7 @@ const PayrollBreakdownTable = ({
                         {formatCurrency(deductVal)}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right font-mono font-bold text-[#0038A8]">
+                    <td className="px-3 py-3 text-right font-mono font-bold text-primary">
                       {formatCurrency(netVal)}
                     </td>
                     <td className="px-3 py-3 text-center">
@@ -117,7 +117,7 @@ const PayrollBreakdownTable = ({
                         p.status === 'released'
                           ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                           : p.status === 'approved'
-                          ? 'bg-blue-50 text-[#0038A8] border-blue-200'
+                          ? 'bg-blue-50 text-primary border-blue-200'
                           : p.status === 'draft'
                           ? 'bg-amber-50 text-amber-800 border-amber-200'
                           : 'bg-slate-100 text-slate-700 border-slate-200'
@@ -179,7 +179,7 @@ const PayrollBreakdownTable = ({
                 <td className="px-3 py-3 text-right font-mono text-rose-700">
                   {formatCurrency(totalDeductions)}
                 </td>
-                <td className="px-3 py-3 text-right font-mono text-[#0038A8]">
+                <td className="px-3 py-3 text-right font-mono text-primary">
                   {formatCurrency(totalNet)}
                 </td>
                 <td colSpan="2"></td>

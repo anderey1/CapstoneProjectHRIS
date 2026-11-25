@@ -37,7 +37,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-900">
       {/* DepEd Institutional Top Header Bar */}
-      <header className="w-full bg-[#0038A8] border-b-2 border-[#FCD116] px-4 py-3 shadow-sm">
+      <header className="w-full bg-primary border-b-2 border-accent px-4 py-3 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/Deped2.png" alt="Republic of the Philippines Seal" className="w-9 h-9 object-contain" />
@@ -89,7 +89,7 @@ const Login = () => {
                     type="text"
                     autoComplete="username"
                     placeholder="e.g. employee.username"
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
+                    className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                     required
                     disabled={isLoading}
                   />
@@ -113,7 +113,7 @@ const Login = () => {
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     placeholder="Enter account password"
-                    className="w-full pl-9 pr-10 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0038A8] focus:ring-1 focus:ring-[#0038A8]"
+                    className="w-full pl-9 pr-10 py-2 bg-white border border-slate-300 rounded text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                     required
                     disabled={isLoading}
                   />
@@ -132,7 +132,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-2 bg-[#0038A8] hover:bg-[#002d86] text-white font-semibold text-xs uppercase tracking-wider py-2.5 px-4 rounded border border-[#002d86] shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                className="w-full mt-2 btn btn-primary btn-sm h-10 text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2"
               >
                 <ShieldCheck className="w-4 h-4" />
                 {isLoading ? 'Signing in...' : 'Sign in'}
@@ -143,13 +143,13 @@ const Login = () => {
             <div className="pt-4 border-t border-slate-200 text-xs text-slate-600 space-y-2">
               <div className="flex items-center justify-between">
                 <span>Existing regular employee?</span>
-                <Link to="/register-existing" className="font-semibold text-[#0038A8] hover:underline">
+                <Link to="/register-existing" className="font-semibold text-primary hover:underline">
                   Activate Account
                 </Link>
               </div>
               <div className="flex items-center justify-between">
                 <span>Job applicant / candidate?</span>
-                <Link to="/apply" className="font-semibold text-[#0038A8] hover:underline">
+                <Link to="/apply" className="font-semibold text-primary hover:underline">
                   Submit Application
                 </Link>
               </div>

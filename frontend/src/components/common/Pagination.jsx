@@ -8,7 +8,7 @@ export default function Pagination({ pagination, label = 'records' }) {
   const pages = [...new Set([1, page - 1, page, page + 1, totalPages])]
     .filter(value => value >= 1 && value <= totalPages)
     .sort((a, b) => a - b);
-  const buttonClass = 'inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-md border border-slate-500 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:border-[#0038a8] hover:bg-blue-50 hover:text-[#0038a8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0038a8] disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-50 disabled:text-slate-500 disabled:hover:bg-slate-50';
+  const buttonClass = 'inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-md border border-slate-500 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:border-primary hover:bg-blue-50 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-50 disabled:text-slate-500 disabled:hover:bg-slate-50';
   const blocked = isFetching || isError;
   return (
     <nav aria-label={`${label} pagination`} aria-busy={isFetching} className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -37,7 +37,7 @@ export default function Pagination({ pagination, label = 'records' }) {
             <span key={value} className="inline-flex items-center gap-1">
               {index > 0 && value - pages[index - 1] > 1 && <span aria-hidden="true" className="px-1 text-slate-500">…</span>}
               {value === page ? (
-                <span aria-current="page" aria-label={`Page ${value}`} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[#0038a8] bg-blue-50 px-3 text-sm font-semibold tabular-nums text-[#0038a8]">{value}</span>
+                <span aria-current="page" aria-label={`Page ${value}`} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-primary bg-blue-50 px-3 text-sm font-semibold tabular-nums text-primary">{value}</span>
               ) : (
                 <button type="button" aria-label={`Go to page ${value}`} className={buttonClass} disabled={blocked} onClick={() => setPage(value)}>{value}</button>
               )}

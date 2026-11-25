@@ -55,9 +55,9 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
               </span>
             );
           } else if (step.isCurrent) {
-            badgeBorder = 'border-[#0038A8] bg-blue-50/70 text-slate-900 ring-1 ring-[#0038A8]';
+            badgeBorder = 'border-primary bg-blue-50/70 text-slate-900 ring-1 ring-primary';
             icon = (
-              <span className="w-4 h-4 rounded-full bg-[#0038A8] text-white flex items-center justify-center text-xs font-bold">
+              <span className="w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
                 {step.num}
               </span>
             );
@@ -85,7 +85,7 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
 
               <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-400 uppercase tracking-wider">Status</span>
-                <span className={step.isComplete ? 'text-emerald-700' : step.isCurrent ? 'text-[#0038A8]' : 'text-slate-500'}>
+                <span className={step.isComplete ? 'text-emerald-700' : step.isCurrent ? 'text-primary' : 'text-slate-500'}>
                   {cutoffStatus === 'unavailable' ? 'Status unavailable' : step.isComplete ? 'Completed' : step.isCurrent ? 'In progress' : 'Pending previous step'}
                 </span>
               </div>

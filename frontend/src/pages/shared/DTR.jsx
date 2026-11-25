@@ -81,12 +81,12 @@ const DTR = () => {
   );
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
+            <div className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-primary">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -100,23 +100,23 @@ const DTR = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3 w-full md:w-auto">
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
+        <div className="flex flex-wrap items-end justify-start md:justify-end gap-3 w-full md:w-auto">
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
             Attendance month
             <input
               type="month"
-            required
-            value={selectedMonth}
-            onChange={(e) => { if (e.target.value) setSelectedMonth(e.target.value); }}
-            className="min-h-11 px-3 py-1.5 bg-white border border-slate-500 rounded text-sm text-slate-800"
-          />
+              required
+              value={selectedMonth}
+              onChange={(e) => { if (e.target.value) setSelectedMonth(e.target.value); }}
+              className="min-h-11 px-3 py-1.5 bg-white border border-slate-500 rounded text-sm font-normal text-slate-800"
+            />
           </label>
 
           <div className="dropdown dropdown-end">
             <button 
               tabIndex={0} 
               disabled={downloading || isError}
-              className={`min-h-11 px-4 py-2 bg-[#0038A8] hover:bg-[#002d86] text-white text-sm font-semibold rounded border border-[#002d86] flex items-center gap-1.5 transition-colors disabled:opacity-60`}
+              className="btn btn-primary btn-sm flex items-center gap-1.5"
             >
               <Download className="w-4 h-4" />
               {downloading ? 'Generating PDF...' : 'Export Form 48 PDF'}
@@ -126,7 +126,7 @@ const DTR = () => {
               <li><button type="button" onClick={() => handleDownload('1')} className="py-2 text-slate-700 hover:bg-slate-50">1st Cutoff (1st - 15th Day)</button></li>
               <li><button type="button" onClick={() => handleDownload('2')} className="py-2 text-slate-700 hover:bg-slate-50">2nd Cutoff (16th - End of Month)</button></li>
               <li><button type="button" onClick={() => handleDownload('split')} className="py-2 text-slate-700 hover:bg-slate-50">Split Cards (Full Month)</button></li>
-              <li><button type="button" onClick={() => handleDownload('')} className="py-2 font-semibold text-[#0038A8] hover:bg-blue-50">Full Month Single Document</button></li>
+              <li><button type="button" onClick={() => handleDownload('')} className="py-2 font-semibold text-primary hover:bg-blue-50">Full Month Single Document</button></li>
             </ul>
           </div>
         </div>

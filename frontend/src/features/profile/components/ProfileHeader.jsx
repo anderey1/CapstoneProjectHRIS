@@ -39,7 +39,7 @@ const ProfileHeader = ({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-blue-50 text-[#0038A8] flex items-center justify-center font-bold text-2xl uppercase">
+                <div className="w-full h-full bg-blue-50 text-primary flex items-center justify-center font-bold text-2xl uppercase">
                   {me?.first_name?.charAt(0) || <User className="w-10 h-10 text-slate-400" />}
                 </div>
               )}
@@ -47,7 +47,7 @@ const ProfileHeader = ({
             {canChangePhoto && (
               <button 
                 onClick={onChangePhoto}
-                className="absolute -bottom-2 -right-2 btn btn-circle min-h-11 min-w-11 bg-[#0038A8] text-white hover:bg-[#002d86] border-2 border-white shadow"
+                className="absolute -bottom-2 -right-2 btn btn-primary btn-circle min-h-11 min-w-11 border-2 border-white shadow"
                 aria-label="Change profile photo (this browser only)"
                 title="Change Profile Photo"
               >
@@ -100,7 +100,7 @@ const ProfileHeader = ({
               {canChangePhoto && (
                 <button 
                   onClick={onChangePhoto}
-                  className="btn min-h-11 px-3.5 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-sm font-medium transition-colors shadow-sm"
+                  className="btn btn-primary btn-sm px-3.5"
                 >
                   <Camera className="w-3.5 h-3.5 mr-1" /> Change Photo
                 </button>
@@ -116,12 +116,12 @@ const ProfileHeader = ({
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Profile Completion</span>
-            <span className="text-xs font-bold text-[#0038A8]">{completion}%</span>
+            <span className="text-xs font-bold text-primary">{completion}%</span>
           </div>
           <div className="mt-3">
             <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
               <div 
-                className="bg-[#0038A8] h-2 rounded-full transition-all duration-500" 
+                className="bg-primary h-2 rounded-full transition-all duration-500" 
                 style={{ width: `${completion}%` }}
               />
             </div>
@@ -136,7 +136,7 @@ const ProfileHeader = ({
             <span className="text-base font-bold text-slate-800 mt-1 block">Active Record</span>
             <span className="text-xs text-slate-500 block mt-0.5 truncate max-w-[170px]">{me?.position || 'Teacher I'}</span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0038A8] flex items-center justify-center shrink-0 border border-blue-100">
+          <div className="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0 border border-blue-100">
             <Building2 className="w-4 h-4" />
           </div>
         </div>
@@ -150,7 +150,7 @@ const ProfileHeader = ({
               {uploadedMandatoryCount} of {mandatoryDocsCount} mandatory
             </span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0038A8] flex items-center justify-center shrink-0 border border-blue-100">
+          <div className="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0 border border-blue-100">
             <FileText className="w-4 h-4" />
           </div>
         </div>
@@ -166,7 +166,7 @@ const ProfileHeader = ({
               {me?.eligibilities?.length > 0 ? `Rating: ${me.eligibilities[0].rating}%` : 'Eligibility pending'}
             </span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#0038A8] flex items-center justify-center shrink-0 border border-blue-100">
+          <div className="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0 border border-blue-100">
             <Award className="w-4 h-4" />
           </div>
         </div>

@@ -38,7 +38,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
       <div className="p-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60">
         <div>
           <div className="flex items-center gap-2">
-            <ClockIcon className="w-4 h-4 text-[#0038a8]" />
+            <ClockIcon className="w-4 h-4 text-primary" />
             <h3 className="text-xs font-bold text-slate-900 tracking-wide">
               Personal CSC Form No. 6 Application Ledger
             </h3>
@@ -158,7 +158,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
                           href={leave.supporting_document}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-ghost btn-xs text-[#0038a8] hover:bg-blue-50 px-1.5 h-6 text-xs font-semibold flex items-center gap-1 border border-blue-200"
+                          className="btn btn-ghost btn-xs text-primary hover:bg-blue-50 px-1.5 h-6 text-xs font-semibold flex items-center gap-1 border border-blue-200"
                           title="View Supporting Document"
                         >
                           <FileText className="w-3 h-3" />

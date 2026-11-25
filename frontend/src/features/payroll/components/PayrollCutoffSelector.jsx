@@ -41,7 +41,7 @@ const PayrollCutoffSelector = ({ selectedCutoff, onSelectCutoff, allPayrolls = [
             <option value={2}>16th to month end</option>
           </select>
         </div>
-        <button type="button" className="btn min-h-11 bg-[#0038A8] text-white hover:bg-[#002d86]" disabled={!period} onClick={() => onSelectCutoff(period)}>Select period</button>
+        <button type="button" className="btn btn-primary btn-sm" disabled={!period} onClick={() => onSelectCutoff(period)}>Select period</button>
       </div>
       {!period && <p role="alert" className="text-sm text-red-700">Enter a four-digit year from 1000 to 9999.</p>}
       <p className="text-sm text-slate-600">Current selection: {selectedCutoff}</p>

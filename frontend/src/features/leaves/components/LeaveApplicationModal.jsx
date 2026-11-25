@@ -3,7 +3,7 @@ import { CalendarDays, X } from 'lucide-react';
 import LeaveDocumentUpload from './LeaveDocumentUpload';
 import LeaveDatePicker from './LeaveDatePicker';
 import { useLeaveCalendar, calculateWorkingDays } from '../hooks/useLeaves';
-import { LEAVE_TYPES, getLeaveDocuments, getMinimumLeaveDate, calendarDaysBetween, isCalendarDate, nonWorkingReason } from '../utils/leaveApplication';
+import { LEAVE_TYPES, getLeaveDocuments, calendarDaysBetween, isCalendarDate, nonWorkingReason } from '../utils/leaveApplication';
 
 const fieldClass = 'input input-bordered w-full bg-white text-sm';
 
@@ -30,7 +30,7 @@ export default function LeaveApplicationModal({
   const dialog = useRef(null);
   const id = useId();
   const usesCalendarDays = ['maternity', 'adoption'].includes(leaveType);
-  const calendar = useLeaveCalendar(startDate, endDate, isOpen, usesCalendarDays);
+  const calendar = useLeaveCalendar(startDate, endDate, isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,7 +50,7 @@ export default function LeaveApplicationModal({
   if (!isOpen) return null;
 
   const days = usesCalendarDays ? calendarDaysBetween(startDate, endDate) : calculateWorkingDays(startDate, endDate, calendar.holidays);
-  const minDate = getMinimumLeaveDate(leaveType, calendar.today);
+  const minDate = `${calendar.today.slice(0, 7)}-01`;
   const datesReversed = !!(startDate && endDate && endDate < startDate);
   const noWorkingDays = !!(calendar.ready && startDate && endDate && !datesReversed && !usesCalendarDays && days === 0);
   const documents = getLeaveDocuments(leaveType, days, isWithinPhilippines);
@@ -63,12 +63,8 @@ export default function LeaveApplicationModal({
   const beforeMinimum = (isCalendarDate(startDate) && startDate < minDate) || (isCalendarDate(endDate) && endDate < minDate);
   const nonWorkingEndpoint = calendar.ready && !usesCalendarDays && (nonWorkingReason(startDate, calendar.holidays) || nonWorkingReason(endDate, calendar.holidays));
   const includesTodayEndpoint = startDate === calendar.today || endDate === calendar.today;
-  const dateError = invalidFormat ? 'Enter a valid date in YYYY-MM-DD format.' : datesReversed ? 'End date must be on or after the start date.' : includesTodayEndpoint ? "Today's date cannot be selected as the start or end date. Choose another date." : beforeMinimum ? 'Choose dates within the filing rules for this leave type.' : noWorkingDays ? 'These dates contain no working days. Weekends and public non-working holidays are excluded.' : nonWorkingEndpoint ? 'Choose working days for the start and end dates. Weekends and non-working holidays are unavailable.' : '';
-  const filingHint = ['vacation', 'solo_parent'].includes(leaveType)
-    ? 'Choose a start date at least 5 days from today.'
-    : ['sick', 'emergency', 'rehabilitation'].includes(leaveType)
-      ? 'Today is unavailable. Past dates within the last 30 days remain available.'
-      : 'Include the first and last day of your requested leave. Today is unavailable.';
+  const dateError = invalidFormat ? 'Enter a valid date in YYYY-MM-DD format.' : datesReversed ? 'End date must be on or after the start date.' : includesTodayEndpoint ? "Today's date cannot be selected as the start or end date. Choose another date." : beforeMinimum ? 'Choose dates from the current month onward.' : noWorkingDays ? 'These dates contain no working days. Weekends and public non-working holidays are excluded.' : nonWorkingEndpoint ? 'Choose dates that are not PH non-working holidays.' : '';
+  const filingHint = 'Choose dates from the current month onward. Today and PH non-working holidays cannot be selected.';
 
   return (
     <dialog ref={dialog} className="modal z-[80]" style={{ '--color-primary': 'var(--color-deped-blue)' }} aria-labelledby={`${id}-title`} aria-describedby={`${id}-intro`} onKeyDown={keepFocusInDialog}

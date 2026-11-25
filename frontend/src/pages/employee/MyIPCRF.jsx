@@ -52,7 +52,7 @@ const MyIPCRF = () => {
   if (isLoading) {
     return (
       <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
-        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
+        <span className="loading loading-spinner loading-lg text-primary"></span>
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Loading Personal RPMS Portfolio...
         </p>
@@ -66,7 +66,7 @@ const MyIPCRF = () => {
       <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-[#0038A8]">
+            <div className="w-9 h-9 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-primary">
               <Award className="w-5 h-5" />
             </div>
             <div>
@@ -82,7 +82,7 @@ const MyIPCRF = () => {
 
         <button
           onClick={() => setShowUploadModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0038A8] text-white rounded-md text-xs font-semibold hover:bg-[#002c85] transition-colors shadow-sm self-start md:self-auto"
+          className="btn btn-primary btn-sm self-start md:self-auto"
         >
           <Plus className="w-4 h-4" />
           Submit Signed IPCRF Portfolio
@@ -112,7 +112,7 @@ const MyIPCRF = () => {
               Composite Rating
             </span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-2xl font-bold font-mono tabular-nums text-[#0038A8]">
+              <span className="text-2xl font-bold font-mono tabular-nums text-primary">
                 {latestScore !== null ? latestScore.toFixed(3) : '—'}
               </span>
               <span className="text-xs text-slate-500">/ 5.000</span>
@@ -233,7 +233,7 @@ const MyIPCRF = () => {
                       </td>
 
                       {/* Final Composite Score */}
-                      <td className="py-3 px-3 text-center font-mono tabular-nums font-bold text-[#0038A8] text-xs">
+                      <td className="py-3 px-3 text-center font-mono tabular-nums font-bold text-primary text-xs">
                         {finalScore !== null ? finalScore.toFixed(3) : '—'}
                       </td>
 
@@ -266,7 +266,7 @@ const MyIPCRF = () => {
                             href={r.ipcrf_file}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[#0038A8] hover:underline font-medium text-xs"
+                            className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs"
                           >
                             <Download className="w-3.5 h-3.5" />
                             File
@@ -280,7 +280,7 @@ const MyIPCRF = () => {
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => setSelectedReview(r)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0038A8] bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-primary bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           View Docket

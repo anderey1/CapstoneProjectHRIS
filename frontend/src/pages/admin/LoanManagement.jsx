@@ -9,6 +9,9 @@ import { useRBAC, PERMISSIONS } from '../../hooks/useRBAC';
 import { useLoans, SubsidiaryLedger } from '../../features/loans';
 import Pagination from '../../components/common/Pagination';
 import AccessibleDialog from '../../components/common/AccessibleDialog';
+import PageHeader from '../../components/common/PageHeader';
+import StatCards from '../../components/common/StatCards';
+import PageLoader from '../../components/common/PageLoader';
 
 const PURPOSE_LABELS = {
   general: 'General Purpose',
@@ -80,109 +83,36 @@ const LoanManagement = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-[60vh] flex flex-col items-center justify-center gap-3 text-slate-400">
-        <span className="loading loading-spinner loading-lg text-[#0038A8]"></span>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Loading Provident Fund Ledger...
-        </p>
-      </div>
-    );
+    return <PageLoader label="Loading Provident Fund Ledger..." />;
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-300">
-      {/* Official Government Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-[#0038A8] shrink-0">
-              <Coins className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Provident loan management
-                </h1>
-                <span className="badge badge-sm bg-slate-100 text-slate-700 border-slate-200 font-semibold text-xs">
-                  DepEd Order No. 37, s. 2018
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Department of Education Division of Lucena City • Employee Loan Review, Approval & Amortization
-              </p>
-            </div>
-          </div>
-        </div>
-
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+      <PageHeader
+        icon={Coins}
+        title="Provident loan management"
+        badge="DepEd Order No. 37, s. 2018"
+        subtitle="Department of Education Division of Lucena City · Employee Loan Review, Approval & Amortization"
+      >
         <div className="flex items-center gap-2 text-xs">
           <div className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-slate-700 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#0038A8] shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
             <span>
               Auditing Role: <strong className="text-slate-900">{user?.role?.replace('_', ' ')}</strong>
             </span>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Portfolio Operational Metrics Strip (4 Columns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Awaiting Verification
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-              {counts.pending || 0}
-            </span>
-            <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-              Accountant Audit
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Superintendent Endorsement
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-              {counts.verified || 0}
-            </span>
-            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-              Executive Review
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Ready for Disbursement
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-              {counts.approved || 0}
-            </span>
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              Cashier / ATM
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Active Portfolio Disbursed
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl font-bold text-[#0038A8] font-mono tabular-nums">
-              {formatCurrency(totalReleasedValue)}
-            </span>
-            <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-              Servicing
-            </span>
-          </div>
-        </div>
-      </div>
+      <StatCards
+        ariaLabel="Provident loan metrics"
+        stats={[
+          { label: 'Awaiting Verification', value: counts.pending || 0, description: 'Accountant Audit' },
+          { label: 'Superintendent Endorsement', value: counts.verified || 0, valueClass: 'text-blue-700', description: 'Executive Review' },
+          { label: 'Ready for Disbursement', value: counts.approved || 0, valueClass: 'text-emerald-700', description: 'Cashier / ATM' },
+          { label: 'Active Portfolio Disbursed', value: formatCurrency(totalReleasedValue), valueClass: 'text-primary', description: 'Servicing' },
+        ]}
+      />
 
       {/* Segmented Stage Filter Bar */}
       <div className="bg-white rounded-lg border border-slate-200 p-2 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -203,7 +133,7 @@ const LoanManagement = () => {
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
                   isSelected
-                    ? 'bg-[#0038A8] text-white shadow-xs'
+                    ? 'bg-primary text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
@@ -280,7 +210,7 @@ const LoanManagement = () => {
                       <td className="px-3 py-3 text-center font-mono text-slate-600">
                         {loan.term_months} mos @ {loan.interest_rate}%
                       </td>
-                      <td className="px-3 py-3 text-right font-mono font-bold text-[#0038A8]">
+                      <td className="px-3 py-3 text-right font-mono font-bold text-primary">
                         {formatCurrency(monthlyVal)}/mo
                       </td>
                       <td className="px-3 py-3">
@@ -293,7 +223,7 @@ const LoanManagement = () => {
                           loan.status === 'released' || loan.status === 'paid'
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             : loan.status === 'approved'
-                            ? 'bg-blue-50 text-[#0038A8] border-blue-200'
+                            ? 'bg-blue-50 text-primary border-blue-200'
                             : loan.status === 'verified'
                             ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
                             : loan.status === 'pending'
@@ -315,7 +245,7 @@ const LoanManagement = () => {
                         >
                           {(loan.status === 'released' || loan.status === 'paid') ? (
                             <>
-                              <FileSpreadsheet className="w-3.5 h-3.5 mr-1 text-[#0038A8]" />
+                              <FileSpreadsheet className="w-3.5 h-3.5 mr-1 text-primary" />
                               Ledger
                             </>
                           ) : (
@@ -389,7 +319,7 @@ const LoanManagement = () => {
                     </div>
                     <div>
                       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Monthly Amortization</span>
-                      <span className="text-base font-bold text-[#0038A8] font-mono">{formatCurrency(selectedLoan.monthly_payment)}</span>
+                      <span className="text-base font-bold text-primary font-mono">{formatCurrency(selectedLoan.monthly_payment)}</span>
                     </div>
                     <div>
                       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Repayment</span>
@@ -464,7 +394,7 @@ const LoanManagement = () => {
                                     href={getFileUrl(uploadedDoc.file)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="btn btn-xs bg-white hover:bg-slate-100 text-[#0038A8] border border-slate-200 font-semibold"
+                                    className="btn btn-xs bg-white hover:bg-slate-100 text-primary border border-slate-200 font-semibold"
                                   >
                                     <Eye className="w-3 h-3 mr-1" /> View
                                   </a>
@@ -514,7 +444,7 @@ const LoanManagement = () => {
                                   setSelectedLoan(null);
                                 }}
                                 disabled={isVerifying}
-                                className="btn btn-sm bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                                className="btn btn-primary btn-sm px-4"
                               >
                                 {isVerifying ? 'Verifying...' : 'Verify Requirements & Forward to Superintendent'}
                               </button>
@@ -529,7 +459,7 @@ const LoanManagement = () => {
                                   setApproveRemarks('');
                                 }}
                                 disabled={isApproving}
-                                className="btn btn-sm bg-emerald-700 hover:bg-emerald-800 text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                                className="btn btn-primary btn-sm px-4"
                               >
                                 {isApproving ? 'Approving...' : 'Directly Approve (Superintendent Override)'}
                               </button>
@@ -557,7 +487,7 @@ const LoanManagement = () => {
                                 setRejectRemarks('');
                               }}
                               disabled={isRejecting || !rejectRemarks.trim()}
-                              className="btn btn-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-md text-xs font-semibold px-3 h-8"
+                              className="btn btn-error btn-outline btn-sm px-3"
                             >
                               {isRejecting ? 'Rejecting...' : 'Disapprove Application'}
                             </button>
@@ -597,7 +527,7 @@ const LoanManagement = () => {
                                 setApproveRemarks('');
                               }}
                               disabled={isApproving}
-                              className="btn btn-sm bg-emerald-700 hover:bg-emerald-800 text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                              className="btn btn-primary btn-sm px-4"
                             >
                               {isApproving ? 'Endorsing...' : 'Certify & Approve Provident Fund Loan'}
                             </button>
@@ -621,7 +551,7 @@ const LoanManagement = () => {
                                 setRejectRemarks('');
                               }}
                               disabled={isRejecting || !rejectRemarks.trim()}
-                              className="btn btn-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-md text-xs font-semibold px-3 h-8"
+                              className="btn btn-error btn-outline btn-sm px-3"
                             >
                               {isRejecting ? 'Rejecting...' : 'Disapprove Application'}
                             </button>
@@ -653,7 +583,7 @@ const LoanManagement = () => {
                               setSelectedLoan(null);
                             }}
                             disabled={isDisbursing}
-                            className="btn btn-sm bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-md text-xs font-semibold px-4 h-9 shadow-xs"
+                            className="btn btn-primary btn-sm px-4"
                           >
                             {isDisbursing ? 'Releasing Funds...' : 'Release & Disburse Principal to Borrower'}
                           </button>

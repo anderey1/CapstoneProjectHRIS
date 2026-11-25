@@ -1,5 +1,5 @@
 import pytest
-from datetime import timedelta
+from datetime import date, timedelta
 from django.utils import timezone
 from rest_framework.test import APIRequestFactory, force_authenticate, APIClient
 from rest_framework.exceptions import ValidationError
@@ -9,23 +9,19 @@ from core.views.leave import LeaveViewSet
 
 @pytest.mark.django_db
 class TestLeaveRules:
-    def test_sick_leave_retrospective_filing_allowed(self, teacher_employee, non_teaching_employee):
-        """CSC Form 6 allows sick leave to be filed retrospectively up to 30 days."""
+    def test_sick_leave_retrospective_filing_allowed(self, teacher_employee, non_teaching_employee, monkeypatch):
+        """Sick leave can be filed for earlier dates in the current month."""
+        monkeypatch.setattr('django.utils.timezone.localdate', lambda *args, **kwargs: date(2026, 11, 20))
         factory = APIRequestFactory()
         non_teaching_employee.leave_duty = 'checker'
         non_teaching_employee.save(update_fields=['leave_duty'])
         teacher_employee.leave_checker = non_teaching_employee
         teacher_employee.save(update_fields=['leave_checker'])
-        today = timezone.localdate()
-        # Ensure dates are past weekdays within 30 days regardless of test execution day
-        days_back = today.weekday() + 7  # Monday of the previous week
-        start_date = today - timedelta(days=days_back)
-        end_date = start_date + timedelta(days=1)  # Tuesday of the previous week
-        
+
         request = factory.post('/api/leaves/', {
             'leave_type': 'sick',
-            'start_date': start_date.isoformat(),
-            'end_date': end_date.isoformat(),
+            'start_date': '2026-11-16',
+            'end_date': '2026-11-17',
             'reason': 'High fever and medical rest',
         }, format='json')
         
@@ -37,56 +33,65 @@ class TestLeaveRules:
         assert response.data['leave_type'] == 'sick'
         assert response.data['status'] == 'pending_supervisor'
 
-    def test_vacation_leave_in_past_raises_validation_error(self, teacher_employee):
-        """Vacation leave cannot be filed for past dates."""
+    def test_vacation_leave_before_current_month_rejected(self, teacher_employee, monkeypatch):
+        """Vacation leave cannot use dates from a previous month."""
+        monkeypatch.setattr('django.utils.timezone.localdate', lambda *args, **kwargs: date(2026, 11, 5))
         factory = APIRequestFactory()
-        today = timezone.localdate()
-        start_date = today - timedelta(days=2)
-        end_date = today - timedelta(days=1)
 
         request = factory.post('/api/leaves/', {
             'leave_type': 'vacation',
-            'start_date': start_date.isoformat(),
-            'end_date': end_date.isoformat(),
+            'start_date': '2026-10-29',
+            'end_date': '2026-10-30',
         }, format='json')
 
         force_authenticate(request, user=teacher_employee.user)
         view = LeaveViewSet.as_view({'post': 'create'})
         response = view(request)
         assert response.status_code == 400
-        assert "Advance filing required" in str(response.data)
+        assert 'current month' in str(response.data)
 
-    def test_vacation_leave_under_five_days_advance_rejected(self, teacher_employee):
-        """Vacation leave must be filed at least 5 days in advance."""
+    def test_vacation_leave_short_notice_allowed(self, teacher_employee, monkeypatch):
+        """Vacation leave no longer has a five-day filing cutoff."""
+        monkeypatch.setattr('django.utils.timezone.localdate', lambda *args, **kwargs: date(2026, 11, 5))
         factory = APIRequestFactory()
-        today = timezone.localdate()
-        start_date = today + timedelta(days=2)
-        end_date = today + timedelta(days=3)
 
         request = factory.post('/api/leaves/', {
             'leave_type': 'vacation',
-            'start_date': start_date.isoformat(),
-            'end_date': end_date.isoformat(),
+            'start_date': '2026-11-06',
+            'end_date': '2026-11-07',
         }, format='json')
 
         force_authenticate(request, user=teacher_employee.user)
         view = LeaveViewSet.as_view({'post': 'create'})
         response = view(request)
-        assert response.status_code == 400
-        assert "5 days in advance" in str(response.data)
+        assert response.status_code == 201, response.data
 
-    def test_sick_leave_exceeding_five_days_requires_med_cert(self, teacher_employee):
+    def test_weekend_endpoint_allowed_with_working_day(self, teacher_employee, monkeypatch):
+        """A Saturday start is valid when the range contains a working day."""
+        monkeypatch.setattr('django.utils.timezone.localdate', lambda *args, **kwargs: date(2026, 11, 5))
+        factory = APIRequestFactory()
+
+        request = factory.post('/api/leaves/', {
+            'leave_type': 'vacation',
+            'start_date': '2026-11-07',
+            'end_date': '2026-11-09',
+        }, format='json')
+
+        force_authenticate(request, user=teacher_employee.user)
+        view = LeaveViewSet.as_view({'post': 'create'})
+        response = view(request)
+        assert response.status_code == 201, response.data
+        assert Decimal(response.data['working_days_applied']) == 1
+
+    def test_sick_leave_exceeding_five_days_requires_med_cert(self, teacher_employee, monkeypatch):
         """Sick leave > 5 days without medical certificate raises ValidationError."""
+        monkeypatch.setattr('django.utils.timezone.localdate', lambda *args, **kwargs: date(2026, 11, 25))
         factory = APIRequestFactory()
-        today = timezone.localdate()
-        # 8 business days in past
-        start_date = today - timedelta(days=12)
-        end_date = today - timedelta(days=2)
 
         request = factory.post('/api/leaves/', {
             'leave_type': 'sick',
-            'start_date': start_date.isoformat(),
-            'end_date': end_date.isoformat(),
+            'start_date': '2026-11-06',
+            'end_date': '2026-11-23',
         }, format='json')
 
         force_authenticate(request, user=teacher_employee.user)

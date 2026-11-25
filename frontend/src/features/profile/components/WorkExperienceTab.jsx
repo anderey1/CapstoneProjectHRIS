@@ -12,7 +12,7 @@ const WorkExperienceTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) => {
         {canEdit && (
           <button 
             onClick={onAdd}
-            className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium flex items-center gap-1 shadow-sm"
+            className="btn btn-primary btn-sm flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" /> Add Experience
           </button>
@@ -23,7 +23,7 @@ const WorkExperienceTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) => {
         <div className="space-y-3 relative pl-4 border-l-2 border-slate-200 ml-2 py-1">
           {me.work_experience.map((w, idx) => (
             <div key={idx} className="relative p-4 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors shadow-sm space-y-2.5">
-              <div className="absolute w-2.5 h-2.5 bg-[#0038A8] rounded-full -left-[22px] top-5 border-2 border-white ring-2 ring-slate-100"></div>
+              <div className="absolute w-2.5 h-2.5 bg-primary rounded-full -left-[22px] top-5 border-2 border-white ring-2 ring-slate-100"></div>
               
               <div className="flex justify-between items-start gap-4">
                 <div>
@@ -83,7 +83,7 @@ const WorkExperienceTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) => {
           {canEdit && (
             <button 
               onClick={onAdd}
-              className="btn btn-sm h-8 px-3 bg-[#0038A8] hover:bg-[#002d86] text-white border-none rounded-lg text-xs font-medium shadow-sm"
+              className="btn btn-primary btn-sm"
             >
               Add Job Record
             </button>

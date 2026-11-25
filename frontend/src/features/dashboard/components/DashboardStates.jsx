@@ -49,7 +49,7 @@ export function DashboardError({ onRetry, isFetching }) {
       <button
         type="button"
         disabled={isFetching}
-        className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-secondary disabled:opacity-60"
+        className="btn btn-primary btn-sm mt-4 flex items-center gap-1.5"
         onClick={onRetry}
       >
         <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />

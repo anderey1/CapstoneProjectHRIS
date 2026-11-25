@@ -51,18 +51,11 @@ export function isCalendarDate(value) {
 export function nonWorkingReason(value, holidays) {
   if (!isCalendarDate(value)) return '';
   const holiday = holidays.find(day => day.date === value && day.category !== 'special_working');
-  return holiday?.label || ([0, 6].includes(new Date(`${value}T00:00:00Z`).getUTCDay()) ? 'Weekend' : '');
+  return holiday?.label || '';
 }
 
 export function manilaToday() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-}
-
-export function getMinimumLeaveDate(type, today = manilaToday()) {
-  const date = new Date(`${today}T00:00:00Z`);
-  const offset = ['sick', 'emergency', 'rehabilitation'].includes(type) ? -30 : ['vacation', 'solo_parent'].includes(type) ? 5 : 0;
-  date.setUTCDate(date.getUTCDate() + offset);
-  return date.toISOString().slice(0, 10);
 }
 
 export function calendarDaysBetween(start, end) {

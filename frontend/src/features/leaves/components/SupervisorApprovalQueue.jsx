@@ -173,7 +173,7 @@ const SupervisorApprovalQueue = ({
                           onClick={() => setSelectedApproval(leave)}
                           className={`btn btn-xs rounded text-[11px] font-semibold transition-colors ${
                             isActionRequired
-                              ? 'bg-[#0038a8] text-white hover:bg-[#002b80] border-none px-3'
+                              ? 'bg-primary text-white hover:bg-secondary border-none px-3'
                               : 'btn-ghost border border-slate-200 text-slate-700 hover:bg-slate-100'
                           }`}
                         >
@@ -203,7 +203,7 @@ const SupervisorApprovalQueue = ({
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#0038a8] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-primary bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
                     CSC Form No. 6 Endorsement
                   </span>
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedApproval.id}</span>

@@ -2,7 +2,7 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 from ...models import LeaveRequest, Role
-from ...services.leave_calendar import count_leave_working_days
+from ...services.leave_calendar import count_leave_working_days, load_calendar
 
 
 class LeaveApplicationActions:
@@ -28,30 +28,14 @@ class LeaveApplicationActions:
         if start_date == today or end_date == today:
             raise ValidationError("Today's date cannot be selected as the start or end date. Choose another date.")
 
-        # Retrospective leaves (CSC Form 6: Sick, Calamity/Emergency, Rehabilitation)
-        RETROSPECTIVE_LEAVES = ['sick', 'emergency', 'rehabilitation']
+        month_start = today.replace(day=1)
+        if start_date < month_start or end_date < month_start:
+            raise ValidationError("Dates before the current month cannot be filed.")
 
-        if leave_type not in RETROSPECTIVE_LEAVES:
-            if start_date < today:
-                raise ValidationError("Advance filing required. Start date cannot be in the past.")
-            if end_date < today:
-                raise ValidationError("End date cannot be in the past.")
-        else:
-            # Retrospective leaves allowed up to 30 calendar days upon return
-            if (today - start_date).days > 30:
-                raise ValidationError("Sick or Emergency leave must be filed within 30 calendar days of occurrence.")
+        for year in range(start_date.year, end_date.year + 1):
+            load_calendar(year)
 
-        # 2. Advance Filing Rules (CSC Form 6)
-        if leave_type == 'vacation' and (start_date - today).days < 5:
-            raise ValidationError("Vacation leave must be filed 5 days in advance.")
-
-        if leave_type == 'special_privilege' and (start_date - today).days < 7:
-            pass
-
-        if leave_type == 'solo_parent' and (start_date - today).days < 5:
-            raise ValidationError("Solo Parent leave must be filed 5 days in advance.")
-
-        # 3. Overlap Check
+        # 2. Overlap Check
         overlapping = LeaveRequest.objects.exclude(pk=serializer.instance.pk if serializer.instance else None).filter(
             employee=employee,
             status__in=['pending_checking', 'pending_supervisor', 'pending_records', 'pending_hr', 'pending_superintendent', 'approved'],
@@ -62,7 +46,7 @@ class LeaveApplicationActions:
         if overlapping:
             raise ValidationError("An overlapping leave request already exists.")
 
-        # 4. Duration and Balance Check
+        # 3. Duration and Balance Check
         # Calendar-day statutory leaves vs working-day leaves
         CALENDAR_DAY_LEAVES = ['maternity', 'adoption']
         if leave_type in CALENDAR_DAY_LEAVES:

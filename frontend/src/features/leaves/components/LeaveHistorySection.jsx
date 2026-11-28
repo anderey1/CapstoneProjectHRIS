@@ -3,6 +3,7 @@ import LeaveWorkflowDetails from './LeaveWorkflowDetails';
 import { formatLeaveStatus as formatStatus } from '../utils/leaveWorkflow';
 import { Clock as ClockIcon, FileText, CheckCircle2, XCircle, Search, ExternalLink } from 'lucide-react';
 import Pagination from '../../../components/common/Pagination';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -196,19 +197,25 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
         <Pagination pagination={pagination} label="personal leave applications" />
       </div>
       {selectedLeave && (
-        <div className="modal modal-open" role="dialog" aria-modal="true" aria-label={`Application #${selectedLeave.id} progress`}>
-          <div className="modal-box max-h-[85dvh] space-y-4">
-            <h3 className="text-lg font-semibold">Leave application #{selectedLeave.id}</h3>
+        <AccessibleDialog
+          onClose={() => setSelectedLeave(null)}
+          labelledBy="leave-progress-title"
+          className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-2xl max-h-[85dvh] flex flex-col overflow-hidden"
+        >
+          <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 shrink-0">
+            <h3 id="leave-progress-title" className="text-base font-semibold text-slate-900">Leave application #{selectedLeave.id}</h3>
+            <button type="button" onClick={() => setSelectedLeave(null)} aria-label="Close application progress" className="btn btn-ghost btn-sm btn-square shrink-0"><XCircle className="w-5 h-5" /></button>
+          </div>
+          <div className="p-5 overflow-y-auto flex-1 space-y-4">
             <LeaveWorkflowDetails leave={selectedLeave} />
             <div className="flex flex-wrap justify-end gap-2">
               {selectedLeave.status === 'returned' && onCorrect && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => { onCorrect(selectedLeave); setSelectedLeave(null); }}>Correct & resubmit</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => { onCorrect(selectedLeave); setSelectedLeave(null); }}>Correct &amp; resubmit</button>
               )}
               <button type="button" className="btn btn-sm" onClick={() => setSelectedLeave(null)}>Close</button>
             </div>
           </div>
-          <button type="button" aria-label="Close application progress" className="modal-backdrop bg-black/40" onClick={() => setSelectedLeave(null)} />
-        </div>
+        </AccessibleDialog>
       )}
     </div>
   );

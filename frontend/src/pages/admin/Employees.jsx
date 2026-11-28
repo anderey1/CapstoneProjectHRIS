@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Users, UserPlus, Search, Filter, FileDown } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import PageHeader from '../../components/common/PageHeader';
 import PageLoader from '../../components/common/PageLoader';
+import AccessibleDialog from '../../components/common/AccessibleDialog';
 import { useRBAC } from '../../hooks/useRBAC';
 import { 
   useEmployees, 
@@ -25,8 +26,7 @@ const Employees = () => {
   const activeTab = can('MANAGE_REGISTRATIONS') && ['pending', 'rejected'].includes(searchParams.get('tab')) ? searchParams.get('tab') : 'active';
   const setActiveTab = tab => setSearchParams(tab === 'active' ? {} : { tab });
   const [rejectTarget, setRejectTarget] = useState(null);
-  const rejectionDialog = useRef(null);
-  useEffect(() => { if (rejectTarget) rejectionDialog.current?.showModal(); }, [rejectTarget]);
+  const rejectReasonRef = useRef(null);
   const [rejectReason, setRejectReason] = useState('');
   const [reviewError, setReviewError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -348,19 +348,30 @@ const Employees = () => {
         </div>
       )}
 
-      {rejectTarget && <dialog ref={rejectionDialog} className="modal" aria-labelledby="reject-title" onCancel={event => { event.preventDefault(); if (!isRejecting) setRejectTarget(null); }}>
-        <form className="modal-box" onSubmit={async event => {
-          event.preventDefault(); setReviewError('');
-          try { await rejectRegistration({ id: rejectTarget.id, reason: rejectReason.trim() }); setRejectTarget(null); }
-          catch { setReviewError('Could not reject registration. Try again.'); }
-        }}>
-          <h2 id="reject-title" className="text-lg font-semibold">Reject registration for {rejectTarget.first_name} {rejectTarget.last_name}</h2>
-          <label htmlFor="rejection-reason" className="block mt-4 mb-2 text-sm">Reason (sent to the employee)</label>
-          <textarea id="rejection-reason" autoFocus required maxLength={2000} value={rejectReason} onChange={event => setRejectReason(event.target.value)} className="textarea textarea-bordered w-full" />
-          {reviewError && <p role="alert" className="text-error">{reviewError}</p>}
-          <div className="modal-action"><button type="button" className="btn" disabled={isRejecting} onClick={() => setRejectTarget(null)}>Cancel</button><button className="btn btn-error" disabled={isRejecting || !rejectReason.trim()}>Reject registration</button></div>
-        </form>
-      </dialog>}
+      {rejectTarget && (
+        <AccessibleDialog
+          onClose={() => { if (!isRejecting) setRejectTarget(null); }}
+          labelledBy="reject-title"
+          noBackdropClose={isRejecting}
+          initialFocusRef={rejectReasonRef}
+          className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
+        >
+          <form onSubmit={async event => {
+            event.preventDefault(); setReviewError('');
+            try { await rejectRegistration({ id: rejectTarget.id, reason: rejectReason.trim() }); setRejectTarget(null); }
+            catch { setReviewError('Could not reject registration. Try again.'); }
+          }}>
+            <h2 id="reject-title" className="text-lg font-semibold">Reject registration for {rejectTarget.first_name} {rejectTarget.last_name}</h2>
+            <label htmlFor="rejection-reason" className="block mt-4 mb-2 text-sm">Reason (sent to the employee)</label>
+            <textarea ref={rejectReasonRef} id="rejection-reason" required maxLength={2000} value={rejectReason} onChange={event => setRejectReason(event.target.value)} className="textarea textarea-bordered w-full" />
+            {reviewError && <p role="alert" className="text-error mt-2 text-sm">{reviewError}</p>}
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" className="btn" disabled={isRejecting} onClick={() => setRejectTarget(null)}>Cancel</button>
+              <button className="btn btn-error" disabled={isRejecting || !rejectReason.trim()}>Reject registration</button>
+            </div>
+          </form>
+        </AccessibleDialog>
+      )}
       {/* Modal Overlay */}
       {activeModal === 'form' && (
         <PersonnelFormModal

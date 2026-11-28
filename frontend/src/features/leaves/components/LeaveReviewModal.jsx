@@ -2,6 +2,7 @@ import React from 'react';
 import { XCircle, CheckCircle2 } from 'lucide-react';
 import DocumentAttachmentCard, { CSC_DOCUMENT_SPECS } from './DocumentAttachmentCard';
 import { formatStatus } from './LeaveDocketTable';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 /**
  * Official CSC Form No. 6 Review & Approval Modal.
@@ -24,8 +25,7 @@ const LeaveReviewModal = ({
   );
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box rounded-lg max-w-4xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white h-[90vh] flex flex-col">
+    <AccessibleDialog onClose={onClose} labelledBy="leave-review-modal-title" className="rounded-lg max-w-4xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white h-[90vh] flex flex-col w-full">
         {/* Modal Header */}
         <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div>
@@ -35,16 +35,17 @@ const LeaveReviewModal = ({
               </span>
               <span className="text-xs font-mono text-slate-500">Application #{leave.id}</span>
             </div>
-            <h3 className="font-bold text-base text-slate-900 mt-0.5">
+            <h3 id="leave-review-modal-title" className="font-bold text-base text-slate-900 mt-0.5">
               Application for Leave — {leave.employee_name}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close leave review"
             className="btn btn-ghost btn-xs btn-circle text-slate-500 hover:text-slate-800"
           >
-            <XCircle className="w-5 h-5" />
+            <XCircle className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -293,9 +294,7 @@ const LeaveReviewModal = ({
             Close Record
           </button>
         </div>
-      </div>
-      <div className="modal-backdrop bg-black/40" onClick={onClose}></div>
-    </div>
+    </AccessibleDialog>
   );
 };
 

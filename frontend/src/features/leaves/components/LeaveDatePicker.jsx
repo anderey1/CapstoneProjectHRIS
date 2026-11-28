@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useLeaveCalendar } from '../hooks/useLeaves';
 import { isCalendarDate, nonWorkingReason } from '../utils/leaveApplication';
+import { trapFocus } from '../../../components/common/AccessibleDialog';
 
 function monthAfter(month, offset) {
   const date = new Date(`${month}-01T00:00:00Z`);
@@ -87,13 +88,8 @@ export default function LeaveDatePicker({ id, name, label, value, onChange, min,
         onCancel={event => { event.preventDefault(); event.stopPropagation(); close(); }}
         onClick={event => { if (event.target === event.currentTarget) close(); }}
         onKeyDown={event => {
-          if (event.key !== 'Tab') return;
-          event.stopPropagation();
-          const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled)')].filter(element => element.tabIndex >= 0);
-          const firstControl = controls[0];
-          const lastControl = controls[controls.length - 1];
-          if (event.shiftKey && document.activeElement === firstControl) { event.preventDefault(); lastControl?.focus(); }
-          else if (!event.shiftKey && document.activeElement === lastControl) { event.preventDefault(); firstControl?.focus(); }
+          if (event.key === 'Tab') event.stopPropagation();
+          trapFocus(event);
         }}>
         <section role="region" aria-label={`${label} calendar`} className="modal-box flex max-h-[calc(100dvh-2rem)] w-[calc(100%-1.5rem)] max-w-md flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-2xl">
           <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">

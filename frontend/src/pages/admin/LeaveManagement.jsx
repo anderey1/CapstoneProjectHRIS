@@ -11,6 +11,7 @@ import {
   CSC_DOCUMENT_SPECS 
 } from '../../features/leaves';
 import Pagination from '../../components/common/Pagination';
+import AccessibleDialog from '../../components/common/AccessibleDialog';
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -261,14 +262,11 @@ const LeaveManagement = () => {
 
       {/* Official CSC Form 6 Review Modal */}
       {selectedLeave && (
-        <dialog
-          ref={node => { if (node && !node.open) node.showModal(); }}
-          aria-labelledby="leave-review-title"
-          onCancel={() => setSelectedLeave(null)}
-          onClick={event => { if (event.target === event.currentTarget) setSelectedLeave(null); }}
-          className="fixed inset-0 m-auto max-h-none max-w-none overflow-visible border-0 bg-transparent p-0 backdrop:bg-black/40"
+        <AccessibleDialog
+          onClose={() => setSelectedLeave(null)}
+          labelledBy="leave-review-title"
+          className="flex h-[90dvh] max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-4xl flex-col overflow-hidden rounded-lg border border-slate-300 bg-white shadow-xl"
         >
-          <div className="flex h-[90dvh] max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-4xl flex-col overflow-hidden rounded-lg border border-slate-300 bg-white shadow-xl">
             {/* Modal Header */}
             <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 sm:px-6 sm:py-4">
               <div>
@@ -433,8 +431,7 @@ const LeaveManagement = () => {
                 Close Record
               </button>
             </div>
-          </div>
-        </dialog>
+        </AccessibleDialog>
       )}
     </div>
   );

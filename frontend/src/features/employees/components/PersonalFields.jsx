@@ -1,212 +1,307 @@
-import React from 'react';
+import React, { useId } from 'react';
+import { AlertCircle } from 'lucide-react';
+
+const labelRowClass = 'flex items-center justify-between gap-2 text-sm font-medium text-slate-800';
+const inputClass = 'input input-bordered min-h-11 w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900 focus:border-primary';
+const selectClass = 'select select-bordered min-h-11 w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900 focus:border-primary';
+const textareaClass = 'textarea textarea-bordered min-h-22 w-full rounded-lg border-slate-300 bg-white text-sm text-slate-900 focus:border-primary leading-relaxed';
+
+function FieldError({ id, error }) {
+  if (!error) return null;
+  return (
+    <p id={id} role="alert" className="flex items-center gap-1.5 text-xs font-medium text-error">
+      <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />
+      <span>{error.message}</span>
+    </p>
+  );
+}
 
 /**
- * Personal Info Fields
- * 
- * Simple, professional redesign with high-density labels and standard radius.
- * Expanded to include PDS (CS Form 212) fields.
+ * Personal Info Fields (CS Form 212 Section I + Contact, Account, IDs, Signature)
  */
 const PersonalFields = ({ isEdit, register, errors, watch }) => {
+  const id = useId();
+  const fieldId = (name) => `${id}-${name}`;
+  const signaturePreview = watch('e_signature_preview');
+
   return (
-    <div className="space-y-8">
-      {/* 1. Basic Name Info */}
-      <div className="space-y-4">
-        <h4 className="text-xs font-semibold tracking-wide text-primary/60 border-b border-base-100 pb-2">Full Name</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">First Name</label>
-            <input 
-              {...register("first_name", { required: "First name is required" })}
-              type="text" 
-              placeholder="John" 
-              className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.first_name ? 'border-error' : ''}`} 
+    <div className="space-y-7">
+      {/* 1. Identity */}
+      <section className="space-y-4" aria-labelledby={fieldId('identity-heading')}>
+        <div className="border-b border-slate-200 pb-2">
+          <h3 id={fieldId('identity-heading')} className="text-sm font-semibold text-slate-900">
+            1. Personal identity
+          </h3>
+          <p className="text-xs text-slate-500">Legal name and birth details as recorded in CSC Form No. 212.</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('first_name')} className={labelRowClass}>
+              <span>First name</span>
+              <span className="text-xs font-medium text-primary">Required</span>
+            </label>
+            <input
+              id={fieldId('first_name')}
+              {...register('first_name', { required: 'First name is required' })}
+              type="text"
+              placeholder="Given name"
+              aria-invalid={Boolean(errors.first_name)}
+              aria-describedby={errors.first_name ? fieldId('first_name-error') : undefined}
+              className={`${inputClass} ${errors.first_name ? 'border-error' : ''}`}
             />
-            {errors.first_name && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.first_name.message}</span>}
+            <FieldError id={fieldId('first_name-error')} error={errors.first_name} />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Last Name</label>
-            <input 
-              {...register("last_name", { required: "Last name is required" })}
-              type="text" 
-              placeholder="Doe" 
-              className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.last_name ? 'border-error' : ''}`} 
-            />
-            {errors.last_name && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.last_name.message}</span>}
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Middle Name</label>
-            <input 
-              {...register("middle_name")}
-              type="text" 
-              placeholder="Middle" 
-              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('middle_name')} className={labelRowClass}>
+              <span>Middle name</span>
+              <span className="text-xs font-normal text-slate-500">Optional</span>
+            </label>
+            <input
+              id={fieldId('middle_name')}
+              {...register('middle_name')}
+              type="text"
+              placeholder="Middle name"
+              className={inputClass}
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Name Extension</label>
-            <input 
-              {...register("name_extension")}
-              type="text" 
-              placeholder="e.g. Jr., Sr." 
-              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('last_name')} className={labelRowClass}>
+              <span>Last name</span>
+              <span className="text-xs font-medium text-primary">Required</span>
+            </label>
+            <input
+              id={fieldId('last_name')}
+              {...register('last_name', { required: 'Last name is required' })}
+              type="text"
+              placeholder="Family name"
+              aria-invalid={Boolean(errors.last_name)}
+              aria-describedby={errors.last_name ? fieldId('last_name-error') : undefined}
+              className={`${inputClass} ${errors.last_name ? 'border-error' : ''}`}
+            />
+            <FieldError id={fieldId('last_name-error')} error={errors.last_name} />
+          </div>
+
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('name_extension')} className={labelRowClass}>
+              <span>Extension</span>
+              <span className="text-xs font-normal text-slate-500">Optional</span>
+            </label>
+            <input
+              id={fieldId('name_extension')}
+              {...register('name_extension')}
+              type="text"
+              placeholder="e.g. Jr., III"
+              className={inputClass}
             />
           </div>
         </div>
-      </div>
 
-      {/* 2. Birth & Status */}
-      <div className="space-y-4">
-        <h4 className="text-xs font-semibold tracking-wide text-primary/60 border-b border-base-100 pb-2">Birth & Status</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Date of Birth</label>
-            <input 
-              {...register("date_of_birth")}
-              type="date" 
-              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('date_of_birth')} className={labelRowClass}>
+              <span>Date of birth</span>
+            </label>
+            <input
+              id={fieldId('date_of_birth')}
+              {...register('date_of_birth')}
+              type="date"
+              className={`${inputClass} tabular-nums`}
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Sex</label>
-            <select 
-              {...register("sex")}
-              className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
-            >
-              <option value="">Select Sex</option>
+
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('place_of_birth')} className={labelRowClass}>
+              <span>Place of birth</span>
+            </label>
+            <input
+              id={fieldId('place_of_birth')}
+              {...register('place_of_birth')}
+              type="text"
+              placeholder="City or municipality"
+              className={inputClass}
+            />
+          </div>
+
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('sex')} className={labelRowClass}>
+              <span>Sex</span>
+            </label>
+            <select id={fieldId('sex')} {...register('sex')} className={selectClass}>
+              <option value="">Select sex</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Civil Status</label>
-            <select 
-              {...register("civil_status")}
-              className="select select-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-semibold uppercase tracking-wide"
-            >
-              <option value="">Select Status</option>
+
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('civil_status')} className={labelRowClass}>
+              <span>Civil status</span>
+            </label>
+            <select id={fieldId('civil_status')} {...register('civil_status')} className={selectClass}>
+              <option value="">Select civil status</option>
               <option value="Single">Single</option>
               <option value="Married">Married</option>
               <option value="Widowed">Widowed</option>
               <option value="Separated">Separated</option>
             </select>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Place of Birth</label>
-            <input 
-              {...register("place_of_birth")}
-              type="text" 
-              placeholder="City/Municipality" 
-              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+        </div>
+      </section>
+
+      {/* 2. Contact & Portal Account */}
+      <section className="space-y-4" aria-labelledby={fieldId('contact-heading')}>
+        <div className="border-b border-slate-200 pb-2">
+          <h3 id={fieldId('contact-heading')} className="text-sm font-semibold text-slate-900">
+            {isEdit ? '2. Contact and address' : '2. Contact and portal account'}
+          </h3>
+          {!isEdit && (
+            <p className="text-xs text-slate-500">
+              Account credentials send a 24-hour password setup link to the employee email.
+            </p>
+          )}
+        </div>
+
+        {!isEdit && (
+          <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-100 bg-blue-50/50 p-4 sm:grid-cols-2">
+            <div className="min-w-0 space-y-1.5">
+              <label htmlFor={fieldId('username')} className={labelRowClass}>
+                <span>Username</span>
+                <span className="text-xs font-medium text-primary">Required</span>
+              </label>
+              <input
+                id={fieldId('username')}
+                {...register('username', { required: 'Username is required' })}
+                type="text"
+                placeholder="e.g. jdelacruz"
+                aria-invalid={Boolean(errors.username)}
+                aria-describedby={errors.username ? fieldId('username-error') : undefined}
+                className={`${inputClass} ${errors.username ? 'border-error' : ''}`}
+              />
+              <FieldError id={fieldId('username-error')} error={errors.username} />
+            </div>
+
+            <div className="min-w-0 space-y-1.5">
+              <label htmlFor={fieldId('email')} className={labelRowClass}>
+                <span>Email address</span>
+                <span className="text-xs font-medium text-primary">Required</span>
+              </label>
+              <input
+                id={fieldId('email')}
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Enter a valid email address',
+                  },
+                })}
+                type="email"
+                placeholder="name@deped.gov.ph"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? fieldId('email-error') : undefined}
+                className={`${inputClass} ${errors.email ? 'border-error' : ''}`}
+              />
+              <FieldError id={fieldId('email-error')} error={errors.email} />
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="min-w-0 space-y-1.5">
+            <label htmlFor={fieldId('mobile_no')} className={labelRowClass}>
+              <span>Mobile number</span>
+              <span className="text-xs font-normal text-slate-500">Optional</span>
+            </label>
+            <input
+              id={fieldId('mobile_no')}
+              {...register('mobile_no')}
+              type="tel"
+              placeholder="09XX XXX XXXX"
+              className={`${inputClass} tabular-nums`}
+            />
+          </div>
+
+          <div className="min-w-0 space-y-1.5 sm:col-span-2">
+            <label htmlFor={fieldId('residential_address')} className={labelRowClass}>
+              <span>Residential address</span>
+              <span className="text-xs font-normal text-slate-500">Optional</span>
+            </label>
+            <textarea
+              id={fieldId('residential_address')}
+              {...register('residential_address')}
+              rows={2}
+              placeholder="House/Lot No., Street, Barangay, City/Municipality, Province"
+              className={textareaClass}
             />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 3. Government IDs */}
-      <div className="space-y-4">
-        <h4 className="text-xs font-semibold tracking-wide text-primary/60 border-b border-base-100 pb-2">Government IDs</h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <section className="space-y-4" aria-labelledby={fieldId('ids-heading')}>
+        <div className="border-b border-slate-200 pb-2">
+          <h3 id={fieldId('ids-heading')} className="text-sm font-semibold text-slate-900">
+            3. Government identifiers
+          </h3>
+          <p className="text-xs text-slate-500">Optional during encoding; used in payroll, GSIS, and CSC reports.</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {[
-            { label: "UMID ID", name: "umid_id" },
-            { label: "PAG-IBIG ID", name: "pagibig_id" },
-            { label: "PHILHEALTH NO.", name: "philhealth_no" },
-            { label: "PhilSys Number (ID)", name: "philsys_id" },
-            { label: "TIN NO.", name: "tin_no" },
-            { label: "AGENCY EMPLOYEE NO.", name: "agency_employee_no" },
-          ].map(id => (
-            <div key={id.name} className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">{id.label}</label>
-              <input 
-                {...register(id.name)}
-                type="text" 
-                className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
+            { label: 'Agency employee no.', name: 'agency_employee_no' },
+            { label: 'TIN', name: 'tin_no' },
+            { label: 'PhilHealth no.', name: 'philhealth_no' },
+            { label: 'Pag-IBIG ID', name: 'pagibig_id' },
+            { label: 'UMID ID', name: 'umid_id' },
+            { label: 'PhilSys ID (PSN)', name: 'philsys_id' },
+          ].map((item) => (
+            <div key={item.name} className="min-w-0 space-y-1.5">
+              <label htmlFor={fieldId(item.name)} className={labelRowClass}>
+                <span>{item.label}</span>
+              </label>
+              <input
+                id={fieldId(item.name)}
+                {...register(item.name)}
+                type="text"
+                className={`${inputClass} font-mono tabular-nums`}
               />
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* 4. Contact & Address */}
-      <div className="space-y-4">
-        <h4 className="text-xs font-semibold tracking-wide text-primary/60 border-b border-base-100 pb-2">Contact & Address</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Mobile No</label>
-            <input 
-              {...register("mobile_no")}
-              type="text" 
-              className="input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Residential Address</label>
-            <textarea 
-              {...register("residential_address")}
-              className="textarea textarea-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold leading-tight" 
-              rows="2"
-            />
-          </div>
+      {/* 4. Digital Signature */}
+      <section className="space-y-4" aria-labelledby={fieldId('sig-heading')}>
+        <div className="border-b border-slate-200 pb-2">
+          <h3 id={fieldId('sig-heading')} className="text-sm font-semibold text-slate-900">
+            4. Digital signature
+          </h3>
+          <p className="text-xs text-slate-500">PNG with a transparent background works best on CSC forms.</p>
         </div>
-      </div>
 
-      {/* 5. E-Signature Overlay */}
-      <div className="space-y-4">
-        <h4 className="text-xs font-semibold tracking-wide text-primary/60 border-b border-base-100 pb-2">Digital Signature</h4>
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-           {isEdit && watch("e_signature_preview") && (
-              <div className="w-32 h-16 bg-base-100 border border-base-200 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
-                 <img src={watch("e_signature_preview")} alt="Current Sig" className="max-h-full max-w-full object-contain" />
-              </div>
-           )}
-           <div className="space-y-1.5 flex-1">
-             <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Upload Signature Image</label>
-             <input 
-               {...register("e_signature_file")}
-               type="file" 
-               accept="image/*"
-               className="file-input file-input-bordered file-input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold" 
-             />
-             <p className="text-xs font-bold text-slate-600 uppercase ml-1">PNG with transparent background is best</p>
-           </div>
-        </div>
-      </div>
-
-      {/* 6. Account Details */}
-      {!isEdit && (
-        <div className="space-y-4">
-          <h4 className="text-xs font-semibold tracking-wide text-primary/60 border-b border-base-100 pb-2">Account Details</h4>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Username</label>
-            <input 
-              {...register("username", { required: !isEdit ? "Username is required" : false })}
-              type="text" 
-              placeholder="e.g. jdoe2026" 
-              className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.username ? 'border-error' : ''}`} 
-            />
-            {errors.username && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.username.message}</span>}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Email</label>
-              <input 
-                {...register("email", { 
-                  required: !isEdit ? "Email is required" : false,
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Invalid email address"
-                  }
-                })}
-                type="email" 
-                placeholder="email@deped.gov.ph" 
-                className={`input input-sm w-full bg-base-50 border-base-100 focus:border-primary rounded-lg text-xs font-bold ${errors.email ? 'border-error' : ''}`} 
-              />
-              {errors.email && <span className="text-xs font-bold text-error uppercase tracking-tight ml-1">{errors.email.message}</span>}
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          {isEdit && signaturePreview && (
+            <div className="flex h-16 w-36 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-1.5">
+              <img src={signaturePreview} alt="Current employee signature" className="max-h-full max-w-full object-contain" />
             </div>
-            <p className="text-sm text-slate-600">The employee will receive an email with a link to choose their password. The link expires after 24 hours.</p>
+          )}
+          <div className="min-w-0 flex-1 space-y-1.5 w-full">
+            <label htmlFor={fieldId('e_signature_file')} className={labelRowClass}>
+              <span>{isEdit && signaturePreview ? 'Replace signature image' : 'Upload signature image'}</span>
+              <span className="text-xs font-normal text-slate-500">Optional</span>
+            </label>
+            <input
+              id={fieldId('e_signature_file')}
+              {...register('e_signature_file')}
+              type="file"
+              accept="image/*"
+              className="file-input file-input-bordered min-h-11 w-full rounded-lg border-slate-300 bg-white text-sm"
+            />
           </div>
         </div>
-      )}
+      </section>
     </div>
   );
 };

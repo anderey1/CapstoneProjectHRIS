@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import L from 'leaflet';
 import { Crosshair, LocateFixed, MapPin, School, Trash2, X } from 'lucide-react';
 import { CircleMarker, MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 const DIVISION_OFFICE = [13.937200, 121.617800];
 
@@ -24,7 +25,6 @@ function LocationPicker({ point, onChange }) {
 }
 
 export default function SchoolDialog({ school, deleting, pending, error, onClose, onSubmit }) {
-  const ref = useRef(null);
   const mapRef = useRef(null);
   const mapWrapRef = useRef(null);
   const [name, setName] = useState(school?.name || '');
@@ -32,7 +32,6 @@ export default function SchoolDialog({ school, deleting, pending, error, onClose
     ? [Number(school.latitude), Number(school.longitude)] : null);
 
   useEffect(() => {
-    ref.current.showModal();
     const invalidate = () => mapRef.current?.invalidateSize();
     const frameId = requestAnimationFrame(invalidate);
     const timerId = setTimeout(invalidate, 150);
@@ -66,20 +65,17 @@ export default function SchoolDialog({ school, deleting, pending, error, onClose
   };
 
   return (
-    <dialog
-      ref={ref}
-      className="modal"
-      aria-labelledby="school-dialog-title"
-      aria-describedby="school-dialog-description"
-      onCancel={event => {
-        event.preventDefault();
-        if (!pending) onClose();
-      }}
+    <AccessibleDialog
+      onClose={() => { if (!pending) onClose(); }}
+      labelledBy="school-dialog-title"
+      describedBy="school-dialog-description"
+      noBackdropClose={deleting || pending}
+      className={`flex flex-col overflow-hidden bg-white p-0 rounded-xl border border-slate-200 shadow-2xl max-h-[calc(100dvh-24px)] ${
+        hasMap ? 'w-full max-w-[920px]' : 'w-full max-w-[500px]'
+      }`}
     >
       <form
-        className={`modal-box flex flex-col overflow-hidden p-0 rounded-xl border border-slate-200 shadow-2xl max-h-[calc(100dvh-24px)] ${
-          hasMap ? 'w-full max-w-[920px]' : 'w-full max-w-[500px]'
-        }`}
+        className="flex flex-col flex-1 min-h-0"
         onSubmit={event => {
           event.preventDefault();
           onSubmit({
@@ -240,6 +236,6 @@ export default function SchoolDialog({ school, deleting, pending, error, onClose
           </div>
         </div>
       </form>
-    </dialog>
+    </AccessibleDialog>
   );
 }

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import { X, User, Briefcase, ChevronRight, FileText, AlertCircle, BookOpen } from 'lucide-react';
-import api from '../../../api/axios';
+import { X, User, Briefcase, ChevronLeft, ChevronRight, FileText, AlertCircle, BookOpen } from 'lucide-react';
 import { fetchAllPages } from '../../../api/pagination';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import { ROLES } from '../../../utils/constants';
@@ -12,20 +11,45 @@ import PDSUploadForm from '../../../components/common/PDSUploadModal';
 import AccessibleDialog from '../../../components/common/AccessibleDialog';
 import { FamilyFields, EducationFields, EligibilityFields, WorkHistoryFields } from './PDSDetailFields';
 
+function getTabFields(tab, isEdit) {
+  if (tab === 'personal') {
+    return isEdit ? ['first_name', 'last_name'] : ['first_name', 'last_name', 'username', 'email'];
+  }
+  if (tab === 'employment') {
+    return ['role', 'position', 'department', 'school', 'salary', 'date_hired'];
+  }
+  return [];
+}
+
+function countTabErrors(errors, tab, isEdit) {
+  if (tab === 'history') {
+    return ['family', 'education', 'eligibilities', 'work_experience'].filter((key) => errors[key]).length;
+  }
+  return getTabFields(tab, isEdit).filter((field) => errors[field]).length;
+}
+
+const TABS = [
+  { id: 'personal', label: '1. Personal & account', icon: User },
+  { id: 'employment', label: '2. Work & assignment', icon: Briefcase },
+  { id: 'history', label: '3. PDS history', icon: BookOpen },
+];
+
 const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, initialData }) => {
-  const [activeTab, setActiveTab] = useState('personal'); 
+  const id = useId();
+  const [activeTab, setActiveTab] = useState('personal');
   const [showPDSImport, setShowPDSImport] = useState(false);
   const [backendError, setBackendError] = useState(null);
   const isEdit = !!initialData;
 
-  const { 
-    register, 
-    handleSubmit, 
-    reset, 
+  const {
+    register,
+    handleSubmit,
+    reset,
     setValue,
     watch,
     control,
-    formState: { errors } 
+    trigger,
+    formState: { errors },
   } = useForm({
     defaultValues: initialData || {
       role: ROLES.TEACHING,
@@ -36,8 +60,8 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
       family: [],
       education: [],
       eligibilities: [],
-      work_experience: []
-    }
+      work_experience: [],
+    },
   });
 
   useEffect(() => {
@@ -47,13 +71,12 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
         reset({
           ...initialData,
           e_signature_preview: initialData.e_signature,
-          e_signature_file: null
+          e_signature_file: null,
         });
         if (initialData.user_details?.role) {
           setValue('role', initialData.user_details.role);
         }
       } else {
-        // Explicitly set all defaults for a fresh "Add Staff" form
         reset({
           role: ROLES.TEACHING,
           department: '',
@@ -65,11 +88,9 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
           eligibilities: [],
           work_experience: [],
           e_signature_file: null,
-          e_signature_preview: null
+          e_signature_preview: null,
         });
-        // Double-ensure the role is TEACHING for new records
         setValue('role', ROLES.TEACHING);
-
       }
       setActiveTab('personal');
       setShowPDSImport(false);
@@ -79,7 +100,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
   const { data: salaryGrades } = useQuery({
     queryKey: ['salary-grades'],
     queryFn: ({ signal }) => fetchAllPages('salary-grades/', {}, signal),
-    enabled: isOpen // Only fetch when modal is open
+    enabled: isOpen,
   });
 
   const { data: leaveStaff = [], isError: isLeaveStaffError } = useQuery({
@@ -93,50 +114,61 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
 
   const handleProcessSubmit = async (data) => {
     setBackendError(null);
-    
-    // Clean nested data: Filter out empty objects in arrays that backend would reject
     const cleanedData = { ...data };
-    
+
     if (Array.isArray(cleanedData.family)) {
-      cleanedData.family = cleanedData.family.filter(item => 
-        (item.relationship === 'CHILD' && item.full_name) || 
-        (item.relationship !== 'CHILD' && (item.surname || item.first_name))
+      cleanedData.family = cleanedData.family.filter(
+        (item) =>
+          (item.relationship === 'CHILD' && item.full_name) ||
+          (item.relationship !== 'CHILD' && (item.surname || item.first_name))
       );
     }
-    
     if (Array.isArray(cleanedData.education)) {
-      cleanedData.education = cleanedData.education.filter(item => item.school_name || item.degree_course);
+      cleanedData.education = cleanedData.education.filter((item) => item.school_name || item.degree_course);
     }
-    
     if (Array.isArray(cleanedData.eligibilities)) {
-      cleanedData.eligibilities = cleanedData.eligibilities.filter(item => item.service);
+      cleanedData.eligibilities = cleanedData.eligibilities.filter((item) => item.service);
     }
-    
     if (Array.isArray(cleanedData.work_experience)) {
-      cleanedData.work_experience = cleanedData.work_experience.filter(item => item.position_title || item.agency);
+      cleanedData.work_experience = cleanedData.work_experience.filter((item) => item.position_title || item.agency);
     }
 
     try {
       await onSubmit(cleanedData);
     } catch (err) {
-      console.error("Modal submit error:", err);
       const errorData = err.response?.data;
       if (errorData) {
         if (errorData.detail) setBackendError(errorData.detail);
         else if (typeof errorData === 'object') {
-           // Flatten nested errors for display
-           const messages = [];
-           Object.entries(errorData).forEach(([key, val]) => {
-             messages.push(`${key}: ${Array.isArray(val) ? val.join(', ') : JSON.stringify(val)}`);
-           });
-           setBackendError(messages.join(' | '));
+          const messages = Object.entries(errorData).map(
+            ([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : JSON.stringify(val)}`
+          );
+          setBackendError(messages.join(' | '));
         } else {
-          setBackendError("An unexpected server error occurred.");
+          setBackendError('An unexpected server error occurred.');
         }
       } else {
-        setBackendError("Unable to connect to the server.");
+        setBackendError('Unable to connect to the server.');
       }
     }
+  };
+
+  const handleInvalidSubmit = (formErrors) => {
+    const firstInvalidTab = ['personal', 'employment', 'history'].find(
+      (tab) => countTabErrors(formErrors, tab, isEdit) > 0
+    );
+    if (firstInvalidTab) setActiveTab(firstInvalidTab);
+  };
+
+  const handleNextTab = async (nextTab) => {
+    if (!isEdit) {
+      const fields = getTabFields(activeTab, isEdit);
+      if (fields.length > 0) {
+        const valid = await trigger(fields);
+        if (!valid) return;
+      }
+    }
+    setActiveTab(nextTab);
   };
 
   const formatDateForInput = (dateStr) => {
@@ -145,13 +177,12 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return '';
       return date.toISOString().split('T')[0];
-    } catch (e) {
+    } catch {
       return '';
     }
   };
 
   const handlePDSExtraction = (data) => {
-    // Pre-fill form fields from extracted data
     if (data.first_name) setValue('first_name', data.first_name);
     if (data.last_name) setValue('last_name', data.last_name);
     if (data.middle_name) setValue('middle_name', data.middle_name);
@@ -159,7 +190,6 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
 
     if (data.email) {
       setValue('email', data.email);
-      // Auto-generate username from email
       const username = data.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
       setValue('username', username);
     }
@@ -179,253 +209,273 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
     if (data.mobile_no) setValue('mobile_no', data.mobile_no);
     if (data.residential_address) setValue('residential_address', data.residential_address);
     if (data.permanent_address) setValue('permanent_address', data.permanent_address);
-    
-    // Work Information
+
     if (data.position) setValue('position', data.position);
     if (data.department) setValue('department', data.department);
     if (data.salary) setValue('salary', data.salary);
     if (data.date_hired) setValue('date_hired', formatDateForInput(data.date_hired));
 
-    // Dynamic Section Population
     if (data.family && Array.isArray(data.family)) {
-      setValue('family', data.family.map(m => ({
-        ...m,
-        date_of_birth: formatDateForInput(m.date_of_birth),
-        // Ensure child names use the full_name field if available from extraction
-        full_name: m.relationship === 'CHILD' ? (m.full_name || `${m.first_name} ${m.surname}`.trim()) : ''
-      })));
+      setValue(
+        'family',
+        data.family.map((m) => ({
+          ...m,
+          date_of_birth: formatDateForInput(m.date_of_birth),
+          full_name: m.relationship === 'CHILD' ? (m.full_name || `${m.first_name} ${m.surname}`.trim()) : '',
+        }))
+      );
     }
-
     if (data.education && Array.isArray(data.education)) {
-      setValue('education', data.education.map(e => ({
-        ...e,
-        period_from: formatDateForInput(e.period_from),
-        period_to: e.period_to === 'present' ? 'present' : formatDateForInput(e.period_to)
-      })));
+      setValue(
+        'education',
+        data.education.map((e) => ({
+          ...e,
+          period_from: formatDateForInput(e.period_from),
+          period_to: e.period_to === 'present' ? 'present' : formatDateForInput(e.period_to),
+        }))
+      );
     }
-
     if (data.eligibilities && Array.isArray(data.eligibilities)) {
-      setValue('eligibilities', data.eligibilities.map(e => ({
-        ...e,
-        date_of_exam: formatDateForInput(e.date_of_exam),
-        validity_date: formatDateForInput(e.validity_date)
-      })));
+      setValue(
+        'eligibilities',
+        data.eligibilities.map((e) => ({
+          ...e,
+          date_of_exam: formatDateForInput(e.date_of_exam),
+          validity_date: formatDateForInput(e.validity_date),
+        }))
+      );
     }
-
     if (data.work_experience && Array.isArray(data.work_experience)) {
-      setValue('work_experience', data.work_experience.map(w => ({
-        ...w,
-        date_from: formatDateForInput(w.date_from),
-        date_to: w.date_to === 'present' ? 'present' : formatDateForInput(w.date_to)
-      })));
+      setValue(
+        'work_experience',
+        data.work_experience.map((w) => ({
+          ...w,
+          date_from: formatDateForInput(w.date_from),
+          date_to: w.date_to === 'present' ? 'present' : formatDateForInput(w.date_to),
+        }))
+      );
     }
 
     setShowPDSImport(false);
   };
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   if (!isOpen) return null;
+
+  const formId = `${id}-form`;
 
   return (
     <AccessibleDialog
       onClose={() => { if (!isPending) onClose(); }}
-      labelledBy="personnel-form-title"
-      className="w-full rounded-lg p-0 overflow-hidden border border-slate-200 max-w-2xl shadow-lg bg-white flex flex-col max-h-[90vh]"
+      labelledBy={`${id}-title`}
+      describedBy={`${id}-subtitle`}
+      noBackdropClose={isPending}
+      className="flex max-h-[calc(100dvh-1rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-xl sm:max-h-[90dvh]"
     >
-        
-        {/* Page Header */}
-        <div className="bg-slate-50 border-b border-slate-200 p-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 id="personnel-form-title" className="font-bold text-lg text-slate-900">
-              {isEdit ? 'Update Employee Record' : 'New Employee Record'}
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {isEdit 
-                ? `Editing record for ${initialData.first_name}` 
-                : 'Register a new staff member'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {!isEdit && !showPDSImport && (
-              <button 
-                type="button"
-                onClick={() => setShowPDSImport(true)}
-                className="btn btn-outline min-h-11 rounded-md text-sm font-semibold px-3"
-              >
-                <FileText className="w-3.5 h-3.5 mr-1" />
-                Import PDS
-              </button>
-            )}
-            <button 
-              type="button"
-              className="btn btn-ghost min-h-11 min-w-11 btn-circle text-slate-600 hover:text-slate-800"
-              onClick={onClose}
-              disabled={isPending}
-              aria-label="Close dialog"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      {/* Sticky Header */}
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 bg-slate-50/80 px-5 py-4 sm:px-6">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-primary">Plantilla &amp; Personnel Record</p>
+          <h2 id={`${id}-title`} className="mt-0.5 text-lg font-semibold tracking-tight text-slate-900">
+            {isEdit ? 'Edit employee record' : 'Add existing employee'}
+          </h2>
+          <p id={`${id}-subtitle`} className="mt-0.5 text-xs text-slate-600">
+            {isEdit
+              ? `Updating profile for ${initialData.first_name} ${initialData.last_name}`
+              : 'Encode an existing personnel record and send their account setup link.'}
+          </p>
         </div>
 
-        {showPDSImport ? (
-          <div className="p-5 space-y-4 overflow-y-auto">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <h4 className="text-sm font-semibold text-primary">PDS import</h4>
-              <button 
-                type="button"
-                onClick={() => setShowPDSImport(false)}
-                className="btn btn-ghost min-h-11 rounded-md text-sm font-medium text-slate-700"
-              >
-                Back to manual form
-              </button>
-            </div>
-            <PDSUploadForm onExtractionComplete={handlePDSExtraction} />
-            <div className="flex items-start gap-2 text-sm text-slate-600">
-              <AlertCircle aria-hidden="true" className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>Extracted data will be pre-filled into the form fields.</span>
-            </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {!isEdit && !showPDSImport && (
+            <button
+              type="button"
+              onClick={() => setShowPDSImport(true)}
+              className="btn btn-outline btn-sm min-h-11 gap-1.5 border-slate-300 bg-white text-slate-800 hover:border-primary hover:text-primary"
+            >
+              <FileText className="size-4" aria-hidden="true" />
+              <span>Import PDS</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-ghost btn-square min-h-11 min-w-11 text-slate-600 hover:text-slate-900"
+            onClick={onClose}
+            disabled={isPending}
+            aria-label="Close employee dialog"
+          >
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+      </header>
+
+      {showPDSImport ? (
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+            <h3 className="text-sm font-semibold text-slate-900">Import CS Form 212 (PDS PDF)</h3>
+            <button
+              type="button"
+              onClick={() => setShowPDSImport(false)}
+              className="btn btn-outline btn-sm min-h-11 border-slate-300 text-slate-700"
+            >
+              Back to manual form
+            </button>
           </div>
-        ) : (
-          <>
-            {/* Professional Tabs */}
-            <div role="group" className="flex flex-wrap border-b border-slate-200 px-3 bg-white" aria-label="Employee form sections">
-              <button
-                type="button"
-                onClick={() => setActiveTab('personal')}
-                aria-pressed={activeTab === 'personal'}
-                className={`min-h-11 flex cursor-pointer items-center gap-2 px-3 py-3 text-sm font-semibold border-b-2 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
-                  activeTab === 'personal' 
-                    ? 'border-primary text-primary' 
-                    : 'border-transparent text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" />
-                1. Personal
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('employment')}
-                aria-pressed={activeTab === 'employment'}
-                className={`min-h-11 flex cursor-pointer items-center gap-2 px-3 py-3 text-sm font-semibold border-b-2 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
-                  activeTab === 'employment' 
-                    ? 'border-primary text-primary' 
-                    : 'border-transparent text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <Briefcase className="w-3.5 h-3.5" />
-                2. Work
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('history')}
-                aria-pressed={activeTab === 'history'}
-                className={`min-h-11 flex cursor-pointer items-center gap-2 px-3 py-3 text-sm font-semibold border-b-2 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
-                  activeTab === 'history' 
-                    ? 'border-primary text-primary' 
-                    : 'border-transparent text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                3. PDS sections
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit(handleProcessSubmit)} className="flex flex-col flex-1 overflow-hidden">
-              <div className="p-5 overflow-y-auto flex-1 bg-white custom-scrollbar">
-                
-                {backendError && (
-                  <div role="alert" className="mb-6 bg-red-50 border border-red-300 p-4 rounded-md flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-error shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-red-800 mb-1">Could not save employee</p>
-                      <p className="text-sm text-red-800 leading-relaxed break-words">{backendError}</p>
-                    </div>
-                    <button type="button" aria-label="Dismiss save error" onClick={() => setBackendError(null)} className="btn btn-ghost min-h-11 min-w-11 btn-circle text-error">×</button>
-                  </div>
-                )}
-
-                <div className={activeTab !== 'personal' ? 'hidden' : ''}>
-                  <PersonalFields 
-                    isEdit={isEdit} 
-                    register={register} 
-                    errors={errors} 
-                    watch={watch}
-                  />
-                </div>
-                <div className={activeTab !== 'employment' ? 'hidden' : ''}>
-                  {isLeaveStaffError && <p role="alert" className="mb-3 text-sm text-error">Could not load leave processing staff. Close and reopen this form to retry.</p>}
-                  <EmploymentFields 
-                    leaveStaff={leaveStaff}
-                    currentEmployeeId={initialData?.id}
-                    schools={schools} 
-                    salaryGrades={salaryGrades}
-                    register={register} 
-                    setValue={setValue}
-                    watch={watch}
-                    errors={errors}
-                    employeeRole={employeeRole} 
-                    setEmployeeRole={setEmployeeRole} 
-                  />
-                </div>
-                <div className={activeTab !== 'history' ? 'hidden' : 'space-y-10'}>
-                   <FamilyFields control={control} register={register} errors={errors} watch={watch} />
-                   <EducationFields control={control} register={register} errors={errors} watch={watch} />
-                   <EligibilityFields control={control} register={register} errors={errors} />
-                   <WorkHistoryFields control={control} register={register} errors={errors} />
-                </div>
-              </div>
-
-              {/* Clean Footer */}
-              <div className="p-5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-end gap-3">
-                  <button
-                    type="button"
-                    className="btn btn-ghost min-h-11 rounded-md text-sm font-medium text-slate-700"
-                    onClick={onClose}
-                    disabled={isPending}
+          <PDSUploadForm onExtractionComplete={handlePDSExtraction} />
+          <p className="flex items-start gap-2 text-xs text-slate-600">
+            <AlertCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+            <span>Extracted details will pre-fill the form tabs so you can review before saving.</span>
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Section Tabs */}
+          <div
+            role="tablist"
+            aria-label="Employee form sections"
+            className="flex shrink-0 overflow-x-auto border-b border-slate-200 bg-white px-3 sm:px-5"
+          >
+            {TABS.map(({ id: tabId, label, icon: Icon }) => {
+              const isSelected = activeTab === tabId;
+              const errorCount = countTabErrors(errors, tabId, isEdit);
+              return (
+                <button
+                  key={tabId}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => setActiveTab(tabId)}
+                  className={`flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors sm:px-4 ${
+                    isSelected
+                      ? 'border-primary text-primary font-semibold'
+                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
                 >
-                  Cancel
+                  <Icon className="size-4 shrink-0" aria-hidden="true" />
+                  <span>{label}</span>
+                  {errorCount > 0 && (
+                    <span
+                      className="inline-flex size-5 items-center justify-center rounded-full bg-error text-xs font-semibold text-white tabular-nums"
+                      aria-label={`${errorCount} validation error${errorCount > 1 ? 's' : ''}`}
+                    >
+                      {errorCount}
+                    </span>
+                  )}
                 </button>
-                
-                {activeTab === 'personal' ? (
-                  <button 
-                    type="button" 
-                    className="btn btn-primary min-h-11 rounded-md text-sm font-semibold px-5"
-                    onClick={() => setActiveTab('employment')}
-                  >
-                    Next step
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </button>
-                ) : activeTab === 'employment' ? (
-                  <button 
-                    type="button" 
-                    className="btn btn-primary min-h-11 rounded-md text-sm font-semibold px-5"
-                    onClick={() => setActiveTab('history')}
-                  >
-                    Next step
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </button>
-                ) : (
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary min-h-11 rounded-md text-sm font-semibold px-5"
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Saving...' : (isEdit ? 'Update employee' : 'Save staff')}
-                  </button>
-                )}
+              );
+            })}
+          </div>
+
+          <form
+            id={formId}
+            onSubmit={handleSubmit(handleProcessSubmit, handleInvalidSubmit)}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-5 py-5 sm:px-6"
+            noValidate
+          >
+            {backendError && (
+              <div role="alert" className="mb-6 flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-4">
+                <AlertCircle className="mt-0.5 size-5 shrink-0 text-error" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-red-900">Could not save employee</p>
+                  <p className="mt-1 break-words text-sm text-red-800">{backendError}</p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Dismiss save error"
+                  onClick={() => setBackendError(null)}
+                  className="btn btn-ghost btn-square min-h-11 min-w-11 shrink-0 text-error"
+                >
+                  <X className="size-4" aria-hidden="true" />
+                </button>
               </div>
-            </form>
-          </>
-        )}
+            )}
+
+            <div className={activeTab !== 'personal' ? 'hidden' : ''}>
+              <PersonalFields isEdit={isEdit} register={register} errors={errors} watch={watch} />
+            </div>
+
+            <div className={activeTab !== 'employment' ? 'hidden' : ''}>
+              {isLeaveStaffError && (
+                <p role="alert" className="mb-4 flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-error">
+                  <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                  <span>Could not load leave processing staff. Close and reopen this form to retry.</span>
+                </p>
+              )}
+              <EmploymentFields
+                leaveStaff={leaveStaff}
+                currentEmployeeId={initialData?.id}
+                schools={schools}
+                salaryGrades={salaryGrades}
+                register={register}
+                setValue={setValue}
+                watch={watch}
+                errors={errors}
+                employeeRole={employeeRole}
+                setEmployeeRole={setEmployeeRole}
+              />
+            </div>
+
+            <div className={activeTab !== 'history' ? 'hidden' : 'space-y-8'}>
+              <FamilyFields control={control} register={register} errors={errors} watch={watch} />
+              <EducationFields control={control} register={register} errors={errors} watch={watch} />
+              <EligibilityFields control={control} register={register} errors={errors} />
+              <WorkHistoryFields control={control} register={register} errors={errors} />
+            </div>
+          </form>
+
+          {/* Sticky Footer */}
+          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3.5 sm:px-6">
+            <div className="flex items-center gap-2">
+              {activeTab !== 'personal' && (
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm min-h-11 gap-1 border-slate-300 bg-white text-slate-700"
+                  onClick={() => setActiveTab(activeTab === 'history' ? 'employment' : 'personal')}
+                  disabled={isPending}
+                >
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                  <span>Back</span>
+                </button>
+              )}
+              {activeTab !== 'history' && (
+                <button
+                  type="button"
+                  className={`btn btn-sm min-h-11 gap-1 ${
+                    isEdit
+                      ? 'btn-outline border-slate-300 bg-white text-slate-700'
+                      : 'btn-primary px-5'
+                  }`}
+                  onClick={() => handleNextTab(activeTab === 'personal' ? 'employment' : 'history')}
+                  disabled={isPending}
+                >
+                  <span>Next step</span>
+                  <ChevronRight className="size-4" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                className="btn btn-ghost min-h-11 text-sm font-medium text-slate-700"
+                onClick={onClose}
+                disabled={isPending}
+              >
+                Cancel
+              </button>
+              {(isEdit || activeTab === 'history') && (
+                <button
+                  type="submit"
+                  form={formId}
+                  className="btn btn-primary min-h-11 px-5 text-sm font-semibold"
+                  disabled={isPending}
+                >
+                  {isPending ? 'Saving...' : isEdit ? 'Save changes' : 'Save employee'}
+                </button>
+              )}
+            </div>
+          </footer>
+        </>
+      )}
     </AccessibleDialog>
   );
 };

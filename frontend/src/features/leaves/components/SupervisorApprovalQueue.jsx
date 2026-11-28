@@ -8,6 +8,7 @@ import DocumentAttachmentCard, { CSC_DOCUMENT_SPECS } from './DocumentAttachment
 import { usePaginatedList } from '../../../hooks/usePaginatedList';
 import { QUERY_KEYS } from '../../../api/queryKeys';
 import Pagination from '../../../components/common/Pagination';
+import AccessibleDialog from '../../../components/common/AccessibleDialog';
 
 import { formatLeaveStatus as formatStatus, PENDING_LEAVE_STATUSES } from '../utils/leaveWorkflow';
 
@@ -198,8 +199,11 @@ const SupervisorApprovalQueue = ({
 
       {/* Review applicationment Modal */}
       {selectedApproval && (
-        <div className="modal modal-open">
-          <div className="modal-box rounded-lg max-w-3xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white h-[85vh] flex flex-col">
+        <AccessibleDialog
+          onClose={() => setSelectedApproval(null)}
+          labelledBy="supervisor-approval-title"
+          className="rounded-lg max-w-3xl p-0 overflow-hidden shadow-xl border border-slate-300 bg-white h-[85vh] flex flex-col w-full"
+        >
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
@@ -208,13 +212,14 @@ const SupervisorApprovalQueue = ({
                   </span>
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedApproval.id}</span>
                 </div>
-                <h3 className="font-bold text-base text-slate-900 mt-0.5">
+                <h3 id="supervisor-approval-title" className="font-bold text-base text-slate-900 mt-0.5">
                   Leave Review — {selectedApproval.employee_name}
                 </h3>
               </div>
               <button 
                 type="button" 
                 onClick={() => setSelectedApproval(null)}
+                aria-label="Close leave review"
                 className="btn btn-ghost btn-xs btn-circle text-slate-500 hover:text-slate-800"
               >
                 <XCircle className="w-5 h-5" />
@@ -305,9 +310,7 @@ const SupervisorApprovalQueue = ({
                 Close Record
               </button>
             </div>
-          </div>
-          <div className="modal-backdrop bg-black/40" onClick={() => setSelectedApproval(null)}></div>
-        </div>
+        </AccessibleDialog>
       )}
     </div>
   );

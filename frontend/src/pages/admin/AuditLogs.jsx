@@ -59,7 +59,7 @@ const AuditLogs = () => {
   const metrics = { total: 0, operators: 0, recent: 0, critical: 0, ...summary };
 
   if (isLoading) {
-    return <PageLoader label="Loading Security Audit Trail..." />;
+    return <PageLoader label="Loading activity logs..." />;
   }
 
   return (
@@ -207,7 +207,7 @@ const AuditLogs = () => {
                 <tr>
                   <td colSpan="5" className="py-12 text-center text-xs text-slate-500">
                     <Shield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    No security audit records found matching the specified parameters.
+                    No activity logs match your filters.
                   </td>
                 </tr>
               )}

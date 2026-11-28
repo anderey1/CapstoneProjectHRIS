@@ -82,7 +82,7 @@ const MyLeaves = () => {
         badge="CSC Form No. 6 (Revised 2020)"
         subtitle={
           activeMainTab === 'mine'
-            ? 'Employee self-service leave applications, credit balances, and docket history.'
+            ? 'Apply for leave, check your balances, and view past requests.'
             : 'Review and supervisory endorsement queue for division personnel.'
         }
       >

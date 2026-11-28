@@ -104,7 +104,7 @@ const EmployeeTable = ({ employees, onDelete, onEdit }) => {
             ) : (
               <tr>
                 <td colSpan="5" className="text-center py-16 text-sm text-slate-600">
-                  No employee records match the current criteria
+                  No employees match your search.
                 </td>
               </tr>
             )}

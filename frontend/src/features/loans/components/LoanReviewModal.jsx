@@ -129,7 +129,7 @@ const LoanReviewModal = ({
               {/* Application Particulars */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-slate-700 tracking-wide">
-                  Borrower Application Particulars
+                  Loan Details
                 </h4>
                 <div className="bg-white p-3 rounded-md border border-slate-200 space-y-2">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -224,7 +224,7 @@ const LoanReviewModal = ({
                   <MessageSquare className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-amber-800 block">
-                      Executive Audit Remarks
+                      Review Notes
                     </span>
                     <p className="text-xs text-amber-900 mt-0.5">{loan.remarks}</p>
                     {loan.reviewed_by_name && (

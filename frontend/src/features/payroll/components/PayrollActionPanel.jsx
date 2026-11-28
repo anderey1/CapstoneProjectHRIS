@@ -31,7 +31,7 @@ const PayrollActionPanel = ({
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-0.5">
             <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Accounting Command Center
+              Payroll Actions
             </span>
             <span className={`px-2 py-1 rounded text-sm font-semibold border ${
               cutoffStatus === 'released'
@@ -50,9 +50,9 @@ const PayrollActionPanel = ({
             </span>
           </div>
           <p className="text-xs text-slate-500">
-            {cutoffStatus === 'unprepared' && 'Calculate semi-monthly draft gross pay, statutory withholdings, and loan amortizations.'}
+            {cutoffStatus === 'unprepared' && 'Compute semi-monthly gross pay, required deductions, and loan payments.'}
             {cutoffStatus === 'draft' && 'Draft payroll sheets generated. Superintendent signature required on General Payroll Sheet (Form 7).'}
-            {cutoffStatus === 'approved' && 'Payroll is approved. Export the voucher and record release after completing your disbursement procedure.'}
+            {cutoffStatus === 'approved' && 'Payroll is approved. Download the voucher and record the release after payout.'}
             {cutoffStatus === 'released' && 'Release recorded in the payroll ledger. This does not confirm a bank transfer.'}
             {cutoffStatus === 'unavailable' && 'Reload payroll data before processing this period.'}
           </p>

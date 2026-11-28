@@ -250,7 +250,7 @@ const LeaveManagement = () => {
               ) : (
                 <tr>
                   <td colSpan="8" className="px-4 py-12 text-center text-sm text-slate-600">
-                    No leave applications matched the selected filter criteria.
+                    No leave applications match your filters.
                   </td>
                 </tr>
               )}
@@ -277,7 +277,7 @@ const LeaveManagement = () => {
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedLeave.id}</span>
                 </div>
                 <h3 id="leave-review-title" className="mt-2 text-base font-semibold leading-relaxed text-slate-900">
-                  Application for Leave — {selectedLeave.employee_name}
+                  Leave Application: {selectedLeave.employee_name}
                 </h3>
               </div>
               <button 
@@ -309,7 +309,7 @@ const LeaveManagement = () => {
                   <div>
                     <span className="text-xs uppercase font-semibold text-slate-500 block">6.C Inclusive Dates</span>
                     <span className="font-mono tabular-nums font-semibold text-slate-900 text-xs">
-                      {new Date(selectedLeave.start_date).toLocaleDateString()} — {new Date(selectedLeave.end_date).toLocaleDateString()}
+                      {new Date(selectedLeave.start_date).toLocaleDateString()} to {new Date(selectedLeave.end_date).toLocaleDateString()}
                     </span>
                     <span className="text-slate-500 block font-mono text-xs mt-0.5">
                       <strong>{selectedLeave.working_days_applied}</strong> working day(s) applied

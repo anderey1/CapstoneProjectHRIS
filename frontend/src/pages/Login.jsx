@@ -28,7 +28,7 @@ const Login = () => {
       navigate('/', { replace: true });
     } catch (err) {
       console.error(err);
-      setError('Invalid credentials. Please verify your employee username and password.');
+      setError('Wrong username or password. Check your entries and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -165,7 +165,7 @@ const Login = () => {
 
       {/* Institutional Footer */}
       <footer className="w-full bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        <p>Department of Education — Schools Division of Lucena City • Human Resource Information System</p>
+        <p>Department of Education • Schools Division of Lucena City • Human Resource Information System</p>
       </footer>
     </div>
   );

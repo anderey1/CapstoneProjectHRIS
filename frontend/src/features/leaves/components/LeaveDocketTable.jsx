@@ -131,7 +131,7 @@ const LeaveDocketTable = ({ filteredLeaves = [], onSelectLeave }) => {
             ) : (
               <tr>
                 <td colSpan="8" className="py-12 text-center text-slate-400 text-xs">
-                  No leave applications matched the selected filter criteria.
+                  No leave applications match your filters.
                 </td>
               </tr>
             )}

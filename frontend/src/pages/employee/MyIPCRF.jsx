@@ -54,7 +54,7 @@ const MyIPCRF = () => {
       <div className="p-8 flex flex-col justify-center h-[60vh] items-center space-y-3">
         <span className="loading loading-spinner loading-lg text-primary"></span>
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          Loading Personal RPMS Portfolio...
+          Loading your performance records...
         </p>
       </div>
     );
@@ -163,7 +163,7 @@ const MyIPCRF = () => {
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-slate-500" />
             <h2 className="text-xs font-bold text-slate-800 tracking-wider">
-              Chronological IPCRF Rating History
+              Past IPCRF Ratings
             </h2>
           </div>
           <span className="text-xs text-slate-500">
@@ -293,7 +293,7 @@ const MyIPCRF = () => {
                 <tr>
                   <td colSpan="10" className="py-12 text-center text-xs text-slate-500">
                     <BarChart3 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    No official RPMS / IPCRF evaluation records on file.
+                    No IPCRF records on file.
                   </td>
                 </tr>
               )}

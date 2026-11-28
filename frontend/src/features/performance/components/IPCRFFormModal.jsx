@@ -103,9 +103,9 @@ const IPCRFFormModal = ({ onClose, review }) => {
               <Award className="w-5 h-5 text-primary shrink-0" />
               <h2 id="ipcrf-modal-title" className="text-base font-bold text-slate-900">
                 {review?.id
-                  ? 'Update RPMS / IPCRF Assessment'
+                  ? 'Edit RPMS / IPCRF Rating'
                   : isAdmin
-                  ? 'Encode RPMS / IPCRF Evaluation'
+                  ? 'Add RPMS / IPCRF Rating'
                   : 'Submit Signed IPCRF'}
               </h2>
             </div>
@@ -145,7 +145,7 @@ const IPCRFFormModal = ({ onClose, review }) => {
                   <option value="">Select Plantilla Personnel...</option>
                   {(Array.isArray(employees) ? employees : []).map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.first_name} {emp.last_name} — {emp.position || 'Plantilla Staff'} (
+                      {emp.first_name} {emp.last_name} ({emp.position || 'Plantilla Staff'}) (
                       {emp.agency_employee_no || `ID #${emp.id}`})
                     </option>
                   ))}

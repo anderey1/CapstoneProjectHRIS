@@ -28,7 +28,7 @@ const WorkExperienceTab = ({ me, onAdd, onEdit, onDelete, canEdit = true }) => {
               <div className="flex justify-between items-start gap-4">
                 <div>
                   <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                    {w.date_from ? new Date(w.date_from).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : ''} — {w.is_present ? 'Present' : (w.date_to ? new Date(w.date_to).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : '')}
+                    {w.date_from ? new Date(w.date_from).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : ''} to {w.is_present ? 'Present' : (w.date_to ? new Date(w.date_to).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : '')}
                   </span>
                   <h4 className="font-semibold text-sm text-slate-900 mt-1.5">
                     {w.position_title}

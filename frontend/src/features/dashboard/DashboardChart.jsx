@@ -178,9 +178,9 @@ function ChartExplanation({ chart, userId, hasData }) {
   const isAi = summary.data?.source === 'ai';
   const isLoading = summary.isFetching && !summary.data;
   const detail = summary.isError
-    ? 'AI explanation could not load. The figures above remain available.'
+    ? 'Summary could not load. The numbers above are still available.'
     : isAi
-      ? 'Interpretation only. Check it against the figures above.'
+      ? 'Auto-generated summary. Check it against the numbers above.'
       : summary.data?.message;
   const sourceLabel = isAi ? 'AI generated' : isLoading ? null : 'From recorded figures';
 

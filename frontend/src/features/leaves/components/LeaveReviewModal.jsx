@@ -36,7 +36,7 @@ const LeaveReviewModal = ({
               <span className="text-xs font-mono text-slate-500">Application #{leave.id}</span>
             </div>
             <h3 id="leave-review-modal-title" className="font-bold text-base text-slate-900 mt-0.5">
-              Application for Leave — {leave.employee_name}
+              Leave Application: {leave.employee_name}
             </h3>
           </div>
           <button
@@ -75,7 +75,7 @@ const LeaveReviewModal = ({
                   6.C Inclusive Dates
                 </span>
                 <span className="font-mono tabular-nums font-semibold text-slate-900 text-xs">
-                  {new Date(leave.start_date).toLocaleDateString()} —{' '}
+                  {new Date(leave.start_date).toLocaleDateString()} to{' '}
                   {new Date(leave.end_date).toLocaleDateString()}
                 </span>
                 <span className="text-slate-500 block font-mono text-xs mt-0.5">

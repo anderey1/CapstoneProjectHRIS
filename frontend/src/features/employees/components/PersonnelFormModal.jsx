@@ -281,7 +281,7 @@ const PersonnelFormModal = ({ isOpen, onClose, onSubmit, isPending, schools, ini
           <p id={`${id}-subtitle`} className="mt-0.5 text-xs text-slate-600">
             {isEdit
               ? `Updating profile for ${initialData.first_name} ${initialData.last_name}`
-              : 'Encode an existing personnel record and send their account setup link.'}
+              : 'Add an existing employee and send their account setup link.'}
           </p>
         </div>
 

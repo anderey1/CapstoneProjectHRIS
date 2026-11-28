@@ -223,7 +223,7 @@ const Recruitment = () => {
                   <th className="px-4 py-3 text-right">Demo / Exam</th>
                   <th className="px-4 py-3 text-right">Interview</th>
                   <th className="px-4 py-3 text-right">Total Score</th>
-                  <th className="px-4 py-3">Pipeline Status</th>
+                  <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
@@ -516,7 +516,7 @@ const Recruitment = () => {
                         <section className="bg-white border-2 border-primary/20 rounded-2xl p-8 space-y-6">
                            <div className="flex items-center justify-between">
                               <h4 className="text-xs font-semibold tracking-wide text-primary flex items-center gap-2">
-                                 Update Pipeline Status
+                                 Update Application Status
                               </h4>
                               <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold uppercase tracking-wide">      
                                  Current: {COLUMNS.find(c => c.id === selectedApplicant.status)?.label}

@@ -112,10 +112,10 @@ const AddApplicantModal = ({ onClose }) => {
         <div className="min-w-0">
           <p className="text-xs font-medium text-primary">DepEd Order No. 007, s. 2023</p>
           <h2 id={fieldId('title')} className="mt-0.5 text-lg font-semibold tracking-tight text-slate-900">
-            Encode applicant profile
+            Add applicant
           </h2>
           <p id={fieldId('subtitle')} className="mt-0.5 text-xs text-slate-600">
-            Record a walk-in or manually submitted candidate into the RQA/CAR ledger.
+            Add a walk-in or manual applicant to the RQA/CAR list.
           </p>
         </div>
         <button

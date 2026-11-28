@@ -133,7 +133,7 @@ const Apply = () => {
     } catch (err) {
       console.error(err);
       const errData = err.response?.data;
-      let msg = 'We encountered an issue submitting your application.';
+      let msg = 'Could not submit your application. Try again.';
       if (typeof errData === 'object' && errData !== null) {
         msg = Object.entries(errData).map(([k, v]) => `${k}: ${v}`).join('\n');
       }
@@ -244,7 +244,7 @@ const Apply = () => {
 
       {/* Institutional Footer */}
       <footer className="w-full bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        <p>Department of Education — Schools Division of Lucena City • Human Resource Information System</p>
+        <p>Department of Education • Schools Division of Lucena City • Human Resource Information System</p>
       </footer>
     </div>
   );

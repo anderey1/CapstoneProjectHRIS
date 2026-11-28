@@ -63,7 +63,7 @@ const MyPayroll = () => {
   };
 
   if (isLoading) {
-    return <PageLoader label="Loading Compensation Archive..." />;
+    return <PageLoader label="Loading payslips..." />;
   }
 
   return (
@@ -71,7 +71,7 @@ const MyPayroll = () => {
       <PageHeader
         icon={FileCheck}
         title="My payslips"
-        subtitle="Semi-Monthly Salary Disbursements · Civil Service Commission & DBM SSL Schedule"
+        subtitle="Semi-monthly pay · CSC & DBM SSL Schedule"
       >
         <div className="flex items-center gap-2 text-xs text-slate-600">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-primary border border-blue-200 rounded font-semibold">
@@ -93,7 +93,7 @@ const MyPayroll = () => {
           <div className="lg:col-span-7 bg-white border border-slate-300 rounded-lg overflow-hidden shadow-xs">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <h2 className="text-xs font-bold text-slate-800 tracking-wider">
-                Salary Release History
+                Past Payslips
               </h2>
               <span className="text-xs text-slate-500 font-mono">
                 {pagination.count} Recorded Cycles
@@ -248,7 +248,7 @@ const MyPayroll = () => {
                   {/* Earnings Breakdown */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs font-bold text-slate-900 border-b border-slate-200 pb-1">
-                      <span>I. Gross Compensation</span>
+                      <span>I. Gross Pay</span>
                       <span className="font-mono tabular-nums text-slate-700">Amount (₱)</span>
                     </div>
 
@@ -267,7 +267,7 @@ const MyPayroll = () => {
                     </div>
 
                     <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-100">
-                      <span>Total Gross Compensation</span>
+                      <span>Total Gross Pay</span>
                       <span className="font-mono tabular-nums">
                         {formatCurrency(activePayroll.gross_salary)}
                       </span>
@@ -277,7 +277,7 @@ const MyPayroll = () => {
                   {/* Deductions Breakdown */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-200">
                     <div className="flex justify-between items-center text-xs font-bold text-slate-900 border-b border-slate-200 pb-1">
-                      <span>II. Statutory &amp; Other Deductions</span>
+                      <span>II. Deductions</span>
                       <span className="font-mono tabular-nums text-slate-700">Amount (₱)</span>
                     </div>
 
@@ -342,7 +342,7 @@ const MyPayroll = () => {
               </div>
             ) : (
               <div className="h-64 border border-dashed border-slate-300 rounded-lg flex items-center justify-center text-xs text-slate-400">
-                Select a salary cutoff to display the payslip docket.
+                Select a pay period to view your payslip.
               </div>
             )}
           </div>

@@ -103,7 +103,7 @@ const Payroll = () => {
   });
 
   if (isLoading) {
-    return <PageLoader label="Loading Division Payroll Ledger..." />;
+    return <PageLoader label="Loading payroll records..." />;
   }
 
   return (
@@ -156,7 +156,7 @@ const Payroll = () => {
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Mandatory Withholdings
+            Required Deductions
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-xl font-bold text-rose-700 font-mono tabular-nums">

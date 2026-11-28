@@ -9,7 +9,7 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
       actor: 'Division Accountant',
       isComplete: cutoffStatus === 'draft' || cutoffStatus === 'approved' || cutoffStatus === 'released',
       isCurrent: cutoffStatus === 'unprepared',
-      desc: 'Computes gross earnings, statutory GSIS 9%, PhilHealth, Pag-IBIG, and loan deductions from DTR.',
+      desc: 'Computes gross pay, GSIS 9%, PhilHealth, Pag-IBIG, and loan deductions from DTR.',
     },
     {
       num: 2,
@@ -34,10 +34,10 @@ const PayrollWorkflowStepper = ({ cutoffStatus }) => {
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
         <div>
           <h2 className="text-xs font-bold text-slate-800 tracking-wide">
-            Division Payroll Processing Pipeline
+            Payroll Steps
           </h2>
           <p className="text-xs text-slate-500">
-            Civil Service Commission & Commission on Audit (COA) compliance chain
+            CSC and COA review steps
           </p>
         </div>
       </div>

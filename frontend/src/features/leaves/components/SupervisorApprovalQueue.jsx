@@ -213,7 +213,7 @@ const SupervisorApprovalQueue = ({
                   <span className="text-xs font-mono text-slate-500">Docket #{selectedApproval.id}</span>
                 </div>
                 <h3 id="supervisor-approval-title" className="font-bold text-base text-slate-900 mt-0.5">
-                  Leave Review — {selectedApproval.employee_name}
+                  Leave Review: {selectedApproval.employee_name}
                 </h3>
               </div>
               <button 
@@ -236,7 +236,7 @@ const SupervisorApprovalQueue = ({
                 <div>
                   <span className="text-xs uppercase font-semibold text-slate-500 block">Inclusive Dates</span>
                   <span className="font-mono tabular-nums font-semibold text-slate-900 text-xs">
-                    {new Date(selectedApproval.start_date).toLocaleDateString()} — {new Date(selectedApproval.end_date).toLocaleDateString()}
+                    {new Date(selectedApproval.start_date).toLocaleDateString()} to {new Date(selectedApproval.end_date).toLocaleDateString()}
                   </span>
                 </div>
                 <div>
@@ -248,10 +248,10 @@ const SupervisorApprovalQueue = ({
               {/* Specifics */}
               {(selectedApproval.location_details || selectedApproval.illness_details) && (
                 <div className="border border-slate-200 rounded p-3 bg-white space-y-1.5">
-                  <span className="text-xs uppercase font-bold text-slate-500 block">Application Specification</span>
+                  <span className="text-xs uppercase font-bold text-slate-500 block">Leave Details</span>
                   {selectedApproval.location_details && (
                     <p className="text-xs text-slate-700">
-                      <strong>Location:</strong> {selectedApproval.is_within_philippines ? 'Philippines' : 'Abroad'} — {selectedApproval.location_details}
+                      <strong>Location:</strong> {selectedApproval.is_within_philippines ? 'Philippines' : 'Abroad'}: {selectedApproval.location_details}
                     </p>
                   )}
                   {selectedApproval.illness_details && (

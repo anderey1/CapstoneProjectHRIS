@@ -16,7 +16,7 @@ export default function DashboardKpis({ charts }) {
           </h2>
         </div>
         <p className="mt-0.5 text-xs text-slate-600">
-          Recorded totals from this role&apos;s operational data.
+          Totals from your role&apos;s records.
         </p>
       </div>
 

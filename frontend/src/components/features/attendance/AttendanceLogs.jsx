@@ -19,7 +19,7 @@ export default function AttendanceLogs({ records = [], isLoading, searchTerm, se
         {[['am_in', 'am_out'], ['pm_in', 'pm_out'], ['ot_in', 'ot_out']].map(([arrival, departure]) => <td key={arrival} className="p-4 font-mono text-xs whitespace-nowrap text-slate-700">{formatTime(record[arrival])} / {formatTime(record[departure])}</td>)}
         <td className="p-4"><span className={`inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${record.status === 'present' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : record.status === 'late' ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-slate-200 bg-slate-100 text-slate-700'}`}>{record.status}</span></td>
         <td className="p-4 whitespace-nowrap"><span className={`inline-flex items-center gap-1.5 text-xs font-medium ${record.is_dtr_approved ? 'text-emerald-800' : 'text-slate-600'}`}><span aria-hidden="true" className={`size-1.5 rounded-full ${record.is_dtr_approved ? 'bg-emerald-600' : 'bg-amber-500'}`} />{record.is_dtr_approved ? 'Approved' : 'Pending review'}</span></td>
-      </tr>) : <tr><td colSpan={7} className="py-16 px-6 text-center"><p className="font-medium text-slate-900">No attendance records for these filters</p><p className="text-sm text-slate-500 mt-2">Choose another month or import a school file to get started.</p></td></tr>}</tbody>
+      </tr>) : <tr><td colSpan={7} className="py-16 px-6 text-center"><p className="font-medium text-slate-900">No attendance records for these filters</p><p className="text-sm text-slate-500 mt-2">Choose another month or import a school file.</p></td></tr>}</tbody>
     </table></div>
   </section>;
 }

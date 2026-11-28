@@ -83,7 +83,7 @@ const LoanManagement = () => {
   };
 
   if (isLoading) {
-    return <PageLoader label="Loading Provident Fund Ledger..." />;
+    return <PageLoader label="Loading loan records..." />;
   }
 
   return (
@@ -167,7 +167,7 @@ const LoanManagement = () => {
             Provident Fund Credit Ledger ({filteredLoans.length} Records)
           </span>
           <span className="text-xs text-slate-500 font-medium">
-            Semi-monthly amortizations automatically deducted via General Payroll
+            Semi-monthly payments deducted through General Payroll
           </span>
         </div>
 
@@ -262,7 +262,7 @@ const LoanManagement = () => {
               ) : (
                 <tr>
                   <td colSpan="8" className="text-center py-12 text-slate-400 italic">
-                    No loan applications found matching criteria.
+                    No loan applications found.
                   </td>
                 </tr>
               )}
@@ -334,7 +334,7 @@ const LoanManagement = () => {
                   {/* Application Particulars */}
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-slate-700 tracking-wide">
-                      Borrower Application Particulars
+                      Loan Details
                     </h4>
                     <div className="bg-white p-3 rounded-md border border-slate-200 space-y-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -415,7 +415,7 @@ const LoanManagement = () => {
                     <div className="p-3 bg-amber-50/70 rounded-md border border-amber-200 flex items-start gap-2.5">
                       <MessageSquare className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
                       <div>
-                        <span className="text-xs font-bold uppercase tracking-wider text-amber-800 block">Executive Audit Remarks</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-800 block">Review Notes</span>
                         <p className="text-xs text-amber-900 mt-0.5">{selectedLoan.remarks}</p>
                         {selectedLoan.reviewed_by_name && (
                           <span className="text-xs text-amber-700 font-medium block mt-1">
@@ -430,7 +430,7 @@ const LoanManagement = () => {
                   {selectedLoan.status === 'pending' && (
                     <div className="space-y-3 pt-3 border-t border-slate-200">
                       <h4 className="text-xs font-bold text-slate-700 tracking-wide">
-                        Audit Actions (Step 1: Document Verification)
+                        Step 1: Check Documents
                       </h4>
 
                       {(canVerify || canApprove) ? (
@@ -469,7 +469,7 @@ const LoanManagement = () => {
                           {/* Reject Drawer */}
                           <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
                             <label htmlFor="loan-reject-remarks" className="text-xs font-semibold text-slate-700 block">
-                              Disapprove / Return Application (Specify COA audit justification):
+                              Return or disapprove (state reason):
                             </label>
                             <textarea
                               id="loan-reject-remarks"
@@ -504,7 +504,7 @@ const LoanManagement = () => {
                   {selectedLoan.status === 'verified' && (
                     <div className="space-y-3 pt-3 border-t border-slate-200">
                       <h4 className="text-xs font-bold text-slate-700 tracking-wide">
-                        Executive Approval (Step 2: Superintendent Certification)
+                        Step 2: Superintendent Approval
                       </h4>
 
                       {canApprove ? (

@@ -26,7 +26,7 @@ export const METRIC_CONFIG = {
   payroll_status: { sourceLabel: 'Cycle Status', icon: ClipboardCheck },
   payroll: { sourceLabel: 'Net Compensation', icon: Banknote },
   performance: { sourceLabel: 'RPMS / IPCRF', icon: Award },
-  recruitment: { sourceLabel: 'RQA Pipeline', icon: UserPlus },
+  recruitment: { sourceLabel: 'RQA Applicants', icon: UserPlus },
   stations: { sourceLabel: 'School Clusters', icon: School },
   accounts: { sourceLabel: 'User Directory', icon: UserCog },
   registrations: { sourceLabel: 'Onboarding Queue', icon: UserCheck },

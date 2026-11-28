@@ -95,7 +95,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           {/* RPMS Dimension Scoring Matrix */}
           <div className="space-y-2">
             <h3 className="text-xs font-bold text-slate-900 tracking-wider">
-              RPMS Dimensions &amp; Weighted Computations
+              RPMS Scores &amp; Weights
             </h3>
 
             <div className="border border-slate-200 rounded-md overflow-x-auto">
@@ -162,7 +162,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
 
                   {/* Summary Composite Row */}
                   <tr className="bg-slate-50 font-bold border-t-2 border-slate-300">
-                    <td className="py-2.5 px-3 text-slate-900 uppercase">Composite Numerical Rating</td>
+                    <td className="py-2.5 px-3 text-slate-900 uppercase">Final Score</td>
                     <td className="py-2.5 px-3 text-center font-mono tabular-nums text-slate-700">100%</td>
                     <td className="py-2.5 px-3 text-center text-slate-400">—</td>
                     <td className="py-2.5 px-3 text-right font-mono tabular-nums text-sm text-primary">
@@ -178,7 +178,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div className="border border-slate-200 rounded-md p-3 bg-white space-y-1">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                Official Adjectival Rating
+                Rating
               </span>
               <div className="flex items-center gap-2 mt-1">
                 <span
@@ -203,11 +203,11 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
                   }`}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  {review.is_promotion_eligible ? 'Meets configured rating threshold' : 'Regular Rating Recorded'}
+                  {review.is_promotion_eligible ? 'Meets 4.000 rating requirement' : 'Regular Rating Recorded'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Configured rating threshold: 4.000. This indicator does not confirm promotion approval.
+                Minimum score is 4.000. Meeting this score does not guarantee promotion.
               </p>
             </div>
           </div>
@@ -215,7 +215,7 @@ const IPCRFDetailsModal = ({ review, onClose }) => {
           {/* Evaluation Remarks */}
           <div className="border border-slate-200 rounded-md p-3.5 bg-slate-50 text-xs space-y-1">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-              Performance Remarks &amp; Division Assessment
+              Review Notes
             </span>
             <p className="text-slate-800 italic leading-relaxed">
               "{review.ai_summary || (review.ipcrf_file ? 'Signed IPCRF uploaded for division records.' : 'No formal assessment notes recorded.')}"

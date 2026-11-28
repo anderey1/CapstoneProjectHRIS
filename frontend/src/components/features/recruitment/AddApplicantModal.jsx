@@ -172,7 +172,7 @@ const AddApplicantModal = ({ onClose }) => {
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Initial Pipeline Stage</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 ml-1">Starting Stage</label>
               <select className="select select-bordered w-full bg-base-50 border-base-200 focus:border-primary rounded-xl text-xs font-semibold uppercase tracking-wide h-24" {...register('status')}>
                 <option value="applied">Applied / Submitted</option>
                 <option value="initial_evaluation">Initial QS Evaluation</option>

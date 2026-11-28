@@ -93,7 +93,7 @@ const LoanRegistryTable = ({
             Provident Fund Loans ({filteredLoans.length} Records)
           </span>
           <span className="text-xs text-slate-500 font-medium">
-            Semi-monthly amortizations automatically deducted via General Payroll
+            Semi-monthly payments deducted through General Payroll
           </span>
         </div>
 

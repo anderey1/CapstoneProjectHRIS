@@ -99,7 +99,7 @@ const MyLoans = () => {
   };
 
   if (isLoading) {
-    return <PageLoader label="Loading Personal Provident Loan Portfolio..." />;
+    return <PageLoader label="Loading your loans..." />;
   }
 
   return (
@@ -249,7 +249,7 @@ const MyLoans = () => {
                 <tr>
                   <td colSpan="9" className="py-12 text-center text-xs text-slate-500">
                     <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    No Provident Fund loan applications or active credit accounts recorded.
+                    No loan applications or active loans found.
                   </td>
                 </tr>
               )}
@@ -259,7 +259,7 @@ const MyLoans = () => {
         </div>
 
         <div className="bg-slate-50 border-t border-slate-300 px-4 py-2 text-xs text-slate-500 flex justify-between">
-          <span>DepEd SDO Lucena City • Provident Fund Operational System</span>
+          <span>DepEd SDO Lucena City • Provident Fund</span>
           <span className="font-mono">DO 37, s. 2018 Standards</span>
         </div>
       </div>
@@ -275,7 +275,7 @@ const MyLoans = () => {
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex shrink-0 items-start justify-between gap-3">
               <div>
                 <h2 id="personal-loan-ledger-title" className="text-base font-bold text-slate-900">
-                  Provident Fund Subsidiary Ledger Docket
+                  Provident Fund Loan Ledger
                 </h2>
                 <span className="text-xs font-mono tabular-nums text-primary block mt-0.5">
                   #LOAN-{inspectingLoan.id.toString().padStart(4, '0')} • {inspectingLoan.employee_name}

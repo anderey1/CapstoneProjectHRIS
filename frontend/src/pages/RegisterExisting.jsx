@@ -158,7 +158,7 @@ const RegisterExisting = () => {
           .join('\n');
         setErrorMsg(errorDetails || 'Registration failed. Please check your inputs.');
       } else {
-        setErrorMsg('We encountered an issue processing your registration.');
+        setErrorMsg('Could not submit your registration. Try again.');
       }
     } finally {
       setIsLoading(false);
@@ -498,7 +498,7 @@ const RegisterExisting = () => {
       </main>
 
       <footer className="w-full bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
-        <p>Department of Education — Schools Division of Lucena City • Human Resource Information System</p>
+        <p>Department of Education • Schools Division of Lucena City • Human Resource Information System</p>
       </footer>
     </div>
   );

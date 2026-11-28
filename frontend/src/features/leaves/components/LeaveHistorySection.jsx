@@ -45,7 +45,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
             </h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Historical audit log of all filed leave applications and certifying actions.
+            List of your filed leave applications and review status.
           </p>
         </div>
 
@@ -188,7 +188,7 @@ const LeaveHistorySection = ({ leaves, onCorrect, pagination, filterType, setFil
             ) : (
               <tr>
                 <td colSpan="8" className="py-12 text-center text-slate-400 text-xs">
-                  No leave application records found in your personal dossier.
+                  No leave applications found.
                 </td>
               </tr>
             )}

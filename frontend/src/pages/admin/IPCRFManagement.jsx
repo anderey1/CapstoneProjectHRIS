@@ -64,7 +64,7 @@ const IPCRFManagement = () => {
   const metrics = { total: 0, outstanding: 0, verySatisfactory: 0, eligible: 0, ...summary };
 
   if (isLoading) {
-    return <PageLoader label="Loading RPMS Division Master Ledger..." />;
+    return <PageLoader label="Loading performance records..." />;
   }
 
   return (
@@ -298,7 +298,7 @@ const IPCRFManagement = () => {
                 <tr>
                   <td colSpan="9" className="py-12 text-center text-xs text-slate-500">
                     <BarChart3 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    No RPMS / IPCRF evaluation records matching the current filters.
+                    No IPCRF records match your filters.
                   </td>
                 </tr>
               )}
